@@ -61,7 +61,8 @@ export function BookingTrigger({
   );
 }
 
-const TIME_SLOTS = ["Mattina (10–13)", "Pomeriggio (14–18)", "Sera (18–22)", "Flessibile"];
+const TIME_SLOTS = ["Mattina", "Pomeriggio", "Sera", "Notte", "Flessibile"];
+const CREW_SIZES = [0, 1, 2, 3, 4, 5, 6];
 
 type Status = "idle" | "sent";
 
@@ -105,6 +106,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     const date = String(data.get("date") ?? "");
     const slot = String(data.get("slot") ?? "");
     const message = String(data.get("message") ?? "").trim();
+    const crew = String(data.get("crew") ?? "");
     const formattedDate = date ? new Date(`${date}T12:00:00`).toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }) : "Da concordare";
 
     const lines = [
@@ -115,20 +117,22 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       `• Servizio: ${serviceLabel}`,
       `• Data preferita: ${formattedDate}`,
       slot ? `• Fascia oraria: ${slot}` : null,
+      crew && crew !== "0" ? `• Persone con me: ${crew}` : null,
       message ? `• Progetto: ${message}` : null,
     ].filter((l): l is string => l !== null);
     const text = lines.join("\n");
 
-    if (channel === "whatsapp") {
-      window.open(whatsappLink(text), "_blank", "noopener,noreferrer");
-    } else {
-      window.location.href = mailtoLink(`Richiesta sessione – ${serviceLabel}`, text);
-    }
+    const wa = whatsappLink(text);
+    const mail = mailtoLink(`Richiesta sessione – ${serviceLabel}`, text);
+    if (channel === "whatsapp" && wa) window.open(wa, "_blank", "noopener,noreferrer");
+    else if (mail) window.location.href = mail;
     setStatus("sent");
   };
 
+  const hasChannels = Boolean(studio.whatsapp || studio.email);
+
   const fieldClass =
-    "w-full rounded-xl border border-white/12 bg-obsidian/60 px-4 py-3 text-white placeholder:text-mist/60 transition-colors focus:border-gold focus:outline-none";
+    "w-full rounded-xl border border-white/12 bg-obsidian/60 px-4 py-3 text-white placeholder:text-mist/60 transition-colors focus:border-chrome focus:outline-none";
   const labelClass = "mb-2 block font-mono text-[0.7rem] uppercase tracking-[0.2em] text-mist";
 
   return (
@@ -146,24 +150,24 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         }}
       >
         <div className="relative p-6 sm:p-10">
-          <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-gold/20 blur-3xl" />
-          <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-16 h-60 w-60 rounded-full bg-signal/20 blur-3xl" />
+          <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-chrome/20 blur-3xl" />
+          <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-16 h-60 w-60 rounded-full bg-steel/20 blur-3xl" />
 
           <div className="relative flex items-start justify-between gap-6">
             <div>
-              <p className="eyebrow">Prenotazione · Risposta in giornata</p>
+              <p className="eyebrow">Prenotazione · Aperto 24/7</p>
               <h2 id={titleId} className="mt-3 font-display text-4xl leading-none text-white sm:text-5xl">
-                Prenota la tua <em className="text-gradient-gold">sessione</em>
+                Prenota la tua <em className="chrome-text">sessione</em>
               </h2>
               <p id={descId} className="mt-4 max-w-md text-sm leading-relaxed text-mist">
-                Scegli servizio e data: la richiesta parte su WhatsApp o via email, già compilata. Ti confermiamo disponibilità e
-                dettagli in poche ore.
+                Scegli servizio, data e quante persone porti: la richiesta parte già compilata e ti ricontattiamo per confermare
+                disponibilità e dettagli.
               </p>
             </div>
             <button
               type="button"
               onClick={close}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 text-white transition-colors hover:border-gold hover:text-gold"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 text-white transition-colors hover:border-chrome hover:text-chrome"
               aria-label="Chiudi la finestra di prenotazione"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
@@ -173,18 +177,19 @@ export function BookingProvider({ children }: { children: ReactNode }) {
           </div>
 
           {status === "sent" ? (
-            <div className="relative mt-10 rounded-2xl border border-signal/40 bg-signal/10 p-6" role="status">
+            <div className="relative mt-10 rounded-2xl border border-steel/40 bg-steel/10 p-6" role="status">
               <p className="font-display text-3xl text-white">Richiesta pronta ✦</p>
               <p className="mt-3 text-sm leading-relaxed text-mist">
-                Completa l&apos;invio nell&apos;app che si è aperta. Se non si è aperto nulla, scrivici direttamente a{" "}
-                <a className="text-gold underline underline-offset-4" href={`mailto:${studio.email}`}>
-                  {studio.email}
-                </a>{" "}
-                o chiama il{" "}
-                <a className="text-gold underline underline-offset-4" href={`tel:${studio.phoneHref}`}>
-                  {studio.phone}
-                </a>
-                .
+                Completa l&apos;invio nell&apos;app che si è aperta.
+                {studio.email && (
+                  <>
+                    {" "}Se non si è aperto nulla, scrivici a{" "}
+                    <a className="text-white underline underline-offset-4" href={`mailto:${studio.email}`}>
+                      {studio.email}
+                    </a>
+                    .
+                  </>
+                )}
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <button type="button" className={buttonStyles.small} onClick={() => setStatus("idle")}>
@@ -245,6 +250,18 @@ export function BookingProvider({ children }: { children: ReactNode }) {
                 </select>
               </div>
               <div className="sm:col-span-2">
+                <label htmlFor="bk-crew" className={labelClass}>
+                  Persone con te in sala (max 6)
+                </label>
+                <select id="bk-crew" name="crew" defaultValue="0" className={cn(fieldClass, "appearance-none")}>
+                  {CREW_SIZES.map((n) => (
+                    <option key={n} value={n}>
+                      {n === 0 ? "Vengo da solo/a" : `${n} ${n === 1 ? "persona" : "persone"}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="sm:col-span-2">
                 <label htmlFor="bk-message" className={labelClass}>
                   Raccontaci il progetto
                 </label>
@@ -257,15 +274,25 @@ export function BookingProvider({ children }: { children: ReactNode }) {
                   placeholder="Genere, numero di brani, riferimenti, scadenze…"
                 />
               </div>
-              <div className="flex flex-col gap-3 sm:col-span-2 sm:flex-row">
-                <button type="submit" name="channel" value="whatsapp" className={cn(buttonStyles.primary, "flex-1")}>
-                  <WhatsAppIcon />
-                  Invia su WhatsApp
-                </button>
-                <button type="submit" name="channel" value="email" className={cn(buttonStyles.ghost, "flex-1")}>
-                  Invia via Email
-                </button>
-              </div>
+              {hasChannels ? (
+                <div className="flex flex-col gap-3 sm:col-span-2 sm:flex-row">
+                  {studio.whatsapp && (
+                    <button type="submit" name="channel" value="whatsapp" className={cn(buttonStyles.primary, "flex-1")}>
+                      <WhatsAppIcon />
+                      Invia su WhatsApp
+                    </button>
+                  )}
+                  {studio.email && (
+                    <button type="submit" name="channel" value="email" className={cn(studio.whatsapp ? buttonStyles.ghost : buttonStyles.primary, "flex-1")}>
+                      Invia via Email
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <p className="rounded-2xl border border-white/15 bg-white/[0.04] p-4 text-sm text-mist sm:col-span-2" role="note">
+                  I canali di prenotazione (WhatsApp ed email) sono in fase di attivazione.
+                </p>
+              )}
               <p className="text-xs leading-relaxed text-mist/80 sm:col-span-2">
                 Nessun dato viene salvato su questo sito: la richiesta viene inviata direttamente dal tuo WhatsApp o dal tuo client
                 email.

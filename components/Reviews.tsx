@@ -2,24 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { KineticText, Reveal } from "@/components/Reveal";
-import { REVIEWS_ARE_EXAMPLES, reviews } from "@/lib/content";
-import { studio } from "@/lib/studio";
+import { reviews } from "@/lib/content";
 import { cn } from "@/lib/cn";
 
-const AUTOPLAY_MS = 6000;
+const AUTOPLAY_MS = 6500;
 
-function Stars({ value }: { value: number }) {
-  return (
-    <span className="flex gap-1 text-gold" aria-label={`${value} stelle su 5`} role="img">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <svg key={i} width="16" height="16" viewBox="0 0 20 20" fill={i < value ? "currentColor" : "none"} stroke="currentColor" aria-hidden="true">
-          <path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z" />
-        </svg>
-      ))}
-    </span>
-  );
-}
-
+/** Testimonianze reali degli artisti. La sezione non viene mostrata finché la lista è vuota. */
 export function Reviews() {
   const trackRef = useRef<HTMLUListElement>(null);
   const [index, setIndex] = useState(0);
@@ -31,11 +19,9 @@ export function Reviews() {
     const count = track.children.length;
     const next = ((i % count) + count) % count;
     const card = track.children[next] as HTMLElement | undefined;
-    if (!card) return;
-    track.scrollTo({ left: card.offsetLeft - track.offsetLeft, behavior: "smooth" });
+    if (card) track.scrollTo({ left: card.offsetLeft - track.offsetLeft, behavior: "smooth" });
   }, []);
 
-  // Sincronizza l'indice attivo con lo scroll (swipe, trackpad, tastiera)
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
@@ -51,9 +37,8 @@ export function Reviews() {
     return () => io.disconnect();
   }, []);
 
-  // Autoplay (in pausa su hover/focus e con reduced-motion)
   useEffect(() => {
-    if (paused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (paused || reviews.length < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = window.setInterval(() => {
       const track = trackRef.current;
       if (!track) return;
@@ -63,87 +48,67 @@ export function Reviews() {
     return () => window.clearInterval(id);
   }, [index, paused, scrollToIndex]);
 
+  if (reviews.length === 0) return null;
+
   const navBtn =
-    "flex h-12 w-12 items-center justify-center rounded-full border border-white/15 text-white transition-colors duration-300 hover:border-gold hover:bg-gold hover:text-obsidian";
+    "press flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white transition-colors duration-300 hover:border-white hover:bg-white hover:text-obsidian";
 
   return (
     <section
       id="recensioni"
       aria-labelledby="recensioni-title"
       aria-roledescription="carosello"
-      className="relative py-24 sm:py-32"
+      className="relative py-20 sm:py-32"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
+      onTouchStart={() => setPaused(true)}
     >
-      <div className="container-x">
-        <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
-          <div>
-            <p className="eyebrow">Recensioni · Vicenza e Veneto</p>
-            <KineticText id="recensioni-title" text="Parlano *gli artisti*." className="mt-5 text-[clamp(2.6rem,6vw,5.5rem)]" />
-          </div>
-          <Reveal delay={0.1}>
-            <div className="flex items-center gap-6">
-              <div>
-                <p className="font-display text-6xl leading-none text-white">{studio.rating.value.toFixed(1).replace(".", ",")}</p>
-                <p className="mt-1 font-mono text-[0.68rem] uppercase tracking-[0.2em] text-mist">{studio.rating.count}+ recensioni Google</p>
-              </div>
-              <div className="flex gap-3">
-                <button type="button" className={navBtn} onClick={() => scrollToIndex(index - 1)} aria-label="Recensione precedente">
-                  ←
-                </button>
-                <button type="button" className={navBtn} onClick={() => scrollToIndex(index + 1)} aria-label="Recensione successiva">
-                  →
-                </button>
-              </div>
-            </div>
-          </Reveal>
+      <div className="container-x flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+        <div>
+          <p className="eyebrow">Testimonianze</p>
+          <KineticText id="recensioni-title" text="Parlano *gli artisti*." className="mt-5 text-[clamp(2.5rem,6.5vw,5.5rem)]" />
         </div>
+        {reviews.length > 1 && (
+          <div className="flex gap-3">
+            <button type="button" className={navBtn} onClick={() => scrollToIndex(index - 1)} aria-label="Testimonianza precedente">
+              ←
+            </button>
+            <button type="button" className={navBtn} onClick={() => scrollToIndex(index + 1)} aria-label="Testimonianza successiva">
+              →
+            </button>
+          </div>
+        )}
       </div>
 
-      <Reveal delay={0.15}>
+      <Reveal delay={0.1}>
         <ul
           ref={trackRef}
-          className="no-scrollbar mt-14 flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-[max(1.25rem,calc((100vw-88rem)/2+3rem))] pb-4"
-          aria-label="Recensioni dei clienti"
+          className="no-scrollbar mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-[max(1.25rem,calc((100vw-88rem)/2+3rem))] pb-4"
+          aria-label="Testimonianze degli artisti"
         >
           {reviews.map((r, i) => (
-            <li
-              key={`${r.author}-${i}`}
-              className="w-[85vw] max-w-[28rem] shrink-0 snap-start sm:w-[26rem]"
-              aria-roledescription="slide"
-              aria-label={`${i + 1} di ${reviews.length}`}
-            >
+            <li key={`${r.author}-${i}`} className="w-[86vw] max-w-[30rem] shrink-0 snap-start sm:w-[28rem]" aria-roledescription="slide" aria-label={`${i + 1} di ${reviews.length}`}>
               <figure
                 className={cn(
-                  "flex h-full flex-col rounded-[1.75rem] border p-8 transition-colors duration-700",
-                  i === index ? "border-gold/40 bg-gradient-to-b from-titanium/80 to-obsidian-2" : "border-white/10 bg-titanium/30",
+                  "chrome-border flex h-full flex-col rounded-[1.75rem] p-7 transition-colors duration-700 sm:p-8",
+                  i === index ? "bg-gradient-to-b from-titanium to-obsidian-2" : "bg-titanium/40",
                 )}
               >
-                <div className="flex items-center justify-between gap-4">
-                  <Stars value={r.rating} />
-                  {REVIEWS_ARE_EXAMPLES && (
-                    <span className="rounded-full border border-white/20 px-2.5 py-0.5 font-mono text-[0.6rem] uppercase tracking-[0.2em] text-mist">
-                      Esempio
-                    </span>
-                  )}
-                </div>
-                <blockquote className="mt-6 flex-1 font-display text-2xl leading-snug text-white">
-                  <p>&ldquo;{r.text}&rdquo;</p>
+                <span aria-hidden="true" className="chrome-text font-display text-7xl leading-[0.6]">
+                  &ldquo;
+                </span>
+                <blockquote className="mt-4 flex-1 font-display text-2xl leading-snug text-white">
+                  <p>{r.text}</p>
                 </blockquote>
                 <figcaption className="mt-8 flex items-center gap-4 border-t border-white/10 pt-6">
-                  <span
-                    aria-hidden="true"
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-gold to-signal font-display text-lg text-obsidian"
-                  >
+                  <span aria-hidden="true" className="chrome-surface flex h-11 w-11 items-center justify-center rounded-full font-display text-lg">
                     {r.author.charAt(0)}
                   </span>
                   <span>
                     <span className="block font-semibold text-white">{r.author}</span>
-                    <span className="block text-xs text-mist">
-                      {r.role} · {r.city} · {r.service}
-                    </span>
+                    {r.role && <span className="block text-xs text-mist">{r.role}</span>}
                   </span>
                 </figcaption>
               </figure>
@@ -152,33 +117,13 @@ export function Reviews() {
         </ul>
       </Reveal>
 
-      <div className="container-x mt-8 flex flex-wrap items-center justify-between gap-6">
-        <div className="flex gap-2" aria-hidden="true">
+      {reviews.length > 1 && (
+        <div className="container-x mt-6 flex gap-2" aria-hidden="true">
           {reviews.map((_, i) => (
-            <span key={i} className={cn("h-1 rounded-full transition-all duration-500", i === index ? "w-10 bg-gold" : "w-4 bg-white/20")} />
+            <span key={i} className={cn("h-1 rounded-full transition-all duration-500", i === index ? "w-10 bg-white" : "w-4 bg-white/20")} />
           ))}
         </div>
-        <div className="flex flex-wrap gap-4">
-          <a
-            href={studio.googleMapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-semibold text-mist underline-offset-4 transition-colors hover:text-gold hover:underline"
-          >
-            Leggi tutte le recensioni su Google ↗
-          </a>
-          {studio.googleReviewUrl && (
-            <a
-              href={studio.googleReviewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-semibold text-gold underline-offset-4 hover:underline"
-            >
-              Hai registrato da noi? Lascia una recensione ↗
-            </a>
-          )}
-        </div>
-      </div>
+      )}
     </section>
   );
 }

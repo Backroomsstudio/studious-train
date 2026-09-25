@@ -95,8 +95,8 @@ export function CustomCursor() {
           className="flex h-9 w-9 items-center justify-center rounded-full border transition-[transform,background-color,border-color] duration-500 ease-[var(--ease-expo)]"
           style={{
             transform: `translate(-50%, -50%) scale(${pressed ? ringScale * 0.85 : ringScale})`,
-            borderColor: variant === "default" ? "rgba(197,198,199,0.5)" : "rgba(255,176,0,0.9)",
-            backgroundColor: variant === "label" ? "rgba(255,176,0,0.95)" : variant === "hover" ? "rgba(255,176,0,0.08)" : "transparent",
+            borderColor: variant === "default" ? "rgba(197,198,199,0.5)" : "rgba(255,255,255,0.9)",
+            backgroundColor: variant === "label" ? "rgba(255,255,255,0.95)" : variant === "hover" ? "rgba(255,255,255,0.08)" : "transparent",
           }}
         >
           <span
@@ -109,7 +109,7 @@ export function CustomCursor() {
       </div>
       <div ref={dotRef} className="absolute left-0 top-0">
         <div
-          className="h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold shadow-[0_0_12px_rgba(255,176,0,0.9)] transition-opacity duration-300"
+          className="h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chrome shadow-[0_0_12px_rgba(255,255,255,0.9)] transition-opacity duration-300"
           style={{ opacity: variant === "label" ? 0 : 1 }}
         />
       </div>

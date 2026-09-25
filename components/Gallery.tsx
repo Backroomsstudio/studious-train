@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRef } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { KineticText, Reveal } from "@/components/Reveal";
 import { BookingTrigger } from "@/components/BookingModal";
 import { studioPhotos } from "@/lib/content";
@@ -16,6 +16,8 @@ function ParallaxPhoto({ photo, className, sizes, index }: { photo: Photo; class
   const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], ["-8%", "8%"]);
+  // Monocromatico finché non entra nel centro dello schermo, poi si accende il colore reale della sala
+  const inView = useInView(ref, { margin: "-35% 0px -35% 0px" });
 
   return (
     <figure ref={ref} className={cn("group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-titanium", className)}>
@@ -25,7 +27,8 @@ function ParallaxPhoto({ photo, className, sizes, index }: { photo: Photo; class
           alt={photo.alt}
           fill
           sizes={sizes}
-          className="object-cover transition-transform duration-[1600ms] ease-[var(--ease-expo)] group-hover:scale-105"
+          className="object-cover transition-[transform,filter] duration-[1600ms] ease-[var(--ease-expo)] group-hover:scale-105"
+          style={{ filter: inView ? "grayscale(0)" : "grayscale(1)" }}
         />
       </motion.div>
       <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-obsidian/85 via-obsidian/10 to-transparent" />
@@ -43,19 +46,19 @@ export function Gallery() {
   return (
     <section id="studio-foto" aria-labelledby="studio-foto-title" className="relative py-24 sm:py-32">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute left-1/2 top-1/4 h-[30rem] w-[50rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(124,58,237,0.18),transparent)] blur-2xl" />
+        <div className="absolute left-1/2 top-1/4 h-[30rem] w-[50rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(255,255,255,0.18),transparent)] blur-2xl" />
       </div>
 
       <div className="container-x">
         <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
           <div>
-            <p className="eyebrow">Lo studio · Vicenza</p>
-            <KineticText id="studio-foto-title" text="Entra nella *stanza*." className="mt-5 text-[clamp(2.6rem,6vw,5.5rem)]" />
+            <p className="eyebrow">Lo studio · Arcugnano, Vicenza</p>
+            <KineticText id="studio-foto-title" text="Entra nella *Lounge*." className="mt-5 text-[clamp(2.6rem,6vw,5.5rem)]" />
           </div>
           <Reveal delay={0.1}>
             <p className="max-w-md text-base leading-relaxed text-mist">
-              Pannelli acustici su tutte le pareti, diffusori sul fondo, monitor Focal e una sala pensata per farti sentire a casa:
-              è qui che nasce il tuo prossimo brano.
+              Un unico ambiente da 65 mq, luci soffuse, divani e la postazione al centro della sala: è qui che la tua crew si
+              siede, ascolta e vive la sessione con te.
             </p>
           </Reveal>
         </div>
@@ -79,10 +82,10 @@ export function Gallery() {
                   <div>
                     <p className="eyebrow">Prenota una visita</p>
                     <p className="mt-5 font-display text-4xl leading-tight text-white sm:text-5xl">
-                      Vieni a sentire <em className="text-gradient-gold">come suona</em>.
+                      Vieni a sentire <em className="chrome-text">come suona</em>.
                     </p>
                     <p className="mt-4 text-sm leading-relaxed text-mist">
-                      Passa in studio prima di registrare: ascolti la sala, conosci il team e parliamo del tuo progetto.
+                      Passa in studio prima di registrare: vedi la Lounge dal vivo, conosci il collettivo e parliamo del tuo progetto.
                     </p>
                   </div>
                   <BookingTrigger className={cn(buttonStyles.primary, "self-start")} notes="Vorrei passare in studio per una visita prima di registrare.">

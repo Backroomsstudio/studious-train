@@ -1,17 +1,15 @@
-export const SEO_TITLE = "Studio di Registrazione Vicenza | Mix, Master e Incisione Professionale";
+export const SEO_TITLE = "Studio di Registrazione Vicenza | Studio Lounge, Mix e Master ad Arcugnano";
 
 export const SEO_DESCRIPTION =
-  "Il miglior studio di registrazione a Vicenza. Acustica perfetta, catena analogica di pregio e mastering professionale per il tuo brano. Prenota la tua sessione online.";
+  "Il primo Studio Lounge di Vicenza: 65 mq ad Arcugnano, aperto 24/7. Registrazione, produzione musicale, mix e master in studio o a distanza. Prenota la tua sessione.";
 
 export const SEO_KEYWORDS = [
   "studio di registrazione Vicenza",
-  "sala di registrazione Vicenza",
-  "registrazione voce Vicenza",
-  "mix e mastering Vicenza",
-  "mastering analogico",
+  "mix e master Vicenza",
   "produzione musicale Vicenza",
-  "beat trap Vicenza",
-  "studio podcast Vicenza",
-  "incisione canzone Vicenza",
-  "studio di registrazione Veneto",
+  "studio lounge musica Veneto",
+  "studio di registrazione Arcugnano",
+  "mix e master online",
+  "produzione musicale a distanza",
+  "studio di registrazione 24/7",
 ];

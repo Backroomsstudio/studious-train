@@ -5,14 +5,14 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { BookingTrigger } from "@/components/BookingModal";
 import { Magnetic } from "@/components/Magnetic";
 import { buttonStyles, cn } from "@/lib/cn";
+import { heroFacts } from "@/lib/content";
 import { studio } from "@/lib/studio";
 
 // La scena WebGL viene caricata solo lato client e dopo il primo paint:
 // il testo (LCP) resta server-rendered e immediato, three.js non blocca il main thread iniziale.
 const WaveformScene = dynamic(() => import("@/components/three/WaveformScene"), { ssr: false });
 
-const HEADLINE_LINE_1 = ["Il", "suono", "di", "livello", "mondiale,"];
-const HEADLINE_LINE_2 = ["nel", "cuore", "di"];
+const HEADLINE = ["Il", "primo", "Studio"];
 
 /**
  * Monta la scena 3D alla prima interazione reale dell'utente (movimento del mouse, tocco, scroll, tastiera).
@@ -74,11 +74,11 @@ export function Hero3D() {
       ref={sectionRef}
       id="top"
       aria-labelledby="hero-title"
-      className="relative isolate flex min-h-[100svh] flex-col justify-end overflow-hidden pb-14 pt-32 sm:pb-20"
+      className="relative isolate flex min-h-[100svh] flex-col justify-end overflow-hidden pb-10 pt-28 sm:pb-20 sm:pt-32"
     >
       {/* Poster statico: visibile subito, fa da fallback se WebGL non è disponibile */}
       <div aria-hidden="true" className="absolute inset-0 -z-20">
-        <div className="absolute left-1/2 top-[58%] h-[60vmax] w-[80vmax] -translate-x-1/2 -translate-y-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(255,176,0,0.18),rgba(69,162,158,0.10)_45%,transparent_75%)] blur-2xl motion-safe:animate-pulse" />
+        <div className="absolute left-1/2 top-[58%] h-[60vmax] w-[80vmax] -translate-x-1/2 -translate-y-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(255,255,255,0.18),rgba(170,170,170,0.10)_45%,transparent_75%)] blur-2xl motion-safe:animate-pulse" />
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,var(--color-obsidian),transparent)]" />
       </div>
 
@@ -92,34 +92,25 @@ export function Hero3D() {
         ) : null}
       </div>
 
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,transparent_30%,rgba(11,12,16,0.85)_85%)]" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,transparent_30%,rgba(13,13,13,0.85)_85%)]" />
 
       <div className="container-x relative">
-        <div className="fade-up mb-8 flex flex-wrap items-center gap-3" style={{ ["--d" as string]: "50ms" }}>
+        <div className="fade-up mb-6 flex flex-wrap items-center gap-3 sm:mb-8" style={{ ["--d" as string]: "50ms" }}>
           <span className="relative flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal opacity-60" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-signal" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-60" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
           </span>
-          <span className="font-mono text-[0.72rem] uppercase tracking-[0.28em] text-mist">
-            Sessioni aperte · {studio.address.city} ({studio.address.province})
+          <span className="font-mono text-[0.7rem] uppercase tracking-[0.26em] text-mist">
+            Aperto 24/7 · {studio.address.city}, {studio.address.provinceName}
           </span>
         </div>
 
         <h1 id="hero-title" className="text-white">
-          <span className="fade-up eyebrow mb-6 block text-gold" style={{ ["--d" as string]: "80ms" }}>
-            Studio di registrazione a Vicenza
+          <span className="fade-up eyebrow mb-5 block text-chrome" style={{ ["--d" as string]: "80ms" }}>
+            Studio di registrazione · Vicenza
           </span>{" "}
-          <span className="block font-sans max-w-[18ch] text-[clamp(2.5rem,6.4vw,6.6rem)] font-extrabold uppercase leading-[0.92] tracking-[-0.035em]">
-            {HEADLINE_LINE_1.map((w) => (
-              <Fragment key={w}>
-                <span className="kinetic-mask">
-                  <span className="kinetic-word" style={{ ["--i" as string]: wordIndex++ }}>
-                    {w}
-                  </span>
-                </span>{" "}
-              </Fragment>
-            ))}
-            {HEADLINE_LINE_2.map((w) => (
+          <span className="block font-sans text-[clamp(2.9rem,8.2vw,8rem)] font-extrabold uppercase leading-[0.9] tracking-[-0.04em]">
+            {HEADLINE.map((w) => (
               <Fragment key={w}>
                 <span className="kinetic-mask">
                   <span className="kinetic-word" style={{ ["--i" as string]: wordIndex++ }}>
@@ -130,53 +121,56 @@ export function Hero3D() {
             ))}
             <span className="kinetic-mask">
               <span
-                className="kinetic-word font-display text-[1.12em] font-normal normal-case italic tracking-[-0.01em] text-gradient-gold pr-[0.08em]"
+                className="kinetic-word font-display text-[1.08em] font-normal normal-case italic tracking-[-0.01em] chrome-text pr-[0.08em]"
                 style={{ ["--i" as string]: wordIndex++ }}
               >
-                Vicenza.
+                Lounge
               </span>
             </span>
+          </span>{" "}
+          <span
+            className="fade-up mt-4 block max-w-3xl font-display text-[clamp(1.6rem,3.6vw,3rem)] leading-[1.05] text-white/90"
+            style={{ ["--d" as string]: "650ms" }}
+          >
+            di Registrazione e Mix/Master a Vicenza.
           </span>
         </h1>
 
-        <div className="mt-10 grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-end">
-          <p className="fade-up max-w-xl text-base leading-relaxed text-mist sm:text-lg" style={{ ["--d" as string]: "700ms" }}>
-            Acustica progettata su misura, catena analogica vintage e mastering ibrido: il tuo brano esce dallo studio pronto per
-            Spotify, radio e club. <strong className="font-semibold text-white">Registrazione, mix e master in un unico posto</strong>, a
-            10 minuti dal centro di Vicenza.
+        <div className="mt-8 grid gap-8 lg:mt-10 lg:grid-cols-[1.1fr_1fr] lg:items-end">
+          <p className="fade-up max-w-xl text-base leading-relaxed text-mist sm:text-lg" style={{ ["--d" as string]: "750ms" }}>
+            Un collettivo di <strong className="font-semibold text-white">3 produttori e sound/mix engineer</strong> con oltre 5 anni sul
+            campo. 65 mq in stile americano ad Arcugnano, aperti giorno e notte: registri, produci e ti rilassi con la tua crew, nello
+            stesso spazio.
           </p>
 
-          <div className="fade-up flex flex-col gap-4 sm:flex-row lg:justify-end" style={{ ["--d" as string]: "850ms" }}>
-            <Magnetic>
+          <div className="fade-up flex flex-col gap-3 sm:flex-row sm:gap-4 lg:justify-end" style={{ ["--d" as string]: "850ms" }}>
+            <Magnetic className="w-full sm:w-auto">
               <BookingTrigger className={cn(buttonStyles.primary, "w-full sm:w-auto")}>
-                <span className="relative z-10">Prenota una Sessione</span>
+                <span className="relative z-10">Prenota la tua sessione</span>
                 <span aria-hidden="true" className="relative z-10 transition-transform duration-500 group-hover:translate-x-1">
                   →
                 </span>
               </BookingTrigger>
             </Magnetic>
-            <Magnetic>
-              <a href="#ascolta" className={cn(buttonStyles.ghost, "w-full sm:w-auto")} data-cursor="Play">
-                <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded-full border border-current">
-                  <svg width="8" height="10" viewBox="0 0 8 10" fill="currentColor">
-                    <path d="M0 0l8 5-8 5z" />
-                  </svg>
-                </span>
-                Ascolta i Nostri Master
+            <Magnetic className="w-full sm:w-auto">
+              <a href="#lounge" className={cn(buttonStyles.ghost, "w-full sm:w-auto")}>
+                Scopri la Lounge
               </a>
             </Magnetic>
           </div>
         </div>
 
-        <div className="fade-up mt-16 flex items-center justify-between border-t border-white/10 pt-6" style={{ ["--d" as string]: "1000ms" }}>
-          <p className="font-mono text-[0.7rem] uppercase tracking-[0.24em] text-mist">
-            <span className="text-gold">★ {studio.rating.value.toFixed(1)}</span> su Google · {studio.rating.count}+ recensioni
-          </p>
-          <a href="#studio" className="hidden items-center gap-3 font-mono text-[0.7rem] uppercase tracking-[0.24em] text-mist transition-colors hover:text-gold sm:flex">
-            Scopri lo studio
-            <span aria-hidden="true" className="block h-8 w-px animate-pulse bg-gradient-to-b from-gold to-transparent" />
-          </a>
-        </div>
+        <dl className="fade-up mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-4 lg:mt-14" style={{ ["--d" as string]: "1000ms" }}>
+          {heroFacts.map((f) => (
+            <div key={f.label} className="bg-obsidian/80 px-4 py-4 backdrop-blur sm:px-6 sm:py-5">
+              <dt className="font-mono text-[0.62rem] uppercase tracking-[0.22em] text-mist">{f.label}</dt>
+              <dd className="mt-1 font-display text-4xl leading-none text-white sm:text-5xl">
+                <span className="chrome-text">{f.value}</span>
+                {f.unit && <span className="ml-1.5 font-sans text-sm text-mist">{f.unit}</span>}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </div>
     </section>
   );

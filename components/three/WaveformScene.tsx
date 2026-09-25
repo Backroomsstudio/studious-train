@@ -4,7 +4,6 @@ import { useLayoutEffect, useMemo, useRef, useState, type RefObject } from "reac
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { PerformanceMonitor, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
-import { audioBus } from "@/lib/audioBus";
 
 const WIDTH = 18;
 const DEPTH = 10;
@@ -58,7 +57,7 @@ float snoise(vec3 v){
 
 const vertexShader = /* glsl */ `
 uniform float uTime;
-uniform float uAudio;
+uniform float uEnergy;
 uniform float uScroll;
 uniform vec3 uMouse;
 uniform float uMouseStrength;
@@ -80,8 +79,8 @@ void main() {
   float ripple = exp(-d * d * 0.32) * (0.85 + 0.3 * sin(d * 5.0 - uTime * 5.5)) * uMouseStrength;
   h += ripple;
 
-  h *= 1.0 + uAudio * 2.4;
-  h += sin(p.x * 5.5 + uTime * 11.0 + p.z) * uAudio * 0.35 * envelope;
+  h *= 1.0 + uEnergy * 2.4;
+  h += sin(p.x * 5.5 + uTime * 11.0 + p.z) * uEnergy * 0.35 * envelope;
 
   p.y += h;
   p.y -= uScroll * 1.6;
@@ -94,16 +93,18 @@ void main() {
 `;
 
 const fragmentShader = /* glsl */ `
-uniform vec3 uGold;
-uniform vec3 uCyan;
+uniform vec3 uHighlight;
+uniform vec3 uShadow;
 uniform float uScroll;
 varying float vRow;
 varying float vHeight;
 varying float vEdge;
 void main() {
   float heat = smoothstep(-0.25, 1.15, vHeight);
-  vec3 color = mix(uCyan, uGold, heat);
-  color += uGold * pow(max(vHeight, 0.0), 3.0) * 0.35;
+  vec3 color = mix(uShadow, uHighlight, heat);
+  // bande speculari: riflesso da metallo cromato
+  color += vec3(0.18) * sin(vHeight * 14.0 + vRow * 6.0);
+  color += uHighlight * pow(max(vHeight, 0.0), 3.0) * 0.35;
   float depth = mix(0.12, 1.0, vRow * vRow);
   float alpha = vEdge * depth * (0.42 + clamp(vHeight, 0.0, 1.6) * 0.75);
   alpha *= 1.0 - clamp(uScroll, 0.0, 1.0) * 0.85;
@@ -151,12 +152,12 @@ function Waveform({ reduced, compact }: { reduced: boolean; compact: boolean }) 
         blending: THREE.AdditiveBlending,
         uniforms: {
           uTime: { value: 0 },
-          uAudio: { value: 0 },
+          uEnergy: { value: 0 },
           uScroll: { value: 0 },
           uMouse: { value: new THREE.Vector3(0, 0, 2) },
           uMouseStrength: { value: 0 },
-          uGold: { value: new THREE.Color("#FFB000") },
-          uCyan: { value: new THREE.Color("#45A29E") },
+          uHighlight: { value: new THREE.Color("#FFFFFF") },
+          uShadow: { value: new THREE.Color("#5A5A5A") },
         },
       }),
     [],
@@ -169,6 +170,7 @@ function Waveform({ reduced, compact }: { reduced: boolean; compact: boolean }) 
       raycaster: new THREE.Raycaster(),
       lastPointer: new THREE.Vector2(99, 99),
       activity: 0,
+      lastScroll: 0,
     }),
     [],
   );
@@ -189,8 +191,11 @@ function Waveform({ reduced, compact }: { reduced: boolean; compact: boolean }) 
     }
     u.uMouseStrength.value = THREE.MathUtils.lerp(u.uMouseStrength.value, 0.25 + helpers.activity * 0.75, 1 - Math.exp(-dt * 3));
 
-    // Audio (dal player del portfolio) e scroll
-    u.uAudio.value = THREE.MathUtils.lerp(u.uAudio.value, audioBus.playing ? audioBus.level : 0, 1 - Math.exp(-dt * 10));
+        // Energia dallo scroll (funziona anche su mobile, dove non c'è il mouse)
+    const y = window.scrollY;
+    const velocity = Math.abs(y - helpers.lastScroll) / Math.max(dt, 1e-3);
+    helpers.lastScroll = y;
+    u.uEnergy.value = THREE.MathUtils.lerp(u.uEnergy.value, Math.min(velocity / 2500, 0.6), 1 - Math.exp(-dt * 4));
     const scroll = typeof window !== "undefined" ? window.scrollY / window.innerHeight : 0;
     u.uScroll.value = THREE.MathUtils.lerp(u.uScroll.value, scroll, 1 - Math.exp(-dt * 8));
 
@@ -249,10 +254,10 @@ export default function WaveformScene({
     >
       <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(1.75)} />
       <CameraRig />
-      <fog attach="fog" args={["#0B0C10", 8, 20]} />
+      <fog attach="fog" args={["#0D0D0D", 8, 20]} />
       <Waveform reduced={reduced} compact={compact} />
-      <Sparkles count={compact ? 30 : 70} scale={[16, 5, 9]} position={[0, 1.2, 0]} size={2.2} speed={reduced ? 0 : 0.25} opacity={0.55} color="#FFB000" />
-      <Sparkles count={compact ? 16 : 40} scale={[16, 5, 9]} position={[0, 1.4, 0]} size={1.6} speed={reduced ? 0 : 0.18} opacity={0.4} color="#45A29E" />
+      <Sparkles count={compact ? 30 : 70} scale={[16, 5, 9]} position={[0, 1.2, 0]} size={2.2} speed={reduced ? 0 : 0.25} opacity={0.55} color="#E6E6E6" />
+      <Sparkles count={compact ? 16 : 40} scale={[16, 5, 9]} position={[0, 1.4, 0]} size={1.6} speed={reduced ? 0 : 0.18} opacity={0.4} color="#9A9A9A" />
     </Canvas>
   );
 }

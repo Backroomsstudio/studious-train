@@ -1,7 +1,7 @@
-# Backrooms Studio · Studio di registrazione a Vicenza
+# Backrooms Studio · Studio Lounge di registrazione a Vicenza (Arcugnano)
 
-Landing page ad alte prestazioni per lo studio: WebGL 3D, smooth scroll, player audio Prima/Dopo,
-configuratore di sessione, galleria foto e SEO locale per "studio di registrazione Vicenza".
+Landing page ad alte prestazioni per lo studio: WebGL 3D, smooth scroll, design mobile-first "Liquid Chrome",
+Studio Lounge, pacchetti Tailor-Made, live streaming e SEO locale per "studio di registrazione Vicenza".
 
 **Stack:** Next.js 16 (App Router, TypeScript) · Tailwind CSS 4 · three.js + @react-three/fiber + @react-three/drei ·
 GSAP + ScrollTrigger · Framer Motion · Lenis · next-seo (JSON-LD)
@@ -22,28 +22,22 @@ Copia `.env.example` in `.env.local` e imposta `NEXT_PUBLIC_SITE_URL` con il dom
 
 | File | Contenuto |
 | --- | --- |
-| `lib/studio.ts` | Nome, indirizzo, coordinate, telefono, WhatsApp, email, P.IVA, orari, social, rating Google, indicazioni stradali |
-| `lib/content.ts` | Servizi, foto dello studio, attrezzatura, tracce del portfolio, opzioni del configuratore, recensioni, FAQ |
+| `lib/studio.ts` | Nome, indirizzo, contatti (WhatsApp, telefono, email), P.IVA, social, coordinate |
+| `lib/content.ts` | Copy di Hero, Lounge, In-The-Box, servizi, live streaming, **playlist**, **recensioni**, FAQ |
+| `lib/seo.ts` | Title, meta description, keyword |
 | `public/brand/` | Logo (PNG/WebP con trasparenza) |
 | `public/images/` | Foto dello studio |
-| `lib/seo.ts` | Title, meta description, keyword |
-| `public/audio/` | Spezzoni audio Prima/Dopo del player |
 
-### ⚠️ Da compilare prima della messa online
+### Regola: solo dati reali
 
-Tutti i campi marcati `DA VERIFICARE` in `lib/studio.ts` e `lib/content.ts`:
+Il sito non mostra nulla di inventato. I campi vuoti vengono nascosti automaticamente (anche nei dati strutturati per Google):
 
-1. **Indirizzo, coordinate GPS, telefono, WhatsApp, email, P.IVA**: devono coincidere al carattere con il profilo
-   Google Business (la coerenza NAP è il primo fattore di ranking locale).
-2. **Rating Google** (`rating`): deve essere quello reale del profilo. Valori non veritieri sono pubblicità ingannevole
-   e violano le linee guida di Google sui dati strutturati.
-3. **Recensioni**: quelle presenti sono esempi di layout con etichetta "Esempio". Sostituiscile con recensioni reali
-   (con il consenso degli autori) e imposta `REVIEWS_ARE_EXAMPLES = false`.
-4. **Attrezzatura**: sostituisci con il gear reale. Il sito non mostra prezzi: i dettagli economici si concordano in privato.
-5. **Audio**: i file in `public/audio` sono demo sintetiche generate da `npm run audio:demo`. Sostituiscile con
-   spezzoni reali (MP3 320 kbps o AAC, 20–30 s, stesso punto d'attacco per grezzo e master) e aggiorna i percorsi in
-   `lib/content.ts`.
-6. **Link recensione Google** (`googleReviewUrl`): se compilato, compare il pulsante "Lascia una recensione".
+1. **Contatti** (`lib/studio.ts`): `whatsapp`, `phone`, `email`. Finché sono vuoti, i pulsanti di invio della prenotazione non compaiono.
+2. **P.IVA** (`vatId`): obbligatoria per legge sul sito di un'attività; compare nel footer quando inserita.
+3. **Social** (`social`): link a Instagram, TikTok, YouTube, Twitch, Kick.
+4. **Playlist** (`playlistUrl` in `lib/content.ts`): link di condivisione Spotify, Apple Music o SoundCloud. Vuoto = sezione "Ascolta" nascosta.
+5. **Recensioni** (`reviews`): le 5 recensioni reali, testo esatto. Vuoto = sezione nascosta.
+6. **Coordinate** (`geo`, facoltativo): migliorano la precisione della mappa.
 7. **Privacy e cookie policy**: obbligatorie per legge; aggiungere le pagine e linkarle nel footer.
 
 ## Architettura
@@ -51,26 +45,23 @@ Tutti i campi marcati `DA VERIFICARE` in `lib/studio.ts` e `lib/content.ts`:
 ```
 app/
   layout.tsx            font, metadata (title, OG, Twitter, geo), provider globali, JSON-LD
-  page.tsx              composizione delle sezioni
-  sitemap.ts robots.ts manifest.ts
-  opengraph-image.tsx twitter-image.tsx   anteprima social (foto reale + logo) generata al build
-  icon.png apple-icon.png                 favicon dal logo
+  page.tsx              ordine delle sezioni
+  globals.css           design system "Liquid Chrome" (token, gradienti cromati, micro-interazioni)
+  sitemap.ts robots.ts manifest.ts opengraph-image.tsx twitter-image.tsx icon.png apple-icon.png
 components/
-  Hero3D.tsx            hero + montaggio differito della scena WebGL
-  three/WaveformScene   forma d'onda 3D (shader GLSL) reattiva a mouse, scroll e audio
-  LocalProof.tsx        banner rating, indicatori chiave, testo SEO locale
-  AudioPlayer.tsx       player A/B sincronizzato (Web Audio API) + visualizer + filtri per genere
-  Services.tsx          rack dei servizi (TiltCard in vetro) + Outboard & Microfoni
-  Gallery.tsx           foto dello studio con parallax
-  Calculator.tsx        configuratore di sessione (ore + servizi) → WhatsApp / Email / Prenotazione
-  Reviews.tsx           carosello recensioni (scroll-snap, autoplay accessibile)
-  Faq.tsx               FAQ (contenuto long-tail + FAQPage JSON-LD)
-  Footer.tsx MapEmbed   CTA finale, mappa dark (facade → Google Maps al click), orari, dati societari
-  SeoSchema.tsx         @graph JSON-LD: RecordingStudio/LocalBusiness, WebSite, WebPage, FAQPage
-  BookingModal.tsx      modale di prenotazione (<dialog> nativo) → WhatsApp o email precompilati
-  SmoothScroll CustomCursor Magnetic Reveal ScrollText TiltCard Navbar
-lib/                    dati, SEO, utilità
-scripts/generate-demo-audio.mjs   sintetizzatore delle demo audio
+  Navbar.tsx            barra superiore + barra di navigazione inferiore su mobile
+  Hero3D.tsx            H1 "Il primo Studio Lounge…", fatti chiave, forma d'onda 3D cromata (WebGL)
+  Lounge.tsx            Studio Lounge Experience: 65 mq vs ~30 mq, crew, TV, PS4, streaming, relax, bar
+  Gallery.tsx           foto reali (monocromatiche → colore quando entrano in vista)
+  Services.tsx          6 servizi modulari (card in vetro con tilt 3D)
+  InTheBox.tsx          workflow 100% ITB: SSL, Universal Audio, FabFilter, Waves, iZotope
+  TailorMade.tsx        configuratore pacchetti su misura → WhatsApp / Email / Prenotazione
+  LiveStreaming.tsx     telecamera 4K, simulcast Twitch/TikTok/Kick/YouTube/Instagram, promozione
+  Playlist.tsx          embed ufficiale Spotify / Apple Music / SoundCloud (se configurato)
+  Reviews.tsx           testimonianze reali (se presenti)
+  Faq.tsx Footer.tsx MapEmbed.tsx BookingModal.tsx SeoSchema.tsx
+  SmoothScroll CustomCursor Magnetic Reveal ScrollText TiltCard three/WaveformScene
+lib/                    dati, contenuti, SEO, utilità
 ```
 
 ### Scelte tecniche
@@ -84,7 +75,7 @@ scripts/generate-demo-audio.mjs   sintetizzatore delle demo audio
 - **Mappa:** facade SVG stilizzata; Google Maps (con filtro dark) viene caricato solo al click, quindi nessun cookie
   di terze parti al caricamento.
 - **Accessibilità:** `prefers-reduced-motion` rispettato ovunque, cursore custom solo con mouse, modale nativo con
-  focus trap, controlli audio e calcolatore utilizzabili da tastiera.
+  focus trap, configuratore e barra di navigazione utilizzabili da tastiera e touch.
 
 ## Deploy
 

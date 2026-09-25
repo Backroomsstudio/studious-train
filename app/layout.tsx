@@ -64,22 +64,24 @@ export const metadata: Metadata = {
   other: {
     "geo.region": `IT-${studio.address.province}`,
     "geo.placename": studio.address.city,
-    "geo.position": `${studio.geo.lat};${studio.geo.lng}`,
-    ICBM: `${studio.geo.lat}, ${studio.geo.lng}`,
+    ...(studio.geo
+      ? { "geo.position": `${studio.geo.lat};${studio.geo.lng}`, ICBM: `${studio.geo.lat}, ${studio.geo.lng}` }
+      : {}),
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0B0C10",
+  themeColor: "#0D0D0D",
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="it" className={`${display.variable} ${sans.variable}`}>
-      <body className="grain">
+      <body className="grain pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0">
         <SeoSchema />
         <SmoothScroll>
           <BookingProvider>

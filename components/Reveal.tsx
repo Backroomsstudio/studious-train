@@ -83,7 +83,7 @@ export function KineticText({
         {words.map((w, i) => (
           <Fragment key={`${w.value}-${i}`}>
             <span className="kinetic-mask">
-              <motion.span variants={word} className={cn("inline-block", w.accent && "italic text-gradient-gold pr-[0.06em]")}>
+              <motion.span variants={word} className={cn("inline-block", w.accent && "italic chrome-text pr-[0.06em]")}>
                 {w.value}
               </motion.span>
               {w.suffix ? (
@@ -109,7 +109,7 @@ export function Marquee({ items, className }: { items: string[]; className?: str
         {row.map((item, i) => (
           <span key={i} className="flex items-center gap-10 whitespace-nowrap">
             {item}
-            <span className="text-gold">✦</span>
+            <span className="text-chrome">✦</span>
           </span>
         ))}
       </div>

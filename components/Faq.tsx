@@ -20,10 +20,10 @@ export function Faq() {
             <Reveal key={f.q} delay={i * 0.05} y={16}>
               <details className="faq-item group py-2">
                 <summary className="flex items-center justify-between gap-6 py-5 text-left">
-                  <h3 className="font-display text-2xl leading-snug text-white transition-colors group-hover:text-gold sm:text-[1.7rem]">{f.q}</h3>
+                  <h3 className="font-display text-2xl leading-snug text-white transition-colors group-hover:text-chrome sm:text-[1.7rem]">{f.q}</h3>
                   <span
                     aria-hidden="true"
-                    className="faq-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 text-xl text-gold transition-transform duration-500"
+                    className="faq-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 text-xl text-chrome transition-transform duration-500"
                   >
                     +
                   </span>

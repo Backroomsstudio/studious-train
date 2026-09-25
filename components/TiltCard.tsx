@@ -30,7 +30,7 @@ export function TiltCard({
   const rotateY = useSpring(useTransform(px, [0, 1], [-max, max]), spring);
   const glareX = useTransform(px, (v) => `${v * 100}%`);
   const glareY = useTransform(py, (v) => `${v * 100}%`);
-  const glareBg = useMotionTemplate`radial-gradient(circle at ${glareX} ${glareY}, rgba(255,255,255,0.18), rgba(255,176,0,0.06) 25%, transparent 55%)`;
+  const glareBg = useMotionTemplate`radial-gradient(circle at ${glareX} ${glareY}, rgba(255,255,255,0.18), rgba(255,255,255,0.06) 25%, transparent 55%)`;
   const edgeShift = useTransform(px, [0, 1], [-6, 6]);
 
   const onMove = (e: PointerEvent<HTMLDivElement>) => {
@@ -59,7 +59,7 @@ export function TiltCard({
           className="pointer-events-none absolute -inset-px rounded-[1.75rem] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
           style={{
             x: edgeShift,
-            background: "linear-gradient(135deg, rgba(255,176,0,0.55), transparent 30%, transparent 70%, rgba(69,162,158,0.55))",
+            background: "linear-gradient(135deg, rgba(255,255,255,0.55), transparent 30%, transparent 70%, rgba(170,170,170,0.55))",
             WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
             WebkitMaskComposite: "xor",
             maskComposite: "exclude",

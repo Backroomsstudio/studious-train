@@ -1,33 +1,37 @@
 import { JsonLdScript } from "next-seo";
-import { faqs, services, studioPhotos } from "@/lib/content";
+import { faqs, reviews, services, studioPhotos } from "@/lib/content";
 import { SEO_DESCRIPTION, SEO_TITLE } from "@/lib/seo";
-import { DAY_NAMES, SITE_URL, studio } from "@/lib/studio";
+import { activeSocials, googleMapsUrl, SITE_URL, studio } from "@/lib/studio";
+
+const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => `https://schema.org/${d}`);
 
 /**
  * Dati strutturati JSON-LD (schema.org) in un unico @graph collegato tramite @id:
  * RecordingStudio/LocalBusiness + WebSite + WebPage + FAQPage.
- * Renderizzato lato server: Google lo legge senza eseguire JavaScript.
+ * I campi non ancora compilati (telefono, email, P.IVA, coordinate, social) vengono omessi:
+ * nessun dato inventato finisce nei risultati di Google.
  */
 export function SeoSchema() {
   const studioId = `${SITE_URL}/#studio`;
   const websiteId = `${SITE_URL}/#website`;
   const pageId = `${SITE_URL}/#webpage`;
   const imageUrl = `${SITE_URL}/opengraph-image`;
+  const sameAs = activeSocials().map((s) => s.url);
 
   const recordingStudio = {
     "@type": ["RecordingStudio", "LocalBusiness"],
     "@id": studioId,
     name: studio.name,
+    alternateName: `${studio.name} · Studio Lounge`,
     legalName: studio.legalName,
     description: studio.description,
-    slogan: "Il suono di livello mondiale, nel cuore di Vicenza.",
+    slogan: "Il primo Studio Lounge di registrazione e Mix/Master a Vicenza.",
     url: SITE_URL,
     image: [...studioPhotos.map((p) => `${SITE_URL}${p.src}`), imageUrl],
     logo: `${SITE_URL}/brand/logo-br.png`,
-    telephone: studio.phone,
-    email: studio.email,
-    vatID: studio.vatId,
-    foundingDate: String(studio.foundingYear),
+    ...(studio.phone ? { telephone: studio.phone } : {}),
+    ...(studio.email ? { email: studio.email } : {}),
+    ...(studio.vatId ? { vatID: studio.vatId } : {}),
     address: {
       "@type": "PostalAddress",
       streetAddress: studio.address.street,
@@ -36,41 +40,29 @@ export function SeoSchema() {
       postalCode: studio.address.postalCode,
       addressCountry: studio.address.country,
     },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: studio.geo.lat,
-      longitude: studio.geo.lng,
-    },
-    hasMap: studio.googleMapsUrl,
-    openingHoursSpecification: studio.openingHours.map((slot) => ({
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: slot.days.map((d) => `https://schema.org/${DAY_NAMES[d]}`),
-      opens: slot.opens,
-      closes: slot.closes,
-    })),
-    areaServed: studio.areaServed.map((city) => ({ "@type": "City", name: city })),
-    sameAs: Object.values(studio.social),
-    knowsAbout: [
-      "Registrazione audio",
-      "Mixaggio",
-      "Mastering analogico",
-      "Produzione musicale",
-      "Beatmaking",
-      "Podcast",
-      "Sound design",
-      "Voiceover",
+    ...(studio.geo ? { geo: { "@type": "GeoCoordinates", latitude: studio.geo.lat, longitude: studio.geo.lng } } : {}),
+    hasMap: googleMapsUrl,
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ALL_DAYS,
+        opens: "00:00",
+        closes: "23:59",
+      },
     ],
-    ...(studio.rating.count > 0
-      ? {
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: studio.rating.value.toFixed(1),
-            reviewCount: studio.rating.count,
-            bestRating: "5",
-            worstRating: "1",
-          },
-        }
-      : {}),
+    areaServed: studio.areaServed.map((name) => ({ "@type": "Place", name })),
+    ...(sameAs.length ? { sameAs } : {}),
+    amenityFeature: [
+      "Studio Lounge da 65 mq",
+      "Fino a 6 ospiti per sessione",
+      "TV 75 pollici con illuminazione LED",
+      "PlayStation 4",
+      "Piattaforme streaming (Netflix, Prime Video)",
+      "Area relax con divani",
+      "Zona bar con macchina del caffè, friggitrice ad aria e frigo",
+      "Live streaming 4K delle sessioni",
+    ].map((name) => ({ "@type": "LocationFeatureSpecification", name, value: true })),
+    knowsAbout: ["Registrazione audio", "Vocal engineering", "Produzione musicale", "Beatmaking", "Arrangiamento", "Mix", "Master", "Live streaming"],
     hasOfferCatalog: {
       "@type": "OfferCatalog",
       name: "Servizi dello studio di registrazione",
@@ -80,12 +72,21 @@ export function SeoSchema() {
           "@type": "Service",
           name: s.title,
           description: s.description,
-          serviceType: s.kicker,
-          areaServed: { "@type": "City", name: studio.address.city },
+          serviceType: s.mode,
           provider: { "@id": studioId },
+          areaServed: s.mode === "A distanza" ? { "@type": "Country", name: "Italia" } : { "@type": "City", name: "Vicenza" },
         },
       })),
     },
+    ...(reviews.length
+      ? {
+          review: reviews.map((r) => ({
+            "@type": "Review",
+            author: { "@type": "Person", name: r.author },
+            reviewBody: r.text,
+          })),
+        }
+      : {}),
   };
 
   const graph = {

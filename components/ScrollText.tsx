@@ -42,7 +42,7 @@ export function ScrollText({ lines, className }: { lines: string[]; className?: 
           className={cn(
             // testo decorativo generato via CSS (::before): non è contenuto, non entra nei controlli di contrasto
             "whitespace-nowrap font-display text-[clamp(4rem,13vw,12rem)] leading-[0.95] will-change-transform before:content-[attr(data-text)]",
-            i % 2 === 0 ? "text-white/[0.07]" : "italic text-transparent [-webkit-text-stroke:1px_rgba(255,176,0,0.35)]",
+            i % 2 === 0 ? "text-white/[0.07]" : "italic text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.35)]",
           )}
           data-text={`${line} · ${line} · ${line}`}
         />

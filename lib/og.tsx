@@ -28,7 +28,7 @@ export async function renderOgImage() {
             position: "absolute",
             inset: 0,
             display: "flex",
-            background: "linear-gradient(90deg, rgba(11,12,16,0.95) 0%, rgba(11,12,16,0.75) 45%, rgba(11,12,16,0.15) 100%)",
+            background: "linear-gradient(90deg, rgba(13,13,13,0.96) 0%, rgba(13,13,13,0.8) 50%, rgba(13,13,13,0.25) 100%)",
           }}
         />
         <div style={{ position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "60px 72px", width: "100%" }}>
@@ -39,15 +39,14 @@ export async function renderOgImage() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: 22, letterSpacing: 8, color: "#45A29E", textTransform: "uppercase" }}>Studio di registrazione · Vicenza</div>
-            <div style={{ display: "flex", flexDirection: "column", marginTop: 18, fontSize: 68, fontWeight: 800, lineHeight: 1.02, letterSpacing: -2 }}>
-              <span>IL SUONO DI LIVELLO</span>
-              <span>MONDIALE, NEL CUORE</span>
-              <span style={{ color: "#FFB000" }}>DI VICENZA.</span>
+            <div style={{ fontSize: 22, letterSpacing: 8, color: "#BDBDBD", textTransform: "uppercase" }}>Arcugnano · Vicenza · Aperto 24/7</div>
+            <div style={{ display: "flex", flexDirection: "column", marginTop: 18, fontSize: 76, fontWeight: 800, lineHeight: 1, letterSpacing: -2 }}>
+              <span>IL PRIMO STUDIO</span>
+              <span style={{ color: "#D9D9D9" }}>LOUNGE DI VICENZA.</span>
             </div>
           </div>
 
-          <div style={{ display: "flex", fontSize: 24, color: "#C5C6C7" }}>Registrazione · Mix · Mastering · Produzione · Podcast</div>
+          <div style={{ display: "flex", fontSize: 24, color: "#B5B5B5" }}>65 mq · Registrazione · Produzione · Mix & Master · Live 4K</div>
         </div>
       </div>
     ),

@@ -1,208 +1,63 @@
 /**
- * Contenuti editoriali della landing: servizi, foto, attrezzatura, portfolio audio,
- * opzioni di sessione, recensioni e FAQ. Modificare qui i testi senza toccare i componenti.
+ * Contenuti editoriali della landing. Regola: tutto ciò che è scritto qui deve essere vero.
+ * Playlist e recensioni restano vuote finché non vengono inseriti i dati reali: in quel caso
+ * le rispettive sezioni non vengono mostrate.
  */
 
-export interface Service {
-  id: string;
-  unit: string;
-  title: string;
-  kicker: string;
-  description: string;
-  bullets: string[];
-  keywords: string;
-}
+/* ------------------------------------------------------------------ */
+/* Hero                                                                */
+/* ------------------------------------------------------------------ */
 
-export const services: Service[] = [
-  {
-    id: "registrazione",
-    unit: "U-01",
-    title: "Registrazione Voce & Strumenti",
-    kicker: "Tracking",
-    description:
-      "Sala di ripresa trattata acusticamente e cabina vocale isolata: catturiamo voci, chitarre, batterie e ensemble con microfoni a condensatore e a nastro di riferimento.",
-    bullets: ["Tecnico del suono dedicato", "Editing e comping inclusi", "Session file consegnati in WAV 24/48"],
-    keywords: "registrazione voce Vicenza, registrare una canzone",
-  },
-  {
-    id: "mix-master",
-    unit: "U-02",
-    title: "Mix & Mastering Analogico",
-    kicker: "Mixing",
-    description:
-      "Mix ibrido con sommatoria e outboard analogico, mastering calibrato per Spotify, Apple Music, YouTube e vinile. Revisioni incluse fino al risultato che hai in testa.",
-    bullets: ["Catena analogica di pregio", "Master per streaming e club", "2 revisioni incluse"],
-    keywords: "mix e mastering Vicenza, mastering analogico",
-  },
-  {
-    id: "produzione",
-    unit: "U-03",
-    title: "Produzione Musicale & Beatmaking",
-    kicker: "Production",
-    description:
-      "Dal provino al brano finito: arrangiamento, beat originali trap, hip-hop, pop e urban costruiti su misura sulla tua identità artistica, con strumenti reali e synth.",
-    bullets: ["Beat esclusivi con licenza piena", "Arrangiamento e sound design", "Direzione artistica in sessione"],
-    keywords: "produzione musicale Vicenza, beat trap Vicenza",
-  },
-  {
-    id: "podcast",
-    unit: "U-04",
-    title: "Sound Design & Podcasting",
-    kicker: "Post-Production",
-    description:
-      "Registrazione podcast fino a 4 voci, voiceover per spot e video aziendali, sound design e jingle per brand. Consegna pronta per ogni piattaforma.",
-    bullets: ["Setup video-podcast", "Editing, pulizia e loudness broadcast", "Jingle e sigle originali"],
-    keywords: "studio podcast Vicenza, speakeraggio Vicenza",
-  },
-];
-
-export interface GearGroup {
-  category: string;
-  items: { name: string; note: string }[];
-}
-
-/** DA VERIFICARE: sostituire con l'elenco reale dell'attrezzatura dello studio. */
-export const gear: GearGroup[] = [
-  {
-    category: "Microfoni",
-    items: [
-      { name: "Neumann U87 Ai", note: "Condensatore largo diaframma" },
-      { name: "AKG C414 XLII", note: "Multi-pattern, overhead e acustici" },
-      { name: "Royer R-121", note: "Ribbon per chitarre e fiati" },
-      { name: "Shure SM7B", note: "Dinamico per rap e podcast" },
-      { name: "Sennheiser MD421-II", note: "Tom, ampli, voce aggressiva" },
-    ],
-  },
-  {
-    category: "Preamplificatori",
-    items: [
-      { name: "Neve 1073 (stile)", note: "Colore britannico vintage" },
-      { name: "API 512c", note: "Punch e transienti" },
-      { name: "Universal Audio 610", note: "Valvolare, calore anni '60" },
-    ],
-  },
-  {
-    category: "Outboard",
-    items: [
-      { name: "UREI 1176LN (stile)", note: "Compressore FET" },
-      { name: "Teletronix LA-2A (stile)", note: "Opto-compressore per voce" },
-      { name: "SSL G-Bus Compressor", note: "Colla sul mix bus" },
-      { name: "Pultec EQP-1A (stile)", note: "Equalizzatore passivo a valvole" },
-    ],
-  },
-  {
-    category: "Monitor & Conversione",
-    items: [
-      { name: "Focal", note: "Monitor da studio di riferimento" },
-      { name: "Yamaha NS-10M", note: "Riferimento mid-range" },
-      { name: "RME / Apogee AD-DA", note: "Conversione 24-bit / 96 kHz" },
-      { name: "Pro Tools · Logic · Ableton", note: "Tutte le DAW principali" },
-    ],
-  },
-];
-
-export const genres = [
-  { id: "all", label: "Tutti" },
-  { id: "trap", label: "Trap / Hip-Hop" },
-  { id: "pop", label: "Pop" },
-  { id: "rock", label: "Rock" },
-  { id: "acoustic", label: "Classical / Acoustic" },
-  { id: "voice", label: "Voiceover / Podcast" },
-] as const;
-
-export type GenreId = Exclude<(typeof genres)[number]["id"], "all">;
-
-export interface Track {
-  id: string;
-  genre: GenreId;
-  title: string;
-  artist: string;
-  bpm: string;
-  notes: string;
-  raw: string;
-  master: string;
-}
-
-/**
- * I file in /public/audio sono demo sintetiche generate con `npm run audio:demo`
- * per mostrare il funzionamento del player A/B. Sostituirle con spezzoni reali
- * (consigliato: MP3 320 kbps o AAC, 20–30 secondi, stesso punto di attacco per grezzo e master).
- */
-export const tracks: Track[] = [
-  {
-    id: "trap-notte",
-    genre: "trap",
-    title: "Notte su Corso Palladio",
-    artist: "Demo · Trap",
-    bpm: "140 BPM",
-    notes: "808 saturati, hi-hat a rullo, voce in primo piano",
-    raw: "/audio/trap-raw.wav",
-    master: "/audio/trap-master.wav",
-  },
-  {
-    id: "pop-berici",
-    genre: "pop",
-    title: "Colli Berici",
-    artist: "Demo · Pop",
-    bpm: "120 BPM",
-    notes: "Accordi larghi, cassa in quattro, master per streaming",
-    raw: "/audio/pop-raw.wav",
-    master: "/audio/pop-master.wav",
-  },
-  {
-    id: "rock-basilica",
-    genre: "rock",
-    title: "Basilica Amp",
-    artist: "Demo · Rock",
-    bpm: "110 BPM",
-    notes: "Chitarre in overdrive, batteria viva, bus compressor",
-    raw: "/audio/rock-raw.wav",
-    master: "/audio/rock-master.wav",
-  },
-  {
-    id: "acoustic-olimpico",
-    genre: "acoustic",
-    title: "Teatro Olimpico",
-    artist: "Demo · Acoustic",
-    bpm: "Rubato",
-    notes: "Corde pizzicate, riverbero naturale, dinamica preservata",
-    raw: "/audio/acoustic-raw.wav",
-    master: "/audio/acoustic-master.wav",
-  },
-  {
-    id: "voice-spot",
-    genre: "voice",
-    title: "Spot Radio 30\"",
-    artist: "Demo · Voiceover",
-    bpm: "Voce",
-    notes: "De-noise, de-ess, loudness broadcast −16 LUFS",
-    raw: "/audio/voice-raw.wav",
-    master: "/audio/voice-master.wav",
-  },
+export const heroFacts = [
+  { value: "65", unit: "mq", label: "Studio Lounge" },
+  { value: "6", unit: "ospiti", label: "Il tuo team in sala" },
+  { value: "24/7", unit: "", label: "Sempre aperto" },
+  { value: "5+", unit: "anni", label: "Di esperienza" },
 ];
 
 /* ------------------------------------------------------------------ */
-/* Opzioni del configuratore di sessione                               */
+/* Studio Lounge Experience                                            */
 /* ------------------------------------------------------------------ */
 
-export const sessionOptions = {
-  hourPresets: [
-    { hours: 2, label: "2h · Voce su base" },
-    { hours: 4, label: "4h · Singolo" },
-    { hours: 8, label: "8h · Giornata" },
-    { hours: 20, label: "20h · Progetto / EP" },
-  ],
-  addOns: [
-    { id: "editing", label: "Editing & tuning voce", unit: "brano" },
-    { id: "mix", label: "Mix professionale", unit: "brano" },
-    { id: "master-digital", label: "Mastering digitale", unit: "brano" },
-    { id: "master-analog", label: "Mastering analogico ibrido", unit: "brano" },
-    { id: "beat", label: "Beat / produzione originale", unit: "brano" },
-    { id: "podcast", label: "Podcast: editing + mix", unit: "episodio" },
-  ],
-} as const;
+export type LoungeIcon = "space" | "crew" | "tv" | "console" | "stream" | "sofa" | "bar";
 
-export type AddOnId = (typeof sessionOptions.addOns)[number]["id"];
+export const loungeFeatures: { icon: LoungeIcon; title: string; text: string }[] = [
+  {
+    icon: "space",
+    title: "65 mq, un solo ambiente",
+    text: "Come negli studi americani: registrazione, ascolto e relax nella stessa grande sala, senza porte e corridoi a dividere il team.",
+  },
+  {
+    icon: "crew",
+    title: "Porta la tua crew",
+    text: "Fino a 6 persone del tuo team o entourage vivono la sessione con te, comode, senza stare in piedi in un angolo.",
+  },
+  {
+    icon: "tv",
+    title: "TV 75 pollici",
+    text: "Schermo da 75\" con illuminazione ambiente a LED personalizzabile: scegli tu il colore della serata.",
+  },
+  {
+    icon: "console",
+    title: "PlayStation 4",
+    text: "Console con doppio joystick per le pause tra un take e l'altro.",
+  },
+  {
+    icon: "stream",
+    title: "Tutto lo streaming",
+    text: "Accesso completo alle piattaforme: Netflix, Prime Video e le altre, sullo schermo grande.",
+  },
+  {
+    icon: "sofa",
+    title: "Area relax",
+    text: "Doppio divano, tappeto e tavolino: lo spazio dove il team aspetta, ascolta e dice la sua.",
+  },
+  {
+    icon: "bar",
+    title: "Zona bar & snack",
+    text: "Friggitrice ad aria, macchina del caffè e frigo dedicato: le sessioni lunghe si affrontano meglio.",
+  },
+];
 
 /* ------------------------------------------------------------------ */
 /* Foto dello studio (alt text descrittivi: contano per Google Immagini) */
@@ -211,28 +66,28 @@ export type AddOnId = (typeof sessionOptions.addOns)[number]["id"];
 export const studioPhotos = [
   {
     src: "/images/sala-registrazione-panoramica.webp",
-    alt: "Panoramica della sala di registrazione Backrooms Studio a Vicenza con pannelli acustici e luci viola",
-    caption: "La sala",
+    alt: "Panoramica dello Studio Lounge Backrooms Studio ad Arcugnano, Vicenza: sala unica da 65 mq con area relax",
+    caption: "La Lounge",
     width: 1800,
     height: 1348,
   },
   {
     src: "/images/studio-registrazione-vicenza-sala.webp",
-    alt: "Regia dello studio di registrazione a Vicenza: monitor Focal, tastiera MIDI e microfono per la voce",
-    caption: "La regia",
+    alt: "Sala di registrazione e area divani dello studio di registrazione a Vicenza",
+    caption: "La sala",
     width: 1800,
     height: 1348,
   },
   {
     src: "/images/regia-mix-mastering-vicenza.webp",
-    alt: "Postazione di mix e mastering con monitor da studio Focal e scheda audio",
-    caption: "Mix & Mastering",
+    alt: "Postazione di mix e master in-the-box nello studio di Arcugnano",
+    caption: "Mix & Master",
     width: 1800,
     height: 1348,
   },
   {
     src: "/images/postazione-produzione-musicale.webp",
-    alt: "Postazione di produzione musicale e registrazione voce nello studio di Vicenza",
+    alt: "Postazione di produzione musicale e registrazione voce a Vicenza",
     caption: "Produzione",
     width: 1800,
     height: 1348,
@@ -240,123 +95,186 @@ export const studioPhotos = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* Recensioni                                                          */
+/* In-The-Box                                                          */
+/* ------------------------------------------------------------------ */
+
+export const itbBrands = ["SSL", "Universal Audio", "FabFilter", "Waves", "iZotope"];
+
+export const itbBenefits = [
+  {
+    title: "Recall istantaneo",
+    text: "Ogni sessione si riapre esattamente com'era: una revisione del mix richiede minuti, non un pomeriggio a ricablare.",
+  },
+  {
+    title: "Flessibilità assoluta",
+    text: "Plugin, DSP e software di livello mondiale sempre disponibili, su ogni traccia, senza limiti di canali.",
+  },
+  {
+    title: "Sonorità moderne",
+    text: "Lo stesso ecosistema di strumenti che definisce il suono delle release urban e pop di oggi.",
+  },
+  {
+    title: "Velocità d'esecuzione",
+    text: "Dall'idea al bounce senza tempi morti: più tempo per la musica, meno per la tecnica.",
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/* Servizi                                                             */
+/* ------------------------------------------------------------------ */
+
+export interface Service {
+  id: string;
+  mode: "In studio" | "A distanza" | "Su misura";
+  title: string;
+  description: string;
+  bullets: string[];
+}
+
+export const services: Service[] = [
+  {
+    id: "registrazione",
+    mode: "In studio",
+    title: "Ore di Registrazione",
+    description: "Registra nella Lounge con vocal engineering assistito: un engineer ti segue take dopo take, dal primo warm-up all'ultima doppia.",
+    bullets: ["Vocal engineering assistito", "Editing e comping delle take", "La tua crew in sala con te"],
+  },
+  {
+    id: "produzione",
+    mode: "In studio",
+    title: "Ore di Produzione Musicale",
+    description: "Beatmaking, arrangiamento e direzione artistica fianco a fianco con i producer del collettivo, costruiti sulla tua identità.",
+    bullets: ["Beatmaking", "Arrangiamento", "Direzione artistica"],
+  },
+  {
+    id: "produzione-remoto",
+    mode: "A distanza",
+    title: "Produzione Musicale a Distanza",
+    description: "Mandaci la tua idea, un vocale o una reference: sviluppiamo il brano da remoto e lo rifiniamo insieme a ogni step.",
+    bullets: ["Da qualsiasi città", "Confronto a ogni step", "Consegna dei file di progetto"],
+  },
+  {
+    id: "mix-master-studio",
+    mode: "In studio",
+    title: "Mix & Master in Studio",
+    description: "Sessione presenziale: ascolti il mix crescere in tempo reale e prendi ogni decisione con l'engineer, direttamente dal divano.",
+    bullets: ["Sessione presenziale", "Decisioni in tempo reale", "Recall istantaneo in-the-box"],
+  },
+  {
+    id: "mix-master-remoto",
+    mode: "A distanza",
+    title: "Mix & Master a Distanza",
+    description: "Carichi le tracce, ricevi mix e master pronti per le piattaforme con online delivery. Le revisioni sono rapide grazie al recall immediato.",
+    bullets: ["Online delivery", "Master pronto per le piattaforme", "Revisioni rapide"],
+  },
+  {
+    id: "tailor-made",
+    mode: "Su misura",
+    title: "Pacchetti Tailor-Made",
+    description: "Combina un monte ore flessibile di registrazione, produzione, mix e master costruito sul tuo progetto: singolo, EP o album.",
+    bullets: ["Monte ore flessibile", "Registrazione + produzione + mix/master", "Pensato per singoli, EP e album"],
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/* Configuratore Tailor-Made                                           */
+/* ------------------------------------------------------------------ */
+
+export const packageOptions = {
+  hours: [
+    { id: "rec", label: "Ore di registrazione", hint: "Con vocal engineering assistito" },
+    { id: "prod", label: "Ore di produzione in studio", hint: "Beatmaking, arrangiamento, direzione artistica" },
+  ],
+  tracks: [
+    { id: "prod-remote", label: "Produzioni a distanza", unit: "brano" },
+    { id: "mix-studio", label: "Mix & Master in studio", unit: "brano" },
+    { id: "mix-remote", label: "Mix & Master a distanza", unit: "brano" },
+  ],
+} as const;
+
+export type HourOptionId = (typeof packageOptions.hours)[number]["id"];
+export type TrackOptionId = (typeof packageOptions.tracks)[number]["id"];
+
+/* ------------------------------------------------------------------ */
+/* Live streaming                                                      */
+/* ------------------------------------------------------------------ */
+
+export const streamPlatforms = ["Twitch", "TikTok", "Kick", "YouTube", "Instagram"];
+
+export const streamFeatures = [
+  {
+    title: "Telecamera 4K",
+    text: "Una telecamera ultra-HD attiva durante le sessioni mostra il dietro le quinte del tuo processo creativo.",
+  },
+  {
+    title: "Simulcast multipiattaforma",
+    text: "La diretta va in onda contemporaneamente su Twitch, TikTok, Kick, YouTube e Instagram.",
+  },
+  {
+    title: "Promozione diretta",
+    text: "In diretta ricevi sponsorship dallo studio, il tuo brano viene ascoltato insieme alla community in chat e promosso in modo organico, in tempo reale.",
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/* Playlist ufficiale                                                   */
 /* ------------------------------------------------------------------ */
 
 /**
- * ⚠️ Le recensioni qui sotto sono ESEMPI di layout. Prima della messa online vanno sostituite
- * con recensioni reali copiate (con consenso) dal profilo Google Business: pubblicare
- * recensioni inventate è una pratica commerciale scorretta (Codice del Consumo, Direttiva Omnibus).
- * Quando saranno reali, impostare REVIEWS_ARE_EXAMPLES = false per rimuovere l'etichetta "Esempio".
+ * DA COMPILARE: link della playlist ufficiale con le tracce reali del collettivo.
+ * Incolla il link normale di condivisione (es. https://open.spotify.com/playlist/XXXX,
+ * https://music.apple.com/it/playlist/..., https://soundcloud.com/utente/sets/...).
+ * Vuoto = la sezione non viene mostrata.
  */
-export const REVIEWS_ARE_EXAMPLES = true;
+export const playlistUrl = "";
+
+/* ------------------------------------------------------------------ */
+/* Recensioni                                                          */
+/* ------------------------------------------------------------------ */
 
 export interface Review {
   author: string;
-  role: string;
-  city: string;
-  rating: number;
+  role?: string;
   text: string;
-  service: string;
 }
 
-export const reviews: Review[] = [
-  {
-    author: "Marco R.",
-    role: "Rapper",
-    city: "Vicenza",
-    rating: 5,
-    text: "Ho registrato il mio primo EP qui: la voce finalmente suona come nei brani che ascolto su Spotify. Ambiente professionale ma rilassato, ti mettono subito a tuo agio.",
-    service: "Registrazione + Mix",
-  },
-  {
-    author: "Giulia B.",
-    role: "Cantautrice",
-    city: "Bassano del Grappa",
-    rating: 5,
-    text: "Mastering analogico incredibile: il pianoforte respira e la voce è calda senza perdere dettaglio. Tempi di consegna rispettati al giorno.",
-    service: "Mastering analogico",
-  },
-  {
-    author: "The Palladians",
-    role: "Band rock",
-    city: "Schio",
-    rating: 5,
-    text: "Batteria ripresa in presa diretta con un suono enorme. Hanno capito subito il sound che cercavamo e ci hanno guidato in ogni scelta.",
-    service: "Registrazione band",
-  },
-  {
-    author: "Luca T.",
-    role: "Producer",
-    city: "Thiene",
-    rating: 5,
-    text: "Ho portato le mie stem per il mix: il salto di qualità è stato enorme. Il confronto prima/dopo parla da solo. Torno per il prossimo singolo.",
-    service: "Mix & Master",
-  },
-  {
-    author: "Sara M.",
-    role: "Podcaster",
-    city: "Padova",
-    rating: 5,
-    text: "Registriamo qui il nostro podcast ogni settimana. Audio pulitissimo, setup video pronto e zero stress: noi parliamo, loro pensano a tutto il resto.",
-    service: "Podcast",
-  },
-  {
-    author: "Andrea V.",
-    role: "Artista pop",
-    city: "Arzignano",
-    rating: 5,
-    text: "Dalla demo al singolo finito in tre sessioni. Beat originale, arrangiamento e master: il brano è entrato in una playlist editoriale.",
-    service: "Produzione",
-  },
-];
+/**
+ * DA COMPILARE: le 5 recensioni reali, testo esatto, con il consenso degli autori.
+ * Vuoto = la sezione non viene mostrata. Nessuna recensione inventata.
+ */
+export const reviews: Review[] = [];
 
 /* ------------------------------------------------------------------ */
-/* Local proof                                                         */
-/* ------------------------------------------------------------------ */
-
-export const proofPoints = [
-  {
-    title: "Acoustics by Master Designer",
-    text: "Sala progettata con trattamento acustico su misura: tempi di riverbero controllati e risposta in bassa frequenza lineare.",
-  },
-  {
-    title: "Preamplificatori Analogici Vintage",
-    text: "Catena di ripresa con preamp a trasformatore e valvolari: il calore del suono classico, con la precisione del digitale.",
-  },
-  {
-    title: "Mastering 100% Analog & Digital",
-    text: "Mastering ibrido: outboard analogico per carattere, conversione ad alta risoluzione per loudness pronta per lo streaming.",
-  },
-];
-
-/* ------------------------------------------------------------------ */
-/* FAQ (contenuto testuale per long-tail SEO + FAQPage JSON-LD)        */
+/* FAQ (solo informazioni reali)                                       */
 /* ------------------------------------------------------------------ */
 
 export const faqs = [
   {
-    q: "Che generi registrate nel vostro studio di registrazione a Vicenza?",
-    a: "Trap, hip-hop, pop, rock, cantautorato, acustico e classico, oltre a podcast e voiceover. Ogni sessione è seguita da un tecnico che conosce il genere e i riferimenti del tuo progetto.",
+    q: "Dove si trova lo studio di registrazione?",
+    a: "In Via Galileo Galilei 3 ad Arcugnano, in provincia di Vicenza. Trovi le indicazioni stradali in fondo alla pagina.",
   },
   {
-    q: "Quanto dura una sessione di registrazione?",
-    a: "Per una voce su base servono in media 2–4 ore; per una band in presa diretta consigliamo una giornata intera. Usa il configuratore qui sopra per indicarci di quante ore pensi di avere bisogno.",
+    q: "Quante persone posso portare in sessione?",
+    a: "Fino a 6 persone del tuo team o entourage. La Lounge è un unico ambiente da 65 mq con area relax, TV da 75 pollici, PlayStation 4 e zona bar.",
   },
   {
-    q: "Fate mix e mastering online per chi non è di Vicenza?",
-    a: "Sì. Lavoriamo con artisti da tutto il Veneto e il resto d'Italia: ci invii le tracce, ricevi mix e master con revisioni incluse, senza doverti spostare.",
+    q: "Quali sono gli orari dello studio?",
+    a: "Lo studio è aperto 24 ore su 24, 7 giorni su 7: scegli tu la fascia oraria della tua sessione al momento della prenotazione.",
   },
   {
-    q: "Cosa devo portare alla prima sessione?",
-    a: "La base (WAV o stem separate), il testo e i brani di riferimento che ti piacciono. Microfoni, cuffie, preamplificatori e software sono già in studio.",
+    q: "Fate mix e master anche a distanza?",
+    a: "Sì. Mix & Master e produzione musicale sono disponibili anche a distanza, con consegna online: non serve essere di Vicenza.",
   },
   {
-    q: "Registrate anche podcast e voiceover per aziende?",
-    a: "Sì: registriamo podcast fino a 4 voci con setup video, speakeraggio per spot radio e video aziendali, jingle e sound design per brand di Vicenza e provincia.",
+    q: "Con che tecnologia lavorate?",
+    a: "Il nostro workflow è 100% in-the-box: plugin, DSP e software di SSL, Universal Audio, FabFilter, Waves e iZotope, per recall istantaneo, flessibilità e velocità.",
   },
   {
-    q: "Come prenoto una sessione?",
-    a: "Clicca su \"Prenota una Sessione\", scegli servizio e data preferita e invia la richiesta su WhatsApp o via email: ti rispondiamo entro poche ore con la conferma.",
+    q: "Cos'è il live streaming delle sessioni?",
+    a: "Durante le sessioni una telecamera 4K trasmette il dietro le quinte in simulcast su Twitch, TikTok, Kick, YouTube e Instagram: in diretta gli artisti ricevono sponsorship e il brano viene ascoltato insieme alla community.",
+  },
+  {
+    q: "Posso combinare più servizi?",
+    a: "Sì, con i pacchetti Tailor-Made: componi un monte ore flessibile di registrazione, produzione, mix e master su misura per il tuo progetto.",
   },
 ];
