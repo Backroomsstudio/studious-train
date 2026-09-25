@@ -44,8 +44,6 @@ export const studio = {
   whatsapp: "390000000000", // DA VERIFICARE: numero in formato internazionale senza "+"
   email: "info@backroomsstudio.it", // DA VERIFICARE
 
-  priceRange: "$$",
-
   openingHours: [
     { days: ["Mo", "Tu", "We", "Th", "Fr"], label: "Lun – Ven", opens: "10:00", closes: "22:00" },
     { days: ["Sa"], label: "Sabato", opens: "10:00", closes: "20:00" },
@@ -86,7 +84,7 @@ export const studio = {
   directions: [
     {
       mode: "In auto",
-      text: "A4 uscita Vicenza Est o Vicenza Ovest, poi 10 minuti verso il centro. Parcheggio gratuito nelle vie limitrofe.",
+      text: "A4 uscita Vicenza Est o Vicenza Ovest, poi 10 minuti verso il centro. Parcheggio nelle vie limitrofe.",
     },
     {
       mode: "In treno",

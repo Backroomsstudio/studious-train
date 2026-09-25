@@ -2,6 +2,7 @@ import { AudioPlayer } from "@/components/AudioPlayer";
 import { Calculator } from "@/components/Calculator";
 import { Faq } from "@/components/Faq";
 import { Footer } from "@/components/Footer";
+import { Gallery } from "@/components/Gallery";
 import { Hero3D } from "@/components/Hero3D";
 import { LocalProof } from "@/components/LocalProof";
 import { Navbar } from "@/components/Navbar";
@@ -15,6 +16,7 @@ export default function HomePage() {
       <main id="contenuto" tabIndex={-1} className="outline-none">
         <Hero3D />
         <LocalProof />
+        <Gallery />
         <AudioPlayer />
         <Services />
         <Calculator />

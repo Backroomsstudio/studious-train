@@ -3,7 +3,6 @@ import { KineticText, Reveal } from "@/components/Reveal";
 import { ScrollText } from "@/components/ScrollText";
 import { TiltCard } from "@/components/TiltCard";
 import { gear, services } from "@/lib/content";
-import { formatEuro } from "@/lib/format";
 
 function Screw() {
   return (
@@ -92,11 +91,7 @@ export function Services() {
                     </ul>
 
                     <div className="mt-auto flex items-end justify-between gap-4 pt-10">
-                      <p>
-                        <span className="block font-mono text-[0.68rem] uppercase tracking-[0.2em] text-mist">A partire da</span>
-                        <span className="font-display text-4xl text-gold">{formatEuro(s.fromPrice)}</span>
-                        <span className="ml-1 text-sm text-mist">{s.priceUnit}</span>
-                      </p>
+                      <p className="font-mono text-[0.68rem] uppercase tracking-[0.2em] text-mist">{s.kicker} · Vicenza</p>
                       <BookingTrigger
                         service={s.id}
                         className="rounded-full border border-white/20 px-5 py-3 text-xs font-bold uppercase tracking-[0.16em] text-white transition-colors duration-300 hover:border-gold hover:bg-gold hover:text-obsidian"

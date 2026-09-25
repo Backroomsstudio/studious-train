@@ -1,5 +1,5 @@
 import { JsonLdScript } from "next-seo";
-import { faqs, services } from "@/lib/content";
+import { faqs, services, studioPhotos } from "@/lib/content";
 import { SEO_DESCRIPTION, SEO_TITLE } from "@/lib/seo";
 import { DAY_NAMES, SITE_URL, studio } from "@/lib/studio";
 
@@ -22,15 +22,12 @@ export function SeoSchema() {
     description: studio.description,
     slogan: "Il suono di livello mondiale, nel cuore di Vicenza.",
     url: SITE_URL,
-    image: [imageUrl],
-    logo: `${SITE_URL}/apple-icon`,
+    image: [...studioPhotos.map((p) => `${SITE_URL}${p.src}`), imageUrl],
+    logo: `${SITE_URL}/brand/logo-br.png`,
     telephone: studio.phone,
     email: studio.email,
     vatID: studio.vatId,
     foundingDate: String(studio.foundingYear),
-    priceRange: studio.priceRange,
-    currenciesAccepted: "EUR",
-    paymentAccepted: "Contanti, Carta di credito, Bonifico, Satispay",
     address: {
       "@type": "PostalAddress",
       streetAddress: studio.address.street,
@@ -86,12 +83,6 @@ export function SeoSchema() {
           serviceType: s.kicker,
           areaServed: { "@type": "City", name: studio.address.city },
           provider: { "@id": studioId },
-        },
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: s.fromPrice,
-          priceCurrency: "EUR",
-          unitText: s.priceUnit.replace("/", ""),
         },
       })),
     },

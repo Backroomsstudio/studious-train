@@ -1,39 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { animate, useReducedMotion } from "framer-motion";
+import { useMemo, useState } from "react";
 import { useBooking, WhatsAppIcon } from "@/components/BookingModal";
 import { KineticText, Reveal } from "@/components/Reveal";
-import { pricing, type AddOnId } from "@/lib/content";
+import { sessionOptions, type AddOnId } from "@/lib/content";
 import { buttonStyles, cn } from "@/lib/cn";
-import { formatEuro } from "@/lib/format";
 import { mailtoLink, studio, whatsappLink } from "@/lib/studio";
+
+const MAX_HOURS = 40;
+const MAX_QTY = 20;
 
 const PLURALS: Record<string, string> = { brano: "brani", episodio: "episodi" };
 
 function pluralUnit(unit: string, qty: number): string {
   return qty === 1 ? unit : (PLURALS[unit] ?? unit);
-}
-
-const HOUR_PRESETS = [2, 4, 8, 20];
-const MAX_HOURS = 40;
-const MAX_QTY = 20;
-
-function AnimatedEuro({ value, className }: { value: number; className?: string }) {
-  const reduce = useReducedMotion();
-  const [display, setDisplay] = useState(value);
-
-  useEffect(() => {
-    if (reduce) {
-      setDisplay(value);
-      return;
-    }
-    const controls = animate(display, value, { duration: 0.7, ease: [0.16, 1, 0.3, 1], onUpdate: setDisplay });
-    return () => controls.stop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, reduce]);
-
-  return <span className={className}>{formatEuro(display)}</span>;
 }
 
 function Stepper({ id, label, value, onChange }: { id: string; label: string; value: number; onChange: (v: number) => void }) {
@@ -54,6 +34,10 @@ function Stepper({ id, label, value, onChange }: { id: string; label: string; va
   );
 }
 
+/**
+ * Configuratore di sessione: il cliente sceglie ore di studio e servizi e invia la richiesta
+ * già compilata su WhatsApp o via email.
+ */
 export function Calculator() {
   const { open } = useBooking();
   const [hours, setHours] = useState(4);
@@ -66,47 +50,38 @@ export function Calculator() {
     podcast: 0,
   });
 
-  const quote = useMemo(() => {
-    const hoursBase = hours * pricing.hourlyRate;
-    const discount = pricing.hourDiscounts.find((d) => hours >= d.minHours);
-    const hoursDiscount = discount ? hoursBase * discount.rate : 0;
-    const lines = pricing.addOns
-      .filter((a) => qty[a.id] > 0)
-      .map((a) => ({ ...a, qty: qty[a.id], total: a.price * qty[a.id] }));
-    const addOnsTotal = lines.reduce((sum, l) => sum + l.total, 0);
-    const total = hoursBase - hoursDiscount + addOnsTotal;
-    return { hoursBase, discount, hoursDiscount, lines, total };
-  }, [hours, qty]);
+  const lines = useMemo(
+    () => sessionOptions.addOns.filter((a) => qty[a.id] > 0).map((a) => ({ ...a, qty: qty[a.id] })),
+    [qty],
+  );
 
   const summaryText = useMemo(() => {
     const rows = [
-      `Ciao ${studio.name}! Ho calcolato un preventivo dal sito:`,
+      `Ciao ${studio.name}! Ho configurato una sessione dal sito:`,
       "",
-      `• Studio con tecnico: ${hours} ${hours === 1 ? "ora" : "ore"} (${formatEuro(quote.hoursBase)})`,
-      quote.discount ? `• Sconto ${quote.discount.label}: −${formatEuro(quote.hoursDiscount)}` : null,
-      ...quote.lines.map((l) => `• ${l.label}: ${l.qty} ${pluralUnit(l.unit, l.qty)} (${formatEuro(l.total)})`),
+      hours > 0 ? `• Studio con tecnico: ${hours} ${hours === 1 ? "ora" : "ore"}` : null,
+      ...lines.map((l) => `• ${l.label}: ${l.qty} ${pluralUnit(l.unit, l.qty)}`),
       "",
-      `Totale indicativo: ${formatEuro(quote.total)}`,
-      "",
-      "Vorrei confermare disponibilità e dettagli.",
+      "Vorrei sapere disponibilità e dettagli.",
     ].filter((r): r is string => r !== null);
     return rows.join("\n");
-  }, [hours, quote]);
+  }, [hours, lines]);
 
   const fill = (hours / MAX_HOURS) * 100;
+  const isEmpty = hours === 0 && lines.length === 0;
 
   return (
-    <section id="preventivo" aria-labelledby="preventivo-title" className="relative py-24 sm:py-32">
+    <section id="sessione" aria-labelledby="sessione-title" className="relative py-24 sm:py-32">
       <div className="container-x">
         <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
           <div>
-            <p className="eyebrow">Preventivo in tempo reale</p>
-            <KineticText id="preventivo-title" text="Il tuo progetto, *al centesimo*." className="mt-5 text-[clamp(2.6rem,6vw,5.5rem)]" />
+            <p className="eyebrow">Configura la tua sessione</p>
+            <KineticText id="sessione-title" text="Il tuo progetto, *su misura*." className="mt-5 text-[clamp(2.6rem,6vw,5.5rem)]" />
           </div>
           <Reveal delay={0.1}>
             <p className="max-w-md text-base leading-relaxed text-mist">
-              Scegli ore di studio e servizi: il prezzo si aggiorna mentre muovi i comandi. Nessun costo nascosto, nessuna sorpresa a
-              fine sessione.
+              Scegli ore di studio e servizi: la richiesta si compone mentre muovi i comandi e ci arriva già pronta su WhatsApp o via
+              email. Ti rispondiamo con disponibilità e tutti i dettagli.
             </p>
           </Reveal>
         </div>
@@ -118,7 +93,7 @@ export function Calculator() {
               <fieldset>
                 <legend className="flex w-full flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
                   <span className="font-display text-3xl text-white">Ore di studio</span>
-                  <span className="font-mono text-sm text-mist">{formatEuro(pricing.hourlyRate)}/ora · tecnico incluso</span>
+                  <span className="font-mono text-sm text-mist">Tecnico del suono incluso</span>
                 </legend>
                 <div className="mt-8 flex items-center gap-6">
                   <label htmlFor="hours" className="sr-only">
@@ -142,24 +117,21 @@ export function Calculator() {
                   </output>
                 </div>
                 <div className="mt-6 flex flex-wrap gap-2">
-                  {HOUR_PRESETS.map((h) => (
+                  {sessionOptions.hourPresets.map((p) => (
                     <button
-                      key={h}
+                      key={p.hours}
                       type="button"
-                      onClick={() => setHours(h)}
-                      aria-pressed={hours === h}
+                      onClick={() => setHours(p.hours)}
+                      aria-pressed={hours === p.hours}
                       className={cn(
                         "rounded-full border px-4 py-2 font-mono text-xs uppercase tracking-[0.16em] transition-colors",
-                        hours === h ? "border-gold bg-gold text-obsidian" : "border-white/15 text-mist hover:border-white/40 hover:text-white",
+                        hours === p.hours ? "border-gold bg-gold text-obsidian" : "border-white/15 text-mist hover:border-white/40 hover:text-white",
                       )}
                     >
-                      {h}h{h === 8 ? " · giornata" : h === 20 ? " · pacchetto" : ""}
+                      {p.label}
                     </button>
                   ))}
                 </div>
-                <p className="mt-4 text-xs text-mist">
-                  Sconto automatico: −10% da 8 ore, −15% da 20 ore di studio.
-                </p>
               </fieldset>
 
               <div className="hairline my-10" />
@@ -167,7 +139,7 @@ export function Calculator() {
               <fieldset>
                 <legend className="font-display text-3xl text-white">Servizi di post-produzione</legend>
                 <ul className="mt-6 divide-y divide-white/10">
-                  {pricing.addOns.map((a) => {
+                  {sessionOptions.addOns.map((a) => {
                     const labelId = `addon-${a.id}`;
                     const active = qty[a.id] > 0;
                     return (
@@ -176,9 +148,7 @@ export function Calculator() {
                           <p id={labelId} className={cn("font-semibold transition-colors", active ? "text-white" : "text-mist")}>
                             {a.label}
                           </p>
-                          <p className="font-mono text-xs text-mist">
-                            {formatEuro(a.price)} / {a.unit}
-                          </p>
+                          <p className="font-mono text-xs text-mist">per {a.unit}</p>
                         </div>
                         <Stepper id={labelId} label={a.label} value={qty[a.id]} onChange={(v) => setQty((q) => ({ ...q, [a.id]: v }))} />
                       </li>
@@ -195,51 +165,54 @@ export function Calculator() {
               <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gold/20 blur-3xl" />
               <p className="eyebrow relative">Riepilogo sessione</p>
 
-              <dl className="relative mt-8 grid gap-3 font-mono text-sm">
-                <div className="flex justify-between gap-4">
-                  <dt className="text-mist">
-                    Studio · {hours} {hours === 1 ? "ora" : "ore"}
-                  </dt>
-                  <dd className="text-white">{formatEuro(quote.hoursBase)}</dd>
-                </div>
-                {quote.discount && (
-                  <div className="flex justify-between gap-4 text-signal-bright">
-                    <dt>{quote.discount.label}</dt>
-                    <dd>−{formatEuro(quote.hoursDiscount)}</dd>
-                  </div>
+              <ul className="relative mt-8 grid gap-3 font-mono text-sm" aria-live="polite">
+                {hours > 0 && (
+                  <li className="flex justify-between gap-4">
+                    <span className="text-mist">Studio con tecnico</span>
+                    <span className="text-white">
+                      {hours} {hours === 1 ? "ora" : "ore"}
+                    </span>
+                  </li>
                 )}
-                {quote.lines.map((l) => (
-                  <div key={l.id} className="flex justify-between gap-4">
-                    <dt className="text-mist">
-                      {l.label} × {l.qty}
-                    </dt>
-                    <dd className="text-white">{formatEuro(l.total)}</dd>
-                  </div>
+                {lines.map((l) => (
+                  <li key={l.id} className="flex justify-between gap-4">
+                    <span className="text-mist">{l.label}</span>
+                    <span className="text-white">
+                      {l.qty} {pluralUnit(l.unit, l.qty)}
+                    </span>
+                  </li>
                 ))}
-              </dl>
+                {isEmpty && <li className="text-mist">Seleziona ore o servizi per comporre la richiesta.</li>}
+              </ul>
 
               <div className="hairline relative my-8" />
 
-              <div className="relative flex items-end justify-between gap-4">
-                <p className="font-mono text-xs uppercase tracking-[0.2em] text-mist">Totale indicativo</p>
-                <p aria-live="polite" aria-atomic="true">
-                  <AnimatedEuro value={quote.total} className="font-display text-6xl leading-none text-white sm:text-7xl" />
-                </p>
-              </div>
-              <p className="relative mt-4 text-xs leading-relaxed text-mist">{pricing.vatNote}</p>
+              <p className="relative font-display text-3xl leading-tight text-white sm:text-4xl">
+                Ti rispondiamo <em className="text-gradient-gold">in giornata</em>.
+              </p>
+              <p className="relative mt-3 text-sm leading-relaxed text-mist">
+                Ogni progetto è diverso: ascoltiamo il materiale e ti proponiamo la sessione più adatta.
+              </p>
 
               <div className="relative mt-8 grid gap-3">
                 <a
                   href={whatsappLink(summaryText)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={cn(buttonStyles.primary, "w-full")}
+                  className={cn(buttonStyles.primary, "w-full", isEmpty && "pointer-events-none opacity-40")}
+                  aria-disabled={isEmpty}
+                  tabIndex={isEmpty ? -1 : undefined}
                   data-cursor="Invia"
                 >
                   <WhatsAppIcon />
                   Conferma e invia su WhatsApp
                 </a>
-                <a href={mailtoLink("Preventivo dal sito", summaryText)} className={cn(buttonStyles.ghost, "w-full")}>
+                <a
+                  href={mailtoLink("Richiesta sessione dal sito", summaryText)}
+                  className={cn(buttonStyles.ghost, "w-full", isEmpty && "pointer-events-none opacity-40")}
+                  aria-disabled={isEmpty}
+                  tabIndex={isEmpty ? -1 : undefined}
+                >
                   Invia via Email
                 </a>
                 <button

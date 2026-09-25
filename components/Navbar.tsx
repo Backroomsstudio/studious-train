@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
 import { BookingTrigger } from "@/components/BookingModal";
 import { Magnetic } from "@/components/Magnetic";
@@ -9,9 +10,10 @@ import { buttonStyles, cn } from "@/lib/cn";
 import { studio } from "@/lib/studio";
 
 const LINKS = [
+  { href: "#studio-foto", label: "Lo studio" },
   { href: "#ascolta", label: "Ascolta" },
   { href: "#servizi", label: "Servizi" },
-  { href: "#preventivo", label: "Preventivo" },
+  { href: "#sessione", label: "Sessione" },
   { href: "#recensioni", label: "Recensioni" },
   { href: "#contatti", label: "Contatti" },
 ];
@@ -19,25 +21,14 @@ const LINKS = [
 export function Logo() {
   return (
     <a href="#top" className="group flex items-center gap-3" aria-label={`${studio.name} – torna all'inizio`}>
-      <svg viewBox="0 0 32 32" className="h-8 w-8" aria-hidden="true">
-        <rect width="32" height="32" rx="9" fill="#1F2833" />
-        {[6, 10, 14, 18, 22, 26].map((x, i) => {
-          const h = [6, 14, 20, 12, 16, 8][i];
-          return (
-            <rect
-              key={x}
-              x={x - 1}
-              y={16 - h / 2}
-              width="2"
-              height={h}
-              rx="1"
-              fill={i === 2 ? "#FFB000" : "#45A29E"}
-              className="origin-center transition-transform duration-500 group-hover:scale-y-125"
-              style={{ transformBox: "fill-box" }}
-            />
-          );
-        })}
-      </svg>
+      <Image
+        src="/brand/logo-br-120.webp"
+        alt=""
+        width={60}
+        height={47}
+        unoptimized
+        className="h-11 w-auto drop-shadow-[0_0_12px_rgba(255,255,255,0.25)] transition-transform duration-700 ease-[var(--ease-expo)] group-hover:rotate-[-6deg] group-hover:scale-110"
+      />
       <span className="whitespace-nowrap font-display text-xl leading-none text-white sm:text-2xl">
         Backrooms <em className="text-gold">Studio</em>
       </span>

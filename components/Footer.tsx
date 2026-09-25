@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { BookingTrigger } from "@/components/BookingModal";
 import { Magnetic } from "@/components/Magnetic";
 import { MapEmbed } from "@/components/MapEmbed";
@@ -22,6 +23,13 @@ export function Footer() {
 
       {/* CTA finale */}
       <div className="container-x text-center">
+        <Image
+          src="/brand/logo-br.webp"
+          alt=""
+          width={160}
+          height={125}
+          className="mx-auto mb-10 h-28 w-auto drop-shadow-[0_0_40px_rgba(255,255,255,0.18)]"
+        />
         <p className="eyebrow">Il prossimo brano è il tuo</p>
         <KineticText
           id="contatti-title"
@@ -80,9 +88,12 @@ export function Footer() {
       {/* Dati societari e link */}
       <div className="container-x mt-20 grid gap-10 border-t border-white/10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <p className="font-display text-3xl text-white">
-            {studio.name.split(" ")[0]} <em className="text-gradient-gold">{studio.name.split(" ").slice(1).join(" ")}</em>
-          </p>
+          <div className="flex items-center gap-4">
+            <Image src="/brand/logo-br.webp" alt={`Logo ${studio.name}`} width={72} height={56} className="h-14 w-auto" />
+            <p className="font-display text-3xl text-white">
+              {studio.name.split(" ")[0]} <em className="text-gradient-gold">{studio.name.split(" ").slice(1).join(" ")}</em>
+            </p>
+          </div>
           <p className="mt-3 text-sm leading-relaxed text-mist">
             Studio di registrazione a Vicenza. Registrazione, mix, mastering, produzione e podcast per artisti di tutto il Veneto.
           </p>

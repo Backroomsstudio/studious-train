@@ -1,6 +1,6 @@
 /**
- * Contenuti editoriali della landing: servizi, attrezzatura, portfolio audio, listino,
- * recensioni e FAQ. Modificare qui i testi senza toccare i componenti.
+ * Contenuti editoriali della landing: servizi, foto, attrezzatura, portfolio audio,
+ * opzioni di sessione, recensioni e FAQ. Modificare qui i testi senza toccare i componenti.
  */
 
 export interface Service {
@@ -10,8 +10,6 @@ export interface Service {
   kicker: string;
   description: string;
   bullets: string[];
-  fromPrice: number;
-  priceUnit: string;
   keywords: string;
 }
 
@@ -24,8 +22,6 @@ export const services: Service[] = [
     description:
       "Sala di ripresa trattata acusticamente e cabina vocale isolata: catturiamo voci, chitarre, batterie e ensemble con microfoni a condensatore e a nastro di riferimento.",
     bullets: ["Tecnico del suono dedicato", "Editing e comping inclusi", "Session file consegnati in WAV 24/48"],
-    fromPrice: 45,
-    priceUnit: "/ora",
     keywords: "registrazione voce Vicenza, registrare una canzone",
   },
   {
@@ -36,8 +32,6 @@ export const services: Service[] = [
     description:
       "Mix ibrido con sommatoria e outboard analogico, mastering calibrato per Spotify, Apple Music, YouTube e vinile. Revisioni incluse fino al risultato che hai in testa.",
     bullets: ["Catena analogica di pregio", "Master per streaming e club", "2 revisioni incluse"],
-    fromPrice: 150,
-    priceUnit: "/brano",
     keywords: "mix e mastering Vicenza, mastering analogico",
   },
   {
@@ -48,8 +42,6 @@ export const services: Service[] = [
     description:
       "Dal provino al brano finito: arrangiamento, beat originali trap, hip-hop, pop e urban costruiti su misura sulla tua identità artistica, con strumenti reali e synth.",
     bullets: ["Beat esclusivi con licenza piena", "Arrangiamento e sound design", "Direzione artistica in sessione"],
-    fromPrice: 350,
-    priceUnit: "/brano",
     keywords: "produzione musicale Vicenza, beat trap Vicenza",
   },
   {
@@ -60,8 +52,6 @@ export const services: Service[] = [
     description:
       "Registrazione podcast fino a 4 voci, voiceover per spot e video aziendali, sound design e jingle per brand. Consegna pronta per ogni piattaforma.",
     bullets: ["Setup video-podcast", "Editing, pulizia e loudness broadcast", "Jingle e sigle originali"],
-    fromPrice: 90,
-    priceUnit: "/episodio",
     keywords: "studio podcast Vicenza, speakeraggio Vicenza",
   },
 ];
@@ -103,7 +93,7 @@ export const gear: GearGroup[] = [
   {
     category: "Monitor & Conversione",
     items: [
-      { name: "Genelec 8341", note: "Monitoraggio coassiale di precisione" },
+      { name: "Focal", note: "Monitor da studio di riferimento" },
       { name: "Yamaha NS-10M", note: "Riferimento mid-range" },
       { name: "RME / Apogee AD-DA", note: "Conversione 24-bit / 96 kHz" },
       { name: "Pro Tools · Logic · Ableton", note: "Tutte le DAW principali" },
@@ -192,27 +182,62 @@ export const tracks: Track[] = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* Listino del calcolatore preventivo (DA VERIFICARE con i prezzi reali) */
+/* Opzioni del configuratore di sessione                               */
 /* ------------------------------------------------------------------ */
 
-export const pricing = {
-  hourlyRate: 45,
-  hourDiscounts: [
-    { minHours: 20, rate: 0.15, label: "Pacchetto 20h+" },
-    { minHours: 8, rate: 0.1, label: "Giornata intera 8h+" },
+export const sessionOptions = {
+  hourPresets: [
+    { hours: 2, label: "2h · Voce su base" },
+    { hours: 4, label: "4h · Singolo" },
+    { hours: 8, label: "8h · Giornata" },
+    { hours: 20, label: "20h · Progetto / EP" },
   ],
   addOns: [
-    { id: "editing", label: "Editing & tuning voce", price: 40, unit: "brano" },
-    { id: "mix", label: "Mix professionale", price: 150, unit: "brano" },
-    { id: "master-digital", label: "Mastering digitale", price: 40, unit: "brano" },
-    { id: "master-analog", label: "Mastering analogico ibrido", price: 70, unit: "brano" },
-    { id: "beat", label: "Beat / produzione originale", price: 350, unit: "brano" },
-    { id: "podcast", label: "Podcast: editing + mix", price: 90, unit: "episodio" },
+    { id: "editing", label: "Editing & tuning voce", unit: "brano" },
+    { id: "mix", label: "Mix professionale", unit: "brano" },
+    { id: "master-digital", label: "Mastering digitale", unit: "brano" },
+    { id: "master-analog", label: "Mastering analogico ibrido", unit: "brano" },
+    { id: "beat", label: "Beat / produzione originale", unit: "brano" },
+    { id: "podcast", label: "Podcast: editing + mix", unit: "episodio" },
   ],
-  vatNote: "Preventivo indicativo, IVA e oneri esclusi ove applicabili. Il prezzo finale viene confermato dopo l'ascolto del progetto.",
 } as const;
 
-export type AddOnId = (typeof pricing.addOns)[number]["id"];
+export type AddOnId = (typeof sessionOptions.addOns)[number]["id"];
+
+/* ------------------------------------------------------------------ */
+/* Foto dello studio (alt text descrittivi: contano per Google Immagini) */
+/* ------------------------------------------------------------------ */
+
+export const studioPhotos = [
+  {
+    src: "/images/sala-registrazione-panoramica.webp",
+    alt: "Panoramica della sala di registrazione Backrooms Studio a Vicenza con pannelli acustici e luci viola",
+    caption: "La sala",
+    width: 1800,
+    height: 1348,
+  },
+  {
+    src: "/images/studio-registrazione-vicenza-sala.webp",
+    alt: "Regia dello studio di registrazione a Vicenza: monitor Focal, tastiera MIDI e microfono per la voce",
+    caption: "La regia",
+    width: 1800,
+    height: 1348,
+  },
+  {
+    src: "/images/regia-mix-mastering-vicenza.webp",
+    alt: "Postazione di mix e mastering con monitor da studio Focal e scheda audio",
+    caption: "Mix & Mastering",
+    width: 1800,
+    height: 1348,
+  },
+  {
+    src: "/images/postazione-produzione-musicale.webp",
+    alt: "Postazione di produzione musicale e registrazione voce nello studio di Vicenza",
+    caption: "Produzione",
+    width: 1800,
+    height: 1348,
+  },
+];
 
 /* ------------------------------------------------------------------ */
 /* Recensioni                                                          */
@@ -311,12 +336,12 @@ export const proofPoints = [
 
 export const faqs = [
   {
-    q: "Quanto costa registrare una canzone in uno studio di registrazione a Vicenza?",
-    a: "Una sessione di registrazione parte da 45 € l'ora con tecnico incluso. Per un singolo completo (registrazione, mix e mastering) la maggior parte degli artisti investe tra 250 € e 450 €. Usa il calcolatore qui sopra per un preventivo immediato.",
+    q: "Che generi registrate nel vostro studio di registrazione a Vicenza?",
+    a: "Trap, hip-hop, pop, rock, cantautorato, acustico e classico, oltre a podcast e voiceover. Ogni sessione è seguita da un tecnico che conosce il genere e i riferimenti del tuo progetto.",
   },
   {
     q: "Quanto dura una sessione di registrazione?",
-    a: "Per una voce su base servono in media 2–4 ore; per una band in presa diretta consigliamo una giornata intera. Dalle 8 ore in su applichiamo automaticamente lo sconto giornata.",
+    a: "Per una voce su base servono in media 2–4 ore; per una band in presa diretta consigliamo una giornata intera. Usa il configuratore qui sopra per indicarci di quante ore pensi di avere bisogno.",
   },
   {
     q: "Fate mix e mastering online per chi non è di Vicenza?",

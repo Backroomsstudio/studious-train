@@ -157,7 +157,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
               </h2>
               <p id={descId} className="mt-4 max-w-md text-sm leading-relaxed text-mist">
                 Scegli servizio e data: la richiesta parte su WhatsApp o via email, già compilata. Ti confermiamo disponibilità e
-                preventivo definitivo in poche ore.
+                dettagli in poche ore.
               </p>
             </div>
             <button
