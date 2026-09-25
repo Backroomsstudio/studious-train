@@ -11,7 +11,7 @@
     "audio:demo": "node scripts/generate-demo-audio.mjs"
   },
   "engines": {
-    "node": ">=20.9.0"
+    "node": "22.x"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",

@@ -12,9 +12,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   compress: true,
   images: { formats: ["image/avif", "image/webp"] },
-  experimental: {
-    optimizePackageImports: ["@react-three/drei", "framer-motion", "gsap"],
-  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
