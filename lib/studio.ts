@@ -7,7 +7,27 @@
  * I valori contrassegnati con "DA VERIFICARE" vanno sostituiti con quelli reali prima della messa online.
  */
 
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.backroomsstudio.it").replace(/\/$/, "");
+const FALLBACK_SITE_URL = "https://www.backroomsstudio.it";
+
+/**
+ * URL pubblico del sito. Ordine: NEXT_PUBLIC_SITE_URL → dominio di produzione Vercel → fallback.
+ * Valori vuoti, senza protocollo o non validi non fanno fallire la build.
+ */
+function resolveSiteUrl(): string {
+  const candidates = [process.env.NEXT_PUBLIC_SITE_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL, FALLBACK_SITE_URL];
+  for (const raw of candidates) {
+    const value = raw?.trim();
+    if (!value) continue;
+    try {
+      return new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`).origin;
+    } catch {
+      // valore non valido: si prova il successivo
+    }
+  }
+  return FALLBACK_SITE_URL;
+}
+
+export const SITE_URL = resolveSiteUrl();
 
 export type DayCode = "Mo" | "Tu" | "We" | "Th" | "Fr" | "Sa" | "Su";
 
