@@ -31,7 +31,7 @@ export function SeoSchema() {
     logo: `${SITE_URL}/brand/logo-br.png`,
     ...(studio.phone ? { telephone: studio.phone } : {}),
     ...(studio.email ? { email: studio.email } : {}),
-    ...(studio.vatId ? { vatID: studio.vatId } : {}),
+    ...(studio.vatIds.length ? { vatID: studio.vatIds.length === 1 ? `IT${studio.vatIds[0]}` : studio.vatIds.map((v) => `IT${v}`) } : {}),
     address: {
       "@type": "PostalAddress",
       streetAddress: studio.address.street,

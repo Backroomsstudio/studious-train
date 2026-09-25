@@ -226,7 +226,7 @@ export const streamFeatures = [
  * https://music.apple.com/it/playlist/..., https://soundcloud.com/utente/sets/...).
  * Vuoto = la sezione non viene mostrata.
  */
-export const playlistUrl = "";
+export const playlistUrl = "https://open.spotify.com/playlist/4Hc9yJ8rSnKS8J9gKa57nw";
 
 /* ------------------------------------------------------------------ */
 /* Recensioni                                                          */

@@ -135,7 +135,7 @@ export function Footer() {
         <div className="container-x flex flex-col justify-between gap-2 py-6 font-mono text-[0.66rem] uppercase tracking-[0.16em] text-mist sm:flex-row">
           <p>
             © {year} {studio.legalName}
-            {studio.vatId && <> · P.IVA {studio.vatId}</>}
+            {studio.vatIds.length > 0 && <> · P.IVA {studio.vatIds.join(" · ")}</>}
           </p>
           <p>Studio di registrazione · Arcugnano (VI) · Vicenza · Veneto</p>
         </div>

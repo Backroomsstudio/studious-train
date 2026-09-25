@@ -15,7 +15,7 @@ function toEmbed(url: string): Embed | null {
     const u = new URL(value);
     if (u.hostname.endsWith("spotify.com")) {
       const match = u.pathname.match(/(playlist|album|artist|track)\/([A-Za-z0-9]+)/);
-      return match ? { provider: "Spotify", src: `https://open.spotify.com/embed/${match[1]}/${match[2]}?theme=0`, height: 520 } : null;
+      return match ? { provider: "Spotify", src: `https://open.spotify.com/embed/${match[1]}/${match[2]}?theme=0`, height: 452 } : null;
     }
     if (u.hostname.endsWith("music.apple.com")) {
       return { provider: "Apple Music", src: `https://embed.music.apple.com${u.pathname}${u.search}`, height: 520 };

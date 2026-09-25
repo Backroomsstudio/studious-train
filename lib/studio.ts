@@ -35,8 +35,8 @@ export const studio = {
   description:
     "Studio Lounge di registrazione, produzione musicale, mix e master ad Arcugnano (Vicenza): 65 mq in stile americano, aperto 24/7, con live streaming 4K delle sessioni.",
 
-  /** DA COMPILARE: Partita IVA (es. "IT01234567890"). Vuota = non mostrata. */
-  vatId: "",
+  /** Partite IVA dei professionisti dello studio. */
+  vatIds: ["04596940249", "04627790241"] as string[],
 
   address: {
     street: "Via Galileo Galilei, 3",
@@ -51,20 +51,20 @@ export const studio = {
   geo: null as { lat: number; lng: number } | null,
 
   /** Contatti. Vuoti = pulsanti nascosti. whatsapp in formato internazionale senza "+" (es. "393331234567"). */
-  phone: "", // DA COMPILARE, es. "+39 333 123 4567"
-  whatsapp: "", // DA COMPILARE
-  email: "", // DA COMPILARE
+  phone: "", // facoltativo: numero da mostrare per le chiamate, es. "+39 324 891 1607"
+  whatsapp: "393248911607",
+  email: "backrooms.studios.it@gmail.com",
 
   /** Aperto 24 ore su 24, 7 giorni su 7. */
   open247: true,
 
-  /** DA COMPILARE: link reali ai profili. Vuoti = non mostrati. */
+  /** Link ai profili. Vuoti = non mostrati. */
   social: {
-    instagram: "",
-    tiktok: "",
-    youtube: "",
-    twitch: "",
-    kick: "",
+    instagram: "https://www.instagram.com/backrooms.studios/",
+    tiktok: "https://www.tiktok.com/@backrooms.studios",
+    youtube: "", // non ancora attivo
+    twitch: "https://www.twitch.tv/backrooms_studio",
+    kick: "https://kick.com/backrooms-studio",
   },
 
   areaServed: ["Arcugnano", "Vicenza", "Veneto", "Italia"],
