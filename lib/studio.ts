@@ -35,8 +35,11 @@ export const studio = {
   description:
     "Studio Lounge di registrazione, produzione musicale, mix e master ad Arcugnano (Vicenza): 65 mq in stile americano, aperto 24/7, con live streaming 4K delle sessioni.",
 
-  /** Partite IVA dei professionisti dello studio. */
-  vatIds: ["04596940249", "04627790241"] as string[],
+  /** Titolari e Partite IVA dei professionisti dello studio. */
+  vatHolders: [
+    { name: "Luca Cappellari", vatId: "04596940249" },
+    { name: "Freya Michelazzo", vatId: "04627790241" },
+  ] as { name: string; vatId: string }[],
 
   address: {
     street: "Via Galileo Galilei, 3",
@@ -51,7 +54,7 @@ export const studio = {
   geo: null as { lat: number; lng: number } | null,
 
   /** Contatti. Vuoti = pulsanti nascosti. whatsapp in formato internazionale senza "+" (es. "393331234567"). */
-  phone: "", // facoltativo: numero da mostrare per le chiamate, es. "+39 324 891 1607"
+  phone: "+39 324 891 1607",
   whatsapp: "393248911607",
   email: "backrooms.studios.it@gmail.com",
 

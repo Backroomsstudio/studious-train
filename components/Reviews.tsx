@@ -7,6 +7,18 @@ import { cn } from "@/lib/cn";
 
 const AUTOPLAY_MS = 6500;
 
+function Stars({ value }: { value: number }) {
+  return (
+    <span className="flex gap-1 text-white" role="img" aria-label={`${value} stelle su 5`}>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <svg key={i} width="16" height="16" viewBox="0 0 20 20" fill={i < value ? "currentColor" : "none"} stroke="currentColor" aria-hidden="true">
+          <path d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z" />
+        </svg>
+      ))}
+    </span>
+  );
+}
+
 /** Testimonianze reali degli artisti. La sezione non viene mostrata finché la lista è vuota. */
 export function Reviews() {
   const trackRef = useRef<HTMLUListElement>(null);
@@ -67,7 +79,7 @@ export function Reviews() {
     >
       <div className="container-x flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
         <div>
-          <p className="eyebrow">Testimonianze</p>
+          <p className="eyebrow">Testimonianze · Recensioni 5★ su Google</p>
           <KineticText id="recensioni-title" text="Parlano *gli artisti*." className="mt-5 text-[clamp(2.5rem,6.5vw,5.5rem)]" />
         </div>
         {reviews.length > 1 && (
@@ -85,7 +97,7 @@ export function Reviews() {
       <Reveal delay={0.1}>
         <ul
           ref={trackRef}
-          className="no-scrollbar mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-[max(1.25rem,calc((100vw-88rem)/2+3rem))] pb-4"
+          className="no-scrollbar mt-12 flex items-start snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-[max(1.25rem,calc((100vw-88rem)/2+3rem))] pb-4"
           aria-label="Testimonianze degli artisti"
         >
           {reviews.map((r, i) => (
@@ -96,11 +108,12 @@ export function Reviews() {
                   i === index ? "bg-gradient-to-b from-titanium to-obsidian-2" : "bg-titanium/40",
                 )}
               >
-                <span aria-hidden="true" className="chrome-text font-display text-7xl leading-[0.6]">
-                  &ldquo;
-                </span>
-                <blockquote className="mt-4 flex-1 font-display text-2xl leading-snug text-white">
-                  <p>{r.text}</p>
+                <div className="flex items-center justify-between gap-4">
+                  <Stars value={r.rating} />
+                  <span className="font-mono text-[0.62rem] uppercase tracking-[0.2em] text-mist">su {r.source}</span>
+                </div>
+                <blockquote className="mt-6 flex-1 whitespace-pre-line font-display text-2xl leading-snug text-white">
+                  <p>&ldquo;{r.text}&rdquo;</p>
                 </blockquote>
                 <figcaption className="mt-8 flex items-center gap-4 border-t border-white/10 pt-6">
                   <span aria-hidden="true" className="chrome-surface flex h-11 w-11 items-center justify-center rounded-full font-display text-lg">
@@ -108,7 +121,6 @@ export function Reviews() {
                   </span>
                   <span>
                     <span className="block font-semibold text-white">{r.author}</span>
-                    {r.role && <span className="block text-xs text-mist">{r.role}</span>}
                   </span>
                 </figcaption>
               </figure>

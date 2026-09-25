@@ -31,7 +31,10 @@ export function SeoSchema() {
     logo: `${SITE_URL}/brand/logo-br.png`,
     ...(studio.phone ? { telephone: studio.phone } : {}),
     ...(studio.email ? { email: studio.email } : {}),
-    ...(studio.vatIds.length ? { vatID: studio.vatIds.length === 1 ? `IT${studio.vatIds[0]}` : studio.vatIds.map((v) => `IT${v}`) } : {}),
+    ...(studio.vatHolders.length ? { vatID: studio.vatHolders.map((h) => `IT${h.vatId}`) } : {}),
+    ...(studio.vatHolders.length
+      ? { employee: studio.vatHolders.map((h) => ({ "@type": "Person", name: h.name, worksFor: { "@id": studioId } })) }
+      : {}),
     address: {
       "@type": "PostalAddress",
       streetAddress: studio.address.street,
@@ -83,7 +86,9 @@ export function SeoSchema() {
           review: reviews.map((r) => ({
             "@type": "Review",
             author: { "@type": "Person", name: r.author },
+            reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5, worstRating: 1 },
             reviewBody: r.text,
+            publisher: { "@type": "Organization", name: r.source },
           })),
         }
       : {}),

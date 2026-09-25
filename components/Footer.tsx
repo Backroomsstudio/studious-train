@@ -133,10 +133,14 @@ export function Footer() {
 
       <div className="border-t border-white/10">
         <div className="container-x flex flex-col justify-between gap-2 py-6 font-mono text-[0.66rem] uppercase tracking-[0.16em] text-mist sm:flex-row">
-          <p>
-            © {year} {studio.legalName}
-            {studio.vatIds.length > 0 && <> · P.IVA {studio.vatIds.join(" · ")}</>}
-          </p>
+          <div>
+            <p>© {year} {studio.legalName}</p>
+            {studio.vatHolders.map((h) => (
+              <p key={h.vatId}>
+                {h.name} · P.IVA {h.vatId}
+              </p>
+            ))}
+          </div>
           <p>Studio di registrazione · Arcugnano (VI) · Vicenza · Veneto</p>
         </div>
       </div>

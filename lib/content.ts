@@ -234,15 +234,40 @@ export const playlistUrl = "https://open.spotify.com/playlist/4Hc9yJ8rSnKS8J9gKa
 
 export interface Review {
   author: string;
-  role?: string;
+  rating: number;
   text: string;
+  source: "Google";
 }
 
-/**
- * DA COMPILARE: le 5 recensioni reali, testo esatto, con il consenso degli autori.
- * Vuoto = la sezione non viene mostrata. Nessuna recensione inventata.
- */
-export const reviews: Review[] = [];
+/** Recensioni reali dal profilo Google dello studio, testo riportato esattamente. */
+export const reviews: Review[] = [
+  { author: "Eros Asan", rating: 5, source: "Google", text: "miglior studio a Vicenza" },
+  {
+    author: "Luca Fabrello",
+    rating: 5,
+    source: "Google",
+    text: "Producer competente e disponibile in un ambiente professionale, l’ideale per fare una sessione al meglio. Ci tornerò sicuramente.\nGrande Freya, grande Daniele e grande Plugghe!",
+  },
+  { author: "Matteo Poncato", rating: 5, source: "Google", text: "sessione incredibile, studio devastante, il top a vicenza" },
+  {
+    author: "Francesco Sartori",
+    rating: 5,
+    source: "Google",
+    text: "Ragazzi veramente forti e preparati nel loro lavoro, abbiamo lavorato ad un paio di produzioni e sono venute come me le immaginavo, studio consigliatissimo",
+  },
+  {
+    author: "Giorgio Strazzi",
+    rating: 5,
+    source: "Google",
+    text: "Bellissima esperienza, abbiamo fatto una sessione di registrazione e una sessione di beat e Freya e Daniele sono veramente forti, sono uscito con una traccia di cui sono attualmente soddisfatto, ci tornerò assolutamente, qua a Vicenza a mio avviso è il migliore",
+  },
+  {
+    author: "Marco Fiorentini",
+    rating: 5,
+    source: "Google",
+    text: "Miglior studio di Vicenza che ho provato, ragazzi super disponibili e che credono realmente al tuo progetto, Freya fonico devastante!",
+  },
+];
 
 /* ------------------------------------------------------------------ */
 /* FAQ (solo informazioni reali)                                       */
