@@ -9,11 +9,17 @@
 const FALLBACK_SITE_URL = "https://www.backroomsstudio.it";
 
 /**
- * URL pubblico del sito. Ordine: NEXT_PUBLIC_SITE_URL → dominio di produzione Vercel → fallback.
+ * URL pubblico del sito. Ordine: NEXT_PUBLIC_SITE_URL → dominio Netlify → dominio di produzione Vercel → fallback.
  * Valori vuoti, senza protocollo o non validi non fanno fallire la build.
  */
 function resolveSiteUrl(): string {
-  const candidates = [process.env.NEXT_PUBLIC_SITE_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL, FALLBACK_SITE_URL];
+  const candidates = [
+    process.env.NEXT_PUBLIC_SITE_URL,
+    // Netlify: URL principale del sito (il dominio personalizzato, se collegato)
+    process.env.NETLIFY === "true" ? process.env.URL : undefined,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    FALLBACK_SITE_URL,
+  ];
   for (const raw of candidates) {
     const value = raw?.trim();
     if (!value) continue;
