@@ -8,6 +8,7 @@ import { Lounge } from "@/components/Lounge";
 import { Navbar } from "@/components/Navbar";
 import { Playlist } from "@/components/Playlist";
 import { Reviews } from "@/components/Reviews";
+import { SeoSchema } from "@/components/SeoSchema";
 import { Services } from "@/components/Services";
 import { TailorMade } from "@/components/TailorMade";
 
@@ -19,6 +20,7 @@ import { TailorMade } from "@/components/TailorMade";
 export default function HomePage() {
   return (
     <>
+      <SeoSchema />
       <Navbar />
       <main id="contenuto" tabIndex={-1} className="outline-none">
         <Hero3D />

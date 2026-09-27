@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Instrument_Serif, Manrope } from "next/font/google";
 import { BookingProvider } from "@/components/BookingModal";
 import { CustomCursor } from "@/components/CustomCursor";
-import { SeoSchema } from "@/components/SeoSchema";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { SEO_DESCRIPTION, SEO_KEYWORDS, SEO_TITLE } from "@/lib/seo";
 import { SITE_URL, studio } from "@/lib/studio";
@@ -82,7 +81,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="it" className={`${display.variable} ${sans.variable}`}>
       <body className="grain pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0">
-        <SeoSchema />
         <SmoothScroll>
           <BookingProvider>
             {children}
