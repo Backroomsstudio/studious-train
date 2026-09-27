@@ -8,7 +8,13 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "audio:demo": "node scripts/generate-demo-audio.mjs"
+    "audio:demo": "node scripts/generate-demo-audio.mjs",
+    "sistema:test": "node scripts/test-calcoli.mts",
+    "sistema:typecheck": "tsc -p netlify/tsconfig.json",
+    "sistema:setup": "node --env-file=.env scripts/setup-sistema.mts",
+    "sistema:seed-stripe": "node --env-file=.env scripts/seed-stripe-test.mts",
+    "sistema:dev": "node --env-file=.env scripts/dev-server.mts",
+    "sistema:eventi": "node --env-file=.env scripts/invia-eventi.mts"
   },
   "engines": {
     "node": "22.x"
@@ -19,14 +25,17 @@
     "framer-motion": "^13.4.4",
     "gsap": "^3.15.0",
     "lenis": "^1.3.26",
+    "luxon": "^3.7.2",
     "next": "^16.3.6",
     "next-seo": "^7.3.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "stripe": "^22.6.2",
     "three": "^0.186.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
+    "@types/luxon": "^3.7.5",
     "@types/node": "^26.6.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
