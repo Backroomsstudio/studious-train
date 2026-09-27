@@ -5,7 +5,7 @@ Ultimo aggiornamento: 27/09/2026
 | Fase | Cosa | Stato |
 |---|---|---|
 | 0 | Ricognizione | ✅ fatta |
-| 1A | Pagamento Stripe → Registro + CRM + Saldi + Telegram | 🟡 codice scritto, test sui fogli in attesa del setup di Luca |
+| 1A | Pagamento Stripe → Registro + CRM + Saldi + Telegram | ✅ fatta e testata sulle copie (28/09) |
 | 1B | Pagina /cassa | ⏳ |
 | 2 | Avvisi giornalieri | ⏳ |
 | 3 | Report del lunedì | ⏳ |
@@ -44,9 +44,14 @@ Ultimo aggiornamento: 27/09/2026
 | Calcoli: rimborso proporzionale con somma esatta, telefoni, nomi, ricerca CRM, doppioni | ✅ |
 | Controllo tipi TypeScript delle functions | ✅ |
 | Build del sito (`npm run build`): stesse 13 pagine di prima | ✅ |
-| ZINCO 180 su fogli di test → 3 righe, VENDITE, saldo, Telegram | ⏳ serve il setup |
-| ZAFFIRO + Blocco 10 sessioni → 4 righe = 965,00, 2 VENDITE, 2 saldi | ⏳ |
-| Stesso evento due volte → nessun doppione | ⏳ |
-| Cliente nuovo → contatto con ID progressivo | ⏳ |
-| Rimborso totale → righe negative, saldo annullato, totale del mese invariato | ⏳ |
-| Formule H, I, J e totali 166-167 intatti | ⏳ |
+| `/health`: variabili, 3 fogli, calendario, Telegram, Stripe test | ✅ tutto ok |
+| ZINCO 180 (pagato davvero in test con carta 4242) → righe 16-18: 56 / 60 / 64, F = Luca, G = Carta, data vera; VENDITE "Pacchetto Zinco" 180; saldo 1/1/1 | ✅ |
+| Proposta Diego (ZAFFIRO + Blocco 10 sessioni) → righe 19-22 = 115,11 + 123,33 + 131,56 + 595 = 965,00; 2 VENDITE; 2 saldi; C0002 da "6 · In chiusura" a "7 · Cliente" | ✅ |
+| Stesso evento inviato altre 3 volte → nessuna riga nuova | ✅ |
+| Cliente nuovo → C0715 creato (fase 7, fonte "Non nota", origine "Creato automaticamente da Stripe") | ✅ |
+| Rimborso totale ZINCO → righe 23-25 negative, VENDITE −180, saldo "annullato"; totale incassato Set26 = 535 + 965 = 1.500 (ZINCO si annulla) | ✅ |
+| Formule H, I, J in tutte le righe scritte e totali 166-167 intatti; righe 5-6 con correzioni manuali non toccate | ✅ |
+| Tempo del webhook: circa 3 secondi per pagamento (limite 10) | ✅ |
+| Avvisi Telegram (2 incassi + 1 rimborso) | ⏳ da confermare da Luca |
+
+**Quota Daniele: verificata, nessun problema.** Nella formula standard (per esempio la riga 40) J = `ROUND(D*VLOOKUP(C;LISTINO;8;0);2)`, dove la colonna 8 del Listino è la **% Daniele**: è proporzionale all'importo, non fissa. Oggi vale 0% per tutti i servizi di studio.
