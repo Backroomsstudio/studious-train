@@ -1,9 +1,10 @@
 # Copia questo testo in un file chiamato ".env" nella cartella del sito e riempi i valori.
 # Il file .env NON va mai su GitHub (è già escluso da .gitignore).
 
-# Stripe (in test: chiave sk_test_...; il segreto del webhook lo dà "stripe listen")
+# Stripe. In test: chiave sk_test_... e, per il webhook, lascia il valore qui sotto
+# (serve solo in locale: lo usa lo script che manda gli eventi al webhook).
 STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
+STRIPE_WEBHOOK_SECRET=whsec_solo_per_test_locale
 STRIPE_INCASSATO_DA=Luca
 
 # Google (chiave JSON dell'account di servizio codificata in base64, vedi SETUP §2.7)
