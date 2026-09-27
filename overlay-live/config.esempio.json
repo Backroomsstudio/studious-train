@@ -1,0 +1,18 @@
+{
+  "porta": 4747,
+  "host": "127.0.0.1",
+  "pinRegia": "",
+  "giudici": { "beat": "Daniele", "voce": "Plugghe", "mix": "Freya" },
+  "pesi": { "beat": 1, "voce": 1, "mix": 1, "chat": 1 },
+  "topN": 5,
+  "premio": "Mix + Master",
+  "durataCountdownMinuti": 180,
+  "durataVotoChatSecondi": 60,
+  "tiktok": "backrooms.studios",
+  "nero": {
+    "username": "backrooms",
+    "automatico": true,
+    "portaWebhook": 4748,
+    "segreto": ""
+  }
+}
