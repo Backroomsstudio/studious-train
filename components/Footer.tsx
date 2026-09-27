@@ -4,7 +4,7 @@ import { Magnetic } from "@/components/Magnetic";
 import { MapEmbed } from "@/components/MapEmbed";
 import { KineticText } from "@/components/Reveal";
 import { buttonStyles } from "@/lib/cn";
-import { services } from "@/lib/content";
+import { landingPages } from "@/lib/landing-pages";
 import { activeSocials, directionsUrl, fullAddress, phoneHref, studio } from "@/lib/studio";
 
 const headingClass = "font-mono text-[0.7rem] uppercase tracking-[0.24em] text-white";
@@ -105,13 +105,18 @@ export function Footer() {
         <div>
           <h2 className={headingClass}>Servizi</h2>
           <ul className="mt-5 grid gap-2 text-sm">
-            {services.map((s) => (
-              <li key={s.id}>
-                <a className="text-mist transition-colors hover:text-white" href="#servizi">
-                  {s.title}
+            {landingPages.map((p) => (
+              <li key={p.slug}>
+                <a className="text-mist transition-colors hover:text-white" href={`/${p.slug}`}>
+                  {p.h1}
                 </a>
               </li>
             ))}
+            <li>
+              <a className="text-mist transition-colors hover:text-white" href="/#servizi">
+                Pacchetti su misura
+              </a>
+            </li>
           </ul>
         </div>
 

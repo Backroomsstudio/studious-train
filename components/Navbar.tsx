@@ -11,12 +11,12 @@ import { studio } from "@/lib/studio";
 
 /** Voci di navigazione: quelle di sezioni non ancora attive (playlist, recensioni) vengono omesse. */
 const LINKS = [
-  { href: "#lounge", label: "Lounge", short: "Lounge", icon: "lounge" },
-  { href: "#servizi", label: "Servizi", short: "Servizi", icon: "services" },
-  { href: "#live", label: "Live", short: "Live", icon: "live" },
-  ...(playlistUrl ? [{ href: "#ascolta", label: "Ascolta", short: "Ascolta", icon: "listen" }] : []),
-  ...(reviews.length ? [{ href: "#recensioni", label: "Testimonianze", short: "Artisti", icon: "reviews" }] : []),
-  { href: "#contatti", label: "Contatti", short: "Contatti", icon: "contact" },
+  { href: "/#lounge", label: "Lounge", short: "Lounge", icon: "lounge" },
+  { href: "/#servizi", label: "Servizi", short: "Servizi", icon: "services" },
+  { href: "/#live", label: "Live", short: "Live", icon: "live" },
+  ...(playlistUrl ? [{ href: "/#ascolta", label: "Ascolta", short: "Ascolta", icon: "listen" }] : []),
+  ...(reviews.length ? [{ href: "/#recensioni", label: "Testimonianze", short: "Artisti", icon: "reviews" }] : []),
+  { href: "/#contatti", label: "Contatti", short: "Contatti", icon: "contact" },
 ];
 
 function NavIcon({ name }: { name: string }) {
@@ -42,13 +42,14 @@ function NavIcon({ name }: { name: string }) {
 
 export function Logo() {
   return (
-    <a href="#top" className="group flex items-center gap-3" aria-label={`${studio.name} – torna all'inizio`}>
+    <a href="/#top" className="group flex items-center gap-3" aria-label={`${studio.name} – torna all'inizio`}>
       <Image
         src="/brand/logo-br-120.webp"
         alt=""
         width={60}
         height={47}
         unoptimized
+        priority
         className="h-10 w-auto drop-shadow-[0_0_12px_rgba(255,255,255,0.25)] transition-transform duration-700 ease-[var(--ease-expo)] group-hover:rotate-[-6deg] group-hover:scale-110 sm:h-11"
       />
       <span className="whitespace-nowrap font-display text-xl leading-none text-white sm:text-2xl">

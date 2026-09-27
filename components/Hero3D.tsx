@@ -106,7 +106,7 @@ export function Hero3D() {
         </div>
 
         <h1 id="hero-title" className="text-white">
-          <span className="fade-up eyebrow mb-5 block text-chrome" style={{ ["--d" as string]: "80ms" }}>
+          <span className="rise-up eyebrow mb-5 block text-chrome" style={{ ["--d" as string]: "80ms" }}>
             Studio di registrazione · Vicenza
           </span>{" "}
           <span className="block font-sans text-[clamp(2.9rem,8.2vw,8rem)] font-extrabold uppercase leading-[0.9] tracking-[-0.04em]">
@@ -129,7 +129,7 @@ export function Hero3D() {
             </span>
           </span>{" "}
           <span
-            className="fade-up mt-4 block max-w-3xl font-display text-[clamp(1.6rem,3.6vw,3rem)] leading-[1.05] text-white/90"
+            className="rise-up mt-4 block max-w-3xl font-display text-[clamp(1.6rem,3.6vw,3rem)] leading-[1.05] text-white/90"
             style={{ ["--d" as string]: "650ms" }}
           >
             di Registrazione e Mix/Master a Vicenza.
@@ -137,7 +137,7 @@ export function Hero3D() {
         </h1>
 
         <div className="mt-8 grid gap-8 lg:mt-10 lg:grid-cols-[1.1fr_1fr] lg:items-end">
-          <p className="fade-up max-w-xl text-base leading-relaxed text-mist sm:text-lg" style={{ ["--d" as string]: "750ms" }}>
+          <p className="rise-up max-w-xl text-base leading-relaxed text-mist sm:text-lg" style={{ ["--d" as string]: "750ms" }}>
             Un collettivo di <strong className="font-semibold text-white">3 produttori e sound/mix engineer</strong> con oltre 5 anni sul
             campo. 65 mq in stile americano ad Arcugnano, aperti giorno e notte: registri, produci e ti rilassi con la tua crew, nello
             stesso spazio.

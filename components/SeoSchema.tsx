@@ -1,7 +1,7 @@
 import { JsonLdScript } from "next-seo";
 import { faqs, reviews, services, studioPhotos } from "@/lib/content";
 import { SEO_DESCRIPTION, SEO_TITLE } from "@/lib/seo";
-import { activeSocials, googleMapsUrl, SITE_URL, studio } from "@/lib/studio";
+import { activeSocials, googleBusinessUrl, SITE_URL, studio } from "@/lib/studio";
 
 const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => `https://schema.org/${d}`);
 
@@ -16,7 +16,7 @@ export function SeoSchema() {
   const websiteId = `${SITE_URL}/#website`;
   const pageId = `${SITE_URL}/#webpage`;
   const imageUrl = `${SITE_URL}/opengraph-image`;
-  const sameAs = activeSocials().map((s) => s.url);
+  const sameAs = [...activeSocials().map((s) => s.url), googleBusinessUrl];
 
   const recordingStudio = {
     "@type": ["RecordingStudio", "LocalBusiness"],
@@ -44,7 +44,7 @@ export function SeoSchema() {
       addressCountry: studio.address.country,
     },
     ...(studio.geo ? { geo: { "@type": "GeoCoordinates", latitude: studio.geo.lat, longitude: studio.geo.lng } } : {}),
-    hasMap: googleMapsUrl,
+    hasMap: googleBusinessUrl,
     openingHoursSpecification: [
       {
         "@type": "OpeningHoursSpecification",

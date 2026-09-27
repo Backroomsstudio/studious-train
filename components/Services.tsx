@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BookingTrigger } from "@/components/BookingModal";
 import { KineticText, Reveal } from "@/components/Reveal";
 import { ScrollText } from "@/components/ScrollText";
@@ -62,7 +63,15 @@ export function Services() {
                       ))}
                     </ul>
 
-                    <div className="mt-auto pt-8">
+                    <div className="mt-auto flex flex-col gap-3 pt-8 sm:flex-row sm:items-center">
+                      {s.page && (
+                        <Link
+                          href={s.page}
+                          className="press inline-flex min-h-11 items-center justify-center px-2 py-3 text-xs font-bold uppercase tracking-[0.16em] text-mist underline-offset-4 transition-colors hover:text-white hover:underline"
+                        >
+                          Scopri di più <span className="sr-only">su {s.title}</span>
+                        </Link>
+                      )}
                       <BookingTrigger
                         service={s.id}
                         className="press inline-flex min-h-11 w-full items-center justify-center rounded-full border border-white/25 px-5 py-3 text-xs font-bold uppercase tracking-[0.16em] text-white transition-colors duration-300 hover:border-white hover:bg-white hover:text-obsidian sm:w-auto"
