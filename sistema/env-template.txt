@@ -1,0 +1,23 @@
+# Copia questo testo in un file chiamato ".env" nella cartella del sito e riempi i valori.
+# Il file .env NON va mai su GitHub (è già escluso da .gitignore).
+
+# Stripe (in test: chiave sk_test_...; il segreto del webhook lo dà "stripe listen")
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_INCASSATO_DA=Luca
+
+# Google (chiave JSON dell'account di servizio codificata in base64, vedi SETUP §2.7)
+GOOGLE_SERVICE_ACCOUNT_JSON=
+# Durante i test: gli ID delle COPIE di test
+SHEET_CONTABILITA_ID=
+SHEET_CRM_ID=
+SHEET_SISTEMA_ID=
+CALENDAR_ID=backrooms.studios.vi@gmail.com
+
+# Telegram
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
+
+# Cassa (PIN di 6 cifre scelto da Luca)
+CASSA_PIN=
+SITE_URL=http://localhost:8888
