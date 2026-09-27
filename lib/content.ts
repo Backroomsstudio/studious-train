@@ -129,11 +129,14 @@ export interface Service {
   title: string;
   description: string;
   bullets: string[];
+  /** Pagina dedicata al servizio (SEO), se esiste */
+  page?: string;
 }
 
 export const services: Service[] = [
   {
     id: "registrazione",
+    page: "/registrazione-voce-vicenza",
     mode: "In studio",
     title: "Ore di Registrazione",
     description: "Registra nella Lounge con vocal engineering assistito: un engineer ti segue take dopo take, dal primo warm-up all'ultima doppia.",
@@ -141,6 +144,7 @@ export const services: Service[] = [
   },
   {
     id: "produzione",
+    page: "/produzione-musicale-vicenza",
     mode: "In studio",
     title: "Ore di Produzione Musicale",
     description: "Beatmaking, arrangiamento e direzione artistica fianco a fianco con i producer del collettivo, costruiti sulla tua identità.",
@@ -148,6 +152,7 @@ export const services: Service[] = [
   },
   {
     id: "produzione-remoto",
+    page: "/produzione-musicale-vicenza",
     mode: "A distanza",
     title: "Produzione Musicale a Distanza",
     description: "Mandaci la tua idea, un vocale o una reference: sviluppiamo il brano da remoto e lo rifiniamo insieme a ogni step.",
@@ -155,6 +160,7 @@ export const services: Service[] = [
   },
   {
     id: "mix-master-studio",
+    page: "/mix-e-master-vicenza",
     mode: "In studio",
     title: "Mix & Master in Studio",
     description: "Sessione presenziale: ascolti il mix crescere in tempo reale e prendi ogni decisione con l'engineer, direttamente dal divano.",
@@ -162,6 +168,7 @@ export const services: Service[] = [
   },
   {
     id: "mix-master-remoto",
+    page: "/mix-e-master-vicenza",
     mode: "A distanza",
     title: "Mix & Master a Distanza",
     description: "Carichi le tracce, ricevi mix e master pronti per le piattaforme con online delivery. Le revisioni sono rapide grazie al recall immediato.",

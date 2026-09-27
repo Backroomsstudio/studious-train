@@ -57,12 +57,12 @@ export const studio = {
     country: "IT",
   },
   /** DA COMPILARE (facoltativo): coordinate esatte dell'ingresso da Google Maps. null = omesse. */
-  geo: null as { lat: number; lng: number } | null,
+  geo: { lat: 45.5121472, lng: 11.5127014 } as { lat: number; lng: number } | null,
 
   /** Contatti. Vuoti = pulsanti nascosti. whatsapp in formato internazionale senza "+" (es. "393331234567"). */
   phone: "+39 324 891 1607",
   whatsapp: "393248911607",
-  email: "backrooms.studios.it@gmail.com",
+  email: "backrooms.studios.vi@gmail.com",
 
   /** Aperto 24 ore su 24, 7 giorni su 7. */
   open247: true,
@@ -93,6 +93,8 @@ export const fullAddress = `${studio.address.street}, ${studio.address.postalCod
 
 export const mapsQuery = encodeURIComponent(`${studio.address.street}, ${studio.address.postalCode} ${studio.address.city} ${studio.address.province}`);
 export const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
+/** Scheda ufficiale su Google Maps (Profilo dell'attività verificato). */
+export const googleBusinessUrl = "https://maps.google.com/?cid=418318090488923855";
 export const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${mapsQuery}`;
 
 export function activeSocials(): { key: SocialKey; label: string; url: string }[] {
