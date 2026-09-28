@@ -1,0 +1,18 @@
+# ambiente Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.hypothesis/
+.ruff_cache/
+.mypy_cache/
+
+# dati delle live e output (pesanti e personali: mai nel repo)
+data/
+export/
+models/
+tests/fixtures/local/
+
+# segreti
+.env
+consensi.yaml
