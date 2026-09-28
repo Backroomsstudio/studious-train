@@ -3,7 +3,7 @@
   La Fabbrica - Fase 0: ricognizione dell'ambiente su Windows (sola lettura).
 
 .DESCRIPTION
-  Non installa e non modifica nulla. Raccoglie:
+  Non installa e non modifica nulla: l'unico file che scrive e' il report. Raccoglie:
     - sistema (Windows, CPU, RAM, percorsi lunghi, code page)
     - GPU (nvidia-smi) e dischi
     - Python, uv, winget, git, Node, Claude Code
@@ -12,17 +12,24 @@
     - OBS: versione, profilo attivo, tela, fps, formato e cartella di registrazione,
       tracce audio registrate, instradamento delle sorgenti audio sulle tracce,
       scene, sorgenti di overlay, WebSocket (la password NON viene letta), plugin utili
+    - webcam: risoluzione e posizione in ogni scena (serve per il close-up)
+    - Google Drive per desktop e cartella condivisa "La Fabbrica"
     - ultime registrazioni con ffprobe (risoluzione, fps, tracce audio, capitoli)
     - DaVinci Resolve, Stream Deck, font del brand
 
-  Salva un JSON sul Desktop e lo copia negli appunti: incollalo nella chat con Claude.
+  Il report va su Google Drive in "La Fabbrica\ricognizione\<NOME PC>.json", dove Claude
+  lo legge direttamente. Se Drive non c'e', va sul Desktop e negli appunti.
+  Va lanciato su ogni PC dello studio.
 
+.EXAMPLE
+  Da Esplora file: tasto destro su recon.ps1 > "Esegui con PowerShell".
 .EXAMPLE
   powershell -NoProfile -ExecutionPolicy Bypass -File .\recon.ps1
 #>
 [CmdletBinding()]
 param(
-    [string]$OutFile = (Join-Path ([Environment]::GetFolderPath('Desktop')) 'fabbrica-recon.json')
+    [string]$OutFile = '',
+    [switch]$NoPause
 )
 
 $ErrorActionPreference = 'Continue'
@@ -141,8 +148,8 @@ $report.disks = @(Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3' | ForE
         [ordered]@{ drive = $_.DeviceID; label = $_.VolumeName; size_gb = [math]::Round($_.Size / 1GB, 0); free_gb = [math]::Round($_.FreeSpace / 1GB, 0) }
     })
 foreach ($d in $report.disks) {
-    # Una live di 1 ora occupa circa 15-20 GB tra sorgente, WAV, proxy e clip.
-    Write-Check $(if ($d.free_gb -ge 150) { 'OK' } else { 'WARN' }) "Disco $($d.drive) $($d.label)" "$($d.free_gb) GB liberi su $($d.size_gb) GB"
+    # 8 ore di live al giorno sono circa 70-90 GB di sorgente, piu' WAV, proxy e clip.
+    Write-Check $(if ($d.free_gb -ge 300) { 'OK' } else { 'WARN' }) "Disco $($d.drive) $($d.label)" "$($d.free_gb) GB liberi su $($d.size_gb) GB"
 }
 try {
     $report.physical_disks = @(Get-PhysicalDisk -ErrorAction Stop | ForEach-Object {
@@ -326,6 +333,42 @@ if (Test-Path -LiteralPath $obsCfg) {
                 if ($obs.overlay_sources.Count -gt 0) {
                     Write-Check INFO 'Possibili overlay' (($obs.overlay_sources | ForEach-Object { $_.name }) -join ' | ')
                 }
+
+                # Webcam: risoluzione e posizione in ogni scena, per ritagliare il close-up senza overlay
+                $camSources = @($sc.sources | Where-Object { $_.id -match 'dshow_input|av_capture|v4l2' })
+                $camNames = @($camSources | ForEach-Object { $_.name })
+                $obs.cameras = @($camSources | ForEach-Object {
+                        [ordered]@{ name = $_.name; type = $_.id; res_type = $_.settings.res_type; resolution = $_.settings.resolution; frame_interval = $_.settings.frame_interval }
+                    })
+                $placements = @()
+                foreach ($scene in @($sc.sources | Where-Object { $_.id -eq 'scene' -or $_.id -eq 'group' })) {
+                    foreach ($it in @($scene.settings.items)) {
+                        if ($it -and ($camNames -contains $it.name)) {
+                            $placements += [ordered]@{
+                                scene        = $scene.name
+                                scene_type   = $scene.id
+                                source       = $it.name
+                                visible      = $it.visible
+                                pos          = @($it.pos.x, $it.pos.y)
+                                scale        = @($it.scale.x, $it.scale.y)
+                                rot          = $it.rot
+                                align        = $it.align
+                                bounds_type  = $it.bounds_type
+                                bounds       = @($it.bounds.x, $it.bounds.y)
+                                bounds_align = $it.bounds_align
+                                crop_ltrb    = @($it.crop_left, $it.crop_top, $it.crop_right, $it.crop_bottom)
+                            }
+                        }
+                    }
+                }
+                $obs.camera_placements = $placements
+                if ($camSources.Count -eq 0) { Write-Check WARN 'Webcam' 'nessun dispositivo di acquisizione video nelle scene' }
+                foreach ($c in $obs.cameras) {
+                    Write-Check INFO 'Webcam' "$($c.name) - risoluzione: $(if ($c.resolution) { $c.resolution } else { 'predefinita del dispositivo' })"
+                }
+                foreach ($pl in $placements) {
+                    Write-Check INFO '  in scena' "$($pl.scene): pos $($pl.pos -join ',') scala $($pl.scale -join ',') ritaglio $($pl.crop_ltrb -join ',')"
+                }
             } catch {
                 Write-Check WARN 'Collezione scene' "non leggibile: $_"
             }
@@ -410,6 +453,27 @@ foreach ($f in 'Anton', 'Archivo', 'JetBrainsMono') {
     Write-Check INFO "Font $f" $(if ($hit) { 'installato nel sistema' } else { 'non installato (La Fabbrica usa comunque assets/fonts)' })
 }
 
+# ---------------------------------------------------------------- Google Drive
+
+Write-Section 'Google Drive'
+$gdrive = [ordered]@{ app_installed = (Test-Path -LiteralPath "$env:ProgramFiles\Google\Drive File Stream"); my_drive = $null; fabbrica_folder = $false }
+$driveCandidates = @()
+foreach ($d in @(Get-PSDrive -PSProvider FileSystem -ErrorAction SilentlyContinue | Where-Object { -not $_.DisplayRoot })) {
+    foreach ($n in 'Il mio Drive', 'My Drive') { $driveCandidates += (Join-Path $d.Root $n) }
+}
+foreach ($n in 'Il mio Drive', 'My Drive', 'Google Drive\Il mio Drive', 'Google Drive\My Drive') { $driveCandidates += (Join-Path $env:USERPROFILE $n) }
+$myDrive = $driveCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+if ($myDrive) {
+    $gdrive.my_drive = $myDrive
+    $fabbricaDir = Join-Path $myDrive 'La Fabbrica'
+    $gdrive.fabbrica_folder = (Test-Path -LiteralPath $fabbricaDir)
+    Write-Check OK 'Google Drive per desktop' $myDrive
+    Write-Check $(if ($gdrive.fabbrica_folder) { 'OK' } else { 'WARN' }) 'Cartella La Fabbrica' $(if ($gdrive.fabbrica_folder) { $fabbricaDir } else { 'non ancora sincronizzata: il report va sul Desktop' })
+} else {
+    Write-Check WARN 'Google Drive per desktop' $(if ($gdrive.app_installed) { 'installato ma "Il mio Drive" non trovato' } else { 'non installato: https://www.google.com/drive/download/' })
+}
+$report.google_drive = $gdrive
+
 # ---------------------------------------------------------------- riepilogo
 
 Write-Section 'Riepilogo'
@@ -419,10 +483,27 @@ $report.warnings = @($warnings)
 Write-Check INFO 'Percorso consigliato' $report.suggested_path
 Write-Check INFO 'Avvisi' "$($warnings.Count)"
 
+$onDrive = $false
+if (-not $OutFile) {
+    if ($gdrive.fabbrica_folder) {
+        # Scrive solo dentro una cartella "La Fabbrica" gia' esistente, per non crearne un doppione su Drive.
+        $recDir = Join-Path $myDrive 'La Fabbrica\ricognizione'
+        New-Item -ItemType Directory -Path $recDir -Force | Out-Null
+        $OutFile = Join-Path $recDir "$($env:COMPUTERNAME).json"
+        $onDrive = $true
+    } else {
+        $OutFile = Join-Path ([Environment]::GetFolderPath('Desktop')) "fabbrica-recon-$($env:COMPUTERNAME).json"
+    }
+}
 $json = $report | ConvertTo-Json -Depth 8
 [IO.File]::WriteAllText($OutFile, $json, (New-Object System.Text.UTF8Encoding($false)))
 $copied = $false
 try { $json | Set-Clipboard; $copied = $true } catch {}
 Write-Host ''
 Write-Host "Report salvato in: $OutFile" -ForegroundColor Green
-if ($copied) { Write-Host 'Il report e'' gia'' negli appunti: incollalo nella chat con Claude (Ctrl+V).' -ForegroundColor Green }
+if ($onDrive) {
+    Write-Host 'E'' su Google Drive: Claude lo legge da li'', non serve incollarlo.' -ForegroundColor Green
+} elseif ($copied) {
+    Write-Host 'Il report e'' gia'' negli appunti: incollalo nella chat con Claude (Ctrl+V).' -ForegroundColor Green
+}
+if (-not $NoPause) { [void](Read-Host 'Premi Invio per chiudere') }
