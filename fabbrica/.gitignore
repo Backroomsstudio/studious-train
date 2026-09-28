@@ -1,0 +1,16 @@
+# ambiente Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# segreti
+.env
+
+# dati, modelli e output: restano sul PC, mai nel repo
+data/
+export/
+models/
+*.markers.json
+fabbrica-recon.txt
