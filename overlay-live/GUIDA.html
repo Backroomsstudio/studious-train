@@ -230,6 +230,7 @@ dl.problemi dd strong { color: var(--testo); }
       <li><a href="#dopo">Dopo la live</a></li>
       <li><a href="#senza-premio">Live senza premio (giornaliere)</a></li>
       <li><a href="#studio">Live session in studio</a></li>
+      <li><a href="#battle">Battle (scontri)</a></li>
       <li><a href="#nero"><span class="facoltativo">Coda automatica Nero.fan</span></a></li>
       <li><a href="#rete"><span class="facoltativo">Regia da tablet o portatile</span></a></li>
       <li><a href="#problemi">Se qualcosa non va</a></li>
@@ -279,6 +280,11 @@ dl.problemi dd strong { color: var(--testo); }
           <h3>Live session in studio</h3>
           <div class="copia"><code>http://127.0.0.1:4747/studio.html</code><button type="button">Copia</button></div>
           <p style="margin-top:8px">Nella regia, in alto: <strong>In onda → Live session in studio</strong>. Nessun suono. Vedi <a href="#studio">Live session in studio</a>.</p>
+        </div>
+        <div class="scheda">
+          <h3>Battle (scontri tra due rapper)</h3>
+          <div class="copia"><code>http://127.0.0.1:4747/battle.html</code><button type="button">Copia</button></div>
+          <p style="margin-top:8px">Nella regia, in alto: <strong>In onda → Battle</strong>. Vedi <a href="#battle">Battle</a>.</p>
         </div>
       </div>
       <p style="margin-top:14px">Giudici: <strong>Daniele</strong> Beat, <strong>Plugghe</strong> Voce, <strong>Freya</strong> Mix. La chat vale come un quarto giudice (25%). Account TikTok: <strong>@backrooms.studios</strong>.</p>
@@ -615,6 +621,56 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
       <div class="riquadro da-provare">
         <span class="tag">Da controllare la prima volta</span>
         <p>Guardate la live da un telefono. La targa copre circa 40 px in fondo alla camera del fonico e 40 px in cima a quella dell'artista: inquadrate l'artista con un po' di spazio sopra la testa. Le comparse coprono per 10 secondi la parte bassa della camera dell'artista. Se serve spostare qualcosa, i numeri sono in cima a <code class="in">public/css/studio.css</code>.</p>
+      </div>
+    </section>
+
+    <section id="battle">
+      <h2><small>Scontri tra due rapper</small>Battle</h2>
+      <p class="intro">Due rapper uno contro l'altro. In alto le barre della vita (stile Tekken) seguono i voti della chat, la camera sta al centro e un fulmine la divide a metà con il VS. Sopra ci sono modalità e timer, sotto i tre giudici (<strong>Luca</strong>, <strong>Freya</strong>, <strong>Daniele</strong>) e la barra «Vota in chat». Si può accendere il tabellone del <strong>torneo</strong> o della <strong>classifica a punti</strong>. Ogni tanto compare un pop-up con Back Rooms («Prenota la tua sessione») e Rime Vicentine.</p>
+
+      <div class="affiancati">
+        <figure class="figura">
+          <img src="mockup/battle-battle.jpg" alt="Battle: barre della vita con Lince al 59% e Nove al 41%, modalità Tematica, timer, camera con fulmine e VS, box degli artisti, tre giudici e barra Vota in chat" width="1080" height="1920" loading="lazy">
+          <figcaption>Round in corso. Al posto del riquadro viola c'è la vostra camera.</figcaption>
+        </figure>
+        <div>
+          <h3>Una volta sola: la scena in LIVE Studio</h3>
+          <ol class="passi">
+            <li><p>Mettete la camera <strong>sotto</strong>, a tutta larghezza e al centro della tela (16:9, da 656 a 1264 px).</p></li>
+            <li><p><strong>Aggiungi fonte</strong> → <strong>Link</strong> e incolla:</p>
+              <div class="copia"><code>http://127.0.0.1:4747/battle.html</code><button type="button">Copia</button></div>
+              <p>Larghezza <strong>1080</strong>, altezza <strong>1920</strong>, stesa su tutta la tela e <strong>in cima</strong> alle sorgenti.</p>
+            </li>
+            <li><p>Per controllare le posizioni: <code class="in">http://127.0.0.1:4747/battle.html?anteprima=1&amp;guide=1</code>. Se la vostra camera è 4:3, cambiate <code class="in">--bt-y-camera</code> e <code class="in">--bt-h-camera</code> in cima a <code class="in">public/css/battle.css</code>.</p></li>
+          </ol>
+        </div>
+      </div>
+
+      <h3>Un round, passo per passo</h3>
+      <ol class="passi">
+        <li><p>Nella regia, in <strong>In onda</strong>, scegliete <strong>Battle</strong>. Nella sezione <strong>Battle</strong> scrivete nome e Instagram dei due rapper e premete <strong>Applica nomi</strong>. Scegliete la modalità (Tematica e Situazione hanno uno slot per il tema) e la durata.</p></li>
+        <li><p><strong>Avvia</strong> (<kbd>F2</kbd>): 3-2-1 a tutto schermo, gong, fulmine e VS. La chat vota dal primo secondo scrivendo <strong>1</strong> o <strong>sx</strong> per il rapper a sinistra e <strong>2</strong> o <strong>dx</strong> per quello a destra (un voto a testa, vale l'ultimo).</p></li>
+        <li><p>Negli ultimi 30 secondi il timer diventa rosso e lampeggia; a zero suona il gong. <strong>Pausa</strong> (<kbd>F9</kbd>) lo ferma, <strong>Termina</strong> chiude subito.</p></li>
+        <li><p>Scrivete i sei voti dei giudici (da 0 a 10, <kbd>Invio</kbd> passa al campo dopo) e premete <strong>Rivela</strong> (<kbd>F4</kbd>): i voti compaiono uno alla volta, poi la chat e il totale. <strong>Totale = media di Luca, Freya, Daniele e chat</strong> (25% ciascuno).</p></li>
+        <li><p>Con un pari merito la regia decide con <strong>Vince …</strong>. Poi <strong>Prossimo scontro</strong> (<kbd>F8</kbd>): i nomi si svuotano (con il torneo si caricano da soli).</p></li>
+      </ol>
+
+      <h3>Tabellone</h3>
+      <ul class="punti">
+        <li><strong>Torneo</strong>: scrivete 4 o 8 nomi, uno per riga, e premete <strong>Crea il torneo</strong> (<strong>Sorteggia</strong> li mescola). Quarti, semifinali e finale: chi vince avanza da solo.</li>
+        <li><strong>Classifica a punti</strong>: scrivete gli artisti e il <strong>target</strong> (default 30). A ogni round i totali dei due rapper si sommano ai loro punti; vince il primo che arriva al target.</li>
+        <li><strong>Mostra il tabellone</strong> lo mette sopra a tutto; si spegne da solo quando parte il round dopo.</li>
+      </ul>
+
+      <h3>Pop-up e suoni</h3>
+      <ul class="punti">
+        <li>I pop-up escono ogni 4 minuti per 10 secondi, mai durante il round e senza suono. <strong>L'Instagram di Rime Vicentine va scritto da voi</strong> nella riga sotto del pop-up.</li>
+        <li>Suonano gong, 3-2-1, schiocco del fulmine, sirena a 30 secondi, tic negli ultimi 10 e i voti dei giudici, dalla pagina del battle (come per la gara). Si provano in <strong>Suoni</strong>.</li>
+      </ul>
+
+      <div class="riquadro da-provare">
+        <span class="tag">Da controllare la prima volta</span>
+        <p>Guardate la live da un telefono. I giudici e la barra della chat stanno nella zona dei commenti di TikTok: se la chat è molto attiva, i commenti coprono la parte sinistra dei box. Provate un round intero con i dati di prova prima di andare in onda.</p>
       </div>
     </section>
 

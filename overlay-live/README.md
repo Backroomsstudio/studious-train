@@ -6,14 +6,17 @@ Lo stesso server fa anche il **layout senza premio** per le live giornaliere di 
 
 C'è anche il layout **Live session in studio** (`/studio.html`): split screen da tre con il fonico in alto, l'artista al centro e la DAW (FL Studio) in basso. Tra fonico e artista c'è una targa 3D con nome e Instagram dell'artista, che si compilano dalla regia. Tra artista e DAW c'è la barra dei nostri social, da cui salgono le comparse «Vieni a trovarci in studio» e «Scrivici in DM». Il layout non ha nessun suono (vedi [Live session in studio](#live-session-in-studio)).
 
+Per gli scontri tra due rapper c'è il layout **Battle** (`/battle.html`): barre della vita in stile Tekken che seguono il voto della chat, camera al centro divisa da un fulmine con il VS, modalità e timer con il gong, tre giudici (Luca, Freya, Daniele), tabellone a torneo o a punti e pop-up social (vedi [Battle](#battle)).
+
 ```
 Nero.fan ─webhook─▶ ┐                                        ┌──▶ /overlay.html       (gara con premio, sorgente Link)
 Commenti TikTok ──▶ │  server.mjs (Node, porta 4747) ─WebSocket─┼──▶ /senza-premio.html  (live giornaliere, sorgente Link)
 Regia / Stream Deck ▶ ┘  stato + dati/stato.json                 ├──▶ /studio.html        (live session in studio, sorgente Link)
+                                                                 ├──▶ /battle.html        (scontro tra due rapper, sorgente Link)
                                                                  └──▶ /regia               (browser della regia)
 ```
 
-Anteprime in [`mockup/`](mockup): verticale, ultimi minuti (timer rosso e nuovo primo posto), zone del telefono, orizzontale, vincitore, spareggio, la regia, il layout senza premio (`senza-premio*.jpg`) e la live session in studio (`studio*.jpg`).
+Anteprime in [`mockup/`](mockup): verticale, ultimi minuti (timer rosso e nuovo primo posto), zone del telefono, orizzontale, vincitore, spareggio, la regia, il layout senza premio (`senza-premio*.jpg`) la live session in studio (`studio*.jpg`) e il battle (`battle-*.jpg`, la regia in `regia-battle.jpg`).
 
 **Guida passo passo per la regia** (installazione sul PC fisso, TikTok LIVE Studio, uso durante la live, problemi comuni): [`GUIDA.html`](GUIDA.html), si apre con un doppio clic.
 
@@ -102,9 +105,50 @@ In LIVE Studio le tre camere vanno messe nelle loro zone. Sopra tutte va una sor
 
 Si cambiano nel blocco di variabili in cima a `public/css/studio.css`. Parametri: `?anteprima=1` (sfondo nero e finti schermi), `&guide=1` (zone del telefono e dei tre schermi), `&statico=1`, `&comparsa=1` (o `2`, `3`…: comparsa ferma, per i mockup), `?w=targa,barra,comparse`.
 
+## Battle
+
+Per gli scontri tra due rapper in diretta. La camera (16:9, a tutta larghezza, al centro della tela) è una sorgente di LIVE Studio **sotto**; sopra va una sorgente **Link** `http://127.0.0.1:4747/battle.html`, 1080×1920, stesa su tutta la tela (sfondo trasparente). Nella regia, in alto: **In onda → Battle**.
+
+Un round:
+
+1. In **Round** si scrivono nomi e Instagram dei due rapper (*Applica nomi*) e, se serve, si sceglie la modalità e la durata (default 90 secondi).
+2. **Avvia (F2)**: 3-2-1 a tutto schermo, gong, un fulmine divide la camera a metà e compare il VS. Il timer parte e la chat vota dal primo secondo.
+3. La chat vota scrivendo `1` o `sx` (rapper a sinistra) e `2` o `dx` (a destra), con o senza `!`: un voto per utente, vale l'ultimo. Un punteggio come `8` qui non conta. Le barre della vita mostrano la quota in %, e con 0 voti sono a metà.
+4. A zero (o con **Termina**) suona il gong e si chiude la chat. La regia scrive i sei voti dei giudici (0–10, un decimale; `Invio` passa al campo dopo). **Rivela (F4)** li mostra uno alla volta con il conteggio, poi la chat e il totale.
+5. **Totale** = media di Luca, Freya, Daniele e chat (10 × la sua quota), 25% ciascuno. Con un pari merito la regia sceglie con **Vince …**. **Prossimo scontro (F8)** svuota i nomi (con il torneo carica il prossimo scontro) e riparte da 1.
+
+Il timer diventa rosso e lampeggia negli ultimi 30 secondi; **Pausa (F9)** lo ferma. Gong, bip del 3-2-1 e schiocco del fulmine sono sintetizzati come gli altri effetti: suonano solo dalla pagina del layout in onda (come per la gara) e si provano dai pulsanti *Gong*, *Conto* e *Spacco* in *Suoni*.
+
+- **Modalità**: Stile libero, Tre quarti, Tematica (con il tema), Anni '90, Beat a scelta, Situazione (con la situazione) e uno slot custom spento, da compilare. Si sceglie dai pulsanti; l'elenco si modifica in *Modifica l'elenco delle modalità* (massimo 10, la modalità in onda non si può spegnere). In onda compare solo quella scelta.
+- **Tabellone** (copre camera e widget; si accende da *Mostra il tabellone* e si spegne da solo quando parte un round):
+  - **Torneo**: 4 o 8 partecipanti (uno per riga, si sfidano 1-2, 3-4…; *Sorteggia* li mescola prima di iniziare). Quarti, semifinali e finale; chi vince avanza da solo e *Prossimo scontro* carica la partita dopo. *Carica* mette in campo una partita a scelta.
+  - **Classifica a punti**: elenco di artisti (massimo 10) e **target** (default 30). A ogni round i totali di **entrambi** i rapper si sommano ai loro punti; vince il primo che arriva al target (se in due nello stesso round, il totale più alto di quel round). Rimettere l'elenco non azzera chi c'è già; *Azzera i punti* sì. Chi non è nell'elenco non fa punti.
+  - Il round si registra una sola volta, solo nel tabellone attivo.
+- **Pop-up social**: Back Rooms (con «Prenota la tua sessione») e Rime Vicentine, ogni 4 minuti per 10 secondi, mai durante il round e muti. Testi, icone, giro e durata si cambiano come le comparse dello studio. **L'handle Instagram di Rime Vicentine non è preimpostato**: scrivetelo nella riga sotto del pop-up.
+
+### Posizioni battle (pixel della tela 1080×1920)
+
+| Pezzo | x | y | larghezza × altezza |
+|---|---|---|---|
+| Barre della vita (nome · barra · «CHAT VOTES» · barra · nome) | 116 | 282 | 848 × 90 |
+| Modalità | 116 | 398 | 530 × 146 |
+| Timer | 660 | 398 | 304 × 146 |
+| Pop-up social | 116 | 566 | 848 × 78 |
+| Camera (cornice, spacco e VS) | 0 | 656 | 1080 × 608 |
+| Box degli artisti (dentro la camera, in basso) | 116 | 1100 | 848 × 96 |
+| Giudici | 116 | 1292 | 848 × 150 |
+| Barra «Vota in chat» | 116 | 1456 | 848 × 78 |
+| Tabellone | 116 | 282 | 848 × 1252 |
+
+Giudici e barra della chat stanno nella zona dei commenti di TikTok (1200–1700): con la chat molto attiva i commenti coprono la parte sinistra dei box. Si cambiano nel blocco di variabili in cima a `public/css/battle.css`. **Se la camera nella vostra scena è 4:3 (circa y 550 → 1363)**, cambiate `--bt-y-camera` e `--bt-h-camera`: box degli artisti, giudici e barra della chat seguono il fondo della camera; barre della vita, modalità, timer e pop-up restano dove sono. Parametri: `?anteprima=1` (sfondo nero e finta camera), `&guide=1` (tagli dei telefoni e zone di TikTok), `&statico=1`, `&muto=1`, `&conto=3` (3-2-1 fermo), `&popup=1` (primo pop-up fermo), `?w=barre,modalita,timer,camera,artisti,giudici,chat,popup,tabellone,conto`.
+
+Per rifare i mockup e controllare che ogni pezzo stia dove dice la tabella (serve Playwright installato a parte, non fa parte di `npm test`): `node strumenti/mockup-battle.mjs --base http://127.0.0.1:4747 --fase battle` (fasi: `attesa`, `countdown`, `battle`, `voto`, `risultato`, `pari`, `torneo`, `punti`; opzioni `--guida`, `--secondi N`, `--conto N`, `--popup`) e, per provare la regia, `--regia`. I dati di prova li mette il comando `battleDemo`.
+
 ## Effetti sonori
 
 Ogni animazione ha il suo effetto, sintetizzato al momento con Web Audio (`public/js/suoni.js`: nessun file audio, nessun diritto d'autore): nuova traccia, voto dei giudici (la nota sale col voto), voto nascosto, apertura/chiusura del voto chat, pop dei voti della chat, calcolo del punteggio con colpo finale, nuova entrata, scalata, uscita dalla top, fanfara del nuovo primo posto, premio cambiato, sirena a 30 minuti e a 1 minuto dalla fine, tic negli ultimi 10 secondi, rullo e fanfara del vincitore, battito dello spareggio; nel layout senza premio `inAscolto` (traccia nuova, con un tocco in più per Skip, Super Skip e Throne) e la campanella del richiamo. Quale effetto parte e quando lo decide `public/js/eventi-sonori.js` (testato in `test/eventi-sonori.test.mjs`).
+
+Per il battle: `gong` (via e fine), `conto` (i tre bip del 3-2-1), `spacco` (il fulmine) e, riusati dalla gara, sirena a 30 secondi dalla fine, tic negli ultimi 10, `voto` e `calcolo` per i giudici e `vincitore` per il campione del tabellone; quando partono lo decide `suoniBattle` in `eventi-sonori.js`.
 
 Dalla regia (*Suoni*): dove suonano (nell'overlay, nella regia o spenti), volume e pulsanti di prova. Suona solo la pagina del layout **In onda** scelto in testata (gara o senza premio). Se la sorgente Link di LIVE Studio non manda l'audio in diretta, si sceglie «in questa pagina» e si cattura l'audio del PC.
 
@@ -119,6 +163,8 @@ Dalla regia (*Suoni*): dove suonano (nell'overlay, nella regia o spenti), volume
 | `F8` | Prossima traccia |
 | `F9` | Pausa / riprendi il countdown |
 | `Invio` in un voto | Passa al voto successivo |
+
+Con il **battle** in onda i tasti fanno altro: `F2` avvia il round, `F4` o `Ctrl+Invio` rivela i voti dei giudici, `F8` passa al prossimo scontro, `F9` ferma o fa ripartire il timer.
 
 Flusso tipico: la traccia arriva da sola da Nero (oppure *In ascolto ora* / ▶ dalla coda) → i tre giudici dicono il voto, la regia lo scrive → `F2` apre il voto della chat → `F4` conferma → su Nero si passa alla traccia successiva e il tabellone cambia da solo (senza Nero: `F8`).
 
@@ -147,7 +193,7 @@ La chat accetta `8`, `7.5`, `7,5`, `9/10`, `!voto 8`. Un voto per utente (vale l
 | `nero.automatico` | Traccia automatica da Nero accesa all'avvio (si cambia dalla regia) |
 | `nero.attesaDopoConfermaSecondi` | Secondi dopo la conferma prima che arrivi la traccia successiva di Nero (10) |
 | `nero.segreto` | Signing secret dei webhook Nero.fan |
-| `layout` | Layout in onda all'avvio: `"gara"` (predefinito), `"senzaPremio"` o `"studio"` (si cambia dalla regia) |
+| `layout` | Layout in onda all'avvio: `"gara"` (predefinito), `"senzaPremio"`, `"studio"` o `"battle"` (si cambia dalla regia) |
 | `host`, `pinRegia` | Regia da altri dispositivi in rete (vedi sopra) |
 
 ## Nero.fan
@@ -192,13 +238,13 @@ Il tunnel espone solo la porta del webhook, non la regia.
 | `countdown` | `{ "azione": "avvia"\|"pausa"\|"riprendi"\|"aggiungi"\|"azzera", "minuti"? }` |
 | `proclama` | `{}` chiude la gara (spareggio se c'è pari merito) · `{ "id" }` sceglie il vincitore |
 | `nascondiVincitore` | `{}`: chiude la schermata finale |
-| `widget` | `{ "nome": "premio"\|"tabellone"\|"classifica"\|"timer"\|"banner"\|"barra"\|"scheda"\|"targa"\|"barraStudio"\|"comparse", "visibile": true }` |
+| `widget` | `{ "nome": "premio"\|"tabellone"\|"classifica"\|"timer"\|"banner"\|"barra"\|"scheda"\|"targa"\|"barraStudio"\|"comparse"\|"barreVita"\|"modalita"\|"timerBattle"\|"giudiciBattle"\|"popupBattle"\|"bracket", "visibile": true }` |
 | `nascondiVoti` | `{ "attivo": true }`: l'overlay mostra "?" fino alla conferma |
 | `premio` | `{ "testo": "Mix + Master" }` |
 | `invito` | `{ "testo": "La traccia più votata vince \| Manda la tua traccia su nero.fan/backrooms" }` |
 | `suoni` | `{ "dove"?: "overlay"\|"regia"\|"spenti", "volume"?: 0.8 }` |
 | `provaSuono` | `{ "nome": "primo", "dati"?: { "tier": "throne" } }`: fa suonare un effetto dove sono attivi i suoni (es. da un tasto dello Stream Deck) |
-| `layout` | `{ "nome": "gara"\|"senzaPremio"\|"studio" }`: layout in onda (chi suona, e se la traccia di Nero aspetta i voti) |
+| `layout` | `{ "nome": "gara"\|"senzaPremio"\|"studio"\|"battle" }`: layout in onda (chi suona, e se la traccia di Nero aspetta i voti) |
 | `senzaPremio` | Uno o più campi: `sopra`, `titolo`, `pillola`, `link` (testi del banner); `voci` (`[{ "attiva", "icona", "etichetta", "testo" }]`, icone `nero`, `instagram`, `tiktok`, `instagram+tiktok`, `twitch`, `kick`, `youtube`, `spotify`, `whatsapp`, `sito`, `microfono`, `logo`; massimo 12, 8 accese, testo fino a 40 caratteri); `velocita` (40–160); `inAscoltoNellaBarra`, `ascoltateNellaBarra`, `loghiBarra`, `filoCamera`; `durate` (`{ "standard", "skip", "superskip", "throne" }`, 4–20 s); `suonoTraccia` (`"delicato"\|"pieno"\|"nessuno"`); `richiamoOgniMinuti` (0–30); `spot` (`{ "sopra", "titolo", "sotto" }`) |
 | `ripristinaSenzaPremio` | `{}`: testi, social e impostazioni di partenza |
 | `richiamo` | `{}`: il link del banner si illumina, con la campanella |
@@ -208,6 +254,18 @@ Il tunnel espone solo la porta del webhook, non la regia.
 | `studio` | Uno o più campi: `artista` (fino a 32 caratteri), `instagram` (`@nome`, `nome` o link del profilo), `etichetta` (riga sopra il nome); `comparse` (`[{ "attiva", "icona", "sopra", "titolo", "sotto" }]`, massimo 8, titolo fino a 28 caratteri); `comparsaOgniMinuti` (0–30), `durataComparsa` (4–20 s), `velocita` (40–160), `artistaNellaBarra` |
 | `ripristinaStudio` | `{}`: comparse e impostazioni di partenza (il nome dell'artista resta) |
 | `comparsa` | `{}` la prossima del giro · `{ "id" }` quella scelta: sale dalla barra, senza suono |
+| `battleScontro` | `{ "sx": { "nome", "instagram" }, "dx": { … } }`: i due rapper (solo tra un round e l'altro) |
+| `battleModalita` | `{ "scelta"?, "testo"?, "elenco"? }`: modalità in onda, il suo testo (tema o situazione), l'elenco (massimo 10) |
+| `battleTimer` | `{ "durataSecondi": 90 }` (10–600, vale dal prossimo round) oppure `{ "azione": "pausa"\|"riprendi" }` |
+| `battleAvvia`, `battleTermina`, `battleProssimo`, `battleReset` | `{}`: avvia il 3-2-1, chiude il round con il gong, passa allo scontro dopo, scarta il round in corso |
+| `battleVotoGiudice` | `{ "giudice": "luca"\|"freya"\|"daniele", "lato": "sx"\|"dx", "valore": 8.5 }`: solo a fine round |
+| `battleGiudici` | `{ "luca"?, "freya"?, "daniele"? }`: nomi dei giudici |
+| `battleRivela`, `battleProclama` | `{}` mostra i voti e il totale · `{ "lato": "sx"\|"dx" }` decide un pari merito |
+| `tabellone` | `{ "modo"?: "torneo"\|"punti", "visibile"?: true }` |
+| `torneo`, `torneoCarica` | `{ "azione": "crea"\|"sorteggia"\|"azzera", "partecipanti"?: ["…"] }` (4 o 8) · `{ "id": "q1"\|…\|"f1" }` |
+| `punti` | `{ "artisti"?: ["…"], "target"?: 30, "azzera"?: true }` |
+| `battlePopup` | `{ "elenco"?, "ogniMinuti"?, "durata"? }` per le impostazioni, oppure `{ "id"? }` per mostrare un pop-up (senza `id`, la prossima del giro) |
+| `battleDemo` | `{ "fase": "attesa"\|"countdown"\|"battle"\|"voto"\|"risultato"\|"pari"\|"torneo"\|"punti", "secondi"? }`: dati di prova |
 | `togliRisultato` | `{ "id" }` |
 | `demo`, `nuovaSerata` | `{}` |
 
@@ -217,7 +275,10 @@ Il tunnel espone solo la porta del webhook, non la regia.
 - `lib/stato.mjs`: punteggi, classifica, countdown, spareggio, impostazioni del layout senza premio, tracce ascoltate (logica pura, testata)
 - `lib/chat.mjs`: riconoscimento dei voti e lettura dei commenti TikTok (`tiktok-live-connector`)
 - `lib/nero.mjs`: verifica firma e lettura dei webhook Nero.fan
-- `public/`: overlay della gara, layout senza premio, live session in studio e regia (HTML/CSS/JS senza build); `public/js/suoni.js` sintetizza gli effetti, `public/js/eventi-sonori.js` decide quando partono, `public/js/barra.js` mette in fila le voci della barra che scorre; `public/js/studio.js` + `studio-logica.js` (voci della barra e giro delle comparse, testate in `test/studio.test.mjs`) + `nastro.js` (il nastro che scorre) per la live session
+- `lib/battle.mjs`: regole del battle (fasi del round, chat, punteggio, torneo, classifica a punti, dati di prova; logica pura, testata) · `lib/validazione.mjs`: controlli condivisi di testi, numeri e voti
+- `public/battle.html` + `css/battle.css`, `css/battle-tabellone.css`, `js/battle.js`, `js/battle-logica.js`, `js/battle-tabellone.js`: il layout battle (la logica pura è in `battle-logica.js`)
+- `strumenti/mockup-battle.mjs`: mockup e controllo di geometria del battle con Playwright
+- `public/`: overlay della gara, layout senza premio, live session in studio, battle e regia (HTML/CSS/JS senza build); `public/js/suoni.js` sintetizza gli effetti, `public/js/eventi-sonori.js` decide quando partono, `public/js/barra.js` mette in fila le voci della barra che scorre; `public/js/studio.js` + `studio-logica.js` (voci della barra e giro delle comparse, testate in `test/studio.test.mjs`) + `nastro.js` (il nastro che scorre) per la live session
 - `mockup/`: anteprime generate dall'overlay vero (`?anteprima=1&statico=1`)
 
 Test: `npm test`
