@@ -73,7 +73,7 @@ function caricaStato() {
     // Layout senza premio (aggiunto dopo): impostazioni complete anche da uno stato vecchio.
     salvato.senzaPremio = S.fondiSenzaPremio(salvato.senzaPremio);
     if (!S.LAYOUT.includes(salvato.layout)) salvato.layout = iniziale.layout;
-    if (!Array.isArray(salvato.ascoltate)) salvato.ascoltate = [];
+    salvato.ascoltate = Array.isArray(salvato.ascoltate) ? salvato.ascoltate.filter((a) => a && typeof a === "object") : [];
     // Stato di una versione precedente (tre voti per categoria): la traccia in corso riparte da zero.
     if (Array.isArray(salvato.corrente?.voti?.beat)) salvato.corrente = S.tracciaVuota();
     if (Array.isArray(salvato.giudici)) salvato.giudici = { ...config.giudici };
@@ -168,6 +168,17 @@ function collegaTikTok() {
 }
 
 // --- Comandi (regia via WebSocket, Stream Deck e altri tool via POST /api/<comando>) -----
+// Pulsanti Prova: passano alle pagine solo i dati che gli effetti si aspettano.
+function datiProva(dati) {
+  const d = dati && typeof dati === "object" ? dati : {};
+  const puliti = {};
+  if (S.TIER_SCHEDA.includes(d.tier)) puliti.tier = d.tier;
+  if (typeof d.valore === "number" && d.valore >= 0 && d.valore <= 10) puliti.valore = d.valore;
+  if (Number.isInteger(d.posti) && d.posti >= 1 && d.posti <= 10) puliti.posti = d.posti;
+  if (typeof d.ultimi === "boolean") puliti.ultimi = d.ultimi;
+  return puliti;
+}
+
 function esito(fn) {
   const risultato = fn(stato, Date.now());
   if (risultato?.vincitore) emetti("vincitore", risultato.vincitore);
@@ -274,7 +285,7 @@ const comandi = {
   },
   // Fa suonare un effetto su overlay o regia (dove sono attivi i suoni): per provarli prima della live.
   provaSuono({ nome = "entrata", dati = null }) {
-    emetti("suono", { nome: pulisci(nome, 30), dati: dati && typeof dati === "object" && !Array.isArray(dati) ? dati : {} });
+    emetti("suono", { nome: pulisci(nome, 30), dati: datiProva(dati) });
   },
   // --- Layout senza premio (live giornaliere di ascolto) ---
   layout({ nome }) {
@@ -288,6 +299,7 @@ const comandi = {
   },
   // Il link del banner «chiama» (con la campanella, se i suoni sono accesi).
   richiamo() {
+    if (!stato.visibili.banner) throw new Error("Il banner è spento: accendetelo in In onda");
     emetti("richiamo", { manuale: true });
   },
   // Rimostra la scheda della traccia in ascolto, senza suono.
@@ -436,7 +448,13 @@ const server = http.createServer(async (req, res) => {
         return json(res, 415, { ok: false, errore: "Serve Content-Type: application/json" });
       }
       const corpo = await leggiCorpo(req);
-      const risposta = esegui(api[1], corpo.length ? JSON.parse(corpo) : {}, req.headers["x-pin"]);
+      let args;
+      try {
+        args = corpo.length ? JSON.parse(corpo) : {};
+      } catch {
+        return json(res, 400, { ok: false, errore: 'Corpo non valido: serve un JSON, es. {"nome": "senzaPremio"}' });
+      }
+      const risposta = esegui(api[1], args, req.headers["x-pin"]);
       return json(res, risposta.ok ? 200 : 400, risposta);
     }
     if (req.method === "GET" || req.method === "HEAD") return serviFile(res, url.pathname, req.method === "HEAD");

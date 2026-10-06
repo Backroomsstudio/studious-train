@@ -20,7 +20,11 @@ export const TIER_SCHEDA = ["standard", "skip", "superskip", "throne"];
 export const SUONI_TRACCIA = ["delicato", "pieno", "nessuno"];
 const MAX_VOCI = 12;
 const MAX_VOCI_ACCESE = 8;
-const MAX_ASCOLTATE = 200;
+const MAX_ASCOLTATE = 500;
+// «Oggi abbiamo ascoltato N tracce» conta la live in corso: se tra una traccia e l'altra passano più di 4 ore
+// è un'altra live (il giorno dopo) e il conto riparte. Niente data del calendario: una live a cavallo
+// di mezzanotte non si azzera a metà.
+export const PAUSA_NUOVA_LIVE_MS = 4 * 3600_000;
 
 export function statoIniziale(config) {
   return {
@@ -77,21 +81,27 @@ export function senzaPremioIniziale() {
   };
 }
 
-const vociValide = (voci) =>
-  Array.isArray(voci) && voci.every((v) => ICONE.includes(v?.icona) && typeof v.testo === "string" && typeof v.etichetta === "string");
+const oggetto = (x) => Boolean(x) && typeof x === "object" && !Array.isArray(x);
 
 // Uno stato salvato da una versione precedente (senza questi campi, o con solo una parte) li ritrova completi.
+// Ogni valore salvato passa dagli stessi controlli della regia: quelli rotti tornano al predefinito.
 export function fondiSenzaPremio(salvato) {
-  const base = senzaPremioIniziale();
-  if (!salvato || typeof salvato !== "object" || Array.isArray(salvato)) return base;
-  return {
-    ...base,
-    ...salvato,
-    voci: vociValide(salvato.voci) ? salvato.voci : base.voci,
-    durate: { ...base.durate, ...salvato.durate },
-    spot: { ...base.spot, ...salvato.spot },
-    suonoTraccia: SUONI_TRACCIA.includes(salvato.suonoTraccia) ? salvato.suonoTraccia : base.suonoTraccia,
-  };
+  const prova = { senzaPremio: senzaPremioIniziale() };
+  if (!oggetto(salvato)) return prova.senzaPremio;
+  for (const chiave of Object.keys(prova.senzaPremio)) {
+    const valore = salvato[chiave];
+    if (valore === undefined) continue;
+    // durate e spot campo per campo: una durata rotta non butta via le altre
+    const pezzi = (chiave === "durate" || chiave === "spot") && oggetto(valore) ? Object.entries(valore).map(([k, v]) => ({ [chiave]: { [k]: v } })) : [{ [chiave]: valore }];
+    for (const modifica of pezzi) {
+      try {
+        impostaSenzaPremio(prova, modifica);
+      } catch {
+        // valore non valido: resta il predefinito
+      }
+    }
+  }
+  return prova.senzaPremio;
 }
 
 function testo(valore, max, nome, { obbligatorio = false } = {}) {
@@ -103,9 +113,14 @@ function testo(valore, max, nome, { obbligatorio = false } = {}) {
 }
 
 function numeroTra(valore, min, max, nome) {
-  const n = Number(valore);
-  if (valore === null || valore === "" || !Number.isFinite(n) || n < min || n > max) throw new Error(`${nome}: tra ${min} e ${max}`);
+  const n = typeof valore === "number" || (typeof valore === "string" && valore.trim()) ? Number(valore) : NaN;
+  if (!Number.isFinite(n) || n < min || n > max) throw new Error(`${nome}: tra ${min} e ${max}`);
   return Math.round(n);
+}
+
+function siNo(valore, nome) {
+  if (typeof valore !== "boolean") throw new Error(`${nome}: sì o no (true o false)`);
+  return valore;
 }
 
 // Modifiche dalla regia (o dall'API). Si controlla tutto su una copia: un errore non lascia metà modifica.
@@ -136,10 +151,11 @@ export function impostaSenzaPremio(stato, modifiche = {}) {
   }
   if (modifiche.velocita !== undefined) sp.velocita = numeroTra(modifiche.velocita, 40, 160, "Velocità della barra (pixel al secondo)");
   for (const chiave of ["inAscoltoNellaBarra", "ascoltateNellaBarra", "loghiBarra", "filoCamera"]) {
-    if (modifiche[chiave] !== undefined) sp[chiave] = Boolean(modifiche[chiave]);
+    if (modifiche[chiave] !== undefined) sp[chiave] = siNo(modifiche[chiave], chiave);
   }
   if (modifiche.durate !== undefined) {
-    for (const [tier, secondi] of Object.entries(modifiche.durate ?? {})) {
+    if (!oggetto(modifiche.durate)) throw new Error("Durata della scheda: serve un elenco per tipo di invio, es. {\"throne\": 15}");
+    for (const [tier, secondi] of Object.entries(modifiche.durate)) {
       if (!TIER_SCHEDA.includes(tier)) throw new Error("Durata della scheda: tipo di invio sconosciuto");
       sp.durate[tier] = numeroTra(secondi, 4, 20, "Durata della scheda (secondi)");
     }
@@ -150,7 +166,8 @@ export function impostaSenzaPremio(stato, modifiche = {}) {
   }
   if (modifiche.richiamoOgniMinuti !== undefined) sp.richiamoOgniMinuti = numeroTra(modifiche.richiamoOgniMinuti, 0, 30, "Richiamo automatico (minuti)");
   if (modifiche.spot !== undefined) {
-    const spot = modifiche.spot ?? {};
+    if (!oggetto(modifiche.spot)) throw new Error("Spot: servono i testi, es. {\"titolo\": \"Vuoi suonare così?\"}");
+    const spot = modifiche.spot;
     if (spot.sopra !== undefined) sp.spot.sopra = testo(spot.sopra, 40, "Spot, riga sopra");
     if (spot.titolo !== undefined) sp.spot.titolo = testo(spot.titolo, 28, "Spot, titolo", { obbligatorio: true });
     if (spot.sotto !== undefined) sp.spot.sotto = testo(spot.sotto, 60, "Spot, riga sotto");
@@ -167,11 +184,24 @@ export function impostaLayout(stato, nome) {
 export function registraAscolto(stato, ora) {
   const t = stato.corrente;
   if (!t.titolo) return false;
-  const ultima = stato.ascoltate.at(-1);
-  if (stato.ascoltate.some((a) => a.id === t.id) || (ultima && ultima.titolo === t.titolo && ultima.artista === t.artista)) return false;
+  const giaVista = stato.ascoltate.find((a) => a?.id === t.id);
+  if (giaVista) {
+    // la regia ha corretto il nome: si aggiorna, così rimettendola non conta due volte
+    Object.assign(giaVista, { titolo: t.titolo, artista: t.artista, tier: t.tier });
+    return false;
+  }
+  const ultima = stato.ascoltate[stato.ascoltate.length - 1];
+  if (ultima && ultima.titolo === t.titolo && ultima.artista === t.artista) return false;
+  if (ultima && ora - ultima.alle > PAUSA_NUOVA_LIVE_MS) stato.ascoltate = [];
   stato.ascoltate.push({ id: t.id, titolo: t.titolo, artista: t.artista, tier: t.tier, alle: ora });
   if (stato.ascoltate.length > MAX_ASCOLTATE) stato.ascoltate.splice(0, stato.ascoltate.length - MAX_ASCOLTATE);
   return true;
+}
+
+// Quante tracce si sono ascoltate nella live in corso (0 se l'ultima è di un'altra live).
+export function ascoltateNellaLive(stato, ora) {
+  const ultima = stato.ascoltate[stato.ascoltate.length - 1];
+  return ultima && ora - ultima.alle <= PAUSA_NUOVA_LIVE_MS ? stato.ascoltate.length : 0;
 }
 
 export const suoniIniziali = (config) => ({ dove: config.suoni?.dove ?? "overlay", volume: config.suoni?.volume ?? 0.8 });
@@ -215,9 +245,13 @@ export function tracciaDaNero(stato, traccia, { ora = 0, attesaMs = 0 } = {}) {
 
 // La traccia arrivata da Nero durante il voto passa sul tabellone da sola `attesaMs` dopo la conferma.
 // Se dopo la conferma la regia cambia un voto (non più confermata), aspetta la nuova conferma.
+// Nel layout senza premio passa subito (per esempio se la regia cambia layout con una traccia in attesa).
 export function passaSeTocca(stato, ora, attesaMs) {
-  if (!stato.neroAutomatico || !stato.neroInArrivo || !stato.corrente.confermato) return false;
-  if (ora - (stato.ultimaConfermaAlle ?? -Infinity) < attesaMs) return false;
+  if (!stato.neroAutomatico || !stato.neroInArrivo) return false;
+  if (stato.layout !== "senzaPremio") {
+    if (!stato.corrente.confermato) return false;
+    if (ora - (stato.ultimaConfermaAlle ?? -Infinity) < attesaMs) return false;
+  }
   prossima(stato);
   return true;
 }
@@ -447,6 +481,6 @@ export function istantanea(stato, config, ora) {
     spareggio: stato.spareggio,
     layout: stato.layout,
     senzaPremio: stato.senzaPremio,
-    ascoltate: stato.ascoltate.length,
+    ascoltate: ascoltateNellaLive(stato, ora),
   };
 }

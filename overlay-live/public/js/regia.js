@@ -517,7 +517,8 @@ function rigaVoce(v = {}) {
   );
 }
 
-// Le righe ancora vuote (appena aggiunte) non si mandano.
+// Le righe ancora da finire (accese ma senza testo, come una appena aggiunta) non si mandano:
+// restano sullo schermo finché l'operatore non scrive il testo.
 function leggiVoci() {
   return [...$("#sp-voci").children]
     .map((li) => ({
@@ -527,10 +528,13 @@ function leggiVoci() {
       etichetta: li.querySelector('[name="etichetta"]').value,
       testo: li.querySelector('[name="testo"]').value,
     }))
-    .filter((v) => v.etichetta.trim() || v.testo.trim());
+    .filter((v) => v.testo.trim() || (!v.attiva && v.etichetta.trim()));
 }
 
+const firmaVoci = (voci) => JSON.stringify(voci.map((v) => [v.attiva, v.icona, v.etichetta.trim(), v.testo.trim()]));
+
 async function salvaVoci(voci = leggiVoci()) {
+  if (stato && firmaVoci(voci) === firmaVoci(stato.senzaPremio.voci)) return; // niente di nuovo da salvare
   const esito = await invia("senzaPremio", { voci });
   if (esito.ok) avviso("Barra aggiornata", "ok");
   else if (stato) disegnaVoci(stato, true);

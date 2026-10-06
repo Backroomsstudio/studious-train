@@ -114,7 +114,8 @@ export function suoniSenzaPremio(prima, dopo, eventi = [], { ora = 0, ultimaTrac
   if (!prima) return [];
   const suoni = [];
   for (const e of eventi) if (e.nome === "suono") suoni.push(prova(e));
-  if (eventi.some((e) => e.nome === "richiamo" && e.dati?.manuale)) suoni.push({ nome: "premio" });
+  // La campanella del richiamo solo se il banner è in onda (altrimenti si sentirebbe senza vedere niente).
+  if (dopo.visibili?.banner !== false && eventi.some((e) => e.nome === "richiamo" && e.dati?.manuale)) suoni.push({ nome: "premio" });
   const scelta = dopo.senzaPremio?.suonoTraccia ?? "delicato";
   const traccia = richiesteScheda(prima, dopo, eventi).find((r) => r.tipo === "ascolto" && r.conSuono);
   if (traccia && scelta !== "nessuno" && ora - ultimaTracciaAlle >= PAUSA_MIN_TRACCIA_MS) {

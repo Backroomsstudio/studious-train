@@ -302,8 +302,13 @@ export function volume(v) {
   if (uscita) uscita.gain.setTargetAtTime(volumeAttuale, ctx.currentTime, 0.05);
 }
 
+// Un effetto che fallisce (dati strani da un pulsante Prova) non deve mai fermare il disegno della pagina.
 export function suona(nome, dati = {}, ritardoMs = 0) {
-  const effetto = effetti[nome];
+  const effetto = Object.hasOwn(effetti, nome) ? effetti[nome] : null;
   if (!effetto || volumeAttuale === 0 || !contesto()) return;
-  effetto(ctx.currentTime + 0.02 + ritardoMs / 1000, dati);
+  try {
+    effetto(ctx.currentTime + 0.02 + ritardoMs / 1000, dati ?? {});
+  } catch (e) {
+    console.warn(`Suono «${nome}» non riprodotto:`, e.message);
+  }
 }

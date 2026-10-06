@@ -139,7 +139,7 @@ test("barra: in ascolto dopo la prima voce, tracce di oggi prima dell'ultima, vo
   assert.equal(voci[0].oro, true, "nero.fan/backrooms in oro");
 
   stato.corrente = S.tracciaVuota({ titolo: "Notti a Vicenza (feat. Kappa 23) versione estesa", artista: "Lince", tier: "throne" });
-  for (let i = 0; i < MIN_ASCOLTATE; i++) stato.ascoltate.push({ id: `a${i}`, titolo: `T${i}`, artista: "A" });
+  for (let i = 0; i < MIN_ASCOLTATE; i++) stato.ascoltate.push({ id: `a${i}`, titolo: `T${i}`, artista: "A", alle: 0 });
   stato.senzaPremio.voci[3].attiva = false; // Kick spento
   voci = vociBarra(foto(stato));
   assert.deepEqual(voci.map((v) => v.tipo), ["social", "ascolto", "social", "social", "ascoltate", "social"]);
@@ -239,4 +239,88 @@ test("nella gara il pulsante Prova conserva i dati dell'effetto", () => {
   const s = foto(stato);
   assert.deepEqual(suoniTraccia(s, s, [{ nome: "suono", dati: { nome: "voto", dati: { valore: 9 } } }]), [{ nome: "voto", dati: { valore: 9 } }]);
   assert.deepEqual(suoniTraccia(s, s, [{ nome: "suono", dati: { nome: "primo", dati: {} } }]), [{ nome: "primo" }]);
+});
+
+test("cambio da gara a senza premio con una traccia di Nero in attesa: passa subito", () => {
+  const stato = S.statoIniziale(config);
+  S.tracciaDaNero(stato, { neroId: "n1", titolo: "Uno", artista: "A" }, { ora: 0, attesaMs: 10_000 });
+  S.impostaVoto(stato, { categoria: "beat", valore: 8 });
+  S.tracciaDaNero(stato, { neroId: "n2", titolo: "Due", artista: "B", tier: "throne" }, { ora: 1, attesaMs: 10_000 });
+  assert.equal(S.passaSeTocca(stato, 2, 10_000), false, "nella gara aspetta la conferma");
+  S.impostaLayout(stato, "senzaPremio");
+  assert.equal(S.passaSeTocca(stato, 3, 10_000), true);
+  assert.deepEqual([stato.corrente.titolo, stato.corrente.tier, stato.neroInArrivo], ["Due", "throne", null]);
+});
+
+test("«Oggi abbiamo ascoltato»: conta la live in corso, riparte dopo 4 ore di pausa", () => {
+  const stato = statoSenzaPremio();
+  const ora = 1_000_000;
+  for (let i = 0; i < 5; i++) {
+    stato.corrente = S.tracciaVuota({ titolo: `T${i}`, artista: "A" });
+    S.registraAscolto(stato, ora + i * 60_000);
+  }
+  assert.equal(S.istantanea(stato, config, ora + 10 * 60_000).ascoltate, 5);
+  // il giorno dopo, prima ancora della prima traccia, il conto vecchio non si vede
+  const domani = ora + 20 * 3600_000;
+  assert.equal(S.istantanea(stato, config, domani).ascoltate, 0);
+  stato.corrente = S.tracciaVuota({ titolo: "Prima di oggi", artista: "B" });
+  S.registraAscolto(stato, domani);
+  assert.equal(S.istantanea(stato, config, domani).ascoltate, 1);
+  assert.equal(S.ascoltateNellaLive(stato, domani + S.PAUSA_NUOVA_LIVE_MS + 1), 0);
+});
+
+test("nome corretto dalla regia: la traccia ascoltata si aggiorna e non conta due volte", () => {
+  const stato = statoSenzaPremio();
+  stato.corrente = S.tracciaVuota({ titolo: "Tre", artista: "C" });
+  S.registraAscolto(stato, 1);
+  stato.corrente.titolo = "Tre (remix)";
+  assert.equal(S.registraAscolto(stato, 2), false);
+  assert.equal(stato.ascoltate[0].titolo, "Tre (remix)");
+  stato.corrente = S.tracciaVuota({ titolo: "Tre (remix)", artista: "C" });
+  assert.equal(S.registraAscolto(stato, 3), false);
+  assert.equal(stato.ascoltate.length, 1);
+});
+
+test("stato salvato con valori rotti: tornano ai predefiniti, quelli buoni restano", () => {
+  const base = S.senzaPremioIniziale();
+  const fuso = S.fondiSenzaPremio({
+    velocita: "veloce",
+    durate: { throne: "x", skip: 11 },
+    spot: "ciao",
+    richiamoOgniMinuti: -5,
+    titolo: 42,
+    loghiBarra: "no",
+    sopra: "Mandateci",
+  });
+  assert.equal(fuso.velocita, base.velocita);
+  assert.deepEqual(fuso.durate, { ...base.durate, skip: 11 });
+  assert.deepEqual(fuso.spot, base.spot);
+  assert.equal(fuso.richiamoOgniMinuti, base.richiamoOgniMinuti);
+  assert.equal(fuso.titolo, base.titolo);
+  assert.equal(fuso.loghiBarra, true);
+  assert.equal(fuso.sopra, "Mandateci");
+});
+
+test("tipi sbagliati dall'API: errore chiaro invece di un valore a caso", () => {
+  const stato = S.statoIniziale(config);
+  for (const sbagliata of [
+    { richiamoOgniMinuti: "  " },
+    { richiamoOgniMinuti: false },
+    { velocita: [80] },
+    { spot: "ciao" },
+    { durate: [] },
+    { durate: 5 },
+    { loghiBarra: "false" },
+  ]) {
+    assert.throws(() => S.impostaSenzaPremio(stato, sbagliata), Error, JSON.stringify(sbagliata));
+  }
+  S.impostaSenzaPremio(stato, { velocita: "120", loghiBarra: false });
+  assert.equal(stato.senzaPremio.velocita, 120);
+});
+
+test("richiamo con il banner spento: niente campanella", () => {
+  const stato = statoSenzaPremio();
+  stato.visibili.banner = false;
+  const s = foto(stato);
+  assert.deepEqual(suoniSenzaPremio(s, s, [{ nome: "richiamo", dati: { manuale: true } }]), []);
 });
