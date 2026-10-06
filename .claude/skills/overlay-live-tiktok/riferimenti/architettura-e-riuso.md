@@ -153,6 +153,30 @@ Nel modello ogni risultato è una traccia e `classifica` ordina i risultati. In 
 6. Vincitore e candidati dello spareggio hanno sempre `{ id, nome, sotto (es. «3 round vinti»), punti, premio, proclamatoAlle, visibile }`. Rinomina tutto insieme: `lib/stato.mjs`; `overlay.js` (`disegnaClassifica`, `notificaCambi`, `disegnaVincitore`, `disegnaSpareggio`, i `/10`); `regia.js` (`disegnaClassifica`, `disegnaSpareggio`, `scegliVincitore`); il log di fine countdown nel `setInterval` di `server.mjs` (oggi `vincitore.titolo` e `vincitore.artista`). Controlla con la tabella «Contratto di istantanea» di §2.
 7. «Correggi nome» cambia l'archivio, non i round.
 
+## 4ter. Clone o pagina nuova dello stesso server?
+
+Prima di copiare la cartella, chiediti se il layout nuovo usa gli stessi dati: la stessa traccia di Nero, la stessa regia, gli stessi suoni, gli stessi account. Se sì, fai una **pagina nuova dello stesso server**: è come è nato il layout senza premio (`/senza-premio.html`, ottobre 2026). Un programma solo, una regia sola, una sola sessione di Nero, nessuna porta in più.
+
+| Situazione | Scelta |
+|---|---|
+| Stessa diretta, formato diverso (live di ascolto, intervista, «ultimi minuti»), stessi dati | pagina nuova nello stesso server |
+| Gara con logica diversa (battle 1 contro 1, voto per lati) che va in onda da sola | clone (§5), adattando §4bis |
+| Overlay che deve girare insieme a un altro, con dati diversi (due regie) | clone con porte diverse (§5) |
+
+Come si fa (vedi i file del layout senza premio):
+1. **Pagina**: `public/<nome>.html` (copia i `<defs>` SVG che usa, carica `base.css` e `overlay.css` per pannello, `.fuori`, `.statico`, `.onda`, `.tier`, guide e keyframes), `public/css/<nome>.css` con un **prefisso** di classe (`sp-`), perché `overlay.css` usa già `.barra`, `.premio`, `.timer` e altri nomi, e `public/js/<nome>.js`. Aggiungi `"/<nome>"` e `"/<nome>.html"` a `PAGINE` in `server.mjs`.
+2. **Stato**: un oggetto di impostazioni (`senzaPremio`) con `…Iniziale()`, `imposta…()` che valida tutto su una copia (un errore non lascia metà modifica) e `fondi…()` per gli stati salvati vecchi, chiamata da `caricaStato`. Conservalo in `demo` e `nuovaSerata`. Le parti da mostrare o nascondere vanno in `WIDGET` (il comando `widget` e gli interruttori In onda esistono già).
+3. **Layout in onda** (`stato.layout`): con due sorgenti caricate in LIVE Studio, il browser di una scena nascosta può continuare a girare. Ogni pagina suona solo se `suonaIn(stato, "<layout>", "overlay")` (in `eventi-sonori.js`); la regia sceglie le regole del layout in onda. Se il layout non ha voti, `tracciaDaNero` non deve aspettare la conferma.
+4. **Suoni**: una funzione pura per il layout (`suoniSenzaPremio`) con i casi muti testati (primo disegno, titolo vuoto, parte fuori onda, al massimo un suono ogni N secondi).
+5. **Regia**: una sezione larga (`grid-column: 1 / -1`) con un'anteprima dal vivo in `<iframe>` scalata a 0,25 (`?anteprima=1&muto=1`), e il selettore del layout in testata.
+6. **Eventi una tantum** (richiamo, spot, ripeti scheda) come `emetti("<nome>", dati)`: non si salvano, quindi una pagina ricaricata non li ripete.
+
+**Barra che scorre senza salti** (`public/js/senza-premio.js`, «nastro»): niente animazione CSS su due copie. I pezzi sono elementi in fila in un flex che si sposta con `translate3d` di `velocità × dt` a ogni `requestAnimationFrame`. Quando un pezzo esce del tutto a sinistra si toglie e si somma la sua larghezza alla x; a destra se ne aggiungono finché il nastro arriva a ~1500 px. Quando il contenuto cambia si rifanno **solo i pezzi non ancora in vista** (bordo sinistro oltre x 980): chi sta leggendo non vede salti. Le voci le mette in fila una funzione pura (`public/js/barra.js`), con una chiave per voce. Proteggi il ciclo di riempimento dalle larghezze 0 (barra nascosta con `?w=`). Dopo `document.fonts.ready` rimisura le larghezze.
+
+**Scheda che sale da dietro una barra**: un contenitore con `overflow: hidden` che finisce esattamente sul bordo alto della barra (z-index più basso della barra); la scheda dentro passa da `translateY(altezza + margine)` a `none`. Durate per tier (chi paga si vede più a lungo), spot in coda se c'è una traccia, aggiornamento sul posto se arriva un'altra traccia mentre è su.
+
+**Video per lo studio**: Playwright `recordVideo` (540×960, la pagina si adatta con `--scala`) registra il movimento; i suoni si rendono a parte con `suoni.mjs wav` e si uniscono con ffmpeg. Il video di Playwright esce più lento del tempo reale (~11% su una macchina carica): riallinealo con `setpts` misurando due eventi visibili, prima di mettere l'audio.
+
 ## 5. Ricetta: nuovo overlay da questo modello
 
 **Prima scegli:**

@@ -13,6 +13,9 @@ Percorsi (dalla radice `/home/user/studious-train`): modello `overlay-live/`; sk
 
 ## Cosa c'è già: overlay-live, il modello
 
+Due layout nello stesso server: la **gara con premio** (`/overlay.html`) e il **layout senza premio** delle live giornaliere di ascolto (`/senza-premio.html`: banner «Mandaci la tua musica!», barra dei social che scorre, scheda «Ora in ascolto», spot dello studio). La regia sceglie quale è **In onda**. Se il layout nuovo usa gli stessi dati (Nero, regia, suoni), fallo come pagina dello stesso server e non come clone: `riferimenti/architettura-e-riuso.md` §4ter.
+
+
 Server Node locale (`server.mjs`, niente build né framework) e due pagine statiche collegate via WebSocket: l'overlay (sorgente Link) e la regia. La logica sta in funzioni pure in `lib/stato.mjs`. 25 test con `npm test`.
 
 | Pezzo | Cosa fa |
