@@ -238,6 +238,12 @@ export function votoChatBattle(stato, { piattaforma, utente }, lato, _ora) {
   return true;
 }
 
+// Un commento della chat TikTok: vale come voto solo se è «1», «2», «sx» o «dx».
+export function votoDaCommento(stato, { piattaforma, utente, testo: commento }, ora) {
+  const lato = leggiVotoBattle(commento);
+  return lato !== null && votoChatBattle(stato, { piattaforma, utente }, lato, ora);
+}
+
 function conteggi(chat) {
   let sx = 0;
   let dx = 0;
@@ -555,18 +561,20 @@ export function caricaPartita(stato, id) {
   b.partitaId = id;
 }
 
-function registraInTorneo(b) {
-  if (!b.partitaId) return;
-  const torneo = b.tabellone.torneo;
-  const p = torneo.partite.find((x) => x.id === b.partitaId);
+// Scrive l'esito di una partita e porta il vincitore alla successiva (dopo la finale, il campione).
+function esitoPartita(torneo, id, lato, totali) {
+  const p = torneo.partite.find((x) => x.id === id);
   if (!p) return;
-  const r = b.risultato;
-  p.vincitore = r.vincitore;
-  p.totali = { ...r.totali };
-  const vincitore = copia(p[r.vincitore]);
+  p.vincitore = lato;
+  p.totali = { ...totali };
+  const vincitore = copia(p[lato]);
   if (p.id === "f1") torneo.campione = vincitore;
   const destinazione = AVANZA[p.id];
   if (destinazione) torneo.partite.find((x) => x.id === destinazione[0])[destinazione[1]] = vincitore;
+}
+
+function registraInTorneo(b) {
+  if (b.partitaId) esitoPartita(b.tabellone.torneo, b.partitaId, b.risultato.vincitore, b.risultato.totali);
 }
 
 // Classifica a punti: elenco di artisti (massimo 10) e target. Gli artisti si possono dare con punti di partenza.
@@ -609,4 +617,78 @@ function registraInPunti(b) {
   if (punti.vincitore !== null || !raggiunti.length) return;
   raggiunti.sort((x, y) => r.totali[y.lato] - r.totali[x.lato] || y.artista.punti - x.artista.punti || (x.lato === r.vincitore ? -1 : 1));
   punti.vincitore = raggiunti[0].artista.nome;
+}
+
+// ---------- Dati di prova (mockup, pulsanti Prova della regia) ----------
+
+export const FASI_DEMO = ["attesa", "countdown", "battle", "voto", "risultato", "pari", "torneo", "punti"];
+
+const ROUND_DEMO = [
+  ["Lince", [7.25, 7.5, 7.75]],
+  ["Kappa", [6.5, 6.75, 7]],
+  ["Nove", [5.75, 5.5, 6.25]],
+  ["Mira", [4.5, 4.75, 4.75]],
+  ["Dama", [3.5, 4, 4]],
+];
+
+// Riempie lo stato con dati realistici nella fase chiesta, tenendo la configurazione già scelta
+// (nomi dei giudici, modalità, durata, pop-up). Con `secondi` si sceglie il tempo rimasto nel battle.
+export function battleDemo(stato, fase, ora, { secondi = 47 } = {}) {
+  if (!FASI_DEMO.includes(fase)) throw new Error(`Fase di prova sconosciuta: ${FASI_DEMO.join(", ")}`);
+  stato.battle = battleNuovaSerata(stato.battle);
+  stato.visibili.bracket = false;
+  const b = stato.battle;
+  b.sx = { nome: "Lince", instagram: "lince.music" };
+  b.dx = { nome: "Nove", instagram: "nove.mc" };
+  if (b.modalita.elenco.some((m) => m.id === "tematica" && m.attiva)) impostaModalita(stato, { scelta: "tematica", testo: "Vicenza di notte" });
+  const chat = (sx, dx) => {
+    b.chat.voti = {};
+    for (let i = 0; i < sx; i++) b.chat.voti[`demo:s${i}`] = "sx";
+    for (let i = 0; i < dx; i++) b.chat.voti[`demo:d${i}`] = "dx";
+  };
+  const voti = (sx, dx) => b.giudici.forEach((g, i) => (g.voti = { sx: sx[i], dx: dx[i] }));
+  const scaduto = () => (b.timer = { durataSecondi: b.timer.durataSecondi, fineAlle: null, rimanenteMs: null, scaduto: true });
+
+  if (fase === "countdown") {
+    b.fase = "countdown";
+    b.conto.finoAlle = ora + 60_000;
+  } else if (fase === "battle") {
+    b.fase = "battle";
+    b.timer = { durataSecondi: b.timer.durataSecondi, fineAlle: ora + secondi * 1000, rimanenteMs: null, scaduto: false };
+    b.chat.aperta = true;
+    chat(22, 15);
+  } else if (fase === "voto") {
+    b.fase = "voto";
+    scaduto();
+    chat(22, 15);
+  } else if (fase === "risultato" || fase === "pari") {
+    b.fase = "risultato";
+    scaduto();
+    if (fase === "risultato") {
+      chat(22, 15);
+      voti([8, 8, 8], [6, 6, 6]);
+    } else {
+      chat(20, 20);
+      voti([8, 7, 9], [7, 8, 9]);
+    }
+    const r = calcolaRisultato(b);
+    b.risultato = { rivelatoAlle: ora - 60_000, totali: r.totali, parziali: r.parziali, vincitore: r.vincitore, pari: r.pari, registrato: fase === "risultato" };
+  } else if (fase === "torneo") {
+    creaTorneo(stato, [{ nome: "Lince", instagram: "lince.music" }, "Nove", "Kappa", "Mira", "Dama", "Rizzo", "Sole", "Vale"]);
+    const torneo = b.tabellone.torneo;
+    esitoPartita(torneo, "q1", "sx", { sx: 7.5, dx: 6.25 });
+    esitoPartita(torneo, "q2", "dx", { sx: 5.5, dx: 7 });
+    esitoPartita(torneo, "q3", "sx", { sx: 7.75, dx: 6 });
+    esitoPartita(torneo, "q4", "dx", { sx: 6.5, dx: 7.25 });
+    b.tabellone.modo = "torneo";
+    caricaPartita(stato, "s1");
+  } else if (fase === "punti") {
+    b.tabellone.modo = "punti";
+    b.tabellone.punti = {
+      artisti: ROUND_DEMO.map(([nome, round]) => ({ nome, punti: arrotonda(round.reduce((a, x) => a + x, 0), 2), round })),
+      target: 30,
+      vincitore: null,
+    };
+  }
+  if (fase === "torneo" || fase === "punti") stato.visibili.bracket = true;
 }

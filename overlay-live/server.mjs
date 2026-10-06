@@ -9,15 +9,17 @@ import { dirname, extname, join, normalize, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer } from "ws";
 import * as S from "./lib/stato.mjs";
+import * as B from "./lib/battle.mjs";
 import { avviaTikTok, leggiVoto } from "./lib/chat.mjs";
 import { firmaValida, versoCoda, avviaNero } from "./lib/nero.mjs";
 
 const CARTELLA = dirname(fileURLToPath(import.meta.url));
 const PUBBLICA = join(CARTELLA, "public");
-const FILE_STATO = join(CARTELLA, "dati", "stato.json");
+// OVERLAY_CONFIG e OVERLAY_DATI servono alle prove automatiche: un config e una cartella dati temporanei.
+const FILE_STATO = join(process.env.OVERLAY_DATI ?? join(CARTELLA, "dati"), "stato.json");
 // TikTok LIVE Studio accetta nella sorgente Link solo indirizzi con un ".parola" (es. ".html"):
 // per questo l'overlay risponde anche come /overlay.html (il layout delle live giornaliere come /senza-premio.html,
-// la live session in studio come /studio.html).
+// la live session in studio come /studio.html, il battle come /battle.html).
 const PAGINE = {
   "/": "regia.html",
   "/regia": "regia.html",
@@ -27,6 +29,8 @@ const PAGINE = {
   "/senza-premio.html": "senza-premio.html",
   "/studio": "studio.html",
   "/studio.html": "studio.html",
+  "/battle": "battle.html",
+  "/battle.html": "battle.html",
 };
 const TIPI = {
   ".html": "text/html; charset=utf-8",
@@ -46,8 +50,8 @@ let stato = caricaStato();
 
 function caricaConfig() {
   const esempio = join(CARTELLA, "config.esempio.json");
-  const file = join(CARTELLA, "config.json");
-  if (!existsSync(file)) {
+  const file = process.env.OVERLAY_CONFIG ?? join(CARTELLA, "config.json");
+  if (!process.env.OVERLAY_CONFIG && !existsSync(file)) {
     writeFileSync(file, readFileSync(esempio));
     console.log("Creato config.json dal modello.");
   }
@@ -76,6 +80,7 @@ function caricaStato() {
     // Layout senza premio (aggiunto dopo): impostazioni complete anche da uno stato vecchio.
     salvato.senzaPremio = S.fondiSenzaPremio(salvato.senzaPremio);
     salvato.studio = S.fondiStudio(salvato.studio);
+    salvato.battle = B.fondiBattle(salvato.battle);
     if (!S.LAYOUT.includes(salvato.layout)) salvato.layout = iniziale.layout;
     salvato.ascoltate = Array.isArray(salvato.ascoltate) ? salvato.ascoltate.filter((a) => a && typeof a === "object") : [];
     // Stato di una versione precedente (tre voti per categoria): la traccia in corso riparte da zero.
@@ -141,6 +146,12 @@ function inviaATutti() {
 const pulisci = (testo, max = 120) => String(testo ?? "").trim().slice(0, max);
 
 function registraCommento({ piattaforma, utente, testo }) {
+  // Con il battle in onda i commenti votano un rapper («1», «2», «sx», «dx»), non un punteggio.
+  if (stato.layout === "battle") {
+    const preso = B.votoDaCommento(stato, { piattaforma: pulisci(piattaforma, 20), utente: pulisci(utente, 40), testo }, Date.now());
+    if (preso) cambiato();
+    return preso;
+  }
   const valore = leggiVoto(testo);
   if (valore === null) return false;
   const preso = S.votoChat(stato, { piattaforma: pulisci(piattaforma, 20), utente: pulisci(utente, 40) }, valore, Date.now());
@@ -349,10 +360,74 @@ const comandi = {
     if (!id && !stato.studio.comparse.some((c) => c.attiva)) throw new Error("Nessuna comparsa accesa");
     emetti("comparsa", id ? { id } : {});
   },
+  // --- Battle (scontro tra due rapper: barre dal voto chat, giudici, tabellone) ---
+  battleScontro(args) {
+    B.impostaScontro(stato, args);
+  },
+  battleModalita(args) {
+    B.impostaModalita(stato, args);
+  },
+  // { durataSecondi } cambia la durata del prossimo round; { azione: "pausa" | "riprendi" } ferma o fa ripartire quello in corso.
+  battleTimer({ durataSecondi, azione }) {
+    if (durataSecondi === undefined && azione === undefined) throw new Error("Serve durataSecondi oppure azione (pausa o riprendi)");
+    if (azione !== undefined) B.timerAzione(stato, azione, Date.now());
+    if (durataSecondi !== undefined) B.impostaTimer(stato, { durataSecondi });
+  },
+  battleAvvia() {
+    B.avvia(stato, Date.now());
+  },
+  battleTermina() {
+    for (const e of B.termina(stato, Date.now())) emetti(e.nome, e.dati);
+  },
+  battleReset() {
+    B.reset(stato);
+  },
+  battleProssimo() {
+    B.prossimo(stato);
+  },
+  battleVotoGiudice(args) {
+    B.votoGiudice(stato, args);
+  },
+  battleGiudici(nomi) {
+    B.impostaGiudici(stato, nomi);
+  },
+  battleRivela() {
+    return B.rivela(stato, Date.now());
+  },
+  battleProclama({ lato }) {
+    B.proclamaBattle(stato, lato);
+  },
+  tabellone(args) {
+    B.impostaTabellone(stato, args);
+  },
+  torneo({ partecipanti, azione = "crea" }) {
+    if (azione === "crea") B.creaTorneo(stato, partecipanti);
+    else if (azione === "sorteggia") B.sorteggiaTorneo(stato);
+    else if (azione === "azzera") B.azzeraTorneo(stato);
+    else throw new Error("Azione del torneo non valida: crea, sorteggia o azzera");
+  },
+  torneoCarica({ id }) {
+    B.caricaPartita(stato, id);
+  },
+  punti(args) {
+    B.impostaPunti(stato, args);
+  },
+  // Con testi o tempi li salva; senza, mostra un pop-up: quello scelto ({ id }) o la prossima del giro.
+  battlePopup({ elenco, ogniMinuti, durata, id = null }) {
+    if (elenco !== undefined || ogniMinuti !== undefined || durata !== undefined) return B.impostaPopup(stato, { elenco, ogniMinuti, durata });
+    if (!stato.visibili.popupBattle) throw new Error("I pop-up sono spenti: accendeteli in In onda");
+    const { elenco: lista } = stato.battle.popup;
+    if (id && !lista.some((c) => c.id === id)) throw new Error("Pop-up non trovato: salvatelo prima");
+    if (!id && !lista.some((c) => c.attiva)) throw new Error("Nessun pop-up acceso");
+    emetti("popupBattle", id ? { id } : {});
+  },
+  battleDemo({ fase, secondi }) {
+    B.battleDemo(stato, fase, Date.now(), secondi === undefined ? {} : { secondi: Number(secondi) });
+  },
   demo() {
     const ora = Date.now();
-    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio } = stato;
-    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio };
+    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle } = stato;
+    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle };
     const finti = [
       ["Specchi Neri", "Nove", 8.4],
       ["Fuori Orario", "Kappa 23", 7.9],
@@ -377,8 +452,8 @@ const comandi = {
   },
   // La traccia che suona su Nero in quel momento torna sul tabellone al giro successivo.
   nuovaSerata() {
-    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, layout, senzaPremio, studio } = stato;
-    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, layout, senzaPremio, studio };
+    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, layout, senzaPremio, studio, battle } = stato;
+    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, layout, senzaPremio, studio, battle: B.battleNuovaSerata(battle) };
   },
 };
 
@@ -400,6 +475,12 @@ setInterval(() => {
   if (S.chiudiChatSeScaduta(stato, ora)) cambiato();
   if (S.passaSeTocca(stato, ora, ATTESA_DOPO_CONFERMA_MS)) {
     console.log(`Nero.fan: sul tabellone «${stato.corrente.titolo}» di ${stato.corrente.artista}`);
+    cambiato();
+  }
+  // Battle: fine del 3-2-1 e fine del timer, con il gong che le pagine suonano.
+  const gong = B.passaSeTocca(stato, ora);
+  if (gong.length) {
+    for (const e of gong) emetti(e.nome, e.dati);
     cambiato();
   }
   if (stato.countdown.fineAlle !== null && ora >= stato.countdown.fineAlle) {
@@ -523,7 +604,8 @@ server.listen(config.porta, config.host, () => {
   console.log(
     `\nOverlay live pronto\n  Regia:   ${base}/regia\n  Overlay: ${base}/overlay.html   (sorgente Link in TikTok LIVE Studio, 1080x1920)\n` +
       `  Senza premio: ${base}/senza-premio.html   (live giornaliere di ascolto, 1080x1920)\n` +
-      `  Live session in studio: ${base}/studio.html   (fonico, artista e DAW, 1080x1920)\n`,
+      `  Live session in studio: ${base}/studio.html   (fonico, artista e DAW, 1080x1920)\n` +
+      `  Battle: ${base}/battle.html   (scontro tra due rapper, 1080x1920)\n`,
   );
   if (config.host !== "127.0.0.1" && !config.pinRegia) console.warn("Attenzione: server visibile in rete senza pinRegia.");
 });

@@ -617,3 +617,65 @@ test("tabellone: modo e visibilità", () => {
   assert.throws(() => B.impostaTabellone(stato, { visibile: "sì" }), /sì o no/);
   assert.equal(stato.battle.tabellone.modo, "punti", "atomico");
 });
+
+// ---------- Chat per layout e dati di prova ----------
+
+test("commento di chat → voto", () => {
+  const stato = nuovo();
+  stato.battle.chat.aperta = true;
+  assert.equal(B.votoDaCommento(stato, { piattaforma: "tiktok", utente: "m", testo: "!DX" }, 0), true);
+  assert.equal(stato.battle.chat.voti["tiktok:m"], "dx");
+  assert.equal(B.votoDaCommento(stato, { piattaforma: "tiktok", utente: "m", testo: "8" }, 0), false, "un punteggio non è un voto del battle");
+  assert.equal(B.votoDaCommento(stato, { piattaforma: "tiktok", utente: "m", testo: "1 vs 2" }, 0), false);
+  assert.equal(stato.battle.chat.voti["tiktok:m"], "dx", "l'ultimo voto valido resta");
+});
+
+test("battleDemo: ogni fase produce uno stato valido", () => {
+  const fasi = ["attesa", "countdown", "battle", "voto", "risultato", "pari", "torneo", "punti"];
+  for (const fase of fasi) {
+    const stato = nuovo();
+    B.battleDemo(stato, fase, T);
+    const b = stato.battle;
+    assert.deepEqual(B.fondiBattle(JSON.parse(JSON.stringify(b))), b, `fase ${fase}`);
+    // Nel torneo di prova lo scontro in campo è la prima semifinale (Lince contro Mira).
+    assert.deepEqual([b.sx.nome, b.dx.nome], ["Lince", fase === "torneo" ? "Mira" : "Nove"], `nomi ${fase}`);
+    assert.equal(b.sx.instagram, "lince.music");
+  }
+  const battle = nuovo();
+  B.battleDemo(battle, "battle", T, { secondi: 20 });
+  assert.equal(battle.battle.fase, "battle");
+  assert.equal(battle.battle.timer.fineAlle, T + 20_000);
+  assert.deepEqual(B.quota(battle.battle.chat), { sx: 22 / 37, dx: 15 / 37, voti: 37 });
+  assert.equal(battle.battle.modalita.scelta, "tematica");
+
+  const risultato = nuovo();
+  B.battleDemo(risultato, "risultato", T);
+  assert.equal(risultato.battle.fase, "risultato");
+  assert.equal(risultato.battle.risultato.vincitore, "sx");
+  assert.equal(risultato.battle.risultato.rivelatoAlle, T - 60_000);
+
+  const pari = nuovo();
+  B.battleDemo(pari, "pari", T);
+  assert.deepEqual([pari.battle.risultato.pari, pari.battle.risultato.vincitore], [true, null]);
+
+  const torneo = nuovo();
+  B.battleDemo(torneo, "torneo", T);
+  assert.equal(torneo.visibili.bracket, true);
+  assert.equal(torneo.battle.tabellone.modo, "torneo");
+  assert.equal(torneo.battle.tabellone.torneo.partecipanti.length, 8);
+  assert.equal(partita(torneo, "q1").vincitore, "sx");
+
+  const punti = nuovo();
+  B.battleDemo(punti, "punti", T);
+  assert.equal(punti.battle.tabellone.modo, "punti");
+  assert.equal(punti.battle.tabellone.punti.artisti.length, 5);
+  assert.equal(punti.battle.tabellone.punti.target, 30);
+  assert.throws(() => B.battleDemo(nuovo(), "boh", T), /sconosciuta/);
+});
+
+test("battleDemo conserva la configurazione già scelta", () => {
+  const stato = nuovo();
+  B.impostaGiudici(stato, { luca: "Luca C." });
+  B.battleDemo(stato, "battle", T);
+  assert.equal(stato.battle.giudici[0].nome, "Luca C.");
+});
