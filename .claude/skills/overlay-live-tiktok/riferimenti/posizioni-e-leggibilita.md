@@ -17,8 +17,20 @@ Modello: `overlay-live/` (i percorsi sotto sono relativi a quella cartella). Str
 
 ## 1. Cosa chiedere allo studio
 
+- Trova il FILE dello screenshot: il percorso dato dallo studio, oppure le cartelle degli allegati (`/mnt/user-data/uploads`, `/mnt/attach`). Se l'immagine è solo nel messaggio, chiedi di allegarla come file. Nel frattempo stima la cornice a occhio dagli angoli, scrivi che è una stima e rimanda il composito.
 - Uno screenshot intero dell'anteprima di LIVE Studio (la cornice a forma di telefono), con i riquadri dove li vogliono: l'overlay vecchio spostato a mano o rettangoli disegnati sopra.
 - Le loro richieste valgono anche come stile: scritte molto grandi, primi tre su caselle oro/argento/bronzo, premio enorme in alto, tutto in un solo overlay.
+- Se dicono «come l'altra volta» senza mandare un file, usa lo screenshot salvato in `anteprime/` (sotto). Se non c'è, usa le posizioni del modello e dillo: senza screenshot il prima/dopo non si può fare.
+
+### Anteprime misurate
+
+Aggiungi una riga a ogni misura. Se lo studio è d'accordo, salva lo screenshot in `.claude/skills/overlay-live-tiktok/riferimenti/anteprime/<data>-<overlay>.jpg`: il prossimo overlay «come l'altra volta» avrà il prima/dopo anche senza screenshot nuovo.
+
+| Data | Overlay | File | bordo_sx | bordo_alto | larghezza | altezza |
+|---|---|---|---|---|---|---|
+| ottobre 2026 | overlay-live | non salvato | non registrato | non registrato | 720 | 1585 |
+
+Di ottobre restano solo le misure 720×1585. Il punto (300, 60) del §2.1 è l'immagine finta di prova; `{ x: 1, y: 5 }` nel commento degli args del workflow non è verificato.
 
 ## 2. Metodo passo passo
 
@@ -115,7 +127,7 @@ Tutte le posizioni verticali stanno nel blocco in cima a `public/css/overlay.css
 
 ### 2.8 Controlla
 
-1. `http://127.0.0.1:4747/overlay?anteprima=1&guide=1`: bande rosse = lati tagliati (104 px per lato), bande gialle = zone dell'app (alto 0…270, basso da 1768). Nessun riquadro deve toccarle. La regia ha già il link "Anteprima overlay" con `?anteprima=1&guide=1&muto=1`.
+1. `$B/overlay.html?anteprima=1&guide=1` sulla copia di prova (`verifica-e-consegna.md` §0): bande rosse = lati tagliati (104 px per lato), bande gialle = zone dell'app (alto 0…270, basso da 1768). Nessun riquadro deve toccarle. La regia ha già il link "Anteprima overlay" con `?anteprima=1&guide=1&muto=1`.
 2. Prima/dopo sullo screenshot dello studio (sezione 8): è il controllo che convince lo studio.
 
 ## 3. Posizioni attuali (esempio da overlay-live)
@@ -187,8 +199,8 @@ function adattaTesto(el, massimo, minimo) {
 ## 6. Misura se una frase entra
 
 ```bash
-S=.claude/skills/overlay-live-tiktok/strumenti
-node $S/misura-testo.mjs "http://127.0.0.1:4747/overlay.html?anteprima=1&statico=1" "#premio-invito" "Manda la tua traccia su nero.fan/backrooms"
+# S e B come in verifica-e-consegna.md §0 (copia di prova avviata)
+node $S/misura-testo.mjs "$B/overlay.html?anteprima=1&statico=1" "#premio-invito" "Manda la tua traccia su nero.fan/backrooms"
 # → serve 554px, disponibili 477px (corpo 27px)  ⚠ TAGLIATO
 ```
 
@@ -236,22 +248,22 @@ Timer urgente (`.timer.urgente`, ultimi 30 min = `SOGLIA_URGENTE_MS` in `eventi-
 | `?w=premio,tabellone,...` | solo i widget elencati (predefiniti: premio, tabellone, classifica, timer, vincitore) |
 | `?formato=orizzontale` | tela 1920×1080 |
 
+Avvia la copia di prova come in `verifica-e-consegna.md` §0 (`R`, `S`, `SP`, `C`, `B=http://127.0.0.1:4797`). Mai sull'overlay vero: `demo` sostituisce la serata e riscrive `dati/stato.json`.
+
 ```bash
-cd overlay-live && npm start          # in un altro terminale, porta 4747
-S=../.claude/skills/overlay-live-tiktok/strumenti
-SCRATCH=/percorso/dello/scratchpad   # file di lavoro fuori dal progetto
-# mockup (comando "demo" = classifica e traccia finte; ATTENZIONE: sostituisce la serata, mai sul PC della diretta)
-node $S/scatta.mjs "http://127.0.0.1:4747/overlay.html?anteprima=1&statico=1" mockup/verticale.jpg 1080 1920 2500 demo
-node $S/scatta.mjs "http://127.0.0.1:4747/overlay.html?anteprima=1&statico=1" mockup/ultimi-minuti.jpg 1080 1920 1500 demo 'countdown={"azione":"avvia","minuti":25}'
-node $S/scatta.mjs "http://127.0.0.1:4747/overlay.html?anteprima=1&statico=1&guide=1" mockup/zone-telefono.jpg 1080 1920 2500 demo
+U="$B/overlay.html?anteprima=1&statico=1"
+# mockup ("demo" = classifica e traccia finte); elenco completo degli scatti in verifica-e-consegna.md §2
+node $S/scatta.mjs "$U" $R/$C/mockup/verticale.jpg 1080 1920 2500 demo
+node $S/scatta.mjs "$U&guide=1" $R/$C/mockup/zone-telefono.jpg 1080 1920 2500 demo
 # prima/dopo: overlay TRASPARENTE (senza ?anteprima) sopra lo screenshot dello studio, alla stessa scala
-node $S/scatta.mjs "http://127.0.0.1:4747/overlay.html?statico=1" $SCRATCH/ov.png 1080 1920 2500 demo
-python3 $S/composito.py screenshot-studio.jpg $SCRATCH/ov.png $SCRATCH/prima-dopo.jpg <bordo_sx> <bordo_alto> <larghezza_cornice> <altezza_cornice>
+node $S/scatta.mjs "$B/overlay.html?statico=1" $SP/ov.png 1080 1920 2500 demo
+python3 -I $S/composito.py screenshot-studio.jpg $SP/ov.png $SP/composito.jpg <bordo_sx> <bordo_alto> <larghezza_cornice> <altezza_cornice>
 # stampa: k=0.8255  tela visibile x 104…976
+# poi affianca screenshot e composito in $SP/prima-dopo.jpg: snippet PIL in verifica-e-consegna.md §3
 ```
 
 - `composito.py` incolla la tela intera: ciò che sta fuori da x 104…976 sporge dalla cornice sopra l'interfaccia di LIVE Studio. Serve a vedere cosa si perde; per l'immagine da mandare allo studio non usare `?guide=1`.
-- Manda allo studio il prima/dopo (loro screenshot accanto o sotto al composito) e i mockup.
+- `composito.jpg` è un'immagine sola. Allo studio manda `prima-dopo.jpg` (loro screenshot accanto al composito) e i mockup.
 
 ## 9. Formato orizzontale (1920×1080)
 
@@ -268,4 +280,4 @@ python3 $S/composito.py screenshot-studio.jpg $SCRATCH/ov.png $SCRATCH/prima-dop
 - Niente `color-mix()` né CSS recente: il browser di OBS / LIVE Studio può essere un Chromium vecchio. Colori espliciti in variabili.
 - I font arrivano da Google Fonts: senza internet si vedono Arial Narrow o il font di sistema e le larghezze cambiano (adattaTesto rimedia, la grafica no).
 - Se cambi una posizione, aggiorna anche la tabella nel README e rigenera i mockup (anche `zone-telefono.jpg`).
-- Nuovo overlay che gira insieme a questo: stessa tela e stesse zone, ma porta diversa in `config.json` ("porta" 4747, "nero.portaWebhook" 4748). Se si sovrappone a questo, lascia liberi i riquadri già occupati (sezione 3).
+- Nuovo overlay che gira insieme a questo: stessa tela e stesse zone, ma porte diverse in `config.esempio.json` del clone (`porta` 4747 → 4757, `nero.portaWebhook` 4748 → 4758; registro in `SKILL.md`, regola 11), così il `config.json` creato al primo avvio è già giusto. Il `config.json` non è versionato e non entra nello ZIP: cambiarlo lì non basta. Poi cerca i `4747` rimasti nei testi. Se si sovrappone a questo, lascia liberi i riquadri già occupati (sezione 3).

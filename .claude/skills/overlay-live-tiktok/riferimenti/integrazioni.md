@@ -9,6 +9,20 @@ Nero.fan (traccia in onda e submission pagate), chat TikTok (voti), regia (tasti
 | Chat TikTok | `lib/chat.mjs`: `avviaTikTok`, `leggiVoto`, `commentoTikTok`; `server.mjs`: `collegaTikTok`, `registraCommento`; `lib/stato.mjs`: `votoChat` | comandi `messaggioChat` e `simulaChat` (la live vera no) |
 | Regia | `public/regia.html`, `public/js/regia.js`, `public/js/connessione.js` | browser su `/regia`, `curl` su `/api` |
 
+## 0. Il formato usa Nero?
+
+Sì, se sul tabellone va una traccia mandata su Nero. No per battle, quiz e sfide dal vivo. Se basta solo spegnerlo, `"username": ""` e `"portaWebhook": 0`; ma la regia mostra comunque il bollino «Nero non collegato» e la coda vuota. In un formato senza tracce togli tutto:
+- `config.esempio.json`: `nero.username: ""`, `nero.portaWebhook: 0`;
+- `server.mjs`: `collegaNero`, il server del webhook in fondo al file, `passaSeTocca` nel `setInterval`, i campi `nero` e `neroUtente` di `istantanea`, i comandi `neroAutomatico`, `inCoda`, `daCoda`, `togliCoda`;
+- `lib/stato.mjs`: `tracciaDaNero`, `passaSeTocca`, `neroAutomatico`, `neroUltimo`, `neroInArrivo` (anche negli elenchi di `demo` e `nuovaSerata`) e, se non servono, `coda`, `ORDINE_TIER`, `ordinaCoda`;
+- regia: bollino `#nero-stato`, interruttore `#nero-auto` («Traccia automatica da Nero.fan»), coda `#coda` e iframe `#nero-embed`, con il codice in `regia.js` (`disegnaTraccia`, `disegnaCoda`);
+- test: quelli di Nero in `test/integrazioni.test.mjs` e «traccia da Nero…» e «la coda segue le priorità di Nero» in `test/stato.test.mjs`;
+- GUIDA: la sezione `#nero` («Coda automatica da Nero.fan») e i passi «avvia la sessione live su nero.fan»;
+- verifica: salta i punti 8–9 della checklist (`verifica-e-consegna.md` §1) e la riga Nero del messaggio allo studio (§7);
+- non copiare `lib/nero.mjs`: resta nel modello.
+
+Anche senza tracce, proponi allo studio di tenere in rotazione una frase con `nero.fan/backrooms`, accanto a quella su come si partecipa al formato.
+
 ## 1. Nero.fan
 
 Lo studio riceve le tracce su Nero.fan: utente `backrooms`, link pubblico `nero.fan/backrooms`. Tier delle submission: `standard` (gratis), `skip`, `superskip`, `throne` (a pagamento). Ogni altro valore diventa `standard` (funzione `tier` in `lib/nero.mjs`). La coda della regia li ordina come Nero: throne, superskip, skip, standard, poi per arrivo (`ORDINE_TIER` e `ordinaCoda` in `lib/stato.mjs`).
@@ -80,21 +94,26 @@ ngrok http 4748 --url=<dominio>.ngrok-free.app
 
 ### 1.6 Provare senza Nero (il cloud blocca `api.nero.fan`: `CONNECT tunnel failed, response 403`)
 
-Lavora su una copia con porte proprie, mai nella cartella con lo stato vero:
+Lavora su una copia con porte proprie, mai nella cartella con lo stato vero. Preparala come in `verifica-e-consegna.md` §0: `tar` della cartella di lavoro, comprese le modifiche non committate, e `config.json` con porte 4797/4798, `segreto` `prova` e `tiktok` vuoto. `git archive HEAD` va bene solo per copiare il modello già committato: per un overlay nuovo non ancora committato fallisce, e per overlay-live prova la versione vecchia.
 
 ```bash
-SK=/home/user/studious-train/.claude/skills/overlay-live-tiktok/strumenti
-P=<scratchpad>/prova && mkdir -p $P && cd /home/user/studious-train
-git archive HEAD overlay-live | tar -x --strip-components=1 -C $P
-cd $P && ln -s /home/user/studious-train/overlay-live/node_modules node_modules
-node -e 'const f=require("fs"),c=JSON.parse(f.readFileSync("config.esempio.json"));c.porta=4797;c.nero.portaWebhook=4798;c.nero.segreto="prova";c.tiktok="";f.writeFileSync("config.json",JSON.stringify(c,null,2))'
-node $SK/nero-finto.mjs 4999 backrooms > nero.log 2>&1 &
-NERO_API=http://127.0.0.1:4999 node server.mjs > server.log 2>&1 &
+R=/home/user/studious-train; S=$R/.claude/skills/overlay-live-tiktok/strumenti
+C=overlay-live                       # cartella da provare
+P=<scratchpad>/prova-$C; B=http://127.0.0.1:4797
+lsof -ti tcp:4797 -sTCP:LISTEN; lsof -ti tcp:4999 -sTCP:LISTEN   # nessuna riga = porte libere
+rm -rf $P && mkdir -p $P
+tar -C $R/$C --exclude=node_modules --exclude=dati --exclude=config.json -cf - . | tar -C $P -xf -
+ln -sfn $R/$C/node_modules $P/node_modules    # solo nello scratchpad, mai in una cartella del repo
+cd $P && node -e 'const f=require("fs"),c=JSON.parse(f.readFileSync("config.esempio.json"));c.porta=4797;c.nero.portaWebhook=4798;c.nero.segreto="prova";c.tiktok="";f.writeFileSync("config.json",JSON.stringify(c,null,2))'
+node $S/nero-finto.mjs 4999 backrooms > $P/nero.log 2>&1 &
+NERO_API=http://127.0.0.1:4999 node server.mjs > $P/server.log 2>&1 &
 sleep 2
 curl -s "http://127.0.0.1:4999/cambia?titolo=Asfalto&artista=Dama&tier=throne"   # in onda su Nero
-sleep 3.5; curl -s http://127.0.0.1:4797/api/stato | head -c 400                  # corrente = Asfalto
+sleep 3.5; curl -s $B/api/stato | head -c 400                                   # corrente = Asfalto
 curl -s http://127.0.0.1:4999/spegni    # sessione finita: "Nessuna sessione live" entro ~60 s
 ```
+
+Se 4797 o 4999 sono occupate (altri agenti o sessioni in parallelo), usa 4900/4901 con Nero finto su 4990, in `config.json`, `NERO_API` e `$B`. Non mandare mai comandi a una porta che non hai avviato tu.
 
 - `/cambia` riaccende anche la sessione. Ogni `/cambia` crea un `streamSubmissionId` nuovo (`sub-1`, `sub-2`…).
 - Prova verificata: voto → `/cambia` → `neroInArrivo` → `conferma` → dopo 5 s ancora la vecchia → dopo 11 s la nuova sul tabellone.
@@ -123,11 +142,11 @@ Alla fine fermali per porta (non con `pkill`, vedi `architettura-e-riuso.md`): `
 | `STREAM_END` (live finita) | 30 s |
 | `DISCONNECTED` | 10 s |
 
-- Ogni callback controlla `connessione === c`: gli eventi di una connessione vecchia non toccano lo stato.
+- `STREAM_END`, `DISCONNECTED` e l'esito di `connect()` controllano `connessione === c`. `CHAT` ed `ERROR` no: gli eventi di una connessione vecchia li ferma `chiudi(c)`, che fa `removeAllListeners()`.
 - `chiudi(c)` toglie gli ascoltatori ma rimette un `ControlEvent.ERROR` vuoto: un `error` senza ascoltatori farebbe cadere il server.
 - `commentoTikTok(dati)`: testo in `content` (schema vecchio `comment`), utente in `user.displayId` (vecchio `user.uniqueId`, poi `user.id`). Senza utente: `null`.
 - `leggiVoto(testo)` (regex `RE_VOTO`) accetta 0–10 con al massimo un decimale: `8`, `7.5`, `7,5`, `10.0`, `9/10`, `!voto 6`, `!v 6.5`. Rifiuta `10.5`, `11`, `07`, `-3`, `8 bomba`, `7.25`.
-- `votoChat` (`lib/stato.mjs`) applica un voto per utente. Chiave `piattaforma:utente` in minuscolo: `Mario` e `mario` sono la stessa persona. Vale l'ultimo voto. Conta solo a voto aperto e prima di `chiudeAlle`. `ultimi` tiene gli ultimi 8 per l'overlay.
+- `votoChat` (`lib/stato.mjs`) applica un voto per utente. Chiave `piattaforma:utente`, con l'utente in minuscolo: `Mario` e `mario` sono la stessa persona. La piattaforma resta com'è: scrivila sempre uguale (`tiktok`), altrimenti `TikTok` e `tiktok` contano come due persone. Vale l'ultimo voto. Conta solo a voto aperto e prima di `chiudeAlle`. `ultimi` tiene gli ultimi 8 per l'overlay.
 - La chiusura a tempo la fa `chiudiChatSeScaduta` nel `setInterval`. Anche `conferma` chiude il voto. La chat pesa come un giudice (`pesi.chat` = 1, cioè 25%).
 - **Nel cloud non si prova.** La firma passa da `api.eulerstream.com` (bloccato). Nel cloud la regia mostra «Nessuna live trovata per @backrooms.studios: controlla il nome dell'account» anche col nome giusto: non è un errore di nome. Prova la logica così:
 

@@ -85,7 +85,7 @@ Picco e durata: misurati con `strumenti/suoni.mjs livelli` (volume 0,8, canale s
 | `voto` | voto di un giudice visibile, `dati.valore` | campana sulla nota del voto + scintille | 0,27 | 1,3 s | sì (valore 7) |
 | `bloccato` | voto inserito con `nascondiVoti` attivo e traccia non confermata | click di cassaforte | 0,28 | 0,2 s | no |
 | `chatApre` / `chatChiude` | `corrente.chat.aperta` cambia | whoosh + due note quadre + campana / due campane che scendono | 0,36 / 0,47 | 2,0 / 1,5 s | sì / no |
-| `chatVoto` | aumenta `punteggi.chatVoti`: al massimo 4 pop, sfalsati di 70 ms | pop acuto leggero (vol 0,08), non copre la voce | 0,02–0,04 | 0,1 s | no |
+| `chatVoto` | aumenta `punteggi.chatVoti`: al massimo 4 pop, sfalsati di 70 ms | pop acuto leggero (vol 0,08, pan casuale ±0,6), non copre la voce | 0,015–0,04 | 0,1 s | no |
 | `calcolo` | evento `classifica` (esito di `conferma`) | salita di 1,5 s con tic che accelerano, poi `risultato` | 0,59–0,63 | 3,3 s | sì |
 | `risultato` | solo dentro `calcolo`, a +1,5 s | colpo, piatto, accordo di 6 note, scintille | 0,55 | 1,9 s | no |
 | `primo` | nuovo primo in classifica (`suoniClassifica`) | fanfara "ta-ta-ta-taaa" con rullante, colpo, piatto, 22 scintille | 0,61–0,67 | 2,6–3,1 s | sì |
@@ -160,29 +160,31 @@ Non è ancora verificato se TikTok LIVE Studio manda in diretta l'audio della so
 `strumenti/suoni.mjs` sostituisce `window.AudioContext` con un `OfflineAudioContext` e rende gli effetti senza altoparlanti. L'URL deve essere una pagina servita dallo stesso server, perché lo strumento importa `/js/suoni.js`.
 
 ```bash
-# dalla radice del repo, con il server avviato (npm start in overlay-live)
-node .claude/skills/overlay-live-tiktok/strumenti/suoni.mjs "http://127.0.0.1:4747/overlay?muto=1" livelli
+# dalla radice del repo, con la copia di prova avviata (verifica-e-consegna.md §0, B=http://127.0.0.1:4797)
+node .claude/skills/overlay-live-tiktok/strumenti/suoni.mjs "$B/overlay?muto=1" livelli
 
 # senza avviare il server (basta un server statico su public/; ignora gli errori di WebSocket)
 python3 -m http.server 4799 --bind 127.0.0.1 --directory overlay-live/public &
 node .claude/skills/overlay-live-tiktok/strumenti/suoni.mjs "http://127.0.0.1:4799/overlay.html?muto=1" livelli
-pkill -f '^python3 -m http.server 4799'
+kill $(lsof -ti tcp:4799 -sTCP:LISTEN)
 ```
 
 `livelli` stampa picco, RMS e durata per ogni nome di `NOMI_SUONI` (buffer di 7 s) e segnala con ⚠ i picchi ≥ 1 (distorti) o < 0,02 (muti).
-- Obiettivo: picco tra ~0,1 e ~0,65 per gli effetti principali. I più forti (`primo`, `vincitore`, `calcolo`) stanno sopra 0,6. Gli effetti di sottofondo stanno sotto: `chatVoto` 0,02–0,04, `tic` 0,19.
+- Obiettivo: picco tra ~0,1 e ~0,65 per gli effetti principali. I più forti (`primo`, `vincitore`, `calcolo`) stanno sopra 0,6. Gli effetti di sottofondo stanno sotto: `chatVoto` 0,015–0,04, `tic` 0,19.
 - Misura **solo il canale sinistro**: un effetto con pan casuale varia a ogni misura. `chatVoto` sfiora la soglia 0,02 e può comparire tra i ⚠ "muti". È voluto: si sente come un ticchettio sotto la voce.
 
 MP3 di anteprima per lo studio (sequenza `[nome, dati, secondo di partenza]`, durata totale in secondi, volume 0,9):
 
 ```bash
 D=<scratchpad>
-node .claude/skills/overlay-live-tiktok/strumenti/suoni.mjs "http://127.0.0.1:4747/overlay?muto=1" wav $D/suoni.wav '[["nuovaTraccia",{},0],["voto",{"valore":6},2.5],["voto",{"valore":8},3.3],["voto",{"valore":9.5},4.1],["chatApre",{},5.5],["chatVoto",{},7.5],["chatVoto",{},7.57],["chatChiude",{},9],["calcolo",{},11],["entrata",{},12.7],["sale",{"posti":2},16],["primo",{},19],["allarme",{},23],["tic",{},25.5],["tic",{"ultimi":true},26.5],["vincitore",{},28]]' 36
+node .claude/skills/overlay-live-tiktok/strumenti/suoni.mjs "$B/overlay?muto=1" wav $D/suoni.wav '[["nuovaTraccia",{},0],["voto",{"valore":6},2.5],["voto",{"valore":8},3.3],["voto",{"valore":9.5},4.1],["chatApre",{},5.5],["chatVoto",{},7.5],["chatVoto",{},7.57],["chatChiude",{},9],["calcolo",{},11],["entrata",{},12.7],["sale",{"posti":2},16],["primo",{},19],["allarme",{},23],["tic",{},25.5],["tic",{"ultimi":true},26.5],["vincitore",{},28]]' 36
 ffmpeg -loglevel error -y -i $D/suoni.wav -b:a 192k $D/suoni.mp3
 ffmpeg -hide_banner -i $D/suoni.wav -af volumedetect -f null - 2>&1 | grep max_volume   # deve restare sotto 0 dB
 ```
 
 La sequenza segue i tempi veri (`entrata` a `calcolo` + 1,7 s). Manda l'MP3 con `SendUserFile` e scrivi in italiano semplice l'ordine dei suoni ("0 s nuova traccia, 2,5 s voti dei giudici, …").
+
+La sequenza è di overlay-live. Per un overlay nuovo riscrivila con tutti i `NOMI_SUONI` del nuovo `suoni.js`, nell'ordine di un round vero e con i tempi delle costanti di `eventi-sonori.js`.
 
 ## 10. Aggiungere un effetto nuovo
 
@@ -220,6 +222,25 @@ test("una traccia Throne ha la sua entrata", () => {
 ```
 
 L'esempio passa i test (provato su una copia). `tier` funziona perché `tracciaVuota` lo accetta e `istantanea` lo manda alle pagine: per un campo nuovo controlla entrambe le cose.
+
+## 10bis. Formati a sfida (due concorrenti per round)
+
+Riusa il catalogo dove puoi. Proposta di partenza:
+
+| Momento | Effetto |
+|---|---|
+| nuovo round | `nuovaTraccia` |
+| punto di un giudice | nuovo effetto `punto`, con `pan` −0,6 per il lato 1 e +0,6 per il lato 2. Non `voto`: sceglie la nota da `SCALA[round(valore)]`, quindi 1 e 2 danno due note gravi quasi uguali |
+| voti in chat | `chatVoto`, al massimo 4 per aggiornamento |
+| apertura e chiusura della chat | `chatApre`, `chatChiude` |
+| rivelazione del risultato | `calcolo` |
+| vince il round | nuovo effetto `round`, con il culmine in una costante di `eventi-sonori.js` usata anche dall'animazione (§6) |
+| round pari | `spareggio` |
+| classifica | `primo`, `entrata`, `sale`, `esce` invariati |
+| timer | `allarme`, `tic` invariati |
+| fine gara | `vincitore` |
+
+Aggiungi un pulsante Prova `data-suono` per `punto` e `round` (§10, passo 5).
 
 ## 11. Trappole
 

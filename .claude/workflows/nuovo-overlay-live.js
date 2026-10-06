@@ -14,9 +14,10 @@ export const meta = {
 // args: {
 //   nome: 'Battle freestyle',                    // nome del formato, per titoli e documenti
 //   cartella: 'overlay-freestyle',               // cartella nuova nella radice del repo
-//   descrizione: 'due rapper per round, la chat vota 1 o 2, ...',  // cosa deve fare, con le parole dello studio
+//   descrizione: 'due rapper per round, la chat vota 1 o 2, ...',  // cosa deve fare, con le parole dello studio e le regole decise
+//   porta: 4757,                                 // facoltativo: porta del server dal registro (SKILL.md, regola 11); webhook = porta + 1
 //   screenshot: '/percorso/anteprima.jpg',       // facoltativo: anteprima di LIVE Studio con la disposizione voluta
-//   cornice: { x: 1, y: 5, larghezza: 720, altezza: 1585 },  // facoltativo: cornice del telefono nello screenshot
+//   cornice: { x: 1, y: 5, larghezza: 720, altezza: 1585 },  // facoltativo: cornice del telefono nello screenshot (valori d'esempio)
 // }
 const A = args ?? {}
 if (!A.cartella || !A.descrizione) throw new Error('Servono almeno args.cartella e args.descrizione')
@@ -25,11 +26,14 @@ const SKILL = `${RADICE}/.claude/skills/overlay-live-tiktok`
 const MODELLO = `${RADICE}/overlay-live`
 const NUOVO = `${RADICE}/${A.cartella}`
 const NOME = A.nome ?? A.cartella
+const PORTA = Number(A.porta) || null
+const FERMA = "ferma solo i server che hai avviato tu, per porta: kill $(lsof -ti tcp:<porta> -sTCP:LISTEN) (mai pkill: fermerebbe anche i server degli altri agenti)"
 
 const BASE = `
 Lavori per Backrooms Studio (studio di registrazione, 3 giovani liberi professionisti; tutto in italiano).
 Nuovo overlay: "${NOME}" nella cartella ${NUOVO}. Richiesta dello studio:
 """${A.descrizione}"""
+${PORTA ? `Porte del nuovo overlay (in config.esempio.json): porta ${PORTA}, nero.portaWebhook ${PORTA + 1}.` : 'Porte del nuovo overlay: la prima coppia libera del registro in SKILL.md, regola 11 (4747/4748 sono di overlay-live).'}
 ${A.screenshot ? `Screenshot dell'anteprima di TikTok LIVE Studio con la disposizione voluta: ${A.screenshot}${A.cornice ? ` (cornice del telefono nello screenshot: ${JSON.stringify(A.cornice)})` : ''}.` : 'Nessuno screenshot: usa le posizioni del modello, dentro la zona visibile sui telefoni.'}
 Prima di tutto leggi la skill ${SKILL}/SKILL.md e i riferimenti che ti servono: contiene il metodo, le regole e gli strumenti (${SKILL}/strumenti/). Il modello da cui partire è ${MODELLO}.
 Non fare commit né push: li fa la sessione principale dopo la verifica.`
@@ -60,7 +64,7 @@ phase('Capisci')
 const [riuso, posizioni] = await parallel([
   () => agent(`${BASE}
 Compito: piano di RIUSO del modello per il nuovo formato. Leggi il codice di ${MODELLO} (server.mjs, lib/, public/, test/, config.esempio.json) e la skill.
-Dimmi: cosa si copia tale e quale, cosa si adatta (con le modifiche precise alla logica di voto/punteggio/classifica/stato), cosa si toglie, cosa si aggiunge; quali test vanno riscritti; porte da usare se deve poter girare insieme a overlay-live (4747/4748 sono già prese). Non modificare file.`,
+Dimmi: cosa si copia tale e quale, cosa si adatta (con le modifiche precise alla logica di voto/punteggio/classifica/stato; per un formato diverso dalla recensione segui riferimenti/architettura-e-riuso.md §4bis), cosa si toglie (se il formato non usa Nero: riferimenti/integrazioni.md §0), cosa si aggiunge; quali test vanno riscritti; porte (vedi sopra). Non modificare file.`,
     { label: 'capisci:riuso', phase: 'Capisci', schema: {
       type: 'object',
       properties: { copia: ELENCO, adatta: ELENCO, togli: ELENCO, aggiungi: ELENCO, test: ELENCO, porte: { type: 'string' }, rischi: ELENCO },
@@ -68,7 +72,7 @@ Dimmi: cosa si copia tale e quale, cosa si adatta (con le modifiche precise alla
     } }),
   () => agent(`${BASE}
 Compito: POSIZIONI dei riquadri sulla tela 1080×1920. ${A.screenshot ? `Apri lo screenshot (Read) e misuralo con il metodo della skill (riferimenti/posizioni-e-leggibilita.md): cornice del telefono, verifica ritaglio e non stiramento, formula, zone coperte dall'app TikTok. Puoi usare python3 con PIL per misurare la luminosità lungo righe e colonne.` : 'Parti dal blocco di variabili in cima a overlay.css del modello e adatta ai riquadri del nuovo formato.'}
-Restituisci per ogni riquadro x, y, larghezza, altezza in pixel della tela, tutto dentro x 116…964 e tra y ~280 e ~1700, più le note utili (cosa resta scoperto, rischio commenti in basso a sinistra). Non modificare file.`,
+Restituisci per ogni riquadro x, y, larghezza, altezza in pixel della tela, tutto dentro x 116…964 e y 282…1756, più le note utili (cosa resta scoperto, rischio commenti in basso a sinistra). Non modificare file.`,
     { label: 'capisci:posizioni', phase: 'Capisci', schema: {
       type: 'object',
       properties: {
@@ -111,7 +115,7 @@ Compito: costruisci il nuovo overlay in ${NUOVO} partendo da una copia di ${MODE
 - npm install --omit=dev e npm test dentro ${NUOVO}: tutti i test devono passare (scrivi quelli nuovi della logica e dei suoni);
 - avvia il server (porta della specifica) e fai gli screenshot con ${SKILL}/strumenti/scatta.mjs (?anteprima=1&statico=1) dopo aver creato gli stati con i comandi API; guardali (Read) e correggi quello che non va;
 - rigenera mockup/, aggiorna README.md e GUIDA.html per il nuovo formato;
-- ferma il server con pkill -f '^node server\\.mjs' e togli dati/ e config.json creati dalle prove.
+- ${FERMA}; togli dati/ e config.json creati dalle prove.
 Riporta file creati, test, screenshot salvati (percorsi) e dubbi.`,
   { label: 'costruisci', phase: 'Costruisci', schema: {
     type: 'object',
@@ -121,16 +125,21 @@ Riporta file creati, test, screenshot salvati (percorsi) e dubbi.`,
 if (!costruito) throw new Error('Costruzione non completata')
 
 // ---------- Verifica e Correggi ----------
+// I verificatori girano in parallelo: ognuno lavora su una COPIA nel suo scratchpad, con porte sue (4900 + 10 × indice).
 const VERIFICHE = [
-  { key: 'posizioni', prompt: `POSIZIONI E LEGGIBILITÀ. Avvia il server di ${NUOVO} (porta ${costruito.porta}), fai screenshot statici e ${A.screenshot ? `il prima/dopo con strumenti/composito.py sullo screenshot ${A.screenshot}` : 'con ?guide=1'}; guardali. Controlla: tutto dentro x 116…964 e fuori dalle zone dell'app; nessun testo sotto ~22 px (leggi il CSS); testi lunghi misurati con strumenti/misura-testo.mjs; podio, timer rosso negli ultimi 30 minuti (crea lo stato con il countdown), schermate finali dentro la zona visibile.` },
-  { key: 'logica', prompt: `LOGICA E TEST. npm test in ${NUOVO}; leggi la logica di voto/punteggio/classifica e cerca casi limite (pareggi, voti fuori scala, doppio voto, conferma ripetuta, riavvio con stato salvato vecchio); esegui i comandi API sul server avviato (porta ${costruito.porta}) e controlla /api/stato; se ${NUOVO} usa Nero, prova con strumenti/nero-finto.mjs e NERO_API.` },
+  { key: 'posizioni', prompt: `POSIZIONI E LEGGIBILITÀ. Avvia il server della tua copia, fai screenshot statici e ${A.screenshot ? `il prima/dopo con strumenti/composito.py sullo screenshot ${A.screenshot}` : 'con ?guide=1'}; guardali. Controlla: tutto dentro x 116…964 e fuori dalle zone dell'app; nessun testo sotto ~22 px (leggi il CSS); testi lunghi misurati con strumenti/misura-testo.mjs; podio, timer rosso negli ultimi 30 minuti (crea lo stato con il countdown), schermate finali dentro la zona visibile.` },
+  { key: 'logica', prompt: `LOGICA E TEST. npm test in ${NUOVO}; leggi la logica di voto/punteggio/classifica e cerca casi limite (pareggi, voti fuori scala, doppio voto, conferma ripetuta, riavvio con stato salvato vecchio); esegui i comandi API sul server della tua copia e controlla /api/stato (giro intero del formato: checklist punto 8bis); se ${NUOVO} usa Nero, prova con strumenti/nero-finto.mjs e NERO_API.` },
   { key: 'suoni', prompt: `SUONI. Elenca ogni animazione/evento dell'overlay e controlla che abbia un effetto e che parta al momento giusto (eventi-sonori e test); misura con strumenti/suoni.mjs livelli (picco < 1, nessuno muto); controlla la scelta overlay/regia/spenti e ?muto=1 nell'anteprima della regia.` },
   { key: 'consegna', prompt: `CONSEGNA E COMPATIBILITÀ. Niente color-mix() o CSS troppo recente; URL della sorgente con .html; sfondo trasparente; README e GUIDA.html aggiornati e coerenti con il codice (porte, tasti, comandi); mockup rigenerati. Prova d'installazione da zero: copia ${NUOVO} senza node_modules/, dati/ e config.json in una cartella nuova dello scratchpad, poi npm install --omit=dev, npm test e avvio del server (lo ZIP vero con strumenti/pacchetto.py si fa dopo il commit, dalla sessione principale).` },
 ]
-const verifica = (lista, giro) => parallel(lista.map(v => () => agent(`${BASE}
+const verifica = (lista, giro) => parallel(lista.map(v => () => {
+  const n = VERIFICHE.findIndex(x => x.key === v.key)
+  return agent(`${BASE}
 Il nuovo overlay è costruito in ${NUOVO}. Sei un revisore SCETTICO (giro ${giro}): ${v.prompt}
-Riporta solo problemi reali e dimostrati, con la prova e la correzione concreta. Non modificare file del progetto; ferma i server che avvii (pkill -f '^node server\\.mjs').`,
-  { label: `verifica:${v.key}:${giro}`, phase: 'Verifica', schema: PROBLEMI }).then(r => ({ key: v.key, problemi: r?.problemi ?? [] }))))
+Lavora su una COPIA di ${NUOVO} nel tuo scratchpad (ricetta in ${SKILL}/riferimenti/verifica-e-consegna.md §0), mai nella cartella vera: altri revisori lavorano in parallelo. Porte tue: server ${4900 + 10 * n}, webhook ${4901 + 10 * n}, Nero finto ${4990 + n}; prima controlla che siano libere con lsof. ${FERMA}.
+Riporta solo problemi reali e dimostrati, con la prova e la correzione concreta. Non modificare file del progetto.`,
+  { label: `verifica:${v.key}:${giro}`, phase: 'Verifica', schema: PROBLEMI }).then(r => ({ key: v.key, problemi: r?.problemi ?? [] }))
+}))
 
 phase('Verifica')
 let esiti = await verifica(VERIFICHE, 1)
@@ -145,7 +154,7 @@ for (let giro = 1; giro <= 2; giro++) {
   await agent(`${BASE}
 Correggi in ${NUOVO} questi problemi trovati dai revisori (controlla ognuno prima di cambiare; scarta quelli falsi):
 ${JSON.stringify([...daSistemare, ...minori], null, 1)}
-Dopo le correzioni: npm test deve passare; rifai gli screenshot toccati e guardali; ferma i server e togli dati/ e config.json di prova.`,
+Dopo le correzioni: npm test deve passare; rifai gli screenshot toccati e guardali; ${FERMA}; togli dati/ e config.json di prova.`,
     { label: `correggi:${giro}`, phase: 'Correggi' })
   if (!daSistemare.length) break
   phase('Verifica')

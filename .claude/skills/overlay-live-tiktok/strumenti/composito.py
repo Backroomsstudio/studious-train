@@ -1,14 +1,17 @@
 """Sovrappone l'overlay (PNG trasparente 1080x1920) a uno screenshot dell'anteprima di TikTok LIVE Studio,
 alla stessa scala, per controllare che i riquadri cadano dove li vuole lo studio.
 
-  python3 composito.py <screenshot.jpg> <overlay.png> <out.jpg> <bordo_sx> <bordo_alto> <larghezza_cornice> <altezza_cornice>
+  python3 -I composito.py <screenshot.jpg> <overlay.png> <composito.jpg> <bordo_sx> <bordo_alto> <larghezza_cornice> <altezza_cornice>
+
+Salva solo lo screenshot con l'overlay sopra. Il prima/dopo da mandare allo studio (screenshot e composito
+affiancati) si fa dopo, con lo snippet PIL di riferimenti/verifica-e-consegna.md §3.
 
 bordo_sx, bordo_alto: pixel dello screenshot dove inizia la cornice del telefono (l'anteprima di LIVE Studio).
 larghezza_cornice, altezza_cornice: dimensioni della cornice in pixel dello screenshot.
 Le misure si prendono guardando lo screenshot ingrandito (angoli arrotondati, bordo chiaro della cornice) o
 cercando con PIL dove cambia la luminosità lungo una riga e una colonna.
 
-L'anteprima ha la forma di un telefono (circa 9:19,5): la tela 1080x1920 la riempie in altezza e i lati
+L'anteprima ha la forma di un telefono (circa 9:19,8, rapporto 0,454): la tela 1080x1920 la riempie in altezza e i lati
 vengono tagliati al centro. Scala k = altezza_cornice / 1920; larghezza visibile = larghezza_cornice / k.
 Esempio (live di ottobre 2026): cornice 720x1585 px → k = 0,8255 → visibile 872 px della tela, cioè x 104…976.
 Per passare da un punto dello screenshot (px, py) alla tela:
