@@ -141,11 +141,14 @@ export function suoniTimerBattle(msPrima, msDopo) {
   return [];
 }
 
-// Tempo rimasto solo mentre il timer corre: in ogni altro momento non c'è niente da confrontare.
-const msTimer = (s) => (s.battle.fase === "battle" && s.battle.timer.fineAlle !== null ? rimanenteBattleMs(s.battle, s.ora) : null);
+// Tempo rimasto solo mentre il timer corre (null in pausa, prima del via e a fine round): in quei momenti non c'è
+// niente da confrontare. Lo usa il ciclo della pagina e della regia, ogni 50/250 ms, per far suonare sirena e tic:
+// non dipende dagli aggiornamenti dello stato, che con la chat ferma non arrivano per tutto il round.
+export const msTimerBattle = (s, ora) => (s.battle.fase === "battle" && s.battle.timer.fineAlle !== null ? rimanenteBattleMs(s.battle, ora) : null);
 const haCampione = (s) => Boolean(s.battle.tabellone.punti.vincitore || s.battle.tabellone.torneo.campione);
 
-// Suoni del battle: i tre bip del 3-2-1, gong (con lo spacco al via), timer, rivelazione dei voti e fanfara del campione.
+// Suoni del battle: i tre bip del 3-2-1, gong (con lo spacco al via), rivelazione dei voti e fanfara del campione
+// (sirena e tic del timer suonano dal ciclo della pagina: vedi msTimerBattle).
 // Il 3-2-1 e la rivelazione sono programmati con un ritardo per ogni suono, così restano allineati alla grafica.
 export function suoniBattle(prima, dopo, eventi = []) {
   if (!prima) return [];
@@ -161,7 +164,6 @@ export function suoniBattle(prima, dopo, eventi = []) {
     suoni.push({ nome: "gong" });
     if (e.dati?.quando === "inizio") suoni.push({ nome: "spacco" });
   }
-  suoni.push(...suoniTimerBattle(msTimer(prima), msTimer(dopo)));
   const rivelato = a.fase === "voto" && b.fase === "risultato" && b.risultato;
   if (rivelato) {
     for (const passo of sequenzaRivelazione(b.risultato)) {

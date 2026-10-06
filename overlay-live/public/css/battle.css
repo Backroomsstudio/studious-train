@@ -119,9 +119,12 @@ body.bt.anteprima {
 .bt-nome span {
   display: block;
   max-width: 100%;
+  max-height: 90px;
   overflow: hidden;
-  white-space: nowrap;
-  font: 900 36px/1.1 var(--font-dati);
+  /* i nomi lunghi vanno a capo (fino a 24 caratteri) e il corpo si riduce solo quanto serve */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font: 900 36px/1.02 var(--font-dati);
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: #fff;
@@ -659,6 +662,11 @@ body.bt.anteprima {
   display: grid;
   place-items: center;
   background: radial-gradient(60% 40% at 50% 50%, rgba(20, 8, 40, 0.55), rgba(5, 3, 12, 0.82));
+}
+/* Dopo l'1 il «VIA!» resta su un istante e lo sfondo si apre: dietro si vedono il fulmine e il VS che entrano. */
+.bt-conto.dopo {
+  background: transparent;
+  transition: background 0.25s ease;
 }
 .bt-conto-numero {
   font: 900 560px/1 var(--font-dati);

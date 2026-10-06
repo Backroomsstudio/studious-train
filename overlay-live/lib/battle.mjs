@@ -268,9 +268,10 @@ export function calcolaRisultato(battle) {
   }
   const q = quota(battle.chat);
   parziali.chat = { sx: arrotonda(10 * q.sx, 2), dx: arrotonda(10 * q.dx, 2) };
-  const grezzo = (lato) => GIUDICI_BATTLE.concat("chat").reduce((somma, chiave) => somma + parziali[chiave][lato], 0) / 4;
-  const totali = { sx: arrotonda(grezzo("sx"), 2), dx: arrotonda(grezzo("dx"), 2) };
-  const pari = Math.abs(grezzo("sx") - grezzo("dx")) < 0.005;
+  const media = (lato) => GIUDICI_BATTLE.concat("chat").reduce((somma, chiave) => somma + parziali[chiave][lato], 0) / 4;
+  const totali = { sx: arrotonda(media("sx"), 2), dx: arrotonda(media("dx"), 2) };
+  // Si decide su quello che si vede: due totali uguali sullo schermo sono un pari merito, e con totali diversi vince sempre il più alto.
+  const pari = totali.sx === totali.dx;
   return { parziali, totali, pari, vincitore: pari ? null : totali.sx > totali.dx ? "sx" : "dx" };
 }
 
@@ -297,6 +298,10 @@ export function impostaScontro(stato, { sx, dx } = {}) {
   }
   b.sx = nuovi.sx;
   b.dx = nuovi.dx;
+  // Se sul palco non ci sono più i due rapper della partita caricata (sostituto, errore di battitura), la partita non è
+  // più quella: il risultato non va a un torneo che non c'entra. Scambiare i lati va bene: contano i nomi.
+  const caricata = b.partitaId && b.tabellone.torneo.partite.find((x) => x.id === b.partitaId);
+  if (caricata && !stessiRapper(caricata, b)) b.partitaId = null;
 }
 
 // Modalità di gioco: l'elenco (massimo 10, si possono aggiungere voci), quella in onda e il suo testo (tema o situazione).
@@ -536,12 +541,14 @@ export function sorteggiaTorneo(stato, caso = Math.random) {
   const torneo = stato.battle.tabellone.torneo;
   if (!torneo.partecipanti.length) throw new Error("Crea prima il torneo");
   if (torneo.partite.some((p) => p.vincitore !== null)) throw new Error("Il torneo è già iniziato: azzeralo per sorteggiare di nuovo");
+  if (stato.battle.fase !== "attesa") throw new Error("Si sorteggia tra un round e l'altro");
   const mescolati = [...torneo.partecipanti];
   for (let i = mescolati.length - 1; i > 0; i--) {
     const j = Math.floor(caso() * (i + 1));
     [mescolati[i], mescolati[j]] = [mescolati[j], mescolati[i]];
   }
   stato.battle.tabellone.torneo = { partecipanti: mescolati, partite: costruisciPartite(mescolati), campione: null };
+  stato.battle.partitaId = null; // le partite sono altre: quella caricata non esiste più
 }
 
 export function azzeraTorneo(stato) {
@@ -573,8 +580,25 @@ function esitoPartita(torneo, id, lato, totali) {
   if (destinazione) torneo.partite.find((x) => x.id === destinazione[0])[destinazione[1]] = vincitore;
 }
 
+const minuscolo = (persona) => persona?.nome.toLowerCase() ?? null;
+
+// I due nomi sul palco sono quelli della partita (in qualunque ordine, senza distinguere le maiuscole).
+function stessiRapper(partita, b) {
+  const nomi = [minuscolo(partita.sx), minuscolo(partita.dx)].sort();
+  return nomi.join("|") === [b.sx.nome.toLowerCase(), b.dx.nome.toLowerCase()].sort().join("|");
+}
+
+// Il risultato segue i rapper, non i lati del palco: chi vince avanza anche se nella partita sta dall'altra parte.
 function registraInTorneo(b) {
-  if (b.partitaId) esitoPartita(b.tabellone.torneo, b.partitaId, b.risultato.vincitore, b.risultato.totali);
+  const p = b.partitaId && b.tabellone.torneo.partite.find((x) => x.id === b.partitaId);
+  if (!p) return;
+  const r = b.risultato;
+  const vinceSulPalco = r.vincitore;
+  const altroSulPalco = vinceSulPalco === "sx" ? "dx" : "sx";
+  const latoVincitore = LATI.find((l) => minuscolo(p[l]) === b[vinceSulPalco].nome.toLowerCase());
+  if (!latoVincitore) return; // il vincitore non gioca questa partita
+  const latoAltro = latoVincitore === "sx" ? "dx" : "sx";
+  esitoPartita(b.tabellone.torneo, p.id, latoVincitore, { [latoVincitore]: r.totali[vinceSulPalco], [latoAltro]: r.totali[altroSulPalco] });
 }
 
 // Classifica a punti: elenco di artisti (massimo 10) e target. Gli artisti si possono dare con punti di partenza.

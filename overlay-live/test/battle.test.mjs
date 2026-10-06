@@ -694,3 +694,59 @@ test("punti: rimettere l'elenco non azzera punti e round di chi c'è già", () =
   B.impostaPunti(stato, { artisti: [{ nome: "Lince", punti: 3 }] });
   assert.deepEqual(stato.battle.tabellone.punti.artisti.map((a) => [a.punti, a.round]), [[3, []]], "con punti dati a mano si riparte da quelli");
 });
+
+// ---------- Correzioni dopo la revisione finale ----------
+
+test("pari merito: si decide sui totali mostrati, non su quelli non arrotondati", () => {
+  const stato = nuovo();
+  votiGiudici(stato, "sx", [6.1, 8, 8]);
+  votiGiudici(stato, "dx", [7.5, 8, 8]);
+  votiChat(stato, 4, 3);
+  const r = B.calcolaRisultato(stato.battle);
+  assert.equal(r.totali.sx, r.totali.dx, "sullo schermo i due totali sono uguali");
+  assert.equal(r.pari, true, "totali uguali sullo schermo = pari merito");
+  assert.equal(r.vincitore, null);
+});
+
+test("pari merito: totali diversi sullo schermo hanno sempre un vincitore, il più alto", () => {
+  const stato = nuovo();
+  votiGiudici(stato, "sx", [8, 8, 8]);
+  votiGiudici(stato, "dx", [8, 8, 7.9]);
+  const r = B.calcolaRisultato(stato.battle);
+  assert.equal(r.pari, false);
+  assert.equal(r.vincitore, r.totali.sx > r.totali.dx ? "sx" : "dx");
+  assert.equal(r.vincitore, "sx");
+});
+
+test("torneo: scambiare i lati dopo aver caricato la partita assegna il risultato a chi ha vinto", () => {
+  const stato = nuovo();
+  B.creaTorneo(stato, ["A", "B", "C", "D"]);
+  B.caricaPartita(stato, "s1"); // A a sinistra, B a destra
+  B.impostaScontro(stato, { sx: { nome: "B" }, dx: { nome: "A" } });
+  assert.equal(stato.battle.partitaId, "s1", "sono sempre gli stessi due rapper: la partita resta caricata");
+  faiRound(stato, T, "sx"); // sul palco vince B, che nella partita sta a destra
+  assert.equal(partita(stato, "s1").vincitore, "dx");
+  assert.deepEqual(partita(stato, "s1").totali, { sx: 5.75, dx: 7.25 }, "i totali seguono i rapper, non i lati del palco");
+  assert.equal(partita(stato, "f1").sx.nome, "B", "in finale va B, il vincitore vero");
+});
+
+test("torneo: un rapper diverso da quelli della partita caricata non fa avanzare nessuno", () => {
+  const stato = nuovo();
+  B.creaTorneo(stato, ["A", "B", "C", "D"]);
+  B.caricaPartita(stato, "s1");
+  B.impostaScontro(stato, { dx: { nome: "Zeta" } });
+  assert.equal(stato.battle.partitaId, null, "A contro Zeta non è la partita caricata");
+  faiRound(stato, T, "dx"); // vince Zeta
+  assert.equal(partita(stato, "s1").vincitore, null);
+  assert.deepEqual([partita(stato, "f1").sx, partita(stato, "f1").dx], [null, null], "nessuno avanza per sbaglio");
+});
+
+test("torneo: il sorteggio si fa tra un round e l'altro e scarica la partita caricata", () => {
+  const stato = nuovo();
+  B.creaTorneo(stato, ["A", "B", "C", "D"]);
+  B.caricaPartita(stato, "s1");
+  B.sorteggiaTorneo(stato, () => 0);
+  assert.equal(stato.battle.partitaId, null, "dopo il sorteggio le partite sono altre");
+  B.avvia(stato, T);
+  assert.throws(() => B.sorteggiaTorneo(stato, () => 0), /tra un round e l'altro/);
+});

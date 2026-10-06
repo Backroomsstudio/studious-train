@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as S from "../lib/stato.mjs";
 import * as B from "../lib/battle.mjs";
-import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suoniBattle, suoniTimerBattle, suonaIn } from "../public/js/eventi-sonori.js";
+import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suoniBattle, suoniTimerBattle, msTimerBattle, suonaIn } from "../public/js/eventi-sonori.js";
 import { NOMI_SUONI, suona } from "../public/js/suoni.js";
 
 const config = { giudici: { beat: "A", voce: "B", mix: "C" }, pesi: { beat: 1, voce: 1, mix: 1, chat: 1 }, topN: 3, premio: "Mix" };
@@ -147,8 +147,24 @@ test("battle: timer, sirena a 30 secondi e tic negli ultimi 10", () => {
   B.avvia(stato, TB);
   B.passaSeTocca(stato, TB + B.CONTO_MS);
   const fine = stato.battle.timer.fineAlle;
-  assert.deepEqual(suoniBattle(foto(stato, fine - 31_000), foto(stato, fine - 29_900), []), [{ nome: "allarme" }]);
-  assert.deepEqual(suoniBattle(foto(stato, fine - 60_000), foto(stato, fine - 59_000), []), []);
+  // Il timer suona dal ciclo della pagina (ogni 50 ms), non dagli aggiornamenti dello stato: con la chat ferma
+  // il server non manda niente per tutto il round e la sirena a 30 secondi non arriverebbe.
+  assert.deepEqual(suoniBattle(foto(stato, fine - 31_000), foto(stato, fine - 29_900), []), []);
+});
+
+test("battle: tempo rimasto per il ciclo del timer, solo mentre corre", () => {
+  const stato = statoBattle();
+  assert.equal(msTimerBattle(foto(stato), 0), null, "prima del via");
+  B.avvia(stato, TB);
+  B.passaSeTocca(stato, TB + B.CONTO_MS);
+  const fine = stato.battle.timer.fineAlle;
+  assert.equal(msTimerBattle(foto(stato), fine - 29_900), 29_900);
+  assert.equal(msTimerBattle(foto(stato), fine + 5_000), 0, "mai negativo");
+  B.timerAzione(stato, "pausa", fine - 20_000);
+  assert.equal(msTimerBattle(foto(stato), fine - 10_000), null, "in pausa non suona");
+  B.timerAzione(stato, "riprendi", fine - 10_000);
+  B.termina(stato, fine - 5_000);
+  assert.equal(msTimerBattle(foto(stato), fine), null, "a fine round");
 });
 
 test("battle: la rivelazione dei voti suona un voto per giudice e il calcolo del totale", () => {

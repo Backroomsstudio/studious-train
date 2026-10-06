@@ -5,7 +5,7 @@
 // Ogni azione è un comando al server; la pagina si ridisegna dallo stato che torna indietro.
 import { collega, formatta, durata } from "./connessione.js";
 import { suona, volume, audioPronto } from "./suoni.js";
-import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suoniSenzaPremio, suoniBattle, suonaIn, RITARDO_CLASSIFICA_MS } from "./eventi-sonori.js";
+import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suoniSenzaPremio, suoniBattle, suoniTimerBattle, msTimerBattle, suonaIn, RITARDO_CLASSIFICA_MS } from "./eventi-sonori.js";
 import { percentuali, rimanenteBattleMs } from "./battle-logica.js";
 import { vociBarra, stimaGiroSecondi } from "./barra.js";
 import { vociStudio } from "./studio-logica.js";
@@ -868,8 +868,16 @@ function disegnaBattle(s) {
   disegnaPopupRegia(s);
 }
 
+// Ogni 250 ms: il tempo rimasto e, se i suoni suonano da questa pagina, sirena a 30 secondi e tic negli ultimi 10
+// (non dagli aggiornamenti dello stato: con la chat ferma non arrivano).
+let ultimoTimerBattleMs = null;
 function aggiornaTempoBattle() {
-  if (stato) $("#bt-tempo").textContent = durata(rimanenteBattleMs(stato.battle, conn.ora()));
+  if (!stato) return;
+  const ora = conn.ora();
+  $("#bt-tempo").textContent = durata(rimanenteBattleMs(stato.battle, ora));
+  const corrente = msTimerBattle(stato, ora);
+  if (stato.layout === "battle") riproduci(suoniTimerBattle(ultimoTimerBattleMs, corrente));
+  ultimoTimerBattleMs = corrente;
 }
 setInterval(aggiornaTempoBattle, 250);
 
@@ -975,7 +983,14 @@ function disegnaTabelloneRegia(s) {
 
   riempi($("#bt-partecipanti"), t.torneo.partecipanti.map((p) => p.nome).join("\n"));
   $("#bt-torneo-crea").disabled = b.fase !== "attesa";
-  $("#bt-torneo-sorteggia").disabled = !t.torneo.partecipanti.length || t.torneo.partite.some((p) => p.vincitore !== null);
+  $("#bt-torneo-sorteggia").disabled = !t.torneo.partecipanti.length || t.torneo.partite.some((p) => p.vincitore !== null) || b.fase !== "attesa";
+  // Scelta rapida dei nomi dai partecipanti del torneo e dagli artisti della classifica (evita errori di battitura).
+  const nomi = [...new Set([...t.torneo.partecipanti.map((p) => p.nome), ...t.punti.artisti.map((a) => a.nome)])];
+  const lista = $("#bt-nomi");
+  if (lista.dataset.firma !== nomi.join("|")) {
+    lista.dataset.firma = nomi.join("|");
+    lista.replaceChildren(...nomi.map((n) => el("option", { value: n })));
+  }
   disegnaPartiteRegia(b);
 
   riempi($("#bt-artisti-punti"), t.punti.artisti.map((a) => a.nome).join("\n"));
@@ -1011,6 +1026,7 @@ const elencoSalvato = (campo) => delete campo.dataset.modificato;
 $("#bt-bracket").addEventListener("click", () => stato && invia("tabellone", { visibile: !stato.visibili.bracket }));
 for (const chip of document.querySelectorAll("#bt-modo-tabellone [data-modo]")) chip.addEventListener("click", () => invia("tabellone", { modo: chip.dataset.modo }));
 $("#bt-torneo-crea").addEventListener("click", async () => {
+  if (stato?.battle.tabellone.torneo.partite.some((p) => p.vincitore !== null) && !confirm("Ci sono partite già giocate: ricreando il torneo si perdono. Continuare?")) return;
   const esito = await invia("torneo", { azione: "crea", partecipanti: righeDiTesto($("#bt-partecipanti").value) });
   if (esito.ok) {
     elencoSalvato($("#bt-partecipanti"));
@@ -1059,7 +1075,22 @@ async function salvaPopup(elenco = leggiComparse($("#bt-popup-lista"))) {
 }
 
 // ----- Comandi del battle -----
-const battleAvvia = () => invia("battleAvvia");
+// Prima di avviare, due avvisi che evitano risultati persi: un rapper che non è nella classifica a punti non fa punti,
+// e uno scontro che non è una partita del torneo non fa avanzare nessuno.
+async function battleAvvia() {
+  const b = stato?.battle;
+  if (b?.fase === "attesa") {
+    const t = b.tabellone;
+    if (t.modo === "punti" && t.punti.artisti.length) {
+      const elenco = new Set(t.punti.artisti.map((a) => a.nome.toLowerCase()));
+      const fuori = [b.sx.nome, b.dx.nome].filter((n) => n && !elenco.has(n.toLowerCase()));
+      if (fuori.length && !confirm(`${fuori.map((n) => `«${n}»`).join(" e ")} non ${fuori.length > 1 ? "sono" : "è"} nella classifica a punti: ${fuori.length > 1 ? "non faranno" : "non farà"} punti. Avviare lo stesso?`)) return;
+    } else if (t.modo === "torneo" && t.torneo.partite.length && !b.partitaId) {
+      if (!confirm("Questo scontro non è una partita del torneo: il risultato non farà avanzare nessuno. Avviare lo stesso?")) return;
+    }
+  }
+  return invia("battleAvvia");
+}
 const battleRivela = () => invia("battleRivela");
 const battleProssimo = () => invia("battleProssimo");
 const battlePausa = () => stato && invia("battleTimer", { azione: stato.battle.timer.fineAlle !== null ? "pausa" : "riprendi" });
@@ -1139,5 +1170,7 @@ addEventListener("keydown", (e) => {
   const azione = e.key === "Enter" && e.ctrlKey ? (inBattle ? battleRivela : conferma) : azioni[e.key];
   if (!azione || e.repeat) return;
   e.preventDefault();
+  // Un voto scritto ma non ancora salvato (il cursore è ancora nel campo) parte prima del comando: altrimenti Rivela userebbe il vecchio.
+  if (inBattle) document.activeElement?.blur?.();
   azione();
 });

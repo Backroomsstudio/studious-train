@@ -377,9 +377,10 @@
           <h3>Round</h3>
           <p class="bt-stato"><b id="bt-fase"></b> · <span id="bt-round"></span> · <span id="bt-tempo"></span><br><span id="bt-quota"></span></p>
           <form id="f-bt-scontro" class="modulo sp-campi" autocomplete="off">
-            <label>Sinistra · nome <input name="sxNome" maxlength="24" placeholder="es. Lince"></label>
+            <datalist id="bt-nomi"></datalist>
+            <label>Sinistra · nome <input name="sxNome" list="bt-nomi" maxlength="24" placeholder="es. Lince"></label>
             <label>Instagram <input name="sxInstagram" maxlength="80" placeholder="@nome.artista"></label>
-            <label>Destra · nome <input name="dxNome" maxlength="24" placeholder="es. Nove"></label>
+            <label>Destra · nome <input name="dxNome" list="bt-nomi" maxlength="24" placeholder="es. Nove"></label>
             <label>Instagram <input name="dxInstagram" maxlength="80" placeholder="@nome.artista"></label>
             <div class="azioni largo">
               <button class="primario" title="Si cambiano tra un round e l'altro">Applica nomi</button>

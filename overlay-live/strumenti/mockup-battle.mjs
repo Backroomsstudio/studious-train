@@ -42,6 +42,7 @@ const secondi = opzione("secondi");
 const conto = opzione("conto");
 const popup = args.includes("--popup");
 const regia = args.includes("--regia");
+const controlli = args.includes("--controlli");
 
 function caricaPlaywright() {
   try {
@@ -93,21 +94,29 @@ async function provaRegia() {
   if (!(await (await fetch(`${base}/api/stato`)).json()).visibili.bracket) errori.push("il tabellone non si è acceso");
   await pagina.click("#bt-bracket");
   await pagina.waitForFunction(() => document.querySelector("#bt-bracket").textContent.includes("Mostra"));
+  // Lo scontro è la prima semifinale: «Carica» la lega al torneo (altrimenti Avvia chiede conferma).
+  await pagina.click("#bt-partite li:first-child button");
+  await pagina.waitForFunction(() => document.querySelector("#bt-partite li.in-campo"));
   await pagina.click("#bt-avvia");
   await pagina.waitForTimeout(3700);
   await pagina.click("#bt-termina");
-  for (const giudice of ["luca", "freya", "daniele"]) {
-    for (const [lato, valore] of [["sx", "8"], ["dx", "6"]]) {
-      const campo = pagina.locator(`[data-giudice="${giudice}"][data-lato="${lato}"]`);
-      await campo.fill(valore);
-      await campo.press("Enter");
-    }
+  const voti = [];
+  for (const giudice of ["luca", "freya", "daniele"]) for (const [lato, valore] of [["sx", "8"], ["dx", "6"]]) voti.push([giudice, lato, valore]);
+  for (const [giudice, lato, valore] of voti.slice(0, -1)) {
+    const campo = pagina.locator(`[data-giudice="${giudice}"][data-lato="${lato}"]`);
+    await campo.fill(valore);
+    await campo.press("Enter");
   }
-  await pagina.waitForTimeout(300);
-  await pagina.click("#bt-rivela");
+  // L'ultimo voto resta scritto nel campo, senza Invio: F4 deve salvarlo prima di rivelare.
+  const [ultimoGiudice, ultimoLato, ultimoValore] = voti.at(-1);
+  const ultimo = pagina.locator(`[data-giudice="${ultimoGiudice}"][data-lato="${ultimoLato}"]`);
+  await ultimo.fill(ultimoValore);
+  await ultimo.press("F4");
   await pagina.waitForFunction(() => document.querySelector("#bt-fase")?.textContent.includes("Risultato"), null, { timeout: 3000 });
   const stato = await (await fetch(`${base}/api/stato`)).json();
   if (stato.battle.fase !== "risultato" || stato.battle.risultato?.vincitore !== "sx") errori.push(`stato inatteso: ${stato.battle.fase}, vincitore ${stato.battle.risultato?.vincitore}`);
+  const finale = stato.battle.tabellone.torneo.partite.find((p) => p.id === "f1");
+  if (finale?.sx?.nome !== "Lince") errori.push(`il vincitore non è avanzato in finale (f1: ${finale?.sx?.nome ?? "vuota"})`);
   await (await pagina.$("#bt-regia")).screenshot({ path: join(CARTELLA, "mockup", "regia-battle.jpg"), type: "jpeg", quality: 85 });
   await browser.close();
   if (errori.length) {
@@ -117,8 +126,59 @@ async function provaRegia() {
   console.log("ok regia: flusso completo, mockup in mockup/regia-battle.jpg");
 }
 
+// Controlli sulle animazioni e sui testi: i nomi lunghi devono entrare nei riquadri e «VIA!» deve restare visibile
+// abbastanza da leggerlo (con il battle in onda: cambia lo stato del server, usate una porta di prova).
+async function provaControlli() {
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const errori = [];
+  await comando("nuovaSerata");
+  await comando("layout", { nome: "battle" });
+
+  // 1. nomi lunghi (fino a 24 caratteri) nelle barre della vita e nei box degli artisti
+  await comando("battleScontro", { sx: { nome: "Rizzo Freestyle" }, dx: { nome: "MC Lince Vicentino Jr" } });
+  const fissa = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
+  await fissa.goto(`${base}/battle.html?anteprima=1&statico=1`);
+  await fissa.evaluate(() => document.fonts?.ready);
+  await fissa.waitForTimeout(600);
+  const tagliati = await fissa.evaluate(() =>
+    ["#bt-nome-sx", "#bt-nome-dx", "#bt-art-nome-sx", "#bt-art-nome-dx"].filter((sel) => {
+      const e = document.querySelector(sel);
+      return e.scrollWidth > e.clientWidth;
+    }),
+  );
+  if (tagliati.length) errori.push(`nomi tagliati: ${tagliati.join(", ")}`);
+  await fissa.close();
+
+  // 2. «VIA!» visibile per almeno 600 ms tra la fine del 3-2-1 e lo spacco
+  await comando("battleReset");
+  await comando("battleScontro", { sx: { nome: "A" }, dx: { nome: "B" } });
+  const viva = await browser.newPage({ viewport: { width: 540, height: 960 } });
+  await viva.addInitScript(() => {
+    window.__via = 0;
+    setInterval(() => {
+      const strato = document.querySelector("#bt-conto");
+      if (strato && !strato.hidden && document.querySelector("#bt-conto-numero").textContent === "VIA!") window.__via += 20;
+    }, 20);
+  });
+  await viva.goto(`${base}/battle.html?anteprima=1&muto=1`);
+  await viva.waitForTimeout(700);
+  await comando("battleAvvia");
+  await viva.waitForTimeout(4800);
+  const ms = await viva.evaluate(() => window.__via);
+  if (ms < 600) errori.push(`«VIA!» resta visibile solo ${ms} ms (minimo 600)`);
+  await comando("battleReset");
+  await browser.close();
+  if (errori.length) {
+    console.error(`Controlli: problemi\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log(`ok controlli: nomi lunghi dentro i riquadri, «VIA!» visibile ${ms} ms`);
+}
+
 async function main() {
   if (regia) return provaRegia();
+  if (controlli) return provaControlli();
   await comando("layout", { nome: "battle" });
   await comando("battleDemo", { fase, ...(secondi ? { secondi: Number(secondi) } : {}) });
   const { chromium } = caricaPlaywright();

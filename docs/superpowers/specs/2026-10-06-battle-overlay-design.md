@@ -94,8 +94,9 @@ come negli altri layout. Con `?guide=1` si vedono tagli dei telefoni e zone TikT
 - Ogni giudice dà ogni voto da 0 a 10 con un decimale (stessa `normalizzaVoto` della gara).
 - `chat(sx) = 10 × quota(sx)`, `chat(dx) = 10 × quota(dx)`.
 - `totale(lato) = (voto Luca + voto Freya + voto Daniele + chat) / 4`, arrotondato a 2 decimali (25% ciascuno).
-- Vince il totale più alto. Differenza minore di 0,005 = **pari merito**: il round resta in `risultato` con
-  `pari: true` finché la regia non usa `battleProclama { lato }`.
+- Vince il totale più alto **come mostrato** (due decimali): due totali uguali sullo schermo sono un **pari merito**
+  (correzione dopo la revisione: decidere sui totali non arrotondati poteva dare un vincitore con totali uguali
+  sullo schermo). Il round resta in `risultato` con `pari: true` finché la regia non usa `battleProclama { lato }`.
 - Una volta deciso il vincitore, il round viene **registrato una sola volta** (flag `registrato`) nel tabellone attivo.
 
 ### 5.4 Modalità
@@ -205,8 +206,10 @@ camera), `&guide=1`, `&statico=1`, `&fase=` (per i mockup), `?w=` per separare l
 Nuovi effetti in `suoni.js` (sintetizzati con Web Audio, nessun file): `gong`, `conto` (bip del 3-2-1, più acuto
 sull'1) e `spacco` (schiocco del fulmine). Si riusano `allarme` (a 30 s dalla fine), `tic` (ultimi 10 s), `voto`,
 `calcolo`, `risultato` e `vincitore`. I pop-up non suonano. La funzione pura `suoniBattle(prima, dopo, eventi)` in
-`eventi-sonori.js` decide quando partono (testata). Suona solo la pagina del layout in onda, con le stesse opzioni
-di destinazione (overlay / regia / spenti) della gara; il layout `studio` resta senza suoni.
+`eventi-sonori.js` decide quando partono (testata). Sirena a 30 secondi e tic degli ultimi 10 suonano dal ciclo della
+pagina (ogni 50 ms; nella regia ogni 250 ms) con `suoniTimerBattle` e `msTimerBattle`, non dagli aggiornamenti dello
+stato: con la chat ferma il server non manda aggiornamenti per tutto il round. Suona solo la pagina del layout in onda,
+con le stesse opzioni di destinazione (overlay / regia / spenti) della gara; il layout `studio` resta senza suoni.
 
 ## 9. Regia
 

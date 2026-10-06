@@ -7,7 +7,7 @@
 // ?w=barre,modalita,timer,camera,artisti,giudici,chat,popup,tabellone,conto (parti da includere).
 import { collega, durata } from "./connessione.js";
 import { suona, volume } from "./suoni.js";
-import { suoniBattle, suonaIn } from "./eventi-sonori.js";
+import { suoniBattle, suoniTimerBattle, msTimerBattle, suonaIn } from "./eventi-sonori.js";
 import { prossimaComparsa } from "./studio-logica.js";
 import { disegnaTabellone } from "./battle-tabellone.js";
 import {
@@ -82,7 +82,7 @@ function scrivi(el, testo) {
 function adattaTesto(el, massimo, minimo) {
   let corpo = massimo;
   el.style.fontSize = `${corpo}px`;
-  while (el.scrollWidth > el.clientWidth && corpo > minimo) {
+  while ((el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight) && corpo > minimo) {
     corpo -= 2;
     el.style.fontSize = `${corpo}px`;
   }
@@ -119,9 +119,12 @@ const conn = collega({
 // Gli effetti suonano qui solo se la regia ha scelto «overlay» e in onda c'è il battle.
 function suoni(prima, s, eventi) {
   if (MUTO || !prima || !suonaIn(s, "battle", "overlay")) return;
-  const lista = suoniBattle(prima, s, eventi);
+  riproduci(suoniBattle(prima, s, eventi));
+}
+
+function riproduci(lista) {
   if (!lista.length) return;
-  volume(s.suoni.volume);
+  volume(stato.suoni.volume);
   for (const x of lista) suona(x.nome, x.dati, x.ritardo ?? 0);
 }
 
@@ -148,7 +151,7 @@ function disegnaBarre(b) {
   for (const lato of LATI) {
     const nome = $(`#bt-nome-${lato}`);
     nome.textContent = nomi[lato];
-    adattaTesto(nome, 36, 20);
+    adattaTesto(nome, 36, 18);
     $(`#bt-perc-${lato}`).textContent = `${perc[lato]}%`;
     const barra = $(`.bt-barra.${lato}`);
     barra.style.setProperty("--q", b.quota[lato]);
@@ -231,27 +234,49 @@ function tick() {
 }
 if (!STATICO) setInterval(tick, 50);
 
+// Sirena a 30 secondi e tic negli ultimi 10: dal ciclo della pagina (ogni 50 ms), non dagli aggiornamenti dello stato,
+// che con la chat ferma non arrivano per tutto il round.
+let ultimoTimerMs = null;
+
+function suonaTimer(ora) {
+  const corrente = msTimerBattle(stato, ora);
+  if (!MUTO && suonaIn(stato, "battle", "overlay")) riproduci(suoniTimerBattle(ultimoTimerMs, corrente));
+  ultimoTimerMs = corrente;
+}
+
 function aggiornaTimer() {
   const b = stato.battle;
   const ms = rimanenteBattleMs(b, conn.ora());
+  suonaTimer(conn.ora());
   scrivi($("#bt-timer-etichetta"), `Round ${b.round}`);
   scrivi($("#bt-timer-cifre"), durata(ms));
   $("#bt-timer").classList.toggle("urgente", b.fase === "battle" && b.timer.fineAlle !== null && timerUrgente(ms));
 }
 
 // ---------- 3-2-1 a tutto schermo ----------
-const conto = { strato: $("#bt-conto"), numero: $("#bt-conto-numero"), ultimo: null };
+const conto = { strato: $("#bt-conto"), numero: $("#bt-conto-numero"), ultimo: null, attivo: false, viaFinoAlle: 0 };
+const DURATA_VIA_MS = 900;
 
 function aggiornaConto() {
   const b = stato.battle;
+  const adesso = performance.now();
   const inConto = b.fase === "countdown" || CONTO_FISSO > 0;
-  const visibile = inConto && PARTI.includes("conto");
+  if (inConto) conto.attivo = true;
+  // Dopo l'1 il server passa al battle entro 250 ms: senza una pausa il «VIA!» sarebbe visibile un attimo.
+  // Resta su qualche istante anche dopo il passaggio (solo se si è visto il 3-2-1: mai a una pagina ricaricata, mai dopo un Reset).
+  if (!inConto && conto.attivo) {
+    conto.attivo = false;
+    if (b.fase === "battle" && !STATICO) conto.viaFinoAlle = adesso + DURATA_VIA_MS;
+  }
+  const inVia = !inConto && adesso < conto.viaFinoAlle;
+  const visibile = (inConto || inVia) && PARTI.includes("conto");
   conto.strato.hidden = !visibile;
+  conto.strato.classList.toggle("dopo", inVia);
   if (!visibile) {
     conto.ultimo = null;
     return;
   }
-  const n = CONTO_FISSO || numeroConto(b.conto.finoAlle, conn.ora());
+  const n = inVia ? 0 : CONTO_FISSO || numeroConto(b.conto.finoAlle, conn.ora());
   if (n === conto.ultimo) return;
   conto.ultimo = n;
   conto.numero.textContent = n > 0 ? String(n) : "VIA!";
