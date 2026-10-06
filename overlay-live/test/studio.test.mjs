@@ -29,7 +29,7 @@ test("layout studio: si sceglie dalla regia ed è il terzo della tendina", () =>
   const stato = S.statoIniziale(config);
   S.impostaLayout(stato, "studio");
   assert.equal(stato.layout, "studio");
-  assert.deepEqual(S.LAYOUT, ["gara", "senzaPremio", "studio"]);
+  assert.deepEqual(S.LAYOUT, ["gara", "senzaPremio", "studio", "battle"]);
 });
 
 test("Instagram: @nome, nome o link del profilo diventano il nome pulito", () => {

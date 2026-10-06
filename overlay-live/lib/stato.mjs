@@ -2,14 +2,16 @@
 // countdown e spareggio. Solo funzioni sullo stato, senza I/O: il server le chiama e salva su disco.
 import { randomUUID } from "node:crypto";
 import { ICONE, oggetto, testo, numeroTra, siNo, arrotonda, normalizzaVoto, pulisciInstagram, controllaComparse } from "./validazione.mjs";
+import { battleIniziale, istantaneaBattle } from "./battle.mjs";
 
 // Questi cinque restano esportati da qui: li usano server, regia e test.
 export { ICONE, arrotonda, normalizzaVoto, pulisciInstagram };
 
 export const CATEGORIE = ["beat", "voce", "mix"];
 // banner, barra e scheda sono del layout senza premio (banner in alto, barra che scorre, scheda «Ora in ascolto»);
-// targa, barraStudio e comparse della live session in studio (nome dell'artista, barra dei social, comparse dello studio).
-export const WIDGET = ["premio", "tabellone", "classifica", "timer", "banner", "barra", "scheda", "targa", "barraStudio", "comparse"];
+// targa, barraStudio e comparse della live session in studio (nome dell'artista, barra dei social, comparse dello studio);
+// barreVita, modalita, timerBattle, giudiciBattle, popupBattle e bracket (il tabellone a torneo o a punti) del battle.
+export const WIDGET = ["premio", "tabellone", "classifica", "timer", "banner", "barra", "scheda", "targa", "barraStudio", "comparse", "barreVita", "modalita", "timerBattle", "giudiciBattle", "popupBattle", "bracket"];
 export const DOVE_SUONI = ["overlay", "regia", "spenti"];
 // Sotto il premio, a rotazione: spiega a chi entra in live come partecipare. Righe separate da "|".
 export const INVITO_PREDEFINITO = "La traccia più votata vince | Manda la tua traccia su nero.fan/backrooms";
@@ -17,9 +19,10 @@ export const INVITO_PREDEFINITO = "La traccia più votata vince | Manda la tua t
 export const INVITI_SUPERATI = ["La traccia più votata vince | Manda la tua traccia: link in bio"];
 const ORDINE_TIER = { throne: 0, superskip: 1, skip: 2, standard: 3 };
 // Layout in onda: la gara con premio (overlay.html), la live giornaliera di ascolto (senza-premio.html)
-// o la live session in studio (studio.html, split screen fonico · artista · DAW, senza suoni).
+// la live session in studio (studio.html, split screen fonico · artista · DAW, senza suoni)
+// o lo scontro tra due rapper (battle.html, barre della vita dal voto della chat, giudici e tabellone).
 // Suona solo la pagina del layout scelto, così due sorgenti caricate in LIVE Studio non suonano insieme.
-export const LAYOUT = ["gara", "senzaPremio", "studio"];
+export const LAYOUT = ["gara", "senzaPremio", "studio", "battle"];
 const MAX_COMPARSE = 8;
 export const TIER_SCHEDA = ["standard", "skip", "superskip", "throne"];
 // Suono quando parte una traccia nel layout senza premio: leggero, quello della gara, oppure niente.
@@ -45,7 +48,8 @@ export function statoIniziale(config) {
     suoni: suoniIniziali(config),
     giudici: { ...config.giudici },
     nascondiVoti: false,
-    visibili: Object.fromEntries(WIDGET.map((w) => [w, true])),
+    // Il tabellone del battle (bracket) resta spento finché la regia non lo accende.
+    visibili: { ...Object.fromEntries(WIDGET.map((w) => [w, true])), bracket: false },
     tiktokUtente: config.tiktok ?? "",
     // Traccia in riproduzione su Nero: l'ultima vista e quella in attesa se la traccia attuale ha voti da confermare.
     neroAutomatico: config.nero?.automatico ?? true,
@@ -55,6 +59,7 @@ export function statoIniziale(config) {
     layout: LAYOUT.includes(config.layout) ? config.layout : "gara",
     senzaPremio: senzaPremioIniziale(),
     studio: studioIniziale(),
+    battle: battleIniziale(),
     // Tracce ascoltate nella serata (per «Oggi abbiamo ascoltato N tracce»).
     ascoltate: [],
   };
@@ -162,7 +167,7 @@ export function impostaSenzaPremio(stato, modifiche = {}) {
 }
 
 export function impostaLayout(stato, nome) {
-  if (!LAYOUT.includes(nome)) throw new Error("Layout sconosciuto: gara, senzaPremio o studio");
+  if (!LAYOUT.includes(nome)) throw new Error("Layout sconosciuto: gara, senzaPremio, studio o battle");
   stato.layout = nome;
 }
 
@@ -506,6 +511,7 @@ export function istantanea(stato, config, ora) {
     layout: stato.layout,
     senzaPremio: stato.senzaPremio,
     studio: stato.studio,
+    battle: istantaneaBattle(stato.battle),
     ascoltate: ascoltateNellaLive(stato, ora),
   };
 }

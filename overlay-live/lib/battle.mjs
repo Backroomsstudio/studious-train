@@ -1,0 +1,276 @@
+// Layout «Battle»: scontro tra due rapper, voto della chat per lato, tre giudici, tabellone a torneo o a punti.
+// Solo funzioni sullo stato (stato.battle), senza I/O: il server le chiama, salva su disco e le diffonde.
+import { randomUUID } from "node:crypto";
+import { oggetto, testo, numeroTra, arrotonda, normalizzaVoto, pulisciInstagram, controllaComparse } from "./validazione.mjs";
+
+export const LATI = ["sx", "dx"];
+export const FASI = ["attesa", "countdown", "battle", "voto", "risultato"];
+export const GIUDICI_BATTLE = ["luca", "freya", "daniele"];
+export const MODI_TABELLONE = ["torneo", "punti"];
+// Il 3-2-1 prima del via dura 3 secondi.
+export const CONTO_MS = 3000;
+
+export const MAX_NOME = 24;
+export const MAX_MODALITA = 10;
+export const MAX_POPUP = 8;
+const DURATA_MIN = 10;
+const DURATA_MAX = 600;
+const TARGET_MAX = 1000;
+
+const rapperVuoto = () => ({ nome: "", instagram: "" });
+const timerVuoto = (durataSecondi) => ({ durataSecondi, fineAlle: null, rimanenteMs: null, scaduto: false });
+
+export function battleIniziale() {
+  const voce = (id, nome, conTesto = false, attiva = true) => ({ id, nome, conTesto, testo: "", attiva });
+  return {
+    fase: "attesa",
+    round: 1,
+    partitaId: null,
+    sx: rapperVuoto(),
+    dx: rapperVuoto(),
+    modalita: {
+      scelta: "stileLibero",
+      elenco: [
+        voce("stileLibero", "Stile libero"),
+        voce("treQuarti", "Tre quarti"),
+        voce("tematica", "Tematica", true),
+        voce("anni90", "Anni '90"),
+        voce("beatAScelta", "Beat a scelta"),
+        voce("situazione", "Situazione", true),
+        voce("custom", "", false, false), // slot per le modalità future: si compila dalla regia
+      ],
+    },
+    timer: timerVuoto(90),
+    conto: { finoAlle: null },
+    chat: { aperta: false, voti: {} },
+    giudici: [
+      { id: "luca", nome: "Luca", voti: { sx: null, dx: null } },
+      { id: "freya", nome: "Freya", voti: { sx: null, dx: null } },
+      { id: "daniele", nome: "Daniele", voti: { sx: null, dx: null } },
+    ],
+    risultato: null,
+    tabellone: {
+      modo: "torneo",
+      torneo: { partecipanti: [], partite: [], campione: null },
+      punti: { artisti: [], target: 30, vincitore: null },
+    },
+    popup: {
+      elenco: [
+        { id: "backrooms", attiva: true, icona: "logo", sopra: "Backrooms Studio · Vicenza", titolo: "Prenota la tua sessione", sotto: "backroomsstudio.it · @backrooms.studios" },
+        // L'handle di Rime Vicentine lo scrive la regia: finché manca, si mostra solo il nome.
+        { id: "rime", attiva: true, icona: "instagram", sopra: "Seguici su Instagram", titolo: "Rime Vicentine", sotto: "" },
+      ],
+      ogniMinuti: 4,
+      durata: 10,
+    },
+  };
+}
+
+// ---------- Controlli condivisi da fondiBattle e dalle impostazioni ----------
+
+export function controllaRapper(valore) {
+  if (!oggetto(valore)) throw new Error("Rapper: servono nome e Instagram");
+  return { nome: testo(valore.nome ?? "", MAX_NOME, "Nome del rapper"), instagram: pulisciInstagram(valore.instagram ?? "") };
+}
+
+export function controllaModalita(elenco) {
+  if (!Array.isArray(elenco)) throw new Error("Modalità: serve l'elenco");
+  if (elenco.length > MAX_MODALITA) throw new Error(`Modalità: al massimo ${MAX_MODALITA}`);
+  return elenco.map((m, i) => {
+    const n = `Modalità ${i + 1}`;
+    if (!oggetto(m)) throw new Error(`${n}: servono nome e testo`);
+    const voce = {
+      id: typeof m.id === "string" && m.id ? m.id.slice(0, 40) : randomUUID(),
+      nome: testo(m.nome ?? "", MAX_NOME, `${n} (nome)`),
+      conTesto: m.conTesto === true,
+      testo: testo(m.testo ?? "", 40, `${n} (testo)`),
+      attiva: m.attiva !== false,
+    };
+    if (voce.attiva && !voce.nome) throw new Error(`${n}: manca il nome`);
+    return voce;
+  });
+}
+
+const ora = (x) => typeof x === "number" && Number.isFinite(x);
+const oraONulla = (x) => x === null || ora(x);
+
+function controllaTimer(t) {
+  if (!oggetto(t)) throw new Error("Timer: forma non valida");
+  // I campi che mancano prendono il valore di partenza; quelli presenti ma sbagliati invalidano tutto il timer.
+  const { fineAlle = null, rimanenteMs = null, scaduto = false } = t;
+  if (!oraONulla(fineAlle) || !oraONulla(rimanenteMs) || typeof scaduto !== "boolean") throw new Error("Timer: valori non validi");
+  return { durataSecondi: numeroTra(t.durataSecondi, DURATA_MIN, DURATA_MAX, "Durata del round (secondi)"), fineAlle, rimanenteMs, scaduto };
+}
+
+function controllaChat(c) {
+  if (!oggetto(c) || typeof c.aperta !== "boolean" || !oggetto(c.voti)) throw new Error("Chat: forma non valida");
+  const voti = {};
+  for (const [chiave, lato] of Object.entries(c.voti)) if (LATI.includes(lato)) voti[chiave] = lato;
+  return { aperta: c.aperta, voti };
+}
+
+function controllaGiudici(lista) {
+  if (!Array.isArray(lista) || lista.length !== GIUDICI_BATTLE.length) throw new Error("Giudici: ne servono tre");
+  return lista.map((g, i) => {
+    if (!oggetto(g) || g.id !== GIUDICI_BATTLE[i] || !oggetto(g.voti)) throw new Error("Giudici: forma non valida");
+    return { id: g.id, nome: testo(g.nome, MAX_NOME, "Nome del giudice", { obbligatorio: true }), voti: { sx: normalizzaVoto(g.voti.sx), dx: normalizzaVoto(g.voti.dx) } };
+  });
+}
+
+function controllaCoppia(c) {
+  if (!oggetto(c) || !ora(c.sx) || !ora(c.dx)) throw new Error("Risultato: coppia di valori non valida");
+  return { sx: c.sx, dx: c.dx };
+}
+
+function controllaRisultato(r) {
+  if (r === null) return null;
+  if (!oggetto(r) || !ora(r.rivelatoAlle) || typeof r.pari !== "boolean" || typeof r.registrato !== "boolean" || !oggetto(r.parziali)) throw new Error("Risultato: forma non valida");
+  if (r.vincitore !== null && !LATI.includes(r.vincitore)) throw new Error("Risultato: vincitore non valido");
+  const parziali = {};
+  for (const chiave of [...GIUDICI_BATTLE, "chat"]) parziali[chiave] = controllaCoppia(r.parziali[chiave]);
+  return { rivelatoAlle: r.rivelatoAlle, totali: controllaCoppia(r.totali), parziali, vincitore: r.vincitore, pari: r.pari, registrato: r.registrato };
+}
+
+const personaONulla = (p) => (p === null ? null : controllaRapper(p));
+
+function controllaPartita(p) {
+  if (!oggetto(p) || typeof p.id !== "string" || !["quarti", "semifinali", "finale"].includes(p.turno)) throw new Error("Partita: forma non valida");
+  if (p.vincitore !== null && !LATI.includes(p.vincitore)) throw new Error("Partita: vincitore non valido");
+  return { id: p.id, turno: p.turno, sx: personaONulla(p.sx), dx: personaONulla(p.dx), vincitore: p.vincitore, totali: p.totali === null ? null : controllaCoppia(p.totali) };
+}
+
+function controllaTabellone(t) {
+  if (!oggetto(t) || !MODI_TABELLONE.includes(t.modo) || !oggetto(t.torneo) || !oggetto(t.punti)) throw new Error("Tabellone: forma non valida");
+  const { torneo, punti } = t;
+  if (!Array.isArray(torneo.partecipanti) || !Array.isArray(torneo.partite) || !Array.isArray(punti.artisti)) throw new Error("Tabellone: elenchi non validi");
+  if (torneo.campione !== null && !oggetto(torneo.campione)) throw new Error("Tabellone: campione non valido");
+  if (punti.vincitore !== null && typeof punti.vincitore !== "string") throw new Error("Tabellone: vincitore dei punti non valido");
+  return {
+    modo: t.modo,
+    torneo: { partecipanti: torneo.partecipanti.map(controllaRapper), partite: torneo.partite.map(controllaPartita), campione: torneo.campione === null ? null : controllaRapper(torneo.campione) },
+    punti: {
+      artisti: punti.artisti.map((a) => {
+        if (!oggetto(a) || !ora(a.punti) || !Array.isArray(a.round) || !a.round.every(ora)) throw new Error("Punti: artista non valido");
+        return { nome: testo(a.nome, MAX_NOME, "Nome dell'artista", { obbligatorio: true }), punti: a.punti, round: a.round };
+      }),
+      target: numeroTra(punti.target, 1, TARGET_MAX, "Target della classifica"),
+      vincitore: punti.vincitore,
+    },
+  };
+}
+
+function controllaPopup(p) {
+  if (!oggetto(p)) throw new Error("Pop-up: forma non valida");
+  return {
+    elenco: controllaComparse(p.elenco, MAX_POPUP, { elenco: "Pop-up", voce: "Pop-up" }),
+    ogniMinuti: numeroTra(p.ogniMinuti, 0, 30, "Pop-up automatici (minuti)"),
+    durata: numeroTra(p.durata, 4, 20, "Durata del pop-up (secondi)"),
+  };
+}
+
+function controllaModalitaScelta(m) {
+  if (!oggetto(m)) throw new Error("Modalità: forma non valida");
+  const elenco = controllaModalita(m.elenco);
+  if (!elenco.some((v) => v.id === m.scelta && v.attiva)) throw new Error("Modalità: la scelta non è nell'elenco");
+  return { scelta: m.scelta, elenco };
+}
+
+// Un controllo per chiave di primo livello: restituisce il valore pulito o lancia.
+const CONTROLLI = {
+  fase: (v) => {
+    if (!FASI.includes(v)) throw new Error("Fase non valida");
+    return v;
+  },
+  round: (v) => {
+    if (!Number.isInteger(v) || v < 1) throw new Error("Round non valido");
+    return v;
+  },
+  partitaId: (v) => {
+    if (v !== null && (typeof v !== "string" || v.length > 40)) throw new Error("Partita non valida");
+    return v;
+  },
+  sx: controllaRapper,
+  dx: controllaRapper,
+  modalita: controllaModalitaScelta,
+  timer: controllaTimer,
+  conto: (v) => {
+    if (!oggetto(v) || !oraONulla(v.finoAlle)) throw new Error("Conto non valido");
+    return { finoAlle: v.finoAlle };
+  },
+  chat: controllaChat,
+  giudici: controllaGiudici,
+  risultato: controllaRisultato,
+  tabellone: controllaTabellone,
+  popup: controllaPopup,
+};
+
+// Stato salvato da una versione senza battle, o con valori rotti: partenza completa, i valori buoni restano.
+export function fondiBattle(salvato) {
+  const base = battleIniziale();
+  if (!oggetto(salvato)) return base;
+  for (const [chiave, controlla] of Object.entries(CONTROLLI)) {
+    if (salvato[chiave] === undefined) continue;
+    try {
+      base[chiave] = controlla(salvato[chiave]);
+    } catch {
+      // valore non valido: resta il predefinito
+    }
+  }
+  return base;
+}
+
+// ---------- Chat ----------
+
+const RE_LATO = /^!?(1|sx|2|dx)$/i;
+
+// Commenti che votano: «1» o «sx» per il rapper di sinistra, «2» o «dx» per quello di destra (con «!» facoltativo).
+export function leggiVotoBattle(commento) {
+  const m = String(commento ?? "").trim().match(RE_LATO);
+  if (!m) return null;
+  return /^(1|sx)$/i.test(m[1]) ? "sx" : "dx";
+}
+
+// Un voto per utente: se riscrive, vale l'ultimo. Fuori dalla finestra di voto (chat chiusa) non conta.
+export function votoChatBattle(stato, { piattaforma, utente }, lato, _ora) {
+  const chat = stato.battle.chat;
+  if (!chat.aperta || !utente || !LATI.includes(lato)) return false;
+  chat.voti[`${piattaforma}:${String(utente).toLowerCase()}`] = lato;
+  return true;
+}
+
+function conteggi(chat) {
+  let sx = 0;
+  let dx = 0;
+  for (const lato of Object.values(chat.voti)) lato === "sx" ? sx++ : dx++;
+  return { sx, dx, voti: sx + dx };
+}
+
+// Quota di ciascun lato sul totale dei voti; senza voti 50/50.
+export function quota(chat) {
+  const { sx, dx, voti } = conteggi(chat);
+  return voti === 0 ? { sx: 0.5, dx: 0.5, voti: 0 } : { sx: sx / voti, dx: dx / voti, voti };
+}
+
+// ---------- Punteggio ----------
+
+// Totale di ciascun lato = media di Luca, Freya, Daniele e chat (10 × quota), 25% ciascuno.
+export function calcolaRisultato(battle) {
+  const parziali = {};
+  for (const g of battle.giudici) {
+    if (g.voti.sx === null || g.voti.dx === null) throw new Error(`Mancano i voti di ${g.nome}`);
+    parziali[g.id] = { sx: g.voti.sx, dx: g.voti.dx };
+  }
+  const q = quota(battle.chat);
+  parziali.chat = { sx: arrotonda(10 * q.sx, 2), dx: arrotonda(10 * q.dx, 2) };
+  const grezzo = (lato) => GIUDICI_BATTLE.concat("chat").reduce((somma, chiave) => somma + parziali[chiave][lato], 0) / 4;
+  const totali = { sx: arrotonda(grezzo("sx"), 2), dx: arrotonda(grezzo("dx"), 2) };
+  const pari = Math.abs(grezzo("sx") - grezzo("dx")) < 0.005;
+  return { parziali, totali, pari, vincitore: pari ? null : totali.sx > totali.dx ? "sx" : "dx" };
+}
+
+// Quello che ricevono pagine e regia: senza la mappa dei voti della chat (migliaia di righe a ogni aggiornamento).
+export function istantaneaBattle(battle) {
+  const { chat, ...resto } = battle;
+  const c = conteggi(chat);
+  return { ...resto, chat: { aperta: chat.aperta, sx: c.sx, dx: c.dx, voti: c.voti }, quota: quota(chat) };
+}
