@@ -145,3 +145,12 @@ test("e2e: dati di prova, nuova serata e pop-up", async () => {
   assert.equal(dopo.battle.fase, "attesa");
   assert.equal(dopo.battle.giudici[0].nome, "Luca");
 });
+
+test("e2e: la pagina del battle si apre come /battle.html e /battle", async () => {
+  for (const percorso of ["/battle.html", "/battle"]) {
+    const r = await fetch(`${base}${percorso}`);
+    assert.equal(r.status, 200, percorso);
+    assert.match(r.headers.get("content-type"), /text\/html/);
+    assert.match(await r.text(), /data-parte="camera"/, percorso);
+  }
+});

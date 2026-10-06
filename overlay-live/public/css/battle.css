@@ -1,0 +1,486 @@
+/* Layout BATTLE, una sola sorgente Link 1080×1920 su sfondo trasparente (usa base.css e overlay.css).
+   Scontro tra due rapper: barre della vita che seguono il voto della chat, camera al centro con il VS,
+   modalità e timer sopra, giudici e voto della chat sotto.
+
+   POSIZIONI in pixel della tela (la camera è una sorgente di LIVE Studio sotto questa pagina):
+   - barre della vita     y 282 → 372   (l'app TikTok copre fino a ~270)
+   - modalità e timer     y 398 → 544
+   - pop-up social        y 566 → 644
+   - camera               y 656 → 1264  (16:9 a tutta larghezza, al centro)
+   - box degli artisti    y 1100 → 1196 (dentro la camera, in basso)
+   - giudici              y 1292 → 1442
+   - barra voto chat      y 1456 → 1534
+   - tabellone            y 282 → 1534  (copre tutto)
+   Sui telefoni resta visibile circa x 104…976: tutto sta tra x 116 e 964 (la camera è a tutta larghezza).
+   Con una camera 4:3 (la scena attuale: y 550 → 1363) basta cambiare --bt-y-camera e --bt-h-camera:
+   box degli artisti, giudici e barra chat seguono il fondo della camera; barre, modalità, timer e pop-up
+   restano dove sono e vanno spostati a mano. Con ?guide=1 si vedono le zone. */
+.bt .palco {
+  --bt-x: 116px;
+  --bt-largo: 848px;
+
+  --bt-y-barre: 282px;
+  --bt-h-barre: 90px;
+  --bt-y-modo: 398px;
+  --bt-h-modo: 146px;
+  --bt-largo-modo: 530px;
+  --bt-x-timer: 660px;
+  --bt-largo-timer: 304px;
+  --bt-y-popup: 566px;
+  --bt-h-popup: 78px;
+
+  --bt-y-camera: 656px;
+  --bt-h-camera: 608px;
+  --bt-fondo-camera: calc(var(--bt-y-camera) + var(--bt-h-camera));
+  --bt-y-artisti: calc(var(--bt-fondo-camera) - 164px);
+  --bt-h-artisti: 96px;
+  --bt-y-giudici: calc(var(--bt-fondo-camera) + 28px);
+  --bt-h-giudici: 150px;
+  --bt-y-chat: calc(var(--bt-y-giudici) + 164px);
+  --bt-h-chat: 78px;
+
+  --bt-y-tabellone: 282px;
+  --bt-h-tabellone: 1252px;
+
+  /* un colore per lato: sinistra ciano, destra magenta (barra, nome, bordo del box artista, barra chat) */
+  --bt-sx: var(--ciano);
+  --bt-dx: var(--magenta);
+}
+
+body.bt.anteprima {
+  background: #000;
+}
+
+/* ---------- Finta camera (solo ?anteprima=1) ---------- */
+.bt-finto {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: var(--bt-y-camera);
+  width: 1080px;
+  height: var(--bt-h-camera);
+  place-items: center;
+  background: radial-gradient(30% 50% at 28% 55%, rgba(255, 150, 240, 0.4), transparent 70%),
+    radial-gradient(30% 50% at 72% 55%, rgba(120, 160, 255, 0.35), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 46px),
+    linear-gradient(180deg, #4a1450, #1a0828);
+  font: 800 34px/1 var(--font-dati);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+}
+.anteprima .bt-finto {
+  display: grid;
+}
+
+/* ---------- Vetro: pannelli scuri con bordo cromo-neon ---------- */
+.bt-vetro {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 22px;
+  background: radial-gradient(90% 80% at 0% 0%, rgba(160, 102, 255, 0.3), transparent 60%),
+    radial-gradient(80% 80% at 100% 100%, rgba(54, 220, 255, 0.14), transparent 60%),
+    linear-gradient(180deg, rgba(26, 17, 48, 0.96), rgba(8, 6, 16, 0.97));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), 0 0 30px rgba(160, 102, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.bt-vetro::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2.5px;
+  background: var(--bordo-cromo);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ---------- Barre della vita ---------- */
+.bt-barre {
+  position: absolute;
+  left: var(--bt-x);
+  top: var(--bt-y-barre);
+  width: var(--bt-largo);
+  height: var(--bt-h-barre);
+  display: grid;
+  grid-template-columns: 124px 230px 108px 230px 124px;
+  column-gap: 8px;
+  align-items: center;
+}
+.bt-nome {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.bt-nome.dx {
+  justify-content: flex-end;
+}
+.bt-nome span {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  font: 900 36px/1.1 var(--font-dati);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.8), 0 0 18px rgba(0, 0, 0, 0.7);
+  padding-bottom: 4px;
+  border-bottom: 4px solid var(--bt-sx);
+}
+.bt-nome.dx span {
+  border-bottom-color: var(--bt-dx);
+}
+
+.bt-barra {
+  position: relative;
+  height: 46px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.78), rgba(18, 12, 34, 0.9));
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4);
+  overflow: hidden;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 16px) 100%, 0 100%);
+}
+.bt-barra.dx {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 16px 100%);
+}
+.bt-riempi {
+  position: absolute;
+  inset: 3px;
+  transform: scaleX(var(--q, 0.5));
+  transform-origin: right center;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  background: linear-gradient(270deg, #b6f3ff, var(--bt-sx) 40%, #7a5cff);
+  box-shadow: 0 0 18px var(--bt-sx);
+}
+.bt-barra.dx .bt-riempi {
+  transform-origin: left center;
+  background: linear-gradient(90deg, #ffc1f0, var(--bt-dx) 40%, var(--rosso));
+  box-shadow: 0 0 18px var(--bt-dx);
+}
+/* riflesso lucido sulla metà alta */
+.bt-riempi::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 50% 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.05));
+}
+.bt-barra.in-testa {
+  box-shadow: inset 0 0 0 2px #ffe27a, 0 0 22px rgba(255, 226, 122, 0.5);
+}
+.bt-perc {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font: 900 30px/1 var(--font-dati);
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.85), 0 0 10px rgba(0, 0, 0, 0.7);
+}
+.bt-barra.sx .bt-perc {
+  left: 12px;
+}
+.bt-barra.dx .bt-perc {
+  right: 12px;
+}
+
+.bt-badge {
+  box-sizing: border-box;
+  height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid transparent;
+  background: linear-gradient(#150c28, #150c28) padding-box, var(--podio-oro) border-box;
+  clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 16px 100%, 0 50%);
+  box-shadow: 0 0 24px rgba(255, 200, 60, 0.5);
+}
+.bt-badge span {
+  font: 900 25px/1.05 var(--font-dati);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--oro-testo);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------- Modalità e timer ---------- */
+.bt-modo {
+  left: var(--bt-x);
+  top: var(--bt-y-modo);
+  width: var(--bt-largo-modo);
+  height: var(--bt-h-modo);
+  padding: 18px 26px 0;
+  text-align: left;
+}
+.bt-modo-nome {
+  margin-top: 8px;
+  font: 900 48px/1.05 var(--font-dati);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.bt-modo-testo {
+  margin-top: 6px;
+  font: 800 38px/1.1 var(--font-gotico);
+  white-space: nowrap;
+  overflow: hidden;
+  background: var(--oro-testo);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.bt-timer {
+  left: var(--bt-x-timer);
+  top: var(--bt-y-modo);
+  width: var(--bt-largo-timer);
+  height: var(--bt-h-modo);
+  padding-top: 16px;
+  text-align: center;
+}
+.bt-timer-cifre {
+  margin-top: 4px;
+  font: 900 100px/1 var(--font-dati);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.6), 0 0 26px rgba(160, 102, 255, 0.6);
+}
+.bt-timer.urgente .bt-timer-cifre {
+  color: var(--rosso-live);
+  text-shadow: 0 0 30px rgba(255, 48, 70, 0.9);
+  animation: bt-lampeggia 0.8s steps(2, jump-none) infinite;
+}
+.bt-timer.urgente {
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), 0 0 40px rgba(255, 48, 70, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+@keyframes bt-lampeggia {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* ---------- Camera: cornice ---------- */
+.bt-camera {
+  position: absolute;
+  left: 0;
+  top: var(--bt-y-camera);
+  width: 1080px;
+  height: var(--bt-h-camera);
+  pointer-events: none;
+}
+.bt-filo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, var(--bt-sx), #fff 50%, var(--bt-dx));
+  box-shadow: 0 0 16px var(--bt-sx), 0 0 16px var(--bt-dx);
+}
+.bt-filo.alto {
+  top: 0;
+}
+.bt-filo.basso {
+  bottom: 0;
+}
+.bt-staffa {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border: 0 solid transparent;
+  border-image: var(--bordo-cromo) 1;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
+}
+.bt-staffa.as {
+  left: var(--bt-x);
+  top: 14px;
+  border-width: 6px 0 0 6px;
+}
+.bt-staffa.ad {
+  right: calc(1080px - var(--bt-x) - var(--bt-largo));
+  top: 14px;
+  border-width: 6px 6px 0 0;
+}
+.bt-staffa.bs {
+  left: var(--bt-x);
+  bottom: 14px;
+  border-width: 0 0 6px 6px;
+}
+.bt-staffa.bd {
+  right: calc(1080px - var(--bt-x) - var(--bt-largo));
+  bottom: 14px;
+  border-width: 0 6px 6px 0;
+}
+
+/* ---------- Box degli artisti ---------- */
+.bt-artisti {
+  position: absolute;
+  left: var(--bt-x);
+  top: var(--bt-y-artisti);
+  width: var(--bt-largo);
+  height: var(--bt-h-artisti);
+  display: grid;
+  grid-template-columns: 404px 404px;
+  justify-content: space-between;
+}
+.bt-artista {
+  position: relative;
+  width: 404px;
+  height: var(--bt-h-artisti);
+  padding: 8px 22px 0;
+  overflow: hidden;
+}
+.bt-artista.sx {
+  border-left: 8px solid var(--bt-sx);
+}
+.bt-artista.dx {
+  border-right: 8px solid var(--bt-dx);
+  text-align: right;
+}
+.bt-artista-nome {
+  font: 900 42px/1.1 var(--font-dati);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.bt-artista-ig {
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 700 28px/1 var(--font-dati);
+  letter-spacing: 0.04em;
+  color: var(--viola-chiaro);
+}
+.bt-artista.dx .bt-artista-ig {
+  justify-content: flex-end;
+}
+.bt-artista-ig svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: #ff7ad9;
+  stroke-width: 2;
+}
+.bt-artista-ig span {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* ---------- Giudici ---------- */
+.bt-giudici {
+  position: absolute;
+  left: var(--bt-x);
+  top: var(--bt-y-giudici);
+  width: var(--bt-largo);
+  height: var(--bt-h-giudici);
+  display: grid;
+  grid-template-columns: repeat(3, 272px);
+  column-gap: 16px;
+}
+.bt-giudice {
+  position: relative;
+  width: 272px;
+  height: var(--bt-h-giudici);
+  padding-top: 14px;
+  text-align: center;
+}
+.bt-giudice-nome {
+  font: 800 28px/1 var(--font-dati);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--testo-tenue);
+  padding-left: 0.3em;
+}
+.bt-giudice-voti {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 2px 1fr;
+  align-items: center;
+}
+.bt-giudice-voti i {
+  height: 70px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+}
+.bt-giudice-voti b {
+  font: 900 76px/1 var(--font-dati);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.6);
+}
+.bt-giudice-voti b.sx {
+  color: var(--bt-sx);
+}
+.bt-giudice-voti b.dx {
+  color: var(--bt-dx);
+}
+.bt-giudice-voti b.vuoto {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* ---------- Barra voto chat ---------- */
+.bt-chat {
+  position: absolute;
+  left: var(--bt-x);
+  top: var(--bt-y-chat);
+  width: var(--bt-largo);
+  height: var(--bt-h-chat);
+  box-sizing: border-box;
+  padding: 0 28px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(90deg, rgba(54, 220, 255, 0.92), rgba(160, 102, 255, 0.92) 50%, rgba(255, 79, 216, 0.92));
+  box-shadow: 0 0 34px rgba(160, 102, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.bt-chat-testo {
+  font: 900 34px/1 var(--font-dati);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #0a0714;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.bt-chat-testo b {
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+}
+.bt-chat-conta {
+  flex: none;
+  margin-left: 16px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: rgba(10, 7, 20, 0.85);
+  font: 800 28px/1 var(--font-dati);
+  letter-spacing: 0.06em;
+  color: #fff;
+}
+
+/* ---------- Guide (?guide=1): zone coperte da TikTok ---------- */
+.bt-guida {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  display: flex;
+  align-items: flex-end;
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0 8px, rgba(255, 255, 255, 0.02) 8px 16px);
+  border: 2px dashed rgba(255, 255, 255, 0.45);
+}
+.bt-guida.chat {
+  left: 0;
+  top: 1200px;
+  width: 790px;
+  height: 500px;
+}
+.bt-guida.regali {
+  left: 902px;
+  top: 1100px;
+  width: 178px;
+  height: 670px;
+}
