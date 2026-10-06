@@ -282,6 +282,25 @@ const effetti = {
     }
     for (const n of [33, 40, 46]) tono(t, { f: hz(n), tipo: "sawtooth", att: 1.2, dur: 3.6, vol: 0.06, riv: 0.5, filtro: { f: 300, f2: 1200 } });
   },
+  // Battle: gong. Colpo grave con parziali non armoniche e coda lunga, poi un secondo battito più acuto.
+  gong(t) {
+    colpo(t, 0.7);
+    for (const [f, vol] of [[98, 0.5], [148, 0.3], [207, 0.22], [329, 0.14]]) tono(t, { f, f2: f * 0.94, glide: 2.6, tipo: "sine", dur: 3.4, vol, riv: 0.5 });
+    rumore(t, { tipo: "bandpass", f: 3200, q: 0.7, dur: 0.5, vol: 0.18, riv: 0.5 });
+    piatto(t, 0.7);
+    tono(t + 0.25, { f: 147, f2: 138, glide: 1.6, dur: 1.8, vol: 0.26, riv: 0.5 });
+  },
+  // Battle: i bip del 3-2-1 (l'ultimo, il «1», è più acuto).
+  conto(t, { n = 3 } = {}) {
+    tono(t, { f: n === 1 ? 1320 : 880, tipo: "square", dur: 0.2, vol: 0.14, riv: 0.2, filtro: { f: 3600 } });
+    tono(t, { f: n === 1 ? 660 : 440, dur: 0.2, vol: 0.12, riv: 0.1 });
+  },
+  // Battle: lo schiocco del fulmine che divide la camera.
+  spacco(t) {
+    rumore(t, { tipo: "highpass", f: 3000, f2: 9000, dur: 0.28, vol: 0.38, riv: 0.2 });
+    tono(t, { f: 2400, f2: 90, glide: 0.25, tipo: "sawtooth", dur: 0.32, vol: 0.22, riv: 0.2 });
+    colpo(t + 0.03, 0.5);
+  },
 };
 
 export const NOMI_SUONI = Object.keys(effetti);

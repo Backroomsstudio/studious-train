@@ -1,5 +1,6 @@
 // Quali effetti sonori far partire, confrontando lo stato di prima con quello nuovo.
 // Funzioni pure (niente audio, niente DOM): le usano overlay e regia, e i test.
+import { rimanenteBattleMs, sequenzaRivelazione, FINE_RIVELAZIONE_MS, SOGLIA_URGENTE_MS as SOGLIA_BATTLE_MS } from "./battle-logica.js";
 
 // Dopo la conferma il totale conta per 1,5 s e "timbra": la classifica si muove subito dopo.
 export const RITARDO_CLASSIFICA_MS = 1700;
@@ -125,5 +126,49 @@ export function suoniSenzaPremio(prima, dopo, eventi = [], { ora = 0, ultimaTrac
     const suono = { nome: scelta === "pieno" ? "nuovaTraccia" : "inAscolto", dati: { tier: traccia.traccia.tier ?? null }, parte: "scheda" };
     suoni.push(traccia.daCorrente ? { ...suono, traccia: true } : suono);
   }
+  return suoni;
+}
+
+// ---------- Battle ----------
+
+// Timer del battle (90 s di solito): sirena quando mancano 30 secondi, un tic al secondo negli ultimi 10.
+// A zero non suona niente: ci pensa il gong.
+export function suoniTimerBattle(msPrima, msDopo) {
+  if (msPrima === null || msDopo === null || msDopo <= 0 || msDopo >= msPrima) return [];
+  if (msPrima > SOGLIA_BATTLE_MS && msDopo <= SOGLIA_BATTLE_MS) return [{ nome: "allarme" }];
+  const [s1, s2] = [Math.ceil(msPrima / 1000), Math.ceil(msDopo / 1000)];
+  if (s2 <= 10 && s2 !== s1) return [{ nome: "tic", dati: { ultimi: s2 <= 3 } }];
+  return [];
+}
+
+// Tempo rimasto solo mentre il timer corre: in ogni altro momento non c'è niente da confrontare.
+const msTimer = (s) => (s.battle.fase === "battle" && s.battle.timer.fineAlle !== null ? rimanenteBattleMs(s.battle, s.ora) : null);
+const haCampione = (s) => Boolean(s.battle.tabellone.punti.vincitore || s.battle.tabellone.torneo.campione);
+
+// Suoni del battle: i tre bip del 3-2-1, gong (con lo spacco al via), timer, rivelazione dei voti e fanfara del campione.
+// Il 3-2-1 e la rivelazione sono programmati con un ritardo per ogni suono, così restano allineati alla grafica.
+export function suoniBattle(prima, dopo, eventi = []) {
+  if (!prima) return [];
+  const a = prima.battle;
+  const b = dopo.battle;
+  const suoni = [];
+  if (a.fase !== "countdown" && b.fase === "countdown") {
+    for (const n of [3, 2, 1]) suoni.push({ nome: "conto", dati: { n }, ritardo: (3 - n) * 1000 });
+  }
+  for (const e of eventi) {
+    if (e.nome !== "gong") continue;
+    suoni.push({ nome: "gong" });
+    if (e.dati?.quando === "inizio") suoni.push({ nome: "spacco" });
+  }
+  suoni.push(...suoniTimerBattle(msTimer(prima), msTimer(dopo)));
+  const rivelato = a.fase === "voto" && b.fase === "risultato" && b.risultato;
+  if (rivelato) {
+    for (const passo of sequenzaRivelazione(b.risultato)) {
+      if (passo.chiave === "totale") suoni.push({ nome: "calcolo", ritardo: passo.dopoMs });
+      else if (passo.chiave !== "chat") suoni.push({ nome: "voto", dati: { valore: Math.max(passo.sx, passo.dx) }, ritardo: passo.dopoMs });
+    }
+  }
+  // La fanfara arriva dopo la rivelazione; se il campione nasce da una proclamazione (pari merito) parte subito.
+  if (!haCampione(prima) && haCampione(dopo)) suoni.push({ nome: "vincitore", ritardo: rivelato ? FINE_RIVELAZIONE_MS + 600 : 0 });
   return suoni;
 }
