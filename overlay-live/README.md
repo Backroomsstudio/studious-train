@@ -65,7 +65,7 @@ Dalla regia (*Suoni*): dove suonano (nell'overlay, nella regia o spenti), volume
 | `F9` | Pausa / riprendi il countdown |
 | `Invio` in un voto | Passa al voto successivo |
 
-Flusso tipico: *In ascolto ora* (o ▶ dalla coda) → i tre giudici dicono il voto, la regia lo scrive → `F2` apre il voto della chat → `F4` conferma → `F8`.
+Flusso tipico: la traccia arriva da sola da Nero (oppure *In ascolto ora* / ▶ dalla coda) → i tre giudici dicono il voto, la regia lo scrive → `F2` apre il voto della chat → `F4` conferma → su Nero si passa alla traccia successiva e il tabellone cambia da solo (senza Nero: `F8`).
 
 - **Chat TikTok**: nella sezione *Serata* scrivi l'@ dell'account che va in diretta e premi *Collega chat*. In alto compare lo stato (in ascolto / in attesa della live / non collegato). Si collega da solo quando parte la live e si ricollega se cade.
 - **In onda**: mostra o nasconde tabellone, classifica e countdown. Con la classifica nascosta, dopo ogni conferma compare da sola per 15 secondi.
@@ -88,13 +88,21 @@ La chat accetta `8`, `7.5`, `7,5`, `9/10`, `!voto 8`. Un voto per utente (vale l
 | `durataCountdownMinuti` | Durata del countdown (180) |
 | `durataVotoChatSecondi` | Durata predefinita del voto chat |
 | `tiktok` | Account TikTok iniziale (si cambia dalla regia) |
-| `nero.username` | Username Nero.fan: la regia mostra la coda pubblica ufficiale |
+| `nero.username` | Username Nero.fan (`backrooms`): da qui arriva da sola la traccia in riproduzione, e la regia mostra la coda pubblica |
+| `nero.automatico` | Traccia automatica da Nero accesa all'avvio (si cambia dalla regia) |
+| `nero.attesaDopoConfermaSecondi` | Secondi dopo la conferma prima che arrivi la traccia successiva di Nero (10) |
 | `nero.segreto` | Signing secret dei webhook Nero.fan |
 | `host`, `pinRegia` | Regia da altri dispositivi in rete (vedi sopra) |
 
 ## Nero.fan
 
-Nero manda un webhook firmato a ogni submission **pagata** (`submission.paid`): finisce nella coda della regia, ordinata come su Nero (Throne, Super Skip, Skip, Standard), e con ▶ passa sul tabellone. Le submission gratuite non generano webhook: la regia mostra la coda pubblica di Nero (*Coda su Nero.fan*) e si aggiungono con *Metti in coda*.
+**Traccia in riproduzione (automatica, senza configurare niente).** Ogni 3 secondi il server legge la coda pubblica di `nero.username` (`api.nero.fan/users/<username>/profile` → sessione live, poi `/queue/<sessione>/slim` → `current`). Quando su Nero parte un'altra traccia, titolo, artista e tier vanno da soli sul tabellone e nell'overlay. Serve la sessione live avviata su nero.fan e la spunta *Traccia automatica da Nero.fan* nella regia.
+
+- Se la traccia sul tabellone ha voti non confermati, la nuova aspetta (`neroInArrivo`, riquadro nella regia): i voti non si perdono.
+- Dopo la conferma resta sul tabellone per `nero.attesaDopoConfermaSecondi` (10) secondi, il tempo di mostrare punteggio e classifica, poi arriva da sola la traccia successiva. `F8` / *Passa ora* la porta subito. Con `0` passa solo con `F8`.
+- Per provarlo senza Nero: `NERO_API=http://127.0.0.1:<porta> npm start` con un server che risponde agli stessi due indirizzi.
+
+**Coda delle submission pagate (facoltativa).** Nero manda un webhook firmato a ogni submission **pagata** (`submission.paid`): finisce nella coda della regia, ordinata come su Nero (Throne, Super Skip, Skip, Standard), e con ▶ passa sul tabellone. Le submission gratuite non generano webhook: la regia mostra la coda pubblica di Nero (*Coda su Nero.fan*) e si aggiungono con *Metti in coda*.
 
 Il webhook vuole un indirizzo HTTPS pubblico che arrivi alla porta 4748 del PC della diretta. I DNS di backroomsstudio.it sono su Aruba, quindi un tunnel Cloudflare con sottodominio fisso richiederebbe di spostarli. La strada più semplice è il dominio statico gratuito di ngrok:
 

@@ -30,6 +30,8 @@ const TIPI = {
 };
 
 const config = caricaConfig();
+// Dopo la conferma il pubblico vede punteggio e classifica; poi arriva da sola la traccia successiva di Nero.
+const ATTESA_DOPO_CONFERMA_MS = Math.max(0, Number(config.nero.attesaDopoConfermaSecondi) || 0) * 1000;
 let stato = caricaStato();
 
 function caricaConfig() {
@@ -109,7 +111,7 @@ const istantanea = () => ({
   ...S.istantanea(stato, config, Date.now()),
   tiktok: { ...statoTikTok, utente: stato.tiktokUtente },
   neroUtente: config.nero.username,
-  nero: { ...statoNero, automatico: stato.neroAutomatico, inArrivo: stato.neroInArrivo },
+  nero: { ...statoNero, automatico: stato.neroAutomatico, inArrivo: stato.neroInArrivo, attesaDopoConfermaSecondi: ATTESA_DOPO_CONFERMA_MS / 1000 },
 });
 
 function inviaATutti() {
@@ -135,7 +137,7 @@ function registraCommento({ piattaforma, utente, testo }) {
 function collegaNero() {
   avviaNero(
     config.nero.username,
-    (traccia) => S.tracciaDaNero(stato, traccia) && cambiato(),
+    (traccia) => S.tracciaDaNero(stato, traccia, { ora: Date.now(), attesaMs: ATTESA_DOPO_CONFERMA_MS }) && cambiato(),
     (s) => {
       if (s.stato === statoNero.stato && s.messaggio === statoNero.messaggio) return;
       statoNero = s;
@@ -309,6 +311,10 @@ function esegui(nome, args, pin) {
 setInterval(() => {
   const ora = Date.now();
   if (S.chiudiChatSeScaduta(stato, ora)) cambiato();
+  if (S.passaSeTocca(stato, ora, ATTESA_DOPO_CONFERMA_MS)) {
+    console.log(`Nero.fan: sul tabellone «${stato.corrente.titolo}» di ${stato.corrente.artista}`);
+    cambiato();
+  }
   if (stato.countdown.fineAlle !== null && ora >= stato.countdown.fineAlle) {
     const risultato = esito((s) => S.scadenzaCountdown(s, ora));
     console.log(

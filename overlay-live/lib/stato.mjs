@@ -30,6 +30,7 @@ export function statoIniziale(config) {
     neroAutomatico: config.nero?.automatico ?? true,
     neroUltimo: null,
     neroInArrivo: null,
+    ultimaConfermaAlle: null,
   };
 }
 
@@ -49,21 +50,34 @@ export function impostaSuoni(stato, { dove, volume }) {
 
 export const haVoti = (traccia) => CATEGORIE.some((c) => traccia.voti[c] !== null) || Object.keys(traccia.chat.voti).length > 0;
 
-// Nuova traccia in riproduzione su Nero. Se quella sul tabellone ha voti non confermati non la tocca:
-// la nuova aspetta in neroInArrivo e passa sul tabellone con «Prossima».
-export function tracciaDaNero(stato, traccia) {
+// Nuova traccia in riproduzione su Nero: va da sola sul tabellone. Aspetta in neroInArrivo se quella
+// attuale ha voti non ancora confermati (la regia conferma con F4), oppure se è stata confermata da meno
+// di `attesaMs` (il pubblico vede il punteggio e la classifica che si muove); poi passa con passaSeTocca.
+export function tracciaDaNero(stato, traccia, { ora = 0, attesaMs = 0 } = {}) {
   if (!traccia || traccia.neroId === stato.neroUltimo) return false;
   stato.neroUltimo = traccia.neroId;
   if (!stato.neroAutomatico) return true;
   const { titolo, artista, tier } = traccia;
   stato.coda = stato.coda.filter((v) => !(v.titolo === titolo && v.artista === artista));
   if (stato.corrente.titolo === titolo && stato.corrente.artista === artista) return true;
-  if (haVoti(stato.corrente) && !stato.corrente.confermato) {
+  const aspetta = stato.corrente.confermato
+    ? attesaMs > 0 && ora - (stato.ultimaConfermaAlle ?? -Infinity) < attesaMs
+    : haVoti(stato.corrente);
+  if (aspetta) {
     stato.neroInArrivo = { titolo, artista, tier };
   } else {
     stato.corrente = tracciaVuota({ titolo, artista, tier });
     stato.neroInArrivo = null;
   }
+  return true;
+}
+
+// La traccia arrivata da Nero durante il voto passa sul tabellone da sola `attesaMs` dopo la conferma.
+// Se dopo la conferma la regia cambia un voto (non più confermata), aspetta la nuova conferma.
+export function passaSeTocca(stato, ora, attesaMs) {
+  if (!stato.neroAutomatico || !stato.neroInArrivo || !stato.corrente.confermato) return false;
+  if (ora - (stato.ultimaConfermaAlle ?? -Infinity) < attesaMs) return false;
+  prossima(stato);
   return true;
 }
 
@@ -193,6 +207,7 @@ export function conferma(stato, config, ora) {
   };
   stato.risultati = [...stato.risultati.filter((r) => r.id !== traccia.id), risultato];
   traccia.confermato = true;
+  stato.ultimaConfermaAlle = ora;
 
   const ordinati = [...stato.risultati].sort(confronta);
   const posizione = ordinati.findIndex((r) => r.id === traccia.id) + 1;

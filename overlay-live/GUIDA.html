@@ -379,6 +379,7 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
         </li>
         <li><p>In <strong>Serata</strong> <span class="zona">11</span> scrivi il premio di stasera e premi <strong>Salva premio</strong>: compare in grande in cima all'overlay. Sotto il premio girano le frasi di <strong>Salva frasi</strong>, separate da <code class="in">|</code>: usatele per dire a chi entra come partecipare. Di partenza: «La traccia più votata vince» e «Manda la tua traccia su <strong>nero.fan/backrooms</strong>» (l'indirizzo resta minuscolo ed evidenziato in oro). Controlla i nomi dei giudici. L'account <strong>@backrooms.studios</strong> è già impostato.</p></li>
         <li><p>In <strong>Suoni</strong> <span class="zona">10</span> premi un pulsante di <strong>Prova</strong> e controlla che il suono esca in diretta (vedi <a href="#suoni">Effetti sonori</a>).</p></li>
+        <li><p>Su <strong>nero.fan</strong> avvia la sessione live di <strong>backrooms</strong>. Entro un minuto, in alto nella regia <span class="zona">1</span> compare <span class="etichetta-ui verde">Nero in ascolto</span> e la traccia in riproduzione va sul tabellone. Prima c'è <span class="etichetta-ui arancio">Nero in attesa</span>: è normale, riprova da solo.</p></li>
         <li><p>Apri TikTok LIVE Studio, controlla che si veda l'overlay e vai in diretta.</p></li>
         <li><p>Entro un minuto dall'inizio della live, in alto nella regia <span class="zona">1</span> compare <span class="etichetta-ui verde">TikTok in ascolto</span>. Prima della diretta c'è <span class="etichetta-ui arancio">TikTok in attesa</span>: è normale, riprova da solo ogni minuto.</p></li>
         <li><p>Quando inizia la gara: in <strong>Countdown</strong> <span class="zona">8</span> lascia <strong>180</strong> minuti e premi <strong>Avvia</strong>. Partono le 3 ore.</p></li>
@@ -410,7 +411,8 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
 
       <ol class="passi" style="margin-top:28px">
         <li>
-          <p><strong>Metti la traccia sul tabellone.</strong></p>
+          <p><strong>La traccia arriva da sola da Nero.fan.</strong> Quando su Nero parte una traccia, titolo, artista e tipo (Skip, Super Skip, Throne) vanno da soli sul tabellone e nell'overlay, in 3 secondi. Serve la spunta <em>Traccia automatica da Nero.fan</em> in <span class="zona">2</span> e la sessione live aperta su Nero: in alto nella regia <span class="zona">1</span> c'è <span class="etichetta-ui verde">Nero in ascolto</span>.</p>
+          <p>Solo se Nero non è collegato, a mano:</p>
           <ul>
             <li>Se è nella <strong>Coda</strong> <span class="zona">3</span>, premi <strong>▶ In ascolto</strong> accanto. Le submission pagate su Nero arrivano lì da sole, se hai attivato la <a href="#nero">coda automatica</a>, già in ordine: Throne, Super Skip, Skip, Standard.</li>
             <li>Altrimenti scrivi <strong>Titolo traccia</strong> e <strong>Artista</strong> in <span class="zona">2</span> e premi <strong>In ascolto ora</strong>.</li>
@@ -434,7 +436,14 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
           <p><strong>Conferma</strong> con <kbd>F4</kbd> (o <strong>Conferma punteggio</strong> in <span class="zona">6</span>). Il totale è la media di Beat, Voce, Mix e Chat, ognuno al 25%. Se in chat non vota nessuno, è la media dei tre giudici.</p>
           <p>Il totale conta per un secondo e mezzo e si «timbra», poi la classifica si muove. A destra, sotto il countdown, compare una notifica: «Nuova entrata», «Sale al 2° posto» oppure, in oro, «Nuovo primo posto!». I primi tre hanno la casella oro, argento e bronzo; il primo ha la corona accanto al titolo. Nella regia leggi per esempio «Confermato: 2° in classifica».</p>
         </li>
-        <li><p><strong>Passa alla prossima</strong> con <kbd>F8</kbd>. Il tabellone si svuota e ricominci dal punto 1.</p></li>
+        <li>
+          <p><strong>Passa alla prossima traccia su Nero.</strong> Il tabellone cambia da solo.</p>
+          <ul>
+            <li>Se su Nero la traccia nuova parte <strong>mentre state ancora votando</strong>, non cancella i voti: aspetta. Nella regia compare il riquadro «Su Nero ora suona…». Confermate con <kbd>F4</kbd>: <strong>10 secondi dopo</strong>, il tempo di mostrare punteggio e classifica, arriva da sola. Con <kbd>F8</kbd> (o <strong>Passa ora</strong>) arriva subito.</li>
+            <li>Se avete già confermato da più di 10 secondi, la traccia nuova arriva subito.</li>
+            <li>Senza Nero collegato: <kbd>F8</kbd> svuota il tabellone e ricominci dal punto 1.</li>
+          </ul>
+        </li>
       </ol>
 
       <h3>Se sbagli</h3>
@@ -494,7 +503,7 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
     <!-- NERO -->
     <section id="nero">
       <h2><small>Facoltativo, si può fare dopo</small>Coda automatica da Nero.fan</h2>
-      <p class="intro">Senza questa parte funziona tutto: i nomi si leggono dalla coda di Nero dentro la regia e si scrivono a mano. Con questa parte, ogni «Skip the line» pagato compare da solo nella Coda <span class="zona">3</span> con il tipo e l'importo.</p>
+      <p class="intro">Senza questa parte funziona tutto: la traccia che suona su Nero va già da sola sul tabellone. Con questa parte, in più, ogni «Skip the line» pagato compare nella Coda <span class="zona">3</span> appena viene pagato, con il tipo e l'importo, prima ancora che suoni.</p>
       <p>Nero manda un avviso a un indirizzo internet. Il programma gratuito <strong>ngrok</strong> fa arrivare quell'avviso al PC fisso.</p>
 
       <h3>Una volta sola</h3>
@@ -579,6 +588,10 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
         <div>
           <dt>Manca un riquadro in overlay</dt>
           <dd>Controlla le spunte in <strong>In onda</strong> <span class="zona">9</span>. Se è rimasta la schermata del vincitore, premi <strong>Chiudi schermata finale</strong>.</dd>
+        </div>
+        <div>
+          <dt>La traccia di Nero non arriva sul tabellone</dt>
+          <dd>Guarda in alto nella regia <span class="zona">1</span>. Con <span class="etichetta-ui arancio">Nero in attesa</span>, passa il mouse sopra per leggere il motivo: «Nessuna sessione live su Nero» vuol dire che su nero.fan la sessione live non è avviata. Controlla anche la spunta <em>Traccia automatica da Nero.fan</em> in <span class="zona">2</span>. Se c'è il riquadro «Su Nero ora suona…», la traccia nuova aspetta la conferma dei voti con <kbd>F4</kbd> (oppure premi <strong>Passa ora</strong>).</dd>
         </div>
         <div>
           <dt>In diretta non si sentono gli effetti sonori</dt>

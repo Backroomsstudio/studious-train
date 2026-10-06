@@ -162,6 +162,42 @@ test("traccia da Nero: va sul tabellone, ma aspetta se ci sono voti da confermar
   assert.equal(stato.corrente.titolo, "Neon Blu");
 });
 
+test("traccia da Nero arrivata durante il voto: passa da sola dopo la conferma e l'attesa", () => {
+  const attesaMs = 10_000;
+  const stato = S.statoIniziale(config);
+  S.tracciaDaNero(stato, { neroId: "n1", titolo: "Uno", artista: "A", tier: "standard" }, { ora: 0, attesaMs });
+  S.impostaVoto(stato, { categoria: "beat", valore: 8 });
+
+  // Su Nero parte la successiva mentre si vota: aspetta, anche oltre l'attesa, finché non si conferma.
+  S.tracciaDaNero(stato, { neroId: "n2", titolo: "Due", artista: "B", tier: "skip" }, { ora: 1000, attesaMs });
+  assert.equal(stato.neroInArrivo.titolo, "Due");
+  assert.equal(S.passaSeTocca(stato, 60_000, attesaMs), false);
+
+  // Conferma: per 10 secondi resta il punteggio, poi la traccia nuova va sul tabellone.
+  S.conferma(stato, config, 100_000);
+  assert.equal(S.passaSeTocca(stato, 109_999, attesaMs), false);
+  assert.equal(S.passaSeTocca(stato, 110_000, attesaMs), true);
+  assert.deepEqual([stato.corrente.titolo, stato.corrente.tier, stato.neroInArrivo], ["Due", "skip", null]);
+
+  // Appena confermata, una traccia nuova da Nero aspetta l'attesa invece di coprire il punteggio.
+  S.impostaVoto(stato, { categoria: "voce", valore: 9 });
+  S.conferma(stato, config, 200_000);
+  S.tracciaDaNero(stato, { neroId: "n3", titolo: "Tre", artista: "C" }, { ora: 203_000, attesaMs });
+  assert.equal(stato.corrente.titolo, "Due");
+  // Un voto corretto dopo la conferma blocca il passaggio fino alla nuova conferma.
+  S.impostaVoto(stato, { categoria: "voce", valore: 9.5 });
+  assert.equal(S.passaSeTocca(stato, 215_000, attesaMs), false);
+  S.conferma(stato, config, 216_000);
+  assert.equal(S.passaSeTocca(stato, 226_000, attesaMs), true);
+  assert.equal(stato.corrente.titolo, "Tre");
+
+  // Molto dopo la conferma la traccia nuova passa subito.
+  S.impostaVoto(stato, { categoria: "mix", valore: 7 });
+  S.conferma(stato, config, 300_000);
+  S.tracciaDaNero(stato, { neroId: "n4", titolo: "Quattro", artista: "D" }, { ora: 400_000, attesaMs });
+  assert.equal(stato.corrente.titolo, "Quattro");
+});
+
 test("la coda segue le priorità di Nero: throne, super skip, skip, standard", () => {
   const coda = [
     { id: "s", tier: "standard", ricevutoAlle: 1 },

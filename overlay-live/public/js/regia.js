@@ -118,6 +118,10 @@ function disegnaTraccia(s) {
   $("#nero-arrivo").hidden = !n.inArrivo;
   $("#arrivo-titolo").textContent = n.inArrivo ? `«${n.inArrivo.titolo}»` : "";
   $("#arrivo-artista").textContent = n.inArrivo?.artista ?? "";
+  const attesa = n.attesaDopoConfermaSecondi;
+  $("#arrivo-come").textContent = s.corrente.confermato
+    ? attesa ? `Va sul tabellone da sola ${attesa} secondi dopo la conferma (F8 per subito).` : "Passa con F8."
+    : attesa ? `Conferma i voti con F4: ${attesa} secondi dopo va sul tabellone da sola.` : "Conferma i voti con F4, poi passa con F8.";
   const badge = $("#nero-stato");
   badge.textContent = { collegato: "Nero in ascolto", attesa: "Nero in attesa", spento: "Nero non collegato" }[n.stato];
   badge.className = `conn ${n.stato === "collegato" ? "ok" : n.stato === "attesa" ? "attesa" : ""}`;

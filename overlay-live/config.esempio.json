@@ -12,6 +12,7 @@
   "nero": {
     "username": "backrooms",
     "automatico": true,
+    "attesaDopoConfermaSecondi": 10,
     "portaWebhook": 4748,
     "segreto": ""
   }

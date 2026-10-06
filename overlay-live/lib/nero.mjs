@@ -34,7 +34,8 @@ export function versoCoda(evento, ora) {
 //   /users/<username>/profile   → liveSession.id della sessione in corso
 //   /queue/<sessionId>/slim     → coda, con `current` = submission in riproduzione
 // Quando su Nero si passa alla prossima, `current` cambia: l'overlay la segue da solo.
-const API_NERO = "https://api.nero.fan";
+// NERO_API: solo per le prove con un Nero finto in locale.
+const API_NERO = process.env.NERO_API ?? "https://api.nero.fan";
 
 export function tracciaInOnda(coda) {
   const c = coda?.current;
