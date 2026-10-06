@@ -1,0 +1,18 @@
+{
+  "name": "backrooms-overlay-live",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Overlay OBS per le live di recensione: tabellone voti, classifica, countdown e vincitore",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "tiktok-live-connector": "^2.5.0",
+    "ws": "^8.18.3"
+  }
+}

@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Regia live · Backrooms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&family=Grenze+Gotisch:wght@700;800&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/regia.css">
+</head>
+<body>
+  <header class="testata">
+    <img src="/assets/logo-br.png" alt="" class="testata-logo">
+    <h1 class="cromo">Regia</h1>
+    <span class="conn" id="conn">offline</span>
+    <span class="conn" id="tiktok-stato" title="Chat TikTok">TikTok</span>
+    <span class="conn" id="nero-stato" title="Traccia in riproduzione su Nero.fan">Nero</span>
+    <label class="layout-scelta" title="Suona solo la pagina del layout in onda. Senza premio e live session: la traccia di Nero passa subito, senza aspettare i voti. Live session in studio: nessun suono.">In onda
+      <select id="layout">
+        <option value="gara">Gara con premio</option>
+        <option value="senzaPremio">Senza premio</option>
+        <option value="studio">Live session in studio</option>
+      </select>
+    </label>
+    <nav>
+      <a href="/overlay?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok e senza suoni">Anteprima gara ↗</a>
+      <a href="/senza-premio.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok e senza suoni">Anteprima senza premio ↗</a>
+      <a href="/studio.html?anteprima=1&amp;guide=1" target="_blank" rel="noopener" title="Con le zone dei tre schermi e quelle coperte dall'app TikTok">Anteprima studio ↗</a>
+      <button type="button" id="aiuto">Scorciatoie</button>
+    </nav>
+  </header>
+
+  <main class="griglia">
+    <!-- TRACCIA E CODA -->
+    <section class="scheda">
+      <h2>In ascolto</h2>
+      <div class="corrente" title="Clic per correggere i nomi">
+        <span class="tier-badge" id="c-tier" hidden></span>
+        <div class="corrente-titolo" id="c-titolo">—</div>
+        <div class="corrente-artista" id="c-artista"></div>
+      </div>
+      <div class="arrivo" id="nero-arrivo" hidden>
+        <p>Su Nero ora suona <b id="arrivo-titolo"></b> di <b id="arrivo-artista"></b>. <span id="arrivo-come"></span></p>
+        <button type="button" id="arrivo-passa" class="piccolo">Passa ora</button>
+      </div>
+      <label class="interruttore"><input type="checkbox" id="nero-auto"> Traccia automatica da Nero.fan</label>
+      <p class="nota" id="nero-messaggio"></p>
+      <form id="f-traccia" class="modulo" autocomplete="off">
+        <input name="titolo" placeholder="Titolo traccia" maxlength="120">
+        <input name="artista" placeholder="Artista" maxlength="120">
+        <div class="azioni">
+          <button class="primario" value="ascolta">In ascolto ora</button>
+          <button value="coda">Metti in coda</button>
+          <button value="correggi" title="Cambia i nomi senza azzerare i voti">Correggi nomi</button>
+        </div>
+      </form>
+
+      <h3>Coda <span class="conta" id="coda-conta"></span></h3>
+      <p class="nota" id="coda-vuota">Con la traccia automatica non serve: quello che suona su Nero va da solo sul tabellone. Qui puoi mettere in coda tracce a mano.</p>
+      <ol class="lista" id="coda"></ol>
+
+      <details class="nero" id="nero">
+        <summary>Coda su Nero.fan</summary>
+        <iframe id="nero-embed" title="Coda Nero.fan" loading="lazy" allow="clipboard-write"></iframe>
+      </details>
+    </section>
+
+    <!-- VOTI -->
+    <section class="scheda">
+      <h2>Voti</h2>
+      <div class="voti" id="voti">
+        <label class="voto" data-cat="beat"><span class="voto-cat">Beat</span><span class="voto-giudice"></span><input type="number" min="0" max="10" step="0.5" inputmode="decimal" data-cat="beat"></label>
+        <label class="voto" data-cat="voce"><span class="voto-cat">Voce</span><span class="voto-giudice"></span><input type="number" min="0" max="10" step="0.5" inputmode="decimal" data-cat="voce"></label>
+        <label class="voto" data-cat="mix"><span class="voto-cat">Mix</span><span class="voto-giudice"></span><input type="number" min="0" max="10" step="0.5" inputmode="decimal" data-cat="mix"></label>
+      </div>
+      <label class="interruttore"><input type="checkbox" id="nascondi"> Nascondi i voti in overlay fino alla conferma</label>
+
+      <h3>Voto chat TikTok</h3>
+      <div class="chat-stato">
+        <div><span class="grande cromo" id="chat-media">—</span><small id="chat-voti">0 voti</small></div>
+        <div class="chat-tempo" id="chat-tempo">chiuso</div>
+      </div>
+      <div class="azioni">
+        <button id="chat-apri" class="primario">Apri voto chat <kbd>F2</kbd></button>
+        <select id="chat-secondi" aria-label="Durata voto chat">
+          <option value="30">30 s</option>
+          <option value="60" selected>60 s</option>
+          <option value="90">90 s</option>
+          <option value="120">2 min</option>
+          <option value="0">senza limite</option>
+        </select>
+        <button id="chat-azzera">Azzera</button>
+        <button id="chat-simula" title="Solo per le prove">Simula 10 voti</button>
+      </div>
+      <ul class="ultimi" id="chat-ultimi"></ul>
+
+      <div class="conferma">
+        <div>
+          <div class="etichetta">Totale</div>
+          <div class="grande cromo" id="totale">—</div>
+          <div class="nota" id="totale-stato"></div>
+        </div>
+        <div class="azioni colonna">
+          <button id="conferma" class="primario forte">Conferma punteggio <kbd>F4</kbd></button>
+          <button id="prossima">Prossima traccia <kbd>F8</kbd></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLASSIFICA, COUNTDOWN, SERATA -->
+    <section class="scheda">
+      <div class="spareggio" id="spareggio" hidden>
+        <h2>Spareggio</h2>
+        <p class="nota">Pari merito in testa: l'overlay mostra lo spareggio. Scegliete il vincitore.</p>
+        <ol class="lista" id="spa-candidati"></ol>
+      </div>
+
+      <h2>Classifica <span class="conta" id="cl-conta"></span></h2>
+      <ol class="lista classifica" id="classifica"></ol>
+
+      <h2>Countdown</h2>
+      <div class="timer-regia cromo" id="timer">--:--</div>
+      <div class="azioni">
+        <input type="number" id="minuti" min="1" max="600" aria-label="Minuti"> <span class="nota">min</span>
+        <button id="t-avvia" class="primario">Avvia</button>
+        <button id="t-pausa">Pausa <kbd>F9</kbd></button>
+        <button id="t-piu">+5′</button>
+        <button id="t-meno">−5′</button>
+        <button id="t-azzera">Azzera</button>
+      </div>
+      <div class="azioni">
+        <button id="proclama">Proclama vincitore ora</button>
+        <button id="chiudi-vincitore">Chiudi schermata finale</button>
+      </div>
+
+      <h2>In onda</h2>
+      <div class="interruttori">
+        <label class="interruttore"><input type="checkbox" data-widget="premio"> Premio in palio</label>
+        <label class="interruttore"><input type="checkbox" data-widget="tabellone"> Tabellone</label>
+        <label class="interruttore"><input type="checkbox" data-widget="classifica"> Classifica</label>
+        <label class="interruttore"><input type="checkbox" data-widget="timer"> Countdown</label>
+      </div>
+      <p class="nota">Con la classifica nascosta, dopo ogni conferma compare da sola per 15 secondi.</p>
+
+      <h2>Suoni</h2>
+      <div class="suoni">
+        <label>Suonano
+          <select id="suoni-dove">
+            <option value="overlay">nell'overlay (LIVE Studio)</option>
+            <option value="regia">in questa pagina</option>
+            <option value="spenti">spenti</option>
+          </select>
+        </label>
+        <label>Volume <input type="range" id="suoni-volume" min="0" max="1" step="0.05"></label>
+      </div>
+      <div class="azioni prova-suoni">
+        <span class="nota">Prova:</span>
+        <button class="piccolo" data-suono="nuovaTraccia">Nuova traccia</button>
+        <button class="piccolo" data-suono="voto">Voto</button>
+        <button class="piccolo" data-suono="chatApre">Voto chat</button>
+        <button class="piccolo" data-suono="calcolo">Punteggio</button>
+        <button class="piccolo" data-suono="entrata">Nuova entrata</button>
+        <button class="piccolo" data-suono="sale">Scalata</button>
+        <button class="piccolo" data-suono="primo">Primo posto</button>
+        <button class="piccolo" data-suono="allarme">Ultimi 30′</button>
+        <button class="piccolo" data-suono="vincitore">Vincitore</button>
+        <button class="piccolo" data-suono="inAscolto" title="Layout senza premio: traccia nuova">In ascolto</button>
+        <button class="piccolo" data-suono="inAscolto" data-dati='{"tier":"throne"}' title="Layout senza premio: traccia nuova Throne">In ascolto Throne</button>
+        <button class="piccolo" data-suono="premio" title="Layout senza premio: richiamo del link">Richiamo</button>
+      </div>
+      <p class="nota" id="suoni-nota"></p>
+
+      <h2>Serata</h2>
+      <form id="f-premio" class="modulo riga-modulo" autocomplete="off">
+        <input id="premio" list="premi" placeholder="Premio in palio" maxlength="120">
+        <button>Salva premio</button>
+        <datalist id="premi">
+          <option value="Mix"></option>
+          <option value="Master"></option>
+          <option value="Mix + Master"></option>
+          <option value="Beat"></option>
+          <option value="Beat + Mix + Master"></option>
+        </datalist>
+      </form>
+      <form id="f-invito" class="modulo riga-modulo" autocomplete="off">
+        <input id="invito" placeholder="Frasi sotto il premio, separate da |" maxlength="200" title="A rotazione ogni 6 secondi sotto il premio. Separale con |">
+        <button>Salva frasi</button>
+      </form>
+      <p class="nota">Sotto il premio, a rotazione: spiegate a chi entra in live come si partecipa. Es. <code>La traccia più votata vince | Manda la tua traccia su nero.fan/backrooms</code>. Gli indirizzi restano minuscoli e in oro.</p>
+      <form id="f-giudici" class="modulo giudici" autocomplete="off">
+        <label>Beat <input name="beat" maxlength="40"></label>
+        <label>Voce <input name="voce" maxlength="40"></label>
+        <label>Mix <input name="mix" maxlength="40"></label>
+        <button>Salva giudici</button>
+      </form>
+      <form id="f-tiktok" class="modulo riga-modulo" autocomplete="off">
+        <input id="tiktok" placeholder="@account TikTok che va in diretta" maxlength="40">
+        <button>Collega chat</button>
+      </form>
+      <p class="nota" id="tiktok-messaggio"></p>
+      <div class="azioni">
+        <button id="demo">Carica dati demo</button>
+        <button id="nuova-serata" class="pericolo">Nuova serata</button>
+      </div>
+    </section>
+
+    <!-- LAYOUT SENZA PREMIO: live giornaliere di ascolto -->
+    <section class="scheda sp-regia" id="sp-regia">
+      <h2>Senza premio <span class="conta">live giornaliere · sorgente Link <code>/senza-premio.html</code></span></h2>
+      <div class="sp-colonne">
+        <div class="sp-colonna">
+          <div class="azioni">
+            <button id="sp-richiamo" class="primario" title="Il link del banner si illumina d'oro, con la campanella. Stream Deck: POST /api/richiamo">Richiamo link</button>
+            <button id="sp-spot" title="Scheda «Vuoi suonare così?» per 10 secondi, senza suono. Stream Deck: POST /api/spotStudio">Spot studio</button>
+            <button id="sp-ripeti" title="Rimostra la scheda della traccia in ascolto, senza suono">Ripeti scheda</button>
+          </div>
+
+          <h3>Banner</h3>
+          <form id="f-sp-banner" class="modulo sp-campi" autocomplete="off">
+            <label>Riga sopra <input name="sopra" maxlength="24"></label>
+            <label>Titolo <input name="titolo" maxlength="28" required></label>
+            <label>Riga piccola <input name="pillola" maxlength="24"></label>
+            <label>Link <input name="link" maxlength="40" required></label>
+            <button>Salva banner</button>
+          </form>
+          <p class="nota">Il titolo è in gotico: si legge meglio con maiuscole e minuscole («La tua musica!»), non tutto maiuscolo.</p>
+          <label class="sp-riga">Richiamo automatico
+            <select id="sp-richiamo-ogni">
+              <option value="0">spento</option>
+              <option value="3">ogni 3 minuti</option>
+              <option value="5">ogni 5 minuti</option>
+              <option value="10">ogni 10 minuti</option>
+              <option value="15">ogni 15 minuti</option>
+            </select>
+          </label>
+          <p class="nota">Il richiamo automatico è muto; quello a mano fa la campanella.</p>
+
+          <h3>Scheda «Ora in ascolto»</h3>
+          <p class="nota">Sale dalla barra quando su Nero parte una traccia. Chi paga resta di più (secondi):</p>
+          <div class="sp-durate" id="sp-durate">
+            <label>Gratis <input type="number" min="4" max="20" data-tier="standard"></label>
+            <label>Skip <input type="number" min="4" max="20" data-tier="skip"></label>
+            <label>Super Skip <input type="number" min="4" max="20" data-tier="superskip"></label>
+            <label>Throne <input type="number" min="4" max="20" data-tier="throne"></label>
+          </div>
+          <label class="sp-riga">Suono quando parte una traccia
+            <select id="sp-suono-traccia">
+              <option value="delicato">delicato (non copre la musica)</option>
+              <option value="pieno">pieno (come nella gara)</option>
+              <option value="nessuno">nessuno</option>
+            </select>
+          </label>
+          <div class="azioni">
+            <span class="nota">Prova scheda:</span>
+            <button class="piccolo" data-prova-scheda="standard">Gratis</button>
+            <button class="piccolo" data-prova-scheda="skip">Skip</button>
+            <button class="piccolo" data-prova-scheda="superskip">Super Skip</button>
+            <button class="piccolo" data-prova-scheda="throne">Throne</button>
+          </div>
+
+          <h3>Spot studio</h3>
+          <form id="f-sp-spot" class="modulo sp-campi" autocomplete="off">
+            <label class="largo">Riga sopra <input name="sopra" maxlength="40"></label>
+            <label>Titolo <input name="titolo" maxlength="28" required></label>
+            <label class="largo">Riga sotto <input name="sotto" maxlength="60"></label>
+            <button>Salva spot</button>
+          </form>
+        </div>
+
+        <div class="sp-colonna">
+          <h3>Barra che scorre</h3>
+          <p class="nota">Una riga per voce, nell'ordine in cui passano. Spunta = in onda (massimo 8). Le modifiche vanno in onda appena esci dal campo.</p>
+          <ol class="sp-voci" id="sp-voci"></ol>
+          <div class="azioni">
+            <button id="sp-aggiungi" class="piccolo">+ Aggiungi voce</button>
+            <button id="sp-ripristina" class="piccolo pericolo" title="Testi, social e impostazioni di partenza">Ripristina predefiniti</button>
+          </div>
+          <label class="sp-riga">Velocità <input type="range" id="sp-velocita" min="40" max="160" step="10"> <span id="sp-velocita-testo"></span></label>
+          <p class="nota" id="sp-velocita-nota"></p>
+          <label class="interruttore"><input type="checkbox" id="sp-in-ascolto"> Traccia in ascolto nella barra</label>
+          <label class="interruttore"><input type="checkbox" id="sp-ascoltate"> «Oggi abbiamo ascoltato N tracce» (da 3 tracce)</label>
+          <label class="interruttore"><input type="checkbox" id="sp-loghi"> Loghi BR ai lati della barra</label>
+          <label class="interruttore"><input type="checkbox" id="sp-filo"> Filo luminoso sopra la camera</label>
+
+          <h3>In onda</h3>
+          <div class="interruttori">
+            <label class="interruttore"><input type="checkbox" data-widget="banner"> Banner</label>
+            <label class="interruttore"><input type="checkbox" data-widget="barra"> Barra che scorre</label>
+            <label class="interruttore"><input type="checkbox" data-widget="scheda"> Scheda e spot</label>
+          </div>
+        </div>
+
+        <div class="sp-colonna sp-anteprima-colonna">
+          <div class="sp-anteprima"><iframe src="/senza-premio.html?anteprima=1&amp;muto=1" title="Anteprima del layout senza premio" width="1080" height="1920" loading="lazy"></iframe></div>
+          <a href="/senza-premio.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener">Apri grande, con le zone ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIVE SESSION IN STUDIO: fonico, artista e DAW, nessun suono -->
+    <section class="scheda sp-regia st-regia" id="st-regia">
+      <h2>Live session in studio <span class="conta">fonico · artista · DAW · sorgente Link <code>/studio.html</code> · nessun suono</span></h2>
+      <div class="sp-colonne">
+        <div class="sp-colonna">
+          <h3>Artista in studio</h3>
+          <form id="f-st-artista" class="modulo sp-campi" autocomplete="off">
+            <label class="largo">Nome dell'artista <input name="artista" maxlength="32" placeholder="es. Lince"></label>
+            <label>Instagram <input name="instagram" maxlength="80" placeholder="@nome.artista"></label>
+            <label>Riga sopra il nome <input name="etichetta" maxlength="32"></label>
+            <div class="azioni largo">
+              <button class="primario" title="La targa gira e mostra il nome nuovo">Manda in onda</button>
+              <button type="button" id="st-svuota" title="Toglie nome e Instagram: resta «Live session in studio»">Svuota</button>
+            </div>
+          </form>
+          <p class="nota">Si compila a ogni sessione. Instagram: va bene <code>@nome</code>, <code>nome</code> o il link del profilo. Senza nome la targa mostra la riga sopra («Live session in studio»).</p>
+          <label class="interruttore"><input type="checkbox" id="st-artista-barra"> Artista anche nella barra che scorre («In studio ora»)</label>
+
+          <h3>Comparse</h3>
+          <p class="nota">Salgono dalla barra una alla volta, a giro, senza suono. Con ▶ (a destra) ne mostrate una precisa.</p>
+          <div class="azioni">
+            <button id="st-comparsa" class="primario" title="Stream Deck: POST /api/comparsa">Mostra la prossima</button>
+          </div>
+          <label class="sp-riga">Da sole
+            <select id="st-ogni">
+              <option value="0">spente (solo a mano)</option>
+              <option value="2">ogni 2 minuti</option>
+              <option value="3">ogni 3 minuti</option>
+              <option value="4">ogni 4 minuti</option>
+              <option value="5">ogni 5 minuti</option>
+              <option value="10">ogni 10 minuti</option>
+            </select>
+          </label>
+          <label class="sp-riga">Restano su <input type="number" id="st-durata" min="4" max="20" class="st-numero"> secondi</label>
+        </div>
+
+        <div class="sp-colonna">
+          <h3>Testi delle comparse</h3>
+          <p class="nota">Spunta = nel giro automatico (massimo 8). Titolo in gotico, fino a 28 caratteri. Si salva da solo quando esci dal campo.</p>
+          <ol class="st-comparse" id="st-comparse"></ol>
+          <div class="azioni">
+            <button id="st-aggiungi" class="piccolo">+ Aggiungi comparsa</button>
+            <button id="st-ripristina" class="piccolo pericolo" title="Comparse e impostazioni di partenza (il nome dell'artista resta)">Ripristina predefiniti</button>
+          </div>
+
+          <h3>Barra che scorre</h3>
+          <p class="nota">Usa gli stessi social della barra delle live senza premio: si cambiano lì, in «Barra che scorre».</p>
+          <label class="sp-riga">Velocità <input type="range" id="st-velocita" min="40" max="160" step="10"> <span id="st-velocita-testo"></span></label>
+
+          <h3>In onda</h3>
+          <div class="interruttori">
+            <label class="interruttore"><input type="checkbox" data-widget="targa"> Targa dell'artista</label>
+            <label class="interruttore"><input type="checkbox" data-widget="barraStudio"> Barra dei social</label>
+            <label class="interruttore"><input type="checkbox" data-widget="comparse"> Comparse</label>
+          </div>
+        </div>
+
+        <div class="sp-colonna sp-anteprima-colonna">
+          <div class="sp-anteprima"><iframe src="/studio.html?anteprima=1" title="Anteprima della live session in studio" width="1080" height="1920" loading="lazy"></iframe></div>
+          <a href="/studio.html?anteprima=1&amp;guide=1" target="_blank" rel="noopener">Apri grande, con le zone ↗</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="avvisi" id="avvisi" aria-live="polite"></div>
+
+  <dialog id="d-aiuto">
+    <h2>Scorciatoie</h2>
+    <dl>
+      <dt><kbd>F2</kbd></dt><dd>Apri / chiudi il voto della chat</dd>
+      <dt><kbd>F4</kbd> o <kbd>Ctrl</kbd>+<kbd>Invio</kbd></dt><dd>Conferma il punteggio</dd>
+      <dt><kbd>F8</kbd></dt><dd>Prossima traccia</dd>
+      <dt><kbd>F9</kbd></dt><dd>Pausa / riprendi il countdown</dd>
+      <dt><kbd>Invio</kbd> in un voto</dt><dd>Passa al voto successivo</dd>
+    </dl>
+    <p class="nota">Stream Deck: ogni azione è anche un <code>POST http://127.0.0.1:4747/api/&lt;comando&gt;</code> con <code>Content-Type: application/json</code> (es. <code>conferma</code>, <code>apriChat</code>, <code>prossima</code>; senza premio: <code>richiamo</code>, <code>spotStudio</code>, <code>ripetiScheda</code>; live session in studio: <code>comparsa</code>). Elenco completo nel README.</p>
+    <form method="dialog"><button class="primario">Chiudi</button></form>
+  </dialog>
+
+  <script type="module" src="/js/regia.js"></script>
+</body>
+</html>

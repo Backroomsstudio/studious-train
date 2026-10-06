@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="it">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guida overlay Backrooms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&family=Grenze+Gotisch:wght@800&display=swap">
+<style>
+/* Manuale da regia: indice fisso a sinistra su schermo largo, colonna di lettura a destra.
+   Il giallo dei cerchietti numerati è lo stesso dello screenshot della regia, così testo e immagine si richiamano. */
+:root {
+  --fondo: #0b0c10;
+  --pannello: #14161c;
+  --pannello-2: #1b1e26;
+  --linea: #2a2e38;
+  --testo: #e6e8ee;
+  --tenue: #a0a7b4;
+  --oro: #ffc400;
+  --ok: #46d98a;
+  --allarme: #ff6b7d;
+  --cromo: linear-gradient(180deg, #ffffff 0%, #c9ced8 38%, #6d7380 52%, #e9ecf2 70%, #9aa0ab 100%);
+  --f-gotico: "Grenze Gotisch", "Old English Text MT", Georgia, serif;
+  --f-titoli: "Barlow Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+  --f-testo: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --f-codice: "Cascadia Mono", Consolas, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--testo);
+  font: 400 17px/1.6 var(--f-testo);
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; height: auto; display: block; }
+a { color: var(--testo); text-decoration-color: var(--oro); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; border-radius: 4px; }
+
+.pagina {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding-inline: 20px;
+  padding-block: 32px 80px;
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 56px;
+}
+
+/* ---------- Indice ---------- */
+.indice { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; }
+.indice img { width: 64px; margin-bottom: 14px; }
+.indice p { margin: 0 0 10px; font: 700 13px/1 var(--f-titoli); letter-spacing: .14em; text-transform: uppercase; color: var(--tenue); }
+.indice ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.indice a {
+  display: block; padding: 6px 10px; border-radius: 6px;
+  font: 600 16px/1.25 var(--f-titoli); letter-spacing: .02em; text-decoration: none; color: var(--tenue);
+}
+.indice a:hover { color: var(--testo); background: var(--pannello); }
+.indice .facoltativo { font-weight: 500; font-style: normal; opacity: .75; }
+
+/* ---------- Testata ---------- */
+.contenuto { min-width: 0; max-width: 760px; }
+.testata { padding-bottom: 28px; border-bottom: 1px solid var(--linea); margin-bottom: 8px; }
+.occhiello { margin: 0 0 6px; font: 700 14px/1 var(--f-titoli); letter-spacing: .18em; text-transform: uppercase; color: var(--oro); }
+h1 {
+  margin: 0;
+  font: 800 clamp(44px, 7vw, 72px)/1 var(--f-gotico);
+  background: var(--cromo);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-wrap: balance;
+}
+.sommario { margin: 16px 0 0; font-size: 19px; color: var(--tenue); max-width: 60ch; }
+
+/* ---------- Sezioni ---------- */
+section { padding-top: 44px; scroll-margin-top: 16px; }
+h2 {
+  margin: 0 0 6px;
+  font: 800 32px/1.1 var(--f-titoli); letter-spacing: .01em; text-transform: uppercase;
+  text-wrap: balance;
+}
+h2 small { display: block; margin-bottom: 4px; font: 700 13px/1 var(--f-titoli); letter-spacing: .16em; color: var(--tenue); }
+h3 { margin: 30px 0 8px; font: 700 22px/1.2 var(--f-titoli); letter-spacing: .02em; text-wrap: balance; }
+p { margin: 0 0 14px; max-width: 66ch; }
+.intro { color: var(--tenue); }
+strong { font-weight: 600; color: #fff; }
+em { color: var(--testo); }
+
+/* Passi numerati: sono sequenze vere, l'ordine conta */
+ol.passi { list-style: none; counter-reset: passo; margin: 18px 0 0; padding: 0; display: grid; gap: 18px; }
+ol.passi > li {
+  counter-increment: passo;
+  position: relative;
+  padding-left: 48px;
+  min-width: 0;
+}
+ol.passi > li::before {
+  content: counter(passo);
+  position: absolute; left: 0; top: 0;
+  width: 32px; height: 32px; border-radius: 8px;
+  display: grid; place-items: center;
+  background: var(--pannello-2); border: 1px solid var(--linea);
+  font: 800 17px/1 var(--f-titoli); font-variant-numeric: tabular-nums;
+}
+ol.passi > li > :first-child { margin-top: 4px; }
+ol.passi > li > :last-child { margin-bottom: 0; }
+ol.passi ul, .contenuto ul.punti { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 6px; }
+
+/* Cerchietto giallo: rimanda alle zone numerate dello screenshot */
+.zona {
+  display: inline-grid; place-items: center;
+  width: 1.45em; height: 1.45em; border-radius: 50%;
+  background: var(--oro); color: #000;
+  font: 800 .78em/1 var(--f-titoli); vertical-align: .1em;
+  font-variant-numeric: tabular-nums;
+}
+
+kbd {
+  display: inline-block; min-width: 1.9em; padding: 1px 7px; border-radius: 5px;
+  background: var(--pannello-2); border: 1px solid var(--linea); border-bottom-width: 3px;
+  font: 700 .82em/1.5 var(--f-titoli); letter-spacing: .04em; text-align: center; color: #fff;
+}
+.etichetta-ui {
+  font: 700 .86em/1 var(--f-titoli); letter-spacing: .08em; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 4px; border: 1px solid var(--linea); background: var(--pannello);
+  white-space: nowrap;
+}
+.verde { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--linea)); }
+.arancio { color: var(--oro); border-color: color-mix(in srgb, var(--oro) 40%, var(--linea)); }
+.rosso { color: var(--allarme); border-color: color-mix(in srgb, var(--allarme) 40%, var(--linea)); }
+
+/* Blocchi da copiare */
+.copia {
+  display: flex; align-items: stretch; gap: 0;
+  margin: 10px 0 14px; max-width: 100%;
+  border: 1px solid var(--linea); border-radius: 8px; background: #07080b; overflow: hidden;
+}
+.copia code {
+  flex: 1; min-width: 0; padding: 10px 14px; overflow-x: auto; white-space: pre;
+  font: 500 15px/1.55 var(--f-codice); color: #f3f4f7;
+}
+.copia button {
+  flex: none; border: 0; border-left: 1px solid var(--linea); background: var(--pannello-2); color: var(--tenue);
+  padding: 0 14px; font: 700 13px/1 var(--f-titoli); letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
+}
+.copia button:hover { color: #fff; }
+.copia button.fatto { color: var(--ok); }
+code.in { font: 500 .9em var(--f-codice); background: var(--pannello-2); padding: 1px 6px; border-radius: 4px; border: 1px solid var(--linea); overflow-wrap: anywhere; }
+
+pre.finestra {
+  margin: 10px 0 14px; padding: 14px 16px; overflow-x: auto;
+  background: #000; border: 1px solid var(--linea); border-radius: 8px;
+  font: 500 14px/1.5 var(--f-codice); color: #d6d9e0;
+}
+
+/* Riquadri: solo dove serve fermarsi */
+.riquadro {
+  margin: 18px 0; padding: 14px 16px; border-radius: 10px;
+  background: var(--pannello); border: 1px solid var(--linea);
+}
+.riquadro > :last-child { margin-bottom: 0; }
+.riquadro .tag {
+  display: inline-block; margin-bottom: 6px;
+  font: 800 12px/1 var(--f-titoli); letter-spacing: .16em; text-transform: uppercase;
+}
+.riquadro.attenzione { border-color: color-mix(in srgb, var(--allarme) 45%, var(--linea)); }
+.riquadro.attenzione .tag { color: var(--allarme); }
+.riquadro.da-provare { border-color: color-mix(in srgb, var(--oro) 45%, var(--linea)); }
+.riquadro.da-provare .tag { color: var(--oro); }
+
+/* In breve */
+.in-breve { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+.scheda {
+  padding: 16px; border-radius: 12px; background: var(--pannello); border: 1px solid var(--linea); min-width: 0;
+}
+.scheda h3 { margin: 0 0 8px; font-size: 15px; letter-spacing: .14em; text-transform: uppercase; color: var(--tenue); }
+.scheda p { margin: 0; }
+.scheda .copia { margin: 0; }
+.tasti { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; align-items: center; margin: 0; }
+.tasti dt { margin: 0; }
+.tasti dd { margin: 0; }
+
+/* Figure */
+.figura { margin: 22px 0; }
+.figura img { border-radius: 10px; border: 1px solid var(--linea); }
+.figura figcaption { margin-top: 8px; font-size: 14px; color: var(--tenue); }
+.affiancati { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 22px; align-items: start; margin: 22px 0; }
+.affiancati .figura { margin: 0; }
+.legenda { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; font-size: 15px; }
+.legenda li { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+
+/* Problemi */
+dl.problemi { margin: 18px 0 0; display: grid; gap: 0; border-top: 1px solid var(--linea); }
+dl.problemi > div { padding: 14px 0; border-bottom: 1px solid var(--linea); }
+dl.problemi dt { font-weight: 600; color: #fff; margin-bottom: 4px; }
+dl.problemi dd { margin: 0; color: var(--tenue); }
+dl.problemi dd strong { color: var(--testo); }
+
+.piede { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--linea); font-size: 14px; color: var(--tenue); }
+
+@media (max-width: 900px) {
+  .pagina { grid-template-columns: minmax(0, 1fr); gap: 8px; padding-block: 20px 64px; }
+  .indice { position: static; padding-bottom: 18px; border-bottom: 1px solid var(--linea); }
+  .indice img { display: none; }
+  .indice ol { display: flex; flex-wrap: wrap; gap: 6px; }
+  .indice a { padding: 6px 10px; background: var(--pannello); border: 1px solid var(--linea); font-size: 15px; }
+}
+@media (max-width: 620px) {
+  body { font-size: 16px; }
+  .in-breve, .affiancati, .legenda { grid-template-columns: minmax(0, 1fr); }
+  .affiancati .figura { max-width: 240px; }
+  h2 { font-size: 28px; }
+}
+</style>
+
+<div class="pagina">
+  <nav class="indice" aria-label="Indice">
+    <img src="public/assets/logo-br.png" alt="Logo Backrooms">
+    <p>Indice</p>
+    <ol>
+      <li><a href="#in-breve">In breve</a></li>
+      <li><a href="#prima-volta">Prima volta sul PC fisso</a></li>
+      <li><a href="#ogni-live">Prima di ogni live</a></li>
+      <li><a href="#traccia">Il giro di ogni traccia</a></li>
+      <li><a href="#fine">Fine gara e vincitore</a></li>
+      <li><a href="#suoni">Effetti sonori</a></li>
+      <li><a href="#dopo">Dopo la live</a></li>
+      <li><a href="#senza-premio">Live senza premio (giornaliere)</a></li>
+      <li><a href="#studio">Live session in studio</a></li>
+      <li><a href="#nero"><span class="facoltativo">Coda automatica Nero.fan</span></a></li>
+      <li><a href="#rete"><span class="facoltativo">Regia da tablet o portatile</span></a></li>
+      <li><a href="#problemi">Se qualcosa non va</a></li>
+      <li><a href="#claude">Chiedere aiuto a Claude</a></li>
+    </ol>
+  </nav>
+
+  <main class="contenuto">
+    <header class="testata">
+      <p class="occhiello">Backrooms Studio · Live di recensione su TikTok</p>
+      <h1>Overlay live</h1>
+      <p class="sommario">Come installare l'overlay sul PC fisso, collegarlo a TikTok LIVE Studio e usare la regia durante la diretta: tabellone dei voti, classifica Top 5, countdown di 3 ore e vincitore.</p>
+    </header>
+
+    <!-- IN BREVE -->
+    <section id="in-breve">
+      <h2>In breve</h2>
+      <p class="intro">Le cose da ricordare quando la guida è già stata seguita una volta.</p>
+      <div class="in-breve">
+        <div class="scheda">
+          <h3>Avvio</h3>
+          <p>Doppio clic su <strong>AVVIA.cmd</strong> nella cartella <code class="in">overlay-live</code>. Si apre una finestra nera: <strong>lasciala aperta</strong> per tutta la live (puoi ridurla a icona).</p>
+        </div>
+        <div class="scheda">
+          <h3>Tasti della regia</h3>
+          <dl class="tasti">
+            <dt><kbd>F2</kbd></dt><dd>Apri / chiudi il voto della chat</dd>
+            <dt><kbd>F4</kbd></dt><dd>Conferma il punteggio</dd>
+            <dt><kbd>F8</kbd></dt><dd>Prossima traccia</dd>
+            <dt><kbd>F9</kbd></dt><dd>Pausa / riprendi il countdown</dd>
+          </dl>
+        </div>
+        <div class="scheda">
+          <h3>Regia (Chrome o Edge)</h3>
+          <div class="copia"><code>http://127.0.0.1:4747/regia</code><button type="button">Copia</button></div>
+        </div>
+        <div class="scheda">
+          <h3>Sorgente Link in LIVE Studio</h3>
+          <div class="copia"><code>http://127.0.0.1:4747/overlay.html</code><button type="button">Copia</button></div>
+        </div>
+        <div class="scheda">
+          <h3>Live giornaliere senza premio</h3>
+          <div class="copia"><code>http://127.0.0.1:4747/senza-premio.html</code><button type="button">Copia</button></div>
+          <p style="margin-top:8px">Nella regia, in alto: <strong>In onda → Senza premio</strong>. Vedi <a href="#senza-premio">Live senza premio</a>.</p>
+        </div>
+        <div class="scheda">
+          <h3>Live session in studio</h3>
+          <div class="copia"><code>http://127.0.0.1:4747/studio.html</code><button type="button">Copia</button></div>
+          <p style="margin-top:8px">Nella regia, in alto: <strong>In onda → Live session in studio</strong>. Nessun suono. Vedi <a href="#studio">Live session in studio</a>.</p>
+        </div>
+      </div>
+      <p style="margin-top:14px">Giudici: <strong>Daniele</strong> Beat, <strong>Plugghe</strong> Voce, <strong>Freya</strong> Mix. La chat vale come un quarto giudice (25%). Account TikTok: <strong>@backrooms.studios</strong>.</p>
+    </section>
+
+    <!-- PRIMA VOLTA -->
+    <section id="prima-volta">
+      <h2><small>Una volta sola</small>Prima volta sul PC fisso</h2>
+      <p class="intro">Circa 15 minuti. Serve internet. Alla fine avrai l'overlay dentro TikTok LIVE Studio con dei dati di prova.</p>
+
+      <h3>1. Porta la cartella sul PC fisso</h3>
+      <ol class="passi">
+        <li>
+          <p>Copia il file <strong>overlay-live.zip</strong> (o la cartella <code class="in">overlay-live</code>) sul PC fisso con una chiavetta USB, Google Drive o OneDrive.</p>
+        </li>
+        <li>
+          <p>Se l'hai scaricato da internet (Drive, mail, WeTransfer): clic destro sullo zip → <strong>Proprietà</strong> → in basso spunta <strong>Annulla blocco</strong> → <strong>OK</strong>. Evita gli avvisi di Windows al primo avvio. Se la casella non c'è, va bene così.</p>
+        </li>
+        <li>
+          <p>Clic destro sullo zip → <strong>Estrai tutto…</strong> → scegli la cartella <strong>Documenti</strong> → <strong>Estrai</strong>. Alla fine devi avere <code class="in">Documenti\overlay-live</code> con dentro <code class="in">AVVIA.cmd</code>, <code class="in">GUIDA.html</code> e le cartelle <code class="in">lib</code> e <code class="in">public</code>.</p>
+        </li>
+      </ol>
+
+      <h3>2. Installa Node.js</h3>
+      <p>È il programma che fa girare l'overlay. Si installa una volta sola.</p>
+      <ol class="passi">
+        <li><p>Apri <a href="https://nodejs.org/it/download" target="_blank" rel="noopener">nodejs.org</a> e scarica la versione <strong>LTS</strong> per Windows (il file che finisce in <code class="in">.msi</code>).</p></li>
+        <li><p>Aprilo e premi <strong>Next</strong> fino alla fine lasciando tutto com'è. Se compare la casella <em>Automatically install the necessary tools</em>, lasciala vuota.</p></li>
+        <li>
+          <p>Per controllare: menu Start → scrivi <strong>PowerShell</strong> → apri <em>Windows PowerShell</em> → scrivi questo e premi Invio:</p>
+          <div class="copia"><code>node -v</code><button type="button">Copia</button></div>
+          <p>Deve rispondere con un numero come <code class="in">v24.11.0</code>. Va bene qualunque versione da 22 in su.</p>
+        </li>
+      </ol>
+
+      <h3>3. Primo avvio</h3>
+      <ol class="passi">
+        <li><p>Apri <code class="in">Documenti\overlay-live</code> e fai doppio clic su <strong>AVVIA.cmd</strong>.</p></li>
+        <li><p>Se compare <em>Windows ha protetto il PC</em>: <strong>Ulteriori informazioni</strong> → <strong>Esegui comunque</strong>.</p></li>
+        <li>
+          <p>La prima volta scrive <em>Prima installazione…</em> e scarica le librerie (1–2 minuti). Poi deve comparire questo:</p>
+<pre class="finestra">Overlay live pronto
+  Regia:   http://127.0.0.1:4747/regia
+  Overlay: http://127.0.0.1:4747/overlay.html   (sorgente Link in TikTok LIVE Studio, 1080x1920)
+  Senza premio: http://127.0.0.1:4747/senza-premio.html   (live giornaliere di ascolto, 1080x1920)
+
+Nero.fan: manca nero.segreto in config.json, i webhook verranno rifiutati.
+Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
+          <p>La riga su Nero.fan è normale finché non imposti la <a href="#nero">coda automatica</a>.</p>
+        </li>
+        <li><p>Lascia la finestra aperta. Se la chiudi, l'overlay si ferma.</p></li>
+        <li><p>Comodo: clic destro su <strong>AVVIA.cmd</strong> → <strong>Mostra altre opzioni</strong> → <strong>Invia a</strong> → <strong>Desktop (crea collegamento)</strong>. Dalle prossime volte lo avvii dal Desktop.</p></li>
+      </ol>
+
+      <h3>4. Apri la regia e carica i dati di prova</h3>
+      <ol class="passi">
+        <li>
+          <p>Apri Chrome o Edge e vai su:</p>
+          <div class="copia"><code>http://127.0.0.1:4747/regia</code><button type="button">Copia</button></div>
+          <p>In alto a sinistra deve esserci <span class="etichetta-ui verde">Connesso</span>. Aggiungila ai preferiti.</p>
+        </li>
+        <li><p>In fondo a destra premi <strong>Carica dati demo</strong> → <strong>OK</strong>. Compaiono una traccia con i voti, una classifica e una coda finte.</p></li>
+        <li><p>In alto a destra premi <strong>Anteprima gara ↗</strong>: vedi l'overlay come lo vedranno gli spettatori, su sfondo scuro.</p></li>
+      </ol>
+
+      <h3>5. Aggiungi l'overlay in TikTok LIVE Studio</h3>
+      <div class="affiancati">
+        <figure class="figura">
+          <img src="mockup/verticale.jpg" alt="Overlay verticale: premio in palio in alto, sotto la classifica Top 5 a sinistra e il countdown a destra, in basso il tabellone con Beat, Voce, Mix e Chat" width="1080" height="1920" loading="lazy">
+          <figcaption>Così appare sopra la camera, con i dati demo.</figcaption>
+        </figure>
+        <div>
+          <ol class="passi">
+            <li><p>Apri TikTok LIVE Studio con l'account <strong>@backrooms.studios</strong>. In alto a sinistra, sotto <strong>Vista mobile</strong>, deve essere selezionata l'icona del telefono (verticale).</p></li>
+            <li><p>Sotto la lista delle sorgenti, a sinistra, premi <strong>Aggiungi fonte</strong> e scegli <strong>Link</strong>.</p></li>
+            <li>
+              <p>Come indirizzo incolla:</p>
+              <div class="copia"><code>http://127.0.0.1:4747/overlay.html</code><button type="button">Copia</button></div>
+              <p>Deve finire con <strong>.html</strong>: senza, LIVE Studio risponde «Inserisci l'URL corretto». Se chiede le dimensioni: larghezza <strong>1080</strong>, altezza <strong>1920</strong>.</p>
+            </li>
+            <li><p>Allarga la sorgente finché copre tutto lo schermo verticale, dagli angoli fino ai bordi. Non spostarla e non ridimensionarla a mano: i riquadri sono già al loro posto.</p></li>
+            <li><p>Se avevi aggiunto una sorgente per ogni riquadro (classifica, timer, tabellone), toglile: adesso basta questa.</p></li>
+            <li><p>Trascinala in cima alla lista delle sorgenti, così sta sopra la camera.</p></li>
+          </ol>
+        </div>
+      </div>
+      <p>Dall'alto: il <strong>premio in palio</strong> bello grande, sotto la <strong>classifica</strong> a sinistra e il <strong>countdown</strong> a destra, in basso il <strong>tabellone</strong> e, quando si vota, la barra verde «Vota in chat». Le posizioni sono quelle dello screenshot della vostra diretta.</p>
+      <p>Sui telefoni TikTok riempie lo schermo in altezza e <strong>taglia un pezzo a destra e a sinistra</strong> (circa 100 pixel per lato su 1080). Per questo tutto sta un po' più dentro dei bordi. Per controllare: apri <code class="in">http://127.0.0.1:4747/overlay?anteprima=1&amp;guide=1</code>. Le strisce rosse sono i lati tagliati, i riquadri gialli le zone coperte dall'app.</p>
+      <figure class="figura">
+        <img src="mockup/zone-telefono.jpg" alt="L'overlay con le guide: strisce rosse ai lati tagliati sui telefoni, riquadri gialli in alto e in basso dove TikTok mette nome della live e pulsanti" width="1080" height="1920" loading="lazy" style="max-width:360px">
+        <figcaption>Con <code class="in">?guide=1</code>: niente deve finire nelle zone colorate.</figcaption>
+      </figure>
+      <div class="riquadro da-provare">
+        <span class="tag">Da controllare la prima volta</span>
+        <p>Questa parte non è ancora stata provata dentro LIVE Studio. Lo sfondo dell'overlay deve essere <strong>trasparente</strong>: vedi la camera e sopra i riquadri. Se invece vedi uno sfondo nero o la sorgente resta vuota, guarda <a href="#problemi">Se qualcosa non va</a>.</p>
+      </div>
+      <p>Diretta orizzontale: usa <code class="in">http://127.0.0.1:4747/overlay.html?formato=orizzontale</code> con dimensioni 1920 × 1080.</p>
+
+      <h3>6. Togli i dati di prova</h3>
+      <p>Nella regia premi <strong>Nuova serata</strong> → <strong>OK</strong>. Classifica, coda e countdown si svuotano. Premio, giudici e account TikTok restano.</p>
+    </section>
+
+    <!-- OGNI LIVE -->
+    <section id="ogni-live">
+      <h2><small>5 minuti</small>Prima di ogni live</h2>
+      <ol class="passi">
+        <li><p>Doppio clic su <strong>AVVIA.cmd</strong> (o sul collegamento nel Desktop). Aspetta <em>Overlay live pronto</em>.</p></li>
+        <li><p>Apri la regia: <code class="in">http://127.0.0.1:4747/regia</code>.</p></li>
+        <li><p>Premi <strong>Nuova serata</strong> → <strong>OK</strong> per ripartire da zero.</p>
+          <div class="riquadro attenzione"><span class="tag">Attenzione</span><p>Nuova serata cancella la classifica della volta prima. Fallo solo all'inizio di una live, mai durante.</p></div>
+        </li>
+        <li><p>In <strong>Serata</strong> <span class="zona">11</span> scrivi il premio di stasera e premi <strong>Salva premio</strong>: compare in grande in cima all'overlay. Sotto il premio girano le frasi di <strong>Salva frasi</strong>, separate da <code class="in">|</code>: usatele per dire a chi entra come partecipare. Di partenza: «La traccia più votata vince» e «Manda la tua traccia su <strong>nero.fan/backrooms</strong>» (l'indirizzo resta minuscolo ed evidenziato in oro). Controlla i nomi dei giudici. L'account <strong>@backrooms.studios</strong> è già impostato.</p></li>
+        <li><p>In <strong>Suoni</strong> <span class="zona">10</span> premi un pulsante di <strong>Prova</strong> e controlla che il suono esca in diretta (vedi <a href="#suoni">Effetti sonori</a>).</p></li>
+        <li><p>Su <strong>nero.fan</strong> avvia la sessione live di <strong>backrooms</strong>. Entro un minuto, in alto nella regia <span class="zona">1</span> compare <span class="etichetta-ui verde">Nero in ascolto</span> e la traccia in riproduzione va sul tabellone. Prima c'è <span class="etichetta-ui arancio">Nero in attesa</span>: è normale, riprova da solo.</p></li>
+        <li><p>Apri TikTok LIVE Studio, controlla che si veda l'overlay e vai in diretta.</p></li>
+        <li><p>Entro un minuto dall'inizio della live, in alto nella regia <span class="zona">1</span> compare <span class="etichetta-ui verde">TikTok in ascolto</span>. Prima della diretta c'è <span class="etichetta-ui arancio">TikTok in attesa</span>: è normale, riprova da solo ogni minuto.</p></li>
+        <li><p>Quando inizia la gara: in <strong>Countdown</strong> <span class="zona">8</span> lascia <strong>180</strong> minuti e premi <strong>Avvia</strong>. Partono le 3 ore.</p></li>
+      </ol>
+    </section>
+
+    <!-- TRACCIA -->
+    <section id="traccia">
+      <h2><small>Durante la live</small>Il giro di ogni traccia</h2>
+      <p class="intro">La regia la usa una persona sola. I numeri gialli sono le zone della regia nell'immagine.</p>
+
+      <figure class="figura">
+        <img src="mockup/regia.jpg" alt="La regia con le zone numerate da 1 a 13" width="1440" height="2646" loading="lazy">
+        <figcaption>La regia con i dati demo.</figcaption>
+      </figure>
+      <ul class="legenda">
+        <li><span class="zona">1</span> Stato del server e della chat TikTok</li>
+        <li><span class="zona">2</span> Traccia in ascolto</li>
+        <li><span class="zona">3</span> Coda (e coda pubblica di Nero.fan)</li>
+        <li><span class="zona">4</span> Voti dei giudici</li>
+        <li><span class="zona">5</span> Voto della chat</li>
+        <li><span class="zona">6</span> Totale, Conferma, Prossima</li>
+        <li><span class="zona">7</span> Classifica completa</li>
+        <li><span class="zona">8</span> Countdown e vincitore</li>
+        <li><span class="zona">9</span> Riquadri visibili in onda</li>
+        <li><span class="zona">10</span> Effetti sonori</li>
+        <li><span class="zona">11</span> Premio, frasi sotto il premio, giudici, account TikTok</li>
+        <li><span class="zona">12</span> Layout senza premio delle live giornaliere (vedi <a href="#senza-premio">Live senza premio</a>)</li>
+        <li><span class="zona">13</span> In onda: gara con premio o senza premio</li>
+      </ul>
+
+      <ol class="passi" style="margin-top:28px">
+        <li>
+          <p><strong>La traccia arriva da sola da Nero.fan.</strong> Quando su Nero parte una traccia, titolo, artista e tipo (Skip, Super Skip, Throne) vanno da soli sul tabellone e nell'overlay, in 3 secondi. Serve la spunta <em>Traccia automatica da Nero.fan</em> in <span class="zona">2</span> e la sessione live aperta su Nero: in alto nella regia <span class="zona">1</span> c'è <span class="etichetta-ui verde">Nero in ascolto</span>.</p>
+          <p>Solo se Nero non è collegato, a mano:</p>
+          <ul>
+            <li>Se è nella <strong>Coda</strong> <span class="zona">3</span>, premi <strong>▶ In ascolto</strong> accanto. Le submission pagate su Nero arrivano lì da sole, se hai attivato la <a href="#nero">coda automatica</a>, già in ordine: Throne, Super Skip, Skip, Standard.</li>
+            <li>Altrimenti scrivi <strong>Titolo traccia</strong> e <strong>Artista</strong> in <span class="zona">2</span> e premi <strong>In ascolto ora</strong>.</li>
+            <li>Per leggere i nomi delle submission gratuite apri <strong>Coda su Nero.fan</strong> in fondo a <span class="zona">3</span>. Con <strong>Metti in coda</strong> le aggiungi alla coda della regia.</li>
+          </ul>
+        </li>
+        <li><p><strong>Facoltativo, per la suspense:</strong> spunta <em>Nascondi i voti in overlay fino alla conferma</em> in <span class="zona">4</span>. Gli spettatori vedono «?» finché non confermi.</p></li>
+        <li>
+          <p><strong>Scrivi i voti dei giudici</strong> in <span class="zona">4</span>: Beat (Daniele), Voce (Plugghe), Mix (Freya). Da 0 a 10, anche mezzi punti come <code class="in">7.5</code>. Con <kbd>Invio</kbd> passi alla casella successiva. I voti compaiono subito in overlay.</p>
+        </li>
+        <li>
+          <p><strong>Apri il voto della chat</strong> con <kbd>F2</kbd> (o <strong>Apri voto chat</strong> in <span class="zona">5</span>). Sotto il tabellone compare la barra verde «Vota in chat da 0 a 10» con il tempo che scorre. Ditelo anche a voce in diretta.</p>
+          <ul>
+            <li>Valgono i commenti con solo il voto: <code class="in">8</code>, <code class="in">7.5</code>, <code class="in">7,5</code>, <code class="in">9/10</code>, <code class="in">!voto 8</code>. «Bella, 8» non vale.</li>
+            <li>Un voto a persona: se uno scrive due volte, vale l'ultimo.</li>
+            <li>Si chiude da solo dopo 60 secondi (la durata si cambia dal menu accanto). Per chiuderlo prima premi di nuovo <kbd>F2</kbd>.</li>
+            <li>Nella regia vedi la media, quanti hanno votato e gli ultimi voti arrivati.</li>
+          </ul>
+        </li>
+        <li>
+          <p><strong>Conferma</strong> con <kbd>F4</kbd> (o <strong>Conferma punteggio</strong> in <span class="zona">6</span>). Il totale è la media di Beat, Voce, Mix e Chat, ognuno al 25%. Se in chat non vota nessuno, è la media dei tre giudici.</p>
+          <p>Il totale conta per un secondo e mezzo e si «timbra», poi la classifica si muove. A destra, sotto il countdown, compare una notifica: «Nuova entrata», «Sale al 2° posto» oppure, in oro, «Nuovo primo posto!». I primi tre hanno la casella oro, argento e bronzo; il primo ha la corona accanto al titolo. Nella regia leggi per esempio «Confermato: 2° in classifica».</p>
+        </li>
+        <li>
+          <p><strong>Passa alla prossima traccia su Nero.</strong> Il tabellone cambia da solo.</p>
+          <ul>
+            <li>Se su Nero la traccia nuova parte <strong>mentre state ancora votando</strong>, non cancella i voti: aspetta. Nella regia compare il riquadro «Su Nero ora suona…». Confermate con <kbd>F4</kbd>: <strong>10 secondi dopo</strong>, il tempo di mostrare punteggio e classifica, arriva da sola. Con <kbd>F8</kbd> (o <strong>Passa ora</strong>) arriva subito.</li>
+            <li>Se avete già confermato da più di 10 secondi, la traccia nuova arriva subito.</li>
+            <li>Senza Nero collegato: <kbd>F8</kbd> svuota il tabellone e ricominci dal punto 1.</li>
+          </ul>
+        </li>
+      </ol>
+
+      <h3>Se sbagli</h3>
+      <ul class="punti">
+        <li><strong>Voto sbagliato, non ancora confermato:</strong> riscrivilo nella casella.</li>
+        <li><strong>Voto sbagliato dopo la conferma</strong> (prima di <kbd>F8</kbd>): riscrivilo e premi di nuovo <kbd>F4</kbd>. Aggiorna la stessa riga della classifica, non ne crea una nuova.</li>
+        <li><strong>Nome sbagliato:</strong> clic sul titolo in <span class="zona">2</span>, correggi i campi e premi <strong>Correggi nomi</strong>. I voti restano. Se la traccia era già confermata, premi di nuovo <kbd>F4</kbd>.</li>
+        <li><strong>Traccia da togliere dalla classifica:</strong> premi <strong>✕</strong> accanto in <span class="zona">7</span>.</li>
+        <li>Se provi a cambiare traccia con voti non confermati, la regia chiede prima conferma.</li>
+      </ul>
+    </section>
+
+    <!-- FINE -->
+    <section id="fine">
+      <h2><small>Allo scadere delle 3 ore</small>Fine gara e vincitore</h2>
+      <ul class="punti">
+        <li>Quando il countdown arriva a zero, l'overlay mostra da solo la <strong>schermata del vincitore</strong> con il premio.</li>
+        <li>Se in testa ci sono <strong>due o più tracce a pari punti</strong>, l'overlay mostra lo <strong>Spareggio</strong> e nella regia compare il riquadro <strong>Spareggio</strong> in cima alla colonna destra. Decidete voi tre, poi premi <strong>Proclama</strong> accanto alla traccia scelta.</li>
+        <li>Per chiudere la gara prima: <strong>Proclama vincitore ora</strong> in <span class="zona">8</span>.</li>
+        <li>Per tornare all'overlay normale: <strong>Chiudi schermata finale</strong>.</li>
+      </ul>
+      <h3>Countdown</h3>
+      <ul class="punti">
+        <li><kbd>F9</kbd> o <strong>Pausa</strong> lo ferma, di nuovo <kbd>F9</kbd> lo fa ripartire.</li>
+        <li><strong>+5′</strong> e <strong>−5′</strong> aggiungono o tolgono 5 minuti. <strong>Azzera</strong> lo spegne.</li>
+        <li>Negli <strong>ultimi 30 minuti</strong> il countdown diventa rosso e lampeggia, con una sirena. Nell'ultimo minuto lampeggia più veloce; negli ultimi 10 secondi c'è un tic al secondo.</li>
+        <li>Se il PC si riavvia durante la live, il countdown riprende dal punto giusto.</li>
+      </ul>
+      <h3>In onda</h3>
+      <p>In <span class="zona">9</span> togli la spunta per nascondere premio, tabellone, classifica o countdown. Con la classifica nascosta, dopo ogni conferma compare da sola per 15 secondi.</p>
+    </section>
+
+    <!-- SUONI -->
+    <section id="suoni">
+      <h2><small>Per tenere viva la live</small>Effetti sonori</h2>
+      <p>Ogni momento ha il suo suono: nuova traccia, voto di un giudice (più alto il voto, più alta la nota), apertura e chiusura del voto chat, un «pop» leggero per i voti della chat, calcolo del punteggio con colpo finale, nuova entrata, scalata, uscita dalla top, fanfara per il nuovo primo posto, sirena degli ultimi 30 minuti, tic finali, rullo di tamburi per il vincitore, battito per lo spareggio.</p>
+      <p>Si regolano in <strong>Suoni</strong> <span class="zona">10</span>:</p>
+      <ul class="punti">
+        <li><strong>Suonano nell'overlay (LIVE Studio)</strong>: escono dalla sorgente Link, come la grafica. È la scelta di partenza.</li>
+        <li><strong>Suonano in questa pagina</strong>: escono dalla regia. Serve se in diretta i suoni dell'overlay non si sentono: in LIVE Studio aggiungi l'audio del PC (audio di sistema) e tieni la regia aperta. Fai un clic nella regia, altrimenti il browser non fa partire l'audio.</li>
+        <li><strong>Spenti</strong>: nessun suono.</li>
+        <li><strong>Volume</strong>: vale per tutti gli effetti. Teneteli sotto la musica: devono accompagnare, non coprire la traccia.</li>
+        <li>I pulsanti di <strong>Prova</strong> fanno suonare un effetto dove è impostato. Le anteprime della regia (<em>Anteprima gara ↗</em>, <em>Anteprima senza premio ↗</em> e quella piccola nella sezione Senza premio) sono mute apposta, così non si sentono doppi.</li>
+        <li>Suona solo il layout scelto in <strong>In onda</strong> <span class="zona">13</span>: se in LIVE Studio avete caricato sia la gara sia il layout senza premio, non partono suoni doppi.</li>
+      </ul>
+      <div class="riquadro da-provare">
+        <span class="tag">Da controllare la prima volta</span>
+        <p>Non sappiamo ancora se la sorgente Link di LIVE Studio manda in diretta l'audio della pagina. Premi <strong>Prova → Primo posto</strong> e ascolta da un telefono collegato alla live. Se non si sente, passa a «in questa pagina».</p>
+      </div>
+    </section>
+
+    <!-- DOPO -->
+    <section id="dopo">
+      <h2>Dopo la live</h2>
+      <p>Chiudi la finestra nera con la X. Classifica e voti restano salvati nel file <code class="in">dati\stato.json</code>: alla prossima live riaprila e premi <strong>Nuova serata</strong>.</p>
+    </section>
+
+    <!-- SENZA PREMIO -->
+    <section id="senza-premio">
+      <h2><small>Live giornaliere</small>Layout senza premio</h2>
+      <p class="intro">Per le live in cui ascoltate la musica delle persone senza regalare nulla. Niente premio, voti, classifica né countdown: in alto il banner che spiega come mandarvi la musica, sotto la camera una barra che scorre con tutti i vostri social, e una scheda «Ora in ascolto» che sale quando su Nero parte una traccia.</p>
+
+      <div class="affiancati">
+        <figure class="figura">
+          <img src="mockup/senza-premio.jpg" alt="Layout senza premio: banner «Mandaci la tua musica!» con link in bio e nero.fan/backrooms in oro, finta camera, scheda Ora in ascolto con una traccia Throne, barra con i social sotto la camera" width="1080" height="1920" loading="lazy">
+          <figcaption>Con una traccia Throne in ascolto. Al posto della scritta grigia «Camera» c'è la vostra camera.</figcaption>
+        </figure>
+        <div>
+          <h3>Una volta sola: la scena in LIVE Studio</h3>
+          <ol class="passi">
+            <li><p>Apri la scena delle live giornaliere e <strong>togli</strong> il vecchio banner «Mandaci la tua musica», la scritta «qui scrivi social e tutto che scorre» e i loghi BR: li rifà l'overlay, con i vostri colori e le animazioni.</p></li>
+            <li><p><strong>Aggiungi fonte</strong> → <strong>Link</strong> e incolla:</p>
+              <div class="copia"><code>http://127.0.0.1:4747/senza-premio.html</code><button type="button">Copia</button></div>
+              <p>Larghezza <strong>1080</strong>, altezza <strong>1920</strong>. Allargala su tutta la tela e trascinala in cima alla lista delle sorgenti, come per la gara.</p>
+            </li>
+            <li><p>Per controllare le posizioni: <code class="in">http://127.0.0.1:4747/senza-premio.html?anteprima=1&amp;guide=1</code>. Il riquadro azzurro è la camera, quello bianco la zona dove sui telefoni escono i commenti.</p></li>
+          </ol>
+        </div>
+      </div>
+
+      <h3>A ogni live giornaliera</h3>
+      <ol class="passi">
+        <li><p>Avvia <strong>AVVIA.cmd</strong> e apri la regia, come sempre.</p></li>
+        <li><p>In alto nella regia, in <strong>In onda</strong> <span class="zona">13</span>, scegli <strong>Senza premio</strong>. Serve per due cose: suona solo questo layout, e la traccia di Nero passa subito, senza aspettare voti.</p></li>
+        <li><p>Avvia la sessione live su <strong>nero.fan</strong>. Ogni traccia che parte su Nero sale nella scheda «Ora in ascolto», con un suono leggero che non copre la musica, e passa anche nella barra.</p></li>
+        <li><p>Non serve <strong>Nuova serata</strong>: il conto «Oggi abbiamo ascoltato N tracce» (nella barra da 3 tracce in su) riparte da solo quando tra una traccia e l'altra passano più di 4 ore, cioè alla live del giorno dopo.</p></li>
+      </ol>
+
+      <h3>Durante la live: tre pulsanti</h3>
+      <p>Sono in cima alla sezione <strong>Senza premio</strong> <span class="zona">12</span>:</p>
+      <ul class="punti">
+        <li><strong>Richiamo link</strong> (con il banner in onda): il banner diventa d'oro, i loghi girano e <strong>nero.fan/backrooms</strong> pulsa, con una campanella. Usatelo quando dite a voce «mandateci la vostra musica» o quando entra tanta gente. Ogni 5 minuti lo fa anche da solo, senza suono.</li>
+        <li><strong>Spot studio</strong>: per 10 secondi sale la scheda «Vuoi suonare così? · Registrazione, mix e master · backroomsstudio.it». Il momento giusto è quando una traccia è bella ma suonerebbe meglio con un mix fatto bene: è lì che chi ascolta pensa a voi.</li>
+        <li><strong>Ripeti scheda</strong>: rimostra la traccia in ascolto, senza suono (per chi è appena entrato).</li>
+      </ul>
+
+      <h3>Cosa si cambia dalla regia</h3>
+      <ul class="punti">
+        <li><strong>Banner</strong>: le quattro righe («Mandaci», «La tua musica!», «Link in bio», il link) e il richiamo automatico.</li>
+        <li><strong>Barra che scorre</strong>: una riga per voce, nell'ordine in cui passano. Spunta = in onda (massimo 8), icona, etichetta (es. <em>Seguici</em>) e testo (es. <em>@backrooms.studios</em>). Le frecce cambiano l'ordine, <strong>✕</strong> toglie, <strong>+ Aggiungi voce</strong> aggiunge (per esempio YouTube o Spotify quando li aprirete). Si salva da solo quando esci dal campo. Sotto: la velocità (80 di partenza; sopra 120 si legge peggio) e gli interruttori.</li>
+        <li><strong>Scheda «Ora in ascolto»</strong>: quanti secondi resta per ogni tipo di invio. Di partenza gratis 8, Skip 10, Super Skip 12, Throne 15: chi paga si vede di più (Skip con bordo cromato, Super Skip magenta, Throne tutto d'oro con la corona). È quello che gli spettatori vedono comprando un invio veloce. Con <strong>Prova scheda</strong> vedete come appare ognuno.</li>
+        <li><strong>Suono quando parte una traccia</strong>: delicato (consigliato), pieno come nella gara, oppure nessuno.</li>
+        <li><strong>Spot studio</strong>: le tre righe dello spot.</li>
+        <li><strong>In onda</strong>: banner, barra e scheda si possono nascondere uno per uno.</li>
+      </ul>
+      <p>A destra c'è un'anteprima piccola, muta, che si aggiorna dal vivo.</p>
+
+      <div class="riquadro da-provare">
+        <span class="tag">Da controllare la prima volta</span>
+        <p>Guardate una live da un telefono. I commenti escono in basso a sinistra e possono coprire l'inizio della barra e della scheda. La scheda arriva appena sotto il mento di chi parla: se vi sedete più in basso, diteci e la alziamo o la accorciamo.</p>
+      </div>
+    </section>
+
+    <!-- LIVE SESSION IN STUDIO -->
+    <section id="studio">
+      <h2><small>Sessioni di registrazione</small>Live session in studio</h2>
+      <p class="intro">Per le live in cui un artista registra in studio. Lo schermo è diviso in tre: in alto il fonico, al centro l'artista, in basso lo schermo di FL Studio. Tra fonico e artista c'è la targa 3D con il nome e l'Instagram dell'artista, che compilate voi. Tra artista e DAW passa la barra con i vostri social, da cui ogni tanto sale una comparsa («Vieni a trovarci in studio», «Scrivici in DM per prenotare una sessione»). <strong>Nessun effetto sonoro</strong>, per non disturbare chi registra.</p>
+
+      <div class="affiancati">
+        <figure class="figura">
+          <img src="mockup/studio.jpg" alt="Live session in studio: finta camera del fonico in alto, targa 3D con Lince e @lince.music, finta camera dell'artista, comparsa Scrivici in DM, barra dei social, finto schermo della DAW" width="1080" height="1920" loading="lazy">
+          <figcaption>Con la comparsa «Scrivici in DM». Al posto dei riquadri viola ci sono le vostre tre camere.</figcaption>
+        </figure>
+        <div>
+          <h3>Una volta sola: la scena in LIVE Studio</h3>
+          <ol class="passi">
+            <li><p>Fate una scena nuova con le tre camere, una sotto l'altra: <strong>fonico</strong> da 0 a 640 px, <strong>artista</strong> da 716 a 1296, <strong>schermo della DAW</strong> da 1388 a 1920. Il fonico va inquadrato nella metà bassa del suo riquadro, perché in alto l'app di TikTok copre fino a circa 270 px.</p></li>
+            <li><p><strong>Aggiungi fonte</strong> → <strong>Link</strong> e incolla:</p>
+              <div class="copia"><code>http://127.0.0.1:4747/studio.html</code><button type="button">Copia</button></div>
+              <p>Larghezza <strong>1080</strong>, altezza <strong>1920</strong>. Allargatela su tutta la tela e mettetela <strong>in cima</strong> alla lista delle sorgenti, sopra le tre camere.</p>
+            </li>
+            <li><p>Per controllare le posizioni: <code class="in">http://127.0.0.1:4747/studio.html?anteprima=1&amp;guide=1</code>. I tre riquadri azzurri sono le camere.</p></li>
+          </ol>
+        </div>
+      </div>
+
+      <h3>A ogni sessione</h3>
+      <ol class="passi">
+        <li><p>Nella regia, in alto, in <strong>In onda</strong> scegliete <strong>Live session in studio</strong>. Da quel momento non suona più niente: né gli overlay né la regia.</p></li>
+        <li><p>Nella sezione <strong>Live session in studio</strong> (in fondo alla regia) scrivete <strong>Nome dell'artista</strong> e <strong>Instagram</strong> e premete <strong>Manda in onda</strong>. La targa gira su se stessa e mostra il nome nuovo. Per l'Instagram va bene <em>@nome</em>, <em>nome</em> o il link del profilo copiato dall'app.</p></li>
+        <li><p>A fine sessione premete <strong>Svuota</strong>: la targa resta in onda con la scritta «Live session in studio».</p></li>
+      </ol>
+
+      <h3>Comparse</h3>
+      <ul class="punti">
+        <li>Salgono da sole a giro, una ogni 4 minuti, e restano 10 secondi. Si cambia in <strong>Da sole</strong> e <strong>Restano su</strong>; «spente» vuol dire che salgono solo quando le chiedete voi.</li>
+        <li><strong>Mostra la prossima</strong> fa salire la prossima del giro; <strong>▶</strong> accanto a una comparsa fa salire proprio quella. Lo fa anche lo Stream Deck: <code class="in">POST /api/comparsa</code>.</li>
+        <li>I testi si cambiano nell'elenco: icona, titolo (in gotico, fino a 28 caratteri), riga sopra e riga sotto. Gli indirizzi e gli account (<em>backroomsstudio.it</em>, <em>@backrooms.studios</em>) escono in oro. La spunta decide se una comparsa è nel giro automatico. Si salva da solo quando uscite dal campo.</li>
+      </ul>
+
+      <h3>Barra dei social</h3>
+      <p>È la stessa barra delle live senza premio, con gli stessi social: si cambiano lì, in <strong>Barra che scorre</strong>. Qui scegliete solo la velocità e se far passare anche «In studio ora: nome · @instagram». In <strong>In onda</strong> si nascondono targa, barra e comparse una per una.</p>
+
+      <div class="riquadro da-provare">
+        <span class="tag">Da controllare la prima volta</span>
+        <p>Guardate la live da un telefono. La targa copre circa 40 px in fondo alla camera del fonico e 40 px in cima a quella dell'artista: inquadrate l'artista con un po' di spazio sopra la testa. Le comparse coprono per 10 secondi la parte bassa della camera dell'artista. Se serve spostare qualcosa, i numeri sono in cima a <code class="in">public/css/studio.css</code>.</p>
+      </div>
+    </section>
+
+    <!-- NERO -->
+    <section id="nero">
+      <h2><small>Facoltativo, si può fare dopo</small>Coda automatica da Nero.fan</h2>
+      <p class="intro">Senza questa parte funziona tutto: la traccia che suona su Nero va già da sola sul tabellone. Con questa parte, in più, ogni «Skip the line» pagato compare nella Coda <span class="zona">3</span> appena viene pagato, con il tipo e l'importo, prima ancora che suoni.</p>
+      <p>Nero manda un avviso a un indirizzo internet. Il programma gratuito <strong>ngrok</strong> fa arrivare quell'avviso al PC fisso.</p>
+
+      <h3>Una volta sola</h3>
+      <ol class="passi">
+        <li><p>Crea un account gratuito su <a href="https://ngrok.com" target="_blank" rel="noopener">ngrok.com</a>. Nella dashboard copia il tuo <strong>Authtoken</strong> e, nella sezione <strong>Domains</strong>, il dominio gratuito (finisce in <code class="in">.ngrok-free.app</code>).</p></li>
+        <li>
+          <p>Sul PC fisso apri PowerShell e scrivi, uno alla volta (al posto di <code class="in">IL-TUO-TOKEN</code> incolla l'Authtoken):</p>
+          <div class="copia"><code>winget install ngrok.ngrok</code><button type="button">Copia</button></div>
+          <div class="copia"><code>ngrok config add-authtoken IL-TUO-TOKEN</code><button type="button">Copia</button></div>
+        </li>
+        <li>
+          <p>Su Nero.fan: <strong>Settings → Developer → Stream triggers</strong>. Come URL metti il tuo dominio seguito da <code class="in">/webhook/nero</code>:</p>
+          <div class="copia"><code>https://IL-TUO-DOMINIO.ngrok-free.app/webhook/nero</code><button type="button">Copia</button></div>
+          <p>Nero ti mostra un <strong>signing secret</strong>: copialo.</p>
+        </li>
+        <li>
+          <p>In <code class="in">overlay-live</code> clic destro su <strong>config.json</strong> → <strong>Apri con</strong> → <strong>Blocco note</strong>. Nella parte <code class="in">"nero"</code> incolla il secret tra le virgolette di <code class="in">"segreto"</code>:</p>
+          <div class="copia"><code>"segreto": "IL-SIGNING-SECRET"</code><button type="button">Copia</button></div>
+          <p>Salva, chiudi la finestra nera e riapri <strong>AVVIA.cmd</strong>. Il file <code class="in">config.json</code> compare dopo il primo avvio.</p>
+        </li>
+      </ol>
+
+      <h3>A ogni live</h3>
+      <p>Insieme ad AVVIA.cmd, apri PowerShell e lascia aperto anche questo:</p>
+      <div class="copia"><code>ngrok http 4748 --url=IL-TUO-DOMINIO.ngrok-free.app</code><button type="button">Copia</button></div>
+      <div class="riquadro da-provare">
+        <span class="tag">Da controllare la prima volta</span>
+        <p>Non è ancora stato provato con un avviso vero di Nero. Su Nero premi <strong>Send test event</strong>: se nella Coda della regia compare una traccia, funziona. Nella finestra nera leggi <em>Nero.fan: in coda …</em>. Se invece leggi <em>firma non valida</em>, il secret in config.json non è quello giusto.</p>
+      </div>
+      <p>ngrok apre verso internet solo la porta degli avvisi di Nero. La regia resta visibile solo dal PC fisso.</p>
+    </section>
+
+    <!-- RETE -->
+    <section id="rete">
+      <h2><small>Facoltativo</small>Regia da tablet o portatile</h2>
+      <p class="intro">Di base la regia si apre solo sul PC fisso. Per usarla da un altro dispositivo collegato allo stesso Wi-Fi:</p>
+      <ol class="passi">
+        <li>
+          <p>Apri <strong>config.json</strong> con Blocco note e cambia queste due righe (scegli tu le cifre del PIN):</p>
+          <div class="copia"><code>"host": "0.0.0.0",
+"pinRegia": "4827",</code><button type="button">Copia</button></div>
+        </li>
+        <li><p>Salva e riapri <strong>AVVIA.cmd</strong>. Se Windows chiede il permesso per il firewall, premi <strong>Consenti</strong> (reti private).</p></li>
+        <li>
+          <p>Trova l'indirizzo del PC fisso: in PowerShell scrivi</p>
+          <div class="copia"><code>ipconfig</code><button type="button">Copia</button></div>
+          <p>e leggi la riga <strong>Indirizzo IPv4</strong>, per esempio <code class="in">192.168.1.20</code>.</p>
+        </li>
+        <li><p>Sull'altro dispositivo apri <code class="in">http://192.168.1.20:4747/regia</code> con il tuo indirizzo. Al primo comando chiede il PIN.</p></li>
+      </ol>
+      <p>LIVE Studio continua a usare <code class="in">http://127.0.0.1:4747/overlay.html</code>. I tasti F2, F4, F8 e F9 funzionano solo con una tastiera.</p>
+    </section>
+
+    <!-- PROBLEMI -->
+    <section id="problemi">
+      <h2>Se qualcosa non va</h2>
+      <dl class="problemi">
+        <div>
+          <dt>La finestra nera dice che «node» o «npm» non è riconosciuto</dt>
+          <dd>Node.js non è installato, o la finestra era aperta durante l'installazione. Installa Node (<a href="#prima-volta">passo 2</a>), poi riapri AVVIA.cmd.</dd>
+        </div>
+        <div>
+          <dt>La finestra nera scrive EADDRINUSE e si ferma</dt>
+          <dd>L'overlay è già acceso in un'altra finestra. Chiudi tutte le finestre nere e apri AVVIA.cmd una volta sola.</dd>
+        </div>
+        <div>
+          <dt>In alto nella regia c'è «Offline»</dt>
+          <dd>La finestra nera è stata chiusa. Riapri AVVIA.cmd: la regia si ricollega da sola e ritrovi classifica, coda e countdown.</dd>
+        </div>
+        <div>
+          <dt>LIVE Studio dice «Inserisci l'URL corretto» o che il link non è valido</dt>
+          <dd>L'indirizzo deve finire con <strong>.html</strong>: <code class="in">http://127.0.0.1:4747/overlay.html</code>. LIVE Studio scarta gli indirizzi senza un punto seguito da lettere, come <code class="in">/overlay</code> o <code class="in">localhost</code>. Poi prova ad aprirlo: la finestra nera deve essere aperta sullo stesso PC. Usa <strong>Aggiungi fonte → Link</strong>, non «Link di streaming», che vuole un video.</dd>
+        </div>
+        <div>
+          <dt>In LIVE Studio l'overlay non si vede</dt>
+          <dd>Controlla che la finestra nera sia aperta e che l'indirizzo della sorgente sia esattamente <code class="in">http://127.0.0.1:4747/overlay.html</code>. Con una serata vuota si vede poco: premi <strong>Carica dati demo</strong> per provare, poi <strong>Nuova serata</strong>. Se in Chrome <code class="in">http://127.0.0.1:4747/overlay?anteprima=1</code> funziona, togli la sorgente da LIVE Studio e aggiungila di nuovo.</dd>
+        </div>
+        <div>
+          <dt>In LIVE Studio l'overlay ha lo sfondo nero e copre la camera</dt>
+          <dd>Non dovrebbe succedere, ed è la parte non ancora provata. Fai una foto dello schermo e chiedi a Claude come spiegato <a href="#claude">qui sotto</a>.</dd>
+        </div>
+        <div>
+          <dt>Manca un riquadro in overlay</dt>
+          <dd>Controlla le spunte in <strong>In onda</strong> <span class="zona">9</span>. Se è rimasta la schermata del vincitore, premi <strong>Chiudi schermata finale</strong>.</dd>
+        </div>
+        <div>
+          <dt>La traccia di Nero non arriva sul tabellone</dt>
+          <dd>Guarda in alto nella regia <span class="zona">1</span>. Con <span class="etichetta-ui arancio">Nero in attesa</span>, passa il mouse sopra per leggere il motivo: «Nessuna sessione live su Nero» vuol dire che su nero.fan la sessione live non è avviata. Controlla anche la spunta <em>Traccia automatica da Nero.fan</em> in <span class="zona">2</span>. Se c'è il riquadro «Su Nero ora suona…», la traccia nuova aspetta la conferma dei voti con <kbd>F4</kbd> (oppure premi <strong>Passa ora</strong>).</dd>
+        </div>
+        <div>
+          <dt>In diretta non si sentono gli effetti sonori</dt>
+          <dd>In <strong>Suoni</strong> <span class="zona">10</span> controlla che non siano spenti e che il volume non sia a zero. Se sono impostati «nell'overlay», passa a «in questa pagina», aggiungi in LIVE Studio l'audio del PC e fai un clic nella regia. Prova con <strong>Prova → Primo posto</strong>.</dd>
+        </div>
+        <div>
+          <dt>Un riquadro è tagliato sul telefono o finisce sotto i pulsanti di TikTok</dt>
+          <dd>Apri <code class="in">http://127.0.0.1:4747/overlay?anteprima=1&amp;guide=1</code> e confronta con l'anteprima di LIVE Studio. Le posizioni sono numeri in pixel in cima al file <code class="in">public/css/overlay.css</code>: chiedi a Claude di spostarle, allegando uno screenshot dell'anteprima.</dd>
+        </div>
+        <div>
+          <dt>Siamo in diretta ma la regia dice «TikTok in attesa»</dt>
+          <dd>Aspetta un paio di minuti: riprova ogni minuto. Controlla in <strong>Serata</strong> <span class="zona">11</span> che l'account sia <strong>@backrooms.studios</strong>, con la «s» finale, e premi <strong>Collega chat</strong>. Se leggi «Nessuna live trovata», il nome dell'account è sbagliato.</dd>
+        </div>
+        <div>
+          <dt>La chat scrive i voti ma non vengono contati</dt>
+          <dd>Il voto della chat deve essere aperto: in <span class="zona">5</span> deve esserci <span class="etichetta-ui rosso">Aperto</span>. Il commento deve contenere solo il voto.</dd>
+        </div>
+        <div>
+          <dt>La lettura della chat TikTok smette di funzionare</dt>
+          <dd>Si appoggia alla chat pubblica di TikTok, che ogni tanto cambia. Nel frattempo la gara va avanti con i soli voti dei giudici: conferma con <kbd>F4</kbd> senza aprire il voto della chat.</dd>
+        </div>
+        <div>
+          <dt>Il PC si è riavviato durante la live</dt>
+          <dd>Riapri AVVIA.cmd e la regia: classifica, coda, voti e countdown sono salvati.</dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- CLAUDE -->
+    <section id="claude">
+      <h2>Chiedere aiuto a Claude sul PC fisso</h2>
+      <p>Le conversazioni con Claude restano sul computer dove sono state fatte, per questo dal fisso non vedi quella in cui è nato l'overlay. Puoi aprirne una nuova lì:</p>
+      <ol class="passi">
+        <li><p>Apri Claude sul PC fisso e, nella scheda <strong>Code</strong>, scegli la cartella <code class="in">Documenti\overlay-live</code>.</p></li>
+        <li>
+          <p>Scrivi una cosa così, poi descrivi il problema o allega una foto dello schermo:</p>
+          <div class="copia"><code>Leggi GUIDA.html e README.md in questa cartella: è l'overlay delle nostre live TikTok.</code><button type="button">Copia</button></div>
+        </li>
+      </ol>
+      <p>Questa guida è anche nel file <strong>GUIDA.html</strong> dentro la cartella: doppio clic e si apre nel browser, anche senza internet.</p>
+    </section>
+
+    <p class="piede">Overlay live Backrooms · aggiornata il 6 ottobre 2026</p>
+  </main>
+</div>
+
+<script>
+  // Pulsanti «Copia»: copiano il testo del blocco accanto; se il browser non lo permette, lo selezionano.
+  for (const bottone of document.querySelectorAll(".copia button")) {
+    bottone.addEventListener("click", () => {
+      const codice = bottone.previousElementSibling;
+      const fatto = () => {
+        bottone.textContent = "Copiato";
+        bottone.classList.add("fatto");
+        setTimeout(() => { bottone.textContent = "Copia"; bottone.classList.remove("fatto"); }, 1600);
+      };
+      const seleziona = () => {
+        const intervallo = document.createRange();
+        intervallo.selectNodeContents(codice);
+        const sel = getSelection();
+        sel.removeAllRanges();
+        sel.addRange(intervallo);
+        bottone.textContent = "Ctrl+C";
+        setTimeout(() => { bottone.textContent = "Copia"; }, 2500);
+      };
+      try {
+        navigator.clipboard.writeText(codice.textContent).then(fatto, seleziona);
+      } catch {
+        seleziona();
+      }
+    });
+  }
+</script>
+
+</html>

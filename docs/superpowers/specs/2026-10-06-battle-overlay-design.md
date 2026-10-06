@@ -75,8 +75,8 @@ come negli altri layout. Con `?guide=1` si vedono tagli dei telefoni e zone TikT
 - In `voto` la regia scrive i 6 voti (3 giudici × 2 rapper). `battleRivela` richiede tutti i voti presenti, calcola
   i totali e passa a `risultato`.
 - Pausa e ripresa del timer solo in `battle`; la chat resta aperta.
-- `battleProssimo` (da `risultato`): azzera round, chat e voti, torna ad `attesa` e incrementa il numero del round.
-  Con il torneo attivo carica il prossimo scontro giocabile.
+- `battleProssimo` (da `risultato`): azzera round, chat e voti, svuota i nomi dei due rapper, torna ad `attesa` e
+  incrementa il numero del round. Con il torneo attivo carica il prossimo scontro giocabile.
 - `battleReset`: torna ad `attesa` scartando voti e chat del round in corso (la regia chiede conferma).
 
 ### 5.2 Chat
@@ -91,7 +91,7 @@ come negli altri layout. Con `?guide=1` si vedono tagli dei telefoni e zone TikT
 
 ### 5.3 Punteggio
 
-- Ogni giudice dà ogni voto da 0 a 10 a passi di 0,5 (stessa `normalizzaVoto` della gara).
+- Ogni giudice dà ogni voto da 0 a 10 con un decimale (stessa `normalizzaVoto` della gara).
 - `chat(sx) = 10 × quota(sx)`, `chat(dx) = 10 × quota(dx)`.
 - `totale(lato) = (voto Luca + voto Freya + voto Daniele + chat) / 4`, arrotondato a 2 decimali (25% ciascuno).
 - Vince il totale più alto. Differenza minore di 0,005 = **pari merito**: il round resta in `risultato` con

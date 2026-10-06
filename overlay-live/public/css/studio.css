@@ -1,0 +1,611 @@
+/* Layout LIVE SESSION IN STUDIO, una sola sorgente Link 1080×1920 su sfondo trasparente.
+   Split screen da tre come nella reference: camera del fonico in alto, artista al centro, schermo della DAW (FL Studio) in basso.
+   Tra fonico e artista la targa 3D con nome e Instagram dell'artista; tra artista e DAW la barra dei social
+   (stessa barra del layout senza premio: usa base.css, overlay.css e senza-premio.css) da cui salgono le comparse.
+   Niente riquadro al centro della barra (il rettangolo nero della reference non c'è) e nessun suono.
+
+   POSIZIONI in pixel della tela (le tre camere vanno messe in LIVE Studio sotto questa sorgente):
+   - camera del fonico   y 0 → 640    (l'app TikTok copre fino a ~270: il fonico va inquadrato nella metà bassa)
+   - striscia artista    y 640 → 716  (la targa sporge: da 600 a 756, x 150 → 930)
+   - camera dell'artista y 716 → 1296
+   - barra dei social    y 1296 → 1388
+   - schermo della DAW   y 1388 → 1920 (i pulsanti di TikTok coprono da ~1768)
+   Sui telefoni resta visibile circa x 104…976. Per spostare un pezzo basta cambiare i numeri qui sotto. Con ?guide=1 si vedono le zone. */
+.st .palco {
+  --st-y-fascia: 640px;
+  --st-h-fascia: 76px;
+  --st-x-targa: 150px;
+  --st-largo-targa: 780px;
+  --st-y-targa: 600px;
+  --st-h-targa: 156px;
+  --st-y-artista: 716px;
+  --sp-y-barra: 1296px; /* la barra usa le regole di senza-premio.css */
+  --sp-h-barra: 92px;
+  --st-y-daw: 1388px;
+  --st-h-comparsa: 150px;
+}
+
+body.st.anteprima {
+  background: #000;
+}
+
+/* ---------- Finti schermi (solo ?anteprima=1) ---------- */
+.st-finto {
+  display: none;
+  position: absolute;
+  left: 0;
+  width: 1080px;
+  place-items: center;
+  overflow: hidden;
+  font: 800 30px/1 var(--font-dati);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+.anteprima .st-finto {
+  display: grid;
+}
+.st-finto span {
+  padding: 10px 22px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.35);
+}
+.st-finto.fonico {
+  top: 0;
+  height: var(--st-y-fascia);
+  background: radial-gradient(40% 45% at 50% 62%, rgba(255, 120, 230, 0.45), transparent 70%),
+    radial-gradient(70% 60% at 20% 30%, rgba(255, 79, 216, 0.35), transparent 70%),
+    linear-gradient(180deg, #4a1450, #24092c);
+}
+.st-finto.artista {
+  top: var(--st-y-artista);
+  height: calc(var(--sp-y-barra) - var(--st-y-artista));
+  background: radial-gradient(35% 45% at 50% 40%, rgba(255, 150, 240, 0.4), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 46px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.18) 0 2px, transparent 2px 46px),
+    linear-gradient(180deg, #5a1a63, #2e0b38);
+}
+.st-finto.daw {
+  top: var(--st-y-daw);
+  height: calc(1920px - var(--st-y-daw));
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.55) 0 230px, transparent 230px),
+    repeating-linear-gradient(180deg, transparent 0 84px, rgba(0, 0, 0, 0.7) 84px 88px),
+    linear-gradient(180deg, transparent 0 60px, rgba(255, 128, 100, 0.55) 60px 140px, transparent 140px 230px, rgba(190, 80, 255, 0.5) 230px 300px, transparent 300px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 40px),
+    #141418;
+}
+
+/* ---------- Vetro 3D: faccia di targa e comparse (bordo cromo-neon, smusso, spessore estruso) ---------- */
+.st-vetro {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 26px;
+  background: radial-gradient(70% 90% at 50% 0%, rgba(205, 178, 255, 0.3), transparent 60%),
+    radial-gradient(55% 90% at 0% 100%, rgba(255, 79, 216, 0.26), transparent 60%),
+    radial-gradient(55% 90% at 100% 100%, rgba(54, 220, 255, 0.2), transparent 60%),
+    linear-gradient(180deg, #2c1b52 0%, #160d2c 52%, #0a0714 100%);
+  /* spessore: strati sempre più scuri sotto la faccia, poi l'ombra sulla camera */
+  box-shadow: 0 1px 0 #5a4690, 0 2px 0 #4b3a7a, 0 3px 0 #3f3067, 0 4px 0 #342857, 0 5px 0 #2b2148, 0 6px 0 #231b3b,
+    0 7px 0 #1c1530, 0 8px 0 #151025, 0 20px 30px rgba(0, 0, 0, 0.6), 0 34px 70px rgba(0, 0, 0, 0.45), 0 0 54px rgba(160, 102, 255, 0.45),
+    inset 0 2px 0 rgba(255, 255, 255, 0.38), inset 0 -3px 0 rgba(0, 0, 0, 0.5), inset 0 0 44px rgba(160, 102, 255, 0.2);
+}
+/* bordo cromo-neon smussato */
+.st-vetro::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 3px;
+  background: linear-gradient(135deg, #ffffff 0%, #d9c6ff 16%, #5b3e9c 36%, #ffffff 52%, #8a66d6 68%, #ff4fd8 86%, #36dcff 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 3;
+}
+/* filo interno: fa sembrare il bordo uno smusso */
+.st-vetro::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 19px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+/* riflessi: vetro lucido nella metà alta e un lampo di luce che attraversa ogni tanto */
+.st-luce {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+.st-luce::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 48%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.02));
+}
+.st-luce::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.38) 50%, transparent 62%) no-repeat;
+  background-size: 260% 100%;
+  background-position: 170% 0;
+  animation: st-lampo-luce 8s ease-in-out 2s infinite;
+}
+@keyframes st-lampo-luce {
+  0%, 70% { background-position: 170% 0; }
+  100% { background-position: -70% 0; }
+}
+
+/* ---------- Moneta 3D col logo BR (gira mostrando lo spessore) ---------- */
+.st-moneta {
+  --d: 96px;
+  position: absolute;
+  width: var(--d);
+  height: var(--d);
+  perspective: 520px;
+  z-index: 4;
+}
+.st-moneta-corpo {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: st-moneta-gira 9s cubic-bezier(0.5, 0, 0.2, 1) var(--ritardo, 0s) infinite;
+}
+@keyframes st-moneta-gira {
+  0%, 62% { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+.st-moneta-bordo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #4a4e56 0%, #f4f6f8 30%, #7d838c 55%, #ffffff 75%, #50545b 100%);
+}
+.st-moneta-faccia {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  backface-visibility: hidden;
+  background: radial-gradient(circle at 35% 28%, #4a3384 0%, #1d1238 48%, #07050d 78%);
+  box-shadow: inset 0 0 0 3px #d9dde3, inset 0 0 0 5px #4b4f57, inset 0 0 0 6px rgba(255, 255, 255, 0.5), inset 0 -8px 18px rgba(0, 0, 0, 0.55),
+    inset 0 6px 12px rgba(205, 178, 255, 0.35), 0 0 22px rgba(160, 102, 255, 0.55);
+}
+.st-moneta-faccia.fronte {
+  transform: translateZ(4px);
+}
+.st-moneta-faccia.retro {
+  transform: rotateY(180deg) translateZ(4px);
+}
+.st-moneta-faccia img {
+  width: 74%;
+  height: 74%;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 8px rgba(205, 178, 255, 0.6));
+}
+
+/* ---------- Striscia tra fonico e artista ---------- */
+.st-nome {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.st-fascia {
+  position: absolute;
+  left: 0;
+  top: var(--st-y-fascia);
+  width: 1080px;
+  height: var(--st-h-fascia);
+  overflow: hidden;
+  /* barra smussata: luce sopra, ombra sotto, come un profilo di metallo verniciato */
+  background: linear-gradient(180deg, #34225e 0%, #1b1134 44%, #0a0712 56%, #150d29 100%);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.55), 0 -8px 20px rgba(0, 0, 0, 0.4), 0 0 36px rgba(160, 102, 255, 0.32),
+    inset 0 2px 0 rgba(255, 255, 255, 0.16), inset 0 -2px 0 rgba(0, 0, 0, 0.7);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.st-trama {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(115deg, rgba(205, 178, 255, 0.13) 0 2px, transparent 2px 22px);
+  background-size: 200% 100%;
+  animation: st-trama 14s linear infinite;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 30%, #000 70%, transparent);
+}
+@keyframes st-trama {
+  to { background-position: -440px 0; }
+}
+.st-filo {
+  position: absolute;
+  left: 0;
+  width: 1080px;
+  height: 2px;
+  overflow: hidden;
+  background: linear-gradient(90deg, #36dcff 0%, #a066ff 25%, #ffffff 50%, #a066ff 75%, #ff4fd8 100%);
+  box-shadow: 0 0 14px rgba(160, 102, 255, 0.8);
+}
+.st-filo.alto { top: 0; }
+.st-filo.basso { bottom: 0; }
+.st-filo.basso .sp-luce { animation-delay: 4.2s; }
+
+/* Targa 3D: ondeggia piano nello spazio, gira su se stessa quando cambia l'artista */
+.st-targa {
+  position: absolute;
+  left: var(--st-x-targa);
+  top: var(--st-y-targa);
+  width: var(--st-largo-targa);
+  height: var(--st-h-targa);
+  perspective: 1400px;
+  transition: opacity 0.6s ease, transform 0.7s cubic-bezier(0.6, 0, 0.3, 1);
+}
+.st-targa-giro,
+.st-targa-corpo {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.st-targa-corpo {
+  animation: st-ondeggia 11s ease-in-out infinite;
+}
+@keyframes st-ondeggia {
+  0%, 100% { transform: rotateX(4deg) rotateY(-3deg); }
+  50% { transform: rotateX(-2.5deg) rotateY(3deg); }
+}
+.st-targa-faccia {
+  inset: 0;
+}
+.st-targa.gira .st-targa-giro {
+  animation: st-giro 1.1s cubic-bezier(0.55, 0, 0.3, 1) both;
+}
+@keyframes st-giro {
+  0% { transform: rotateX(0deg); }
+  45% { transform: rotateX(90deg) scale(0.96); filter: brightness(1.6); }
+  55% { transform: rotateX(-90deg) scale(0.96); filter: brightness(1.6); }
+  82% { transform: rotateX(8deg); }
+  100% { transform: rotateX(0deg); }
+}
+.st-targa.fuori {
+  opacity: 0;
+  transform: perspective(900px) rotateX(-75deg) translateY(-30px);
+}
+.st-nome:has(.st-targa.fuori) .st-fascia {
+  opacity: 0;
+  transform: scaleY(0.2);
+}
+
+.st-moneta.sx { left: 24px; top: 30px; }
+.st-moneta.dx { right: 24px; top: 30px; }
+
+.st-targa-testi {
+  position: absolute;
+  left: 136px;
+  right: 136px;
+  top: 18px;
+  bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 4;
+}
+.st-nome-artista {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 6px 4px;
+  font: 900 80px/84px var(--font-dati);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  /* cromo estruso: ogni ombra di 1 px aggiunge uno strato di spessore sotto le lettere */
+  filter: drop-shadow(0 1px 0 #a99ad0) drop-shadow(0 1px 0 #7a69a8) drop-shadow(0 1px 0 #54467f) drop-shadow(0 2px 0 #2c2148)
+    drop-shadow(0 10px 14px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 20px rgba(205, 178, 255, 0.3));
+}
+.st-targa.vuota .st-nome-artista {
+  font: 900 72px/88px var(--font-gotico);
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+.st-ig {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+  margin-top: -2px;
+  max-width: 100%;
+}
+.st-targa.senza-ig .st-ig {
+  display: none;
+}
+.st-ig-icona {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  color: #fff;
+  background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%);
+  box-shadow: 0 3px 0 #6d1450, 0 6px 12px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 79, 216, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+.st-ig-icona svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.st-ig-testo {
+  display: block;
+  min-width: 0;
+  max-width: 440px;
+  overflow: hidden;
+  white-space: nowrap;
+  font: 800 38px/44px var(--font-dati);
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-shadow: 0 2px 0 #5a2a6e, 0 3px 0 #2a1238, 0 6px 10px rgba(0, 0, 0, 0.6), 0 0 16px rgba(255, 79, 216, 0.5);
+}
+
+/* Linguetta sopra la targa: «● LIVE SESSION IN STUDIO» (il pallino rosso è solo grafica, nessun suono) */
+.st-etichetta {
+  position: absolute;
+  left: 50%;
+  top: -21px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 22px 0 18px;
+  border-radius: 99px;
+  transform: translateX(-50%) translateZ(26px);
+  font: 900 22px/1 var(--font-dati);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #0a0a0c;
+  background: var(--cromo-orizzontale);
+  box-shadow: 0 2px 0 #8b9098, 0 4px 0 #4d5158, 0 8px 16px rgba(0, 0, 0, 0.55), 0 0 22px rgba(255, 255, 255, 0.3), inset 0 1px 0 #fff;
+  z-index: 5;
+}
+.st-etichetta span {
+  margin-right: -0.22em;
+}
+.st-rec {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff8a98, #ff2d4b 60%, #a3001a);
+  box-shadow: 0 0 10px rgba(255, 45, 75, 0.9);
+  animation: st-rec 1.6s ease-in-out infinite;
+}
+@keyframes st-rec {
+  50% { opacity: 0.35; box-shadow: 0 0 2px rgba(255, 45, 75, 0.4); }
+}
+
+/* ---------- Comparse: pannello incernierato sulla barra che si alza ---------- */
+.st-comparsa-zona {
+  position: absolute;
+  left: 0;
+  top: 980px;
+  width: 1080px;
+  height: calc(var(--sp-y-barra) - 980px);
+  overflow: hidden;
+  perspective: 1100px;
+  perspective-origin: 50% 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+.st-comparsa {
+  left: 116px;
+  bottom: 14px;
+  width: 848px;
+  height: var(--st-h-comparsa);
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr) 92px;
+  gap: 22px;
+  align-items: center;
+  padding: 0 24px 0 22px;
+  transform-origin: 50% 100%;
+  transform: translateY(16px) rotateX(96deg);
+  opacity: 0;
+  transition: transform 550ms cubic-bezier(0.6, 0, 0.8, 0.3), opacity 250ms ease 300ms;
+}
+.st-comparsa.su {
+  transform: none;
+  opacity: 1;
+  transition: transform 900ms cubic-bezier(0.2, 1.35, 0.35, 1), opacity 200ms ease;
+}
+.st-comparsa > .st-moneta {
+  --d: 88px;
+  position: relative;
+  justify-self: end;
+}
+.st-medaglia {
+  --anello: #cdb2ff;
+  --alone: rgba(205, 178, 255, 0.6);
+  position: relative;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  color: #fff;
+  background: radial-gradient(circle at 35% 28%, #4a3384, #160d2c 62%, #07050d);
+  box-shadow: inset 0 0 0 3px var(--anello), inset 0 0 0 6px rgba(0, 0, 0, 0.55), inset 0 0 0 7px rgba(255, 255, 255, 0.3), inset 0 8px 14px rgba(255, 255, 255, 0.12),
+    0 3px 0 #2b2148, 0 6px 0 #151025, 0 12px 20px rgba(0, 0, 0, 0.55), 0 0 26px var(--alone);
+}
+.st-medaglia svg {
+  width: 50px;
+  height: 50px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px var(--alone));
+}
+.st-comparsa[data-colore="dm"] .st-medaglia,
+.st-comparsa[data-colore="instagram"] .st-medaglia,
+.st-comparsa[data-colore="instagram+tiktok"] .st-medaglia { --anello: #ff4fd8; --alone: rgba(255, 79, 216, 0.6); }
+.st-comparsa[data-colore="nero"] .st-medaglia { --anello: #ffd863; --alone: rgba(255, 200, 60, 0.6); }
+.st-comparsa[data-colore="tiktok"] .st-medaglia { --anello: #36dcff; --alone: rgba(54, 220, 255, 0.6); }
+.st-comparsa[data-colore="whatsapp"] .st-medaglia,
+.st-comparsa[data-colore="kick"] .st-medaglia,
+.st-comparsa[data-colore="spotify"] .st-medaglia { --anello: #45ffa8; --alone: rgba(69, 255, 168, 0.5); }
+.st-comparsa[data-colore="youtube"] .st-medaglia { --anello: #ff2d4b; --alone: rgba(255, 45, 75, 0.55); }
+.st-comparsa[data-colore="sito"] .st-medaglia { --anello: #d6dae0; --alone: rgba(255, 255, 255, 0.4); }
+.st-comparsa-testi {
+  position: relative;
+  z-index: 4;
+  min-width: 0;
+}
+.st-comparsa-sopra {
+  height: 26px;
+  font: 800 24px/26px var(--font-dati);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  color: var(--viola-chiaro);
+  text-shadow: 0 0 12px rgba(160, 102, 255, 0.8);
+}
+.st-comparsa-titolo {
+  padding: 0 6px 4px 0;
+  font: 900 58px/66px var(--font-gotico);
+  white-space: nowrap;
+  overflow: hidden;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, transparent 62%) no-repeat, var(--cromo);
+  background-size: 260% 100%, 100% 100%;
+  background-position: 160% 0, 0 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 #a99ad0) drop-shadow(0 1px 0 #6f5f9c) drop-shadow(0 2px 0 #2c2148) drop-shadow(0 8px 12px rgba(0, 0, 0, 0.6));
+}
+.st-comparsa-sotto {
+  height: 34px;
+  font: 800 30px/34px var(--font-dati);
+  white-space: nowrap;
+  overflow: hidden;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+}
+.st-comparsa-sotto .link {
+  color: #ffd863;
+  text-shadow: 0 2px 0 rgba(60, 30, 0, 0.8), 0 0 14px rgba(255, 200, 60, 0.6);
+}
+.st-comparsa.arriva .st-comparsa-titolo {
+  animation: titolo-entra 0.9s cubic-bezier(0.2, 0.9, 0.2, 1) 0.35s both, luccichio 7s ease-in-out 1.4s infinite;
+}
+.st-comparsa.arriva .st-comparsa-sopra,
+.st-comparsa.arriva .st-comparsa-sotto {
+  animation: titolo-entra 0.9s cubic-bezier(0.2, 0.9, 0.2, 1) 0.5s both;
+}
+.st-comparsa.arriva .st-medaglia {
+  animation: st-medaglia 1.1s cubic-bezier(0.2, 1.5, 0.3, 1) 0.25s both;
+}
+@keyframes st-medaglia {
+  from { transform: perspective(400px) rotateY(-180deg) scale(0.5); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.st-comparsa.cambia .st-comparsa-titolo,
+.st-comparsa.cambia .st-comparsa-sopra,
+.st-comparsa.cambia .st-comparsa-sotto {
+  animation: titolo-entra 0.8s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+.st-comparsa.cambia .st-medaglia {
+  animation: st-medaglia 0.9s cubic-bezier(0.2, 1.5, 0.3, 1) both;
+}
+
+/* ---------- Barra dei social tra artista e DAW: quella del layout senza premio, in rilievo ---------- */
+.st .st-barra {
+  background: linear-gradient(180deg, #34225e 0%, #1b1134 44%, #0a0712 56%, #150d29 100%);
+  box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.5), 0 12px 28px rgba(0, 0, 0, 0.55), 0 0 36px rgba(160, 102, 255, 0.32),
+    inset 0 2px 0 rgba(255, 255, 255, 0.14), inset 0 -2px 0 rgba(0, 0, 0, 0.7);
+}
+.st-barra-vetro {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 46%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+  pointer-events: none;
+  z-index: 1;
+}
+.st .st-filo-basso {
+  height: 2px;
+  background: linear-gradient(90deg, #ff4fd8 0%, #a066ff 25%, #ffffff 50%, #a066ff 75%, #36dcff 100%);
+  box-shadow: 0 0 14px rgba(160, 102, 255, 0.7);
+}
+.st .st-filo-basso .sp-luce {
+  animation-delay: 5.4s;
+}
+.st-barra-moneta {
+  --d: 68px;
+  top: 12px;
+}
+.st-barra-moneta.sx { left: 120px; }
+.st-barra-moneta.dx { left: 892px; }
+.st .sp-testo.st-ig-barra {
+  color: #ffd0f4;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 79, 216, 0.5);
+}
+.st .sp-voce.artista .sp-icona.instagram {
+  margin-left: 10px;
+}
+.st .sp-voce.artista .sp-etichetta {
+  color: #ff8a98;
+}
+
+/* ---------- Entrata al caricamento (mai con ?statico) ---------- */
+.entrata .st-fascia {
+  animation: st-fascia-entra 0.9s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+@keyframes st-fascia-entra {
+  from { transform: scaleX(0); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.entrata .st-targa-giro {
+  animation: st-targa-entra 1.3s cubic-bezier(0.2, 1.2, 0.3, 1) 0.45s both;
+}
+@keyframes st-targa-entra {
+  from { transform: rotateX(-100deg) translateY(-40px); opacity: 0; filter: brightness(2.5); }
+  60% { opacity: 1; }
+  to { transform: none; opacity: 1; filter: none; }
+}
+.entrata .st-barra {
+  animation: sp-barra-entra 0.8s cubic-bezier(0.2, 0.9, 0.2, 1) 0.3s both;
+}
+
+/* ---------- Guide (?guide=1): i tre schermi ---------- */
+.guida-schermo {
+  position: absolute;
+  left: 104px;
+  width: 872px;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  border: 2px dashed rgba(54, 220, 255, 0.85);
+  background: rgba(54, 220, 255, 0.07);
+}
+.guida-schermo.fonico { top: 270px; height: calc(var(--st-y-fascia) - 270px); }
+.guida-schermo.artista { top: var(--st-y-artista); height: calc(var(--sp-y-barra) - var(--st-y-artista)); }
+.guida-schermo.daw { top: var(--st-y-daw); height: calc(1768px - var(--st-y-daw)); }
+.guide-attive .st-finto span {
+  visibility: hidden; /* con le guide la scritta è già nel riquadro */
+}
