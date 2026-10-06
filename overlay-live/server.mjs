@@ -168,6 +168,13 @@ function collegaTikTok() {
 }
 
 // --- Comandi (regia via WebSocket, Stream Deck e altri tool via POST /api/<comando>) -----
+// Il richiamo dura 2,4 s nella pagina (RICHIAMO_MS in public/js/eventi-sonori.js): nel frattempo non se ne parte un altro.
+const DURATA_RICHIAMO_MS = 2400;
+let ultimoRichiamoAlle = -Infinity;
+const schedaAccesa = () => {
+  if (!stato.visibili.scheda) throw new Error("La scheda è spenta: accendetela in In onda");
+};
+
 // Pulsanti Prova: passano alle pagine solo i dati che gli effetti si aspettano.
 function datiProva(dati) {
   const d = dati && typeof dati === "object" ? dati : {};
@@ -300,20 +307,26 @@ const comandi = {
   // Il link del banner «chiama» (con la campanella, se i suoni sono accesi).
   richiamo() {
     if (!stato.visibili.banner) throw new Error("Il banner è spento: accendetelo in In onda");
+    const ora = Date.now();
+    if (ora - ultimoRichiamoAlle < DURATA_RICHIAMO_MS) throw new Error("Richiamo già in corso");
+    ultimoRichiamoAlle = ora;
     emetti("richiamo", { manuale: true });
   },
   // Rimostra la scheda della traccia in ascolto, senza suono.
   ripetiScheda() {
+    schedaAccesa();
     const { titolo, artista, tier } = stato.corrente;
     if (!titolo) throw new Error("Nessuna traccia in ascolto da mostrare");
     emetti("scheda", { traccia: { titolo, artista, tier }, conSuono: false });
   },
   // Scheda di prova (non cambia la traccia in ascolto): per vedere come appare un invio Skip, Super Skip o Throne.
   provaScheda({ tier = "throne" }) {
+    schedaAccesa();
     if (!S.TIER_SCHEDA.includes(tier)) throw new Error("Tipo di invio: standard, skip, superskip o throne");
     emetti("scheda", { traccia: { titolo: "Notti a Vicenza", artista: "Lince", tier }, conSuono: true });
   },
   spotStudio() {
+    schedaAccesa();
     emetti("studio", {});
   },
   demo() {

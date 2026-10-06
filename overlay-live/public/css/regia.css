@@ -544,6 +544,7 @@ code {
 
 /* ---------- Layout in onda (testata) ---------- */
 .layout-scelta {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -673,4 +674,8 @@ code {
   border: 0;
   transform: scale(0.25);
   transform-origin: 0 0;
+}
+.sp-voci li.incompleta input[name="testo"] {
+  border-color: #ffd863;
+  box-shadow: 0 0 0 2px rgba(255, 216, 99, 0.25);
 }

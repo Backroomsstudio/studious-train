@@ -110,16 +110,20 @@ export function richiesteScheda(prima, dopo, eventi = []) {
 }
 
 // Pochi suoni, perché la musica degli artisti non va coperta: la traccia nuova, il richiamo premuto a mano, le prove.
-export function suoniSenzaPremio(prima, dopo, eventi = [], { ora = 0, ultimaTracciaAlle = -Infinity } = {}) {
+// «parte» dice quale parte della pagina deve suonarlo, se le sorgenti sono divise con ?w= (una sola suona).
+// La pausa minima vale solo per le tracce vere, non per le prove; il richiamo non suona se ce n'è uno in corso.
+export function suoniSenzaPremio(prima, dopo, eventi = [], { ora = 0, ultimaTracciaAlle = -Infinity, richiamoInCorso = false } = {}) {
   if (!prima) return [];
   const suoni = [];
-  for (const e of eventi) if (e.nome === "suono") suoni.push(prova(e));
-  // La campanella del richiamo solo se il banner è in onda (altrimenti si sentirebbe senza vedere niente).
-  if (dopo.visibili?.banner !== false && eventi.some((e) => e.nome === "richiamo" && e.dati?.manuale)) suoni.push({ nome: "premio" });
+  for (const e of eventi) if (e.nome === "suono") suoni.push({ ...prova(e), parte: "scheda" });
+  const richiamo = eventi.some((e) => e.nome === "richiamo" && e.dati?.manuale);
+  if (richiamo && !richiamoInCorso && dopo.visibili?.banner !== false) suoni.push({ nome: "premio", parte: "banner" });
   const scelta = dopo.senzaPremio?.suonoTraccia ?? "delicato";
   const traccia = richiesteScheda(prima, dopo, eventi).find((r) => r.tipo === "ascolto" && r.conSuono);
-  if (traccia && scelta !== "nessuno" && ora - ultimaTracciaAlle >= PAUSA_MIN_TRACCIA_MS) {
-    suoni.push({ nome: scelta === "pieno" ? "nuovaTraccia" : "inAscolto", dati: { tier: traccia.traccia.tier ?? null }, traccia: true });
+  const inPausa = traccia?.daCorrente && ora - ultimaTracciaAlle < PAUSA_MIN_TRACCIA_MS;
+  if (traccia && scelta !== "nessuno" && !inPausa) {
+    const suono = { nome: scelta === "pieno" ? "nuovaTraccia" : "inAscolto", dati: { tier: traccia.traccia.tier ?? null }, parte: "scheda" };
+    suoni.push(traccia.daCorrente ? { ...suono, traccia: true } : suono);
   }
   return suoni;
 }

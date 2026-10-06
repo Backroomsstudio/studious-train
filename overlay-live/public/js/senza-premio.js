@@ -14,6 +14,7 @@ const parametri = new URLSearchParams(location.search);
 const STATICO = parametri.has("statico");
 const MUTO = parametri.has("muto") || STATICO;
 const PARTI = (parametri.get("w") ?? "banner,barra,scheda").split(",");
+const CON_BARRA = PARTI.includes("barra");
 const SCHEDA_FISSA = parametri.get("scheda"); // solo per i mockup
 const SVG = "http://www.w3.org/2000/svg";
 
@@ -91,7 +92,7 @@ collega({
     const prima = stato;
     stato = s;
     const ora = performance.now();
-    const suoni = suoniSenzaPremio(prima, s, eventi, { ora, ultimaTracciaAlle });
+    const suoni = suoniSenzaPremio(prima, s, eventi, { ora, ultimaTracciaAlle, richiamoInCorso });
     if (suoni.some((x) => x.traccia)) ultimaTracciaAlle = ora;
     riproduci(suoni);
 
@@ -107,10 +108,11 @@ collega({
 });
 
 // Gli effetti suonano qui solo se in onda c'è questo layout e la regia ha scelto "overlay".
+// Con le sorgenti divise (?w=) ogni suono parte solo dalla pagina che mostra la sua parte: niente suoni doppi.
 function riproduci(suoni) {
   if (MUTO || !suoni.length || !suonaIn(stato, "senzaPremio", "overlay")) return;
   volume(stato.suoni.volume);
-  for (const s of suoni) suona(s.nome, s.dati, s.ritardo ?? 0);
+  for (const s of suoni) if (!s.parte || PARTI.includes(s.parte)) suona(s.nome, s.dati, s.ritardo ?? 0);
 }
 
 // ---------- Banner ----------
@@ -128,18 +130,27 @@ const banner = {
 function disegnaBanner(s) {
   const sp = s.senzaPremio;
   banner.radice.classList.toggle("fuori", !s.visibili.banner);
-  banner.sopra.textContent = sp.sopra;
   banner.sopraRiga.hidden = !sp.sopra;
+  if (banner.sopra.textContent !== sp.sopra) {
+    banner.sopra.textContent = sp.sopra;
+    adattaTesto(banner.sopra, 38, 28);
+  }
   if (banner.titolo.textContent !== sp.titolo) {
     banner.titolo.textContent = sp.titolo;
-    adattaTesto(banner.titolo, 112, 64);
+    adattaTesto(banner.titolo, 112, 52);
   }
   banner.pillola.textContent = sp.pillola;
   banner.pillola.hidden = !sp.pillola;
   if (banner.link.textContent !== sp.link) {
     banner.link.textContent = sp.link;
-    adattaTesto(banner.link, 62, 40);
+    adattaTesto(banner.link, 62, 28);
   }
+}
+
+function adattaBanner() {
+  if (banner.sopra.textContent) adattaTesto(banner.sopra, 38, 28);
+  if (banner.titolo.textContent) adattaTesto(banner.titolo, 112, 52);
+  if (banner.link.textContent) adattaTesto(banner.link, 62, 28);
 }
 
 // Il link «chiama»: bordo d'oro, link che pulsa, loghi che girano come monete, punte d'oro dai lati.
@@ -257,6 +268,7 @@ function ripartiDaCapo() {
 }
 
 function disegnaBarra(s) {
+  if (!CON_BARRA) return; // sorgente divisa senza barra: il nastro non gira
   const sp = s.senzaPremio;
   barra.radice.classList.toggle("fuori", !s.visibili.barra);
   barra.radice.classList.toggle("senza-loghi", !sp.loghiBarra);
@@ -303,7 +315,7 @@ function passo(t) {
   }
   requestAnimationFrame(passo);
 }
-if (!STATICO) requestAnimationFrame(passo);
+if (!STATICO && CON_BARRA) requestAnimationFrame(passo);
 
 // ---------- Scheda «Ora in ascolto» e spot dello studio ----------
 const scheda = {
@@ -330,8 +342,6 @@ function riempiScheda(r) {
     scheda.titolo.textContent = spot.titolo;
     scriviConLink(scheda.artista, spot.sotto);
     scheda.tier.hidden = true;
-    adattaTesto(scheda.titolo, 54, 34);
-    adattaTesto(scheda.artista, 30, 24);
   } else {
     const t = r.traccia;
     scheda.sopra.textContent = "Ora in ascolto";
@@ -340,8 +350,18 @@ function riempiScheda(r) {
     scheda.tier.hidden = !ETICHETTE_TIER[t.tier];
     scheda.tier.textContent = ETICHETTE_TIER[t.tier] ?? "";
     scheda.tier.className = `tier ${t.tier ?? ""}`;
+  }
+  adattaScheda(r.tipo);
+}
+
+// Corpi della scheda: il gotico non scende sotto 34 px (poi i puntini), il resto in Barlow sì.
+function adattaScheda(tipo) {
+  if (tipo === "studio") {
+    adattaTesto(scheda.titolo, 54, 34); // gotico
+    adattaTesto(scheda.artista, 30, 24);
+  } else {
     adattaTesto(scheda.titolo, 54, 32);
-    adattaTesto(scheda.artista, 36, 32);
+    adattaTesto(scheda.artista, 36, 34); // gotico
   }
 }
 
@@ -355,13 +375,18 @@ function mostraScheda(r, idCorrente = null, { fissa = false } = {}) {
     scheda.inAttesa = r;
     return;
   }
+  if (r.tipo === "studio") scheda.inAttesa = null; // lo spot sale adesso: niente secondo spot in coda
   const giaSu = scheda.aperta !== null && !scheda.chiude;
   clearTimeout(scheda.timer);
   riempiScheda(r);
   scheda.aperta = r.tipo;
   scheda.idCorrente = idCorrente;
   scheda.chiude = false;
-  if (giaSu) rilancia(scheda.el, "cambia");
+  if (giaSu) {
+    // «arriva» e «cambia» usano la stessa animazione: tolta la prima, la seconda riparte davvero
+    scheda.el.classList.remove("arriva");
+    rilancia(scheda.el, "cambia");
+  }
   else {
     scheda.el.classList.remove("cambia");
     scheda.el.classList.add("su");
@@ -420,10 +445,13 @@ function schedaPerMockup(s) {
 }
 
 // Con i font caricati le larghezze cambiano: si riadattano i testi e si rimisura il nastro.
-document.fonts?.ready.then(() => {
-  if (banner.titolo.textContent) adattaTesto(banner.titolo, 112, 64);
-  if (banner.link.textContent) adattaTesto(banner.link, 62, 40);
-  if (scheda.aperta) adattaTesto(scheda.titolo, 54, 32);
+// Non basta «ready»: con i font già nella cache di OBS o LIVE Studio arriva prima dello stato,
+// e i pesi usati dai testi (Barlow 900, Grenze Gotisch) si caricano dopo. Si rimisura a ogni caricamento.
+function rimisura() {
+  adattaBanner();
+  if (scheda.aperta) adattaScheda(scheda.aperta);
   for (const p of pezzi) p.largo = p.el.offsetWidth;
-  if (STATICO && stato) ripartiDaCapo();
-});
+  if (STATICO && stato && CON_BARRA) ripartiDaCapo();
+}
+document.fonts?.ready.then(rimisura);
+document.fonts?.addEventListener?.("loadingdone", rimisura);

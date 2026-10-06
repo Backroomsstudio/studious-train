@@ -80,7 +80,7 @@ body.sp.anteprima {
   border-radius: 28px;
   background: radial-gradient(70% 60% at 50% 30%, rgba(160, 102, 255, 0.26), transparent 70%),
     radial-gradient(90% 80% at 100% 100%, rgba(54, 220, 255, 0.12), transparent 60%),
-    linear-gradient(180deg, #1a1130, #080610); /* pieno: copre anche le vecchie scritte se restano nella scena */
+    linear-gradient(180deg, #1a1130, #080610); /* pieno: copre le vecchie scritte, ma non il vecchio logo a sinistra (x 102–116): va tolto dalla scena */
 }
 .sp-banner > * {
   position: absolute;
@@ -132,9 +132,14 @@ body.sp.anteprima {
   text-shadow: 0 0 16px rgba(160, 102, 255, 0.9), 0 0 2px #cdb2ff;
 }
 .sp-sopra span {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
   margin-right: -0.34em; /* la spaziatura dopo l'ultima lettera non sposta il centro */
 }
 .sp-sopra i {
+  flex: none;
   width: 90px;
   height: 2px;
   background: linear-gradient(90deg, transparent, #cdb2ff);
@@ -151,7 +156,7 @@ body.sp.anteprima {
   height: 132px;
   box-sizing: border-box;
   padding: 0 14px 6px;
-  font: 900 112px/1.12 var(--font-gotico);
+  font: 900 112px/126px var(--font-gotico); /* riga fissa: un titolo ridotto resta centrato nel suo spazio */
   white-space: nowrap;
   overflow: hidden;
   text-align: center;

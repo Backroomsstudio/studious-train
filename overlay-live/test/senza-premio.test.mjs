@@ -173,7 +173,7 @@ test("traccia nuova: scheda e suono delicato col tier; niente al primo disegno n
 
   stato.corrente = S.tracciaVuota({ titolo: "Cromo", artista: "Vale B", tier: "throne" });
   const dopo = foto(stato);
-  assert.deepEqual(suoniSenzaPremio(prima, dopo), [{ nome: "inAscolto", dati: { tier: "throne" }, traccia: true }]);
+  assert.deepEqual(suoniSenzaPremio(prima, dopo), [{ nome: "inAscolto", dati: { tier: "throne" }, parte: "scheda", traccia: true }]);
   const [richiesta] = richiesteScheda(prima, dopo);
   assert.equal(richiesta.tipo, "ascolto");
   assert.deepEqual(richiesta.traccia, { titolo: "Cromo", artista: "Vale B", tier: "throne" });
@@ -222,7 +222,7 @@ test("richiamo, prove, ripeti scheda e spot", () => {
   const dopo = foto(stato);
   assert.deepEqual(nomi(suoniSenzaPremio(prima, dopo, [{ nome: "richiamo", dati: { manuale: true } }])), ["premio"]);
   assert.deepEqual(suoniSenzaPremio(prima, dopo, [{ nome: "suono", dati: { nome: "inAscolto", dati: { tier: "skip" } } }]), [
-    { nome: "inAscolto", dati: { tier: "skip" } },
+    { nome: "inAscolto", dati: { tier: "skip" }, parte: "scheda" },
   ]);
   const traccia = { titolo: "Notti a Vicenza", artista: "Lince", tier: "throne" };
   assert.deepEqual(suoniSenzaPremio(prima, dopo, [{ nome: "scheda", dati: { traccia, conSuono: false } }]), [], "ripeti scheda: muta");
@@ -323,4 +323,23 @@ test("richiamo con il banner spento: niente campanella", () => {
   stato.visibili.banner = false;
   const s = foto(stato);
   assert.deepEqual(suoniSenzaPremio(s, s, [{ nome: "richiamo", dati: { manuale: true } }]), []);
+});
+
+test("le prove della scheda suonano sempre e non fanno partire la pausa delle tracce", () => {
+  const stato = statoSenzaPremio();
+  const s = foto(stato);
+  const prova = (tier) => [{ nome: "scheda", dati: { traccia: { titolo: "Notti a Vicenza", artista: "Lince", tier }, conSuono: true } }];
+  const [primo] = suoniSenzaPremio(s, s, prova("throne"), { ora: 0 });
+  assert.equal(primo.traccia, undefined, "una prova non conta come traccia");
+  assert.deepEqual(nomi(suoniSenzaPremio(s, s, prova("skip"), { ora: 1000, ultimaTracciaAlle: 500 })), ["inAscolto"]);
+});
+
+test("richiamo: niente campanella se ce n'è già uno in corso; ogni suono dice la sua parte", () => {
+  const stato = statoSenzaPremio();
+  const s = foto(stato);
+  const richiamo = [{ nome: "richiamo", dati: { manuale: true } }];
+  assert.deepEqual(suoniSenzaPremio(s, s, richiamo, { richiamoInCorso: true }), []);
+  assert.deepEqual(suoniSenzaPremio(s, s, richiamo), [{ nome: "premio", parte: "banner" }]);
+  stato.corrente = S.tracciaVuota({ titolo: "Cromo", artista: "Vale B" });
+  assert.equal(suoniSenzaPremio(s, foto(stato))[0].parte, "scheda");
 });

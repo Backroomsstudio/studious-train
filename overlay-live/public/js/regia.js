@@ -72,9 +72,28 @@ function el(tag, props = {}, ...figli) {
 }
 
 // Aggiorna un campo solo se non ci sta scrivendo l'operatore.
+// e nemmeno se l'operatore l'ha cambiato senza ancora salvare (segnato da «modificato», tolto dopo il salvataggio).
 function riempi(input, valore) {
-  if (input !== document.activeElement) input.value = valore ?? "";
+  if (input !== document.activeElement && !input.dataset.modificato) input.value = valore ?? "";
 }
+
+// Le scelte (select, cursori) mostrano sempre il valore in onda: si salvano appena cambiano.
+function mostra(input, valore) {
+  input.value = valore;
+}
+
+document.addEventListener("input", (e) => {
+  if (e.target.matches("form input")) e.target.dataset.modificato = "1";
+});
+const salvato = (modulo) => {
+  for (const input of modulo.querySelectorAll("[data-modificato]")) delete input.dataset.modificato;
+};
+// Dopo una scelta col mouse il fuoco lascia il select: le frecce non cambiano per sbaglio quello che è in onda.
+const scegli = (sel, fn) =>
+  $(sel).addEventListener("change", (e) => {
+    e.target.blur();
+    fn(e.target.value);
+  });
 
 const haVoti = (t) => CATEGORIE.some((c) => t.punteggi[c] !== null) || t.punteggi.chatVoti > 0;
 
@@ -255,8 +274,8 @@ function togliRisultato(r) {
 function disegnaSerata(s) {
   riempi($("#premio"), s.premio);
   riempi($("#invito"), s.invito);
-  riempi($("#suoni-dove"), s.suoni.dove);
-  riempi($("#suoni-volume"), s.suoni.volume);
+  mostra($("#suoni-dove"), s.suoni.dove);
+  riempi($("#suoni-volume"), s.suoni.volume); // un cursore: non si sposta mentre lo si trascina
   $("#suoni-nota").textContent =
     s.suoni.dove === "overlay"
       ? `Suonano dalla sorgente Link di LIVE Studio (${s.layout === "senzaPremio" ? "/senza-premio.html, il layout in onda" : "/overlay.html, la gara in onda"}). Se in diretta non si sentono, scegliete «in questa pagina» e in LIVE Studio aggiungete l'audio del PC.`
@@ -410,14 +429,20 @@ $("#chiudi-vincitore").addEventListener("click", () => invia("nascondiVincitore"
 
 $("#f-premio").addEventListener("submit", async (e) => {
   e.preventDefault();
-  if ((await invia("premio", { testo: $("#premio").value })).ok) avviso("Premio aggiornato", "ok");
+  if ((await invia("premio", { testo: $("#premio").value })).ok) {
+    salvato(e.target);
+    avviso("Premio aggiornato", "ok");
+  }
 });
 $("#f-invito").addEventListener("submit", async (e) => {
   e.preventDefault();
-  if ((await invia("invito", { testo: $("#invito").value })).ok) avviso("Frasi aggiornate", "ok");
+  if ((await invia("invito", { testo: $("#invito").value })).ok) {
+    salvato(e.target);
+    avviso("Frasi aggiornate", "ok");
+  }
 });
-$("#suoni-dove").addEventListener("change", (e) => invia("suoni", { dove: e.target.value }));
-$("#suoni-volume").addEventListener("change", (e) => invia("suoni", { volume: Number(e.target.value) }));
+scegli("#suoni-dove", (dove) => invia("suoni", { dove }));
+scegli("#suoni-volume", (v) => invia("suoni", { volume: Number(v) }));
 for (const bottone of document.querySelectorAll("[data-suono]")) {
   bottone.addEventListener("click", () => {
     if (stato?.suoni.dove === "spenti") return avviso("I suoni sono spenti: scegliete dove farli suonare", "errore");
@@ -426,11 +451,17 @@ for (const bottone of document.querySelectorAll("[data-suono]")) {
 }
 $("#f-giudici").addEventListener("submit", async (e) => {
   e.preventDefault();
-  if ((await invia("giudici", Object.fromEntries(new FormData(e.target)))).ok) avviso("Giudici aggiornati", "ok");
+  if ((await invia("giudici", Object.fromEntries(new FormData(e.target)))).ok) {
+    salvato(e.target);
+    avviso("Giudici aggiornati", "ok");
+  }
 });
 $("#f-tiktok").addEventListener("submit", async (e) => {
   e.preventDefault();
-  if ((await invia("tiktok", { utente: $("#tiktok").value })).ok) $("#tiktok").blur();
+  if ((await invia("tiktok", { utente: $("#tiktok").value })).ok) {
+    salvato(e.target);
+    $("#tiktok").blur();
+  }
 });
 $("#demo").addEventListener("click", () => {
   if (confirm("I dati demo sostituiscono la serata attuale. Continuare?")) invia("demo");
@@ -457,18 +488,25 @@ const NOMI_ICONE = {
   logo: "Logo BR",
 };
 
+let velocitaInMano = false; // il cursore della velocità si sta trascinando
+
 function disegnaSenzaPremio(s) {
   const sp = s.senzaPremio;
-  riempi($("#layout"), s.layout);
+  mostra($("#layout"), s.layout);
   $("#sp-regia").classList.toggle("attivo", s.layout === "senzaPremio");
   const banner = $("#f-sp-banner");
   for (const campo of ["sopra", "titolo", "pillola", "link"]) riempi(banner[campo], sp[campo]);
   const spot = $("#f-sp-spot");
   for (const campo of ["sopra", "titolo", "sotto"]) riempi(spot[campo], sp.spot[campo]);
-  riempi($("#sp-richiamo-ogni"), String(sp.richiamoOgniMinuti));
-  riempi($("#sp-suono-traccia"), sp.suonoTraccia);
+  const ogni = $("#sp-richiamo-ogni");
+  // un valore messo da Stream Deck o API che non è tra le scelte: si aggiunge, così la regia mostra quello in onda
+  if (![...ogni.options].some((o) => Number(o.value) === sp.richiamoOgniMinuti)) {
+    ogni.append(el("option", { value: String(sp.richiamoOgniMinuti) }, `ogni ${sp.richiamoOgniMinuti} minuti`));
+  }
+  mostra(ogni, String(sp.richiamoOgniMinuti));
+  mostra($("#sp-suono-traccia"), sp.suonoTraccia);
   for (const input of document.querySelectorAll("#sp-durate input")) riempi(input, sp.durate[input.dataset.tier]);
-  riempi($("#sp-velocita"), sp.velocita);
+  if (!velocitaInMano) mostra($("#sp-velocita"), sp.velocita);
   scriviVelocita(Number($("#sp-velocita").value));
   $("#sp-in-ascolto").checked = sp.inAscoltoNellaBarra;
   $("#sp-ascoltate").checked = sp.ascoltateNellaBarra;
@@ -528,7 +566,9 @@ function leggiVoci() {
       etichetta: li.querySelector('[name="etichetta"]').value,
       testo: li.querySelector('[name="testo"]').value,
     }))
-    .filter((v) => v.testo.trim() || (!v.attiva && v.etichetta.trim()));
+    // le voci già in onda si mandano sempre (testo svuotato → errore e si rimette quello vero);
+    // una voce nuova si manda quando ha il testo, o se è spenta
+    .filter((v) => v.id || v.testo.trim() || (!v.attiva && v.etichetta.trim()));
 }
 
 const firmaVoci = (voci) => JSON.stringify(voci.map((v) => [v.attiva, v.icona, v.etichetta.trim(), v.testo.trim()]));
@@ -546,31 +586,43 @@ const senzaPremio = async (modifiche, messaggio) => {
   return esito;
 };
 
-$("#layout").addEventListener("change", (e) => invia("layout", { nome: e.target.value }));
+scegli("#layout", (nome) => invia("layout", { nome }));
 $("#sp-richiamo").addEventListener("click", () => invia("richiamo"));
 $("#sp-spot").addEventListener("click", () => invia("spotStudio"));
 $("#sp-ripeti").addEventListener("click", () => invia("ripetiScheda"));
 for (const bottone of document.querySelectorAll("[data-prova-scheda]")) {
   bottone.addEventListener("click", () => invia("provaScheda", { tier: bottone.dataset.provaScheda }));
 }
-$("#f-sp-banner").addEventListener("submit", (e) => {
+$("#f-sp-banner").addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
-  senzaPremio({ sopra: f.sopra.value, titolo: f.titolo.value, pillola: f.pillola.value, link: f.link.value }, "Banner aggiornato");
+  const esito = await senzaPremio({ sopra: f.sopra.value, titolo: f.titolo.value, pillola: f.pillola.value, link: f.link.value }, "Banner aggiornato");
+  if (esito.ok) salvato(f);
 });
-$("#f-sp-spot").addEventListener("submit", (e) => {
+$("#f-sp-spot").addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
-  senzaPremio({ spot: { sopra: f.sopra.value, titolo: f.titolo.value, sotto: f.sotto.value } }, "Spot aggiornato");
+  const esito = await senzaPremio({ spot: { sopra: f.sopra.value, titolo: f.titolo.value, sotto: f.sotto.value } }, "Spot aggiornato");
+  if (esito.ok) salvato(f);
 });
-$("#sp-richiamo-ogni").addEventListener("change", (e) => senzaPremio({ richiamoOgniMinuti: Number(e.target.value) }));
-$("#sp-suono-traccia").addEventListener("change", (e) => senzaPremio({ suonoTraccia: e.target.value }));
-$("#sp-durate").addEventListener("change", (e) => {
+scegli("#sp-richiamo-ogni", (v) => senzaPremio({ richiamoOgniMinuti: Number(v) }));
+scegli("#sp-suono-traccia", (suonoTraccia) => senzaPremio({ suonoTraccia }));
+$("#sp-durate").addEventListener("change", async (e) => {
   const input = e.target.closest("input");
-  if (input) senzaPremio({ durate: { [input.dataset.tier]: Number(input.value) } }, "Scheda aggiornata");
+  if (!input) return;
+  const esito = await senzaPremio({ durate: { [input.dataset.tier]: input.value } }, "Scheda aggiornata");
+  // valore rifiutato: il campo torna a quello in onda
+  if (!esito.ok && stato) input.value = stato.senzaPremio.durate[input.dataset.tier];
 });
-$("#sp-velocita").addEventListener("input", (e) => scriviVelocita(Number(e.target.value)));
-$("#sp-velocita").addEventListener("change", (e) => senzaPremio({ velocita: Number(e.target.value) }));
+$("#sp-velocita").addEventListener("input", (e) => {
+  velocitaInMano = true;
+  scriviVelocita(Number(e.target.value));
+});
+$("#sp-velocita").addEventListener("change", (e) => {
+  velocitaInMano = false;
+  e.target.blur();
+  senzaPremio({ velocita: Number(e.target.value) });
+});
 for (const [id, chiave] of [["#sp-in-ascolto", "inAscoltoNellaBarra"], ["#sp-ascoltate", "ascoltateNellaBarra"], ["#sp-loghi", "loghiBarra"], ["#sp-filo", "filoCamera"]]) {
   $(id).addEventListener("change", (e) => senzaPremio({ [chiave]: e.target.checked }));
 }
@@ -588,6 +640,15 @@ $("#sp-voci").addEventListener("click", (e) => {
   }
   $("#sp-voci").replaceChildren(...righe);
   salvaVoci();
+});
+// Uscendo da una riga nuova accesa senza testo: avviso, perché non va in onda.
+$("#sp-voci").addEventListener("focusout", (e) => {
+  const li = e.target.closest("li");
+  if (!li || li.contains(e.relatedTarget)) return;
+  const testo = li.querySelector('[name="testo"]').value.trim();
+  const incompleta = !li.dataset.id && !testo && li.querySelector('[name="attiva"]').checked && li.querySelector('[name="etichetta"]').value.trim();
+  li.classList.toggle("incompleta", Boolean(incompleta));
+  if (incompleta) avviso("Voce nuova senza testo: scrivetelo, altrimenti non va in onda", "errore");
 });
 $("#sp-aggiungi").addEventListener("click", () => {
   const riga = rigaVoce({ attiva: true, icona: "sito" });

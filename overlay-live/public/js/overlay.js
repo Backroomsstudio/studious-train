@@ -536,10 +536,13 @@ function scintille(tela) {
   };
 }
 
-// Con i font caricati le larghezze cambiano: si riadattano i testi lunghi.
-document.fonts?.ready.then(() => {
+// Con i font caricati le larghezze cambiano: si riadattano i testi lunghi. A ogni caricamento, non solo al primo
+// «ready»: con i font nella cache di OBS o LIVE Studio i pesi usati dai testi arrivano dopo lo stato.
+function rimisura() {
   adattaTesto(tab.titolo, 56, 30);
   if (premio.testo.textContent) adattaTesto(premio.testo, 76, 40);
   adattaTesto(premio.invito, 27, 19);
   for (const riga of righeClassifica.values()) adattaTesto(riga.traccia, 27, 18);
-});
+}
+document.fonts?.ready.then(rimisura);
+document.fonts?.addEventListener?.("loadingdone", rimisura);
