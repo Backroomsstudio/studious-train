@@ -8,6 +8,20 @@
   --linea: rgba(255, 255, 255, 0.12);
   --rosso-live: #ff3046;
 
+  /* Accenti al neon, presi dalle luci dello studio */
+  --viola: #a066ff;
+  --viola-chiaro: #cdb2ff;
+  --magenta: #ff4fd8;
+  --ciano: #36dcff;
+  --verde: #45ffa8;
+  --rosso: #ff2d4b;
+
+  /* Podio: oro, argento e bronzo (toni chiari, così il testo scuro sopra si legge bene) */
+  --podio-oro: linear-gradient(160deg, #fff4c2 0%, #ffd863 26%, #f2b52a 52%, #ffd863 74%, #fff0b0 100%);
+  --podio-argento: linear-gradient(160deg, #ffffff 0%, #e4e8ee 26%, #b6bdc7 52%, #e4e8ee 74%, #ffffff 100%);
+  --podio-bronzo: linear-gradient(160deg, #ffe1c4 0%, #f3ab70 26%, #d47c3c 52%, #f3ab70 74%, #ffd9b5 100%);
+  --oro-testo: linear-gradient(180deg, #fffbe6 0%, #ffe27a 30%, #f5b72a 55%, #c98a0c 70%, #ffe58f 100%);
+
   --font-gotico: "Grenze Gotisch", "UnifrakturCook", Georgia, serif;
   --font-dati: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
 

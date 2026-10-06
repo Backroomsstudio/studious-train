@@ -55,7 +55,11 @@ function caricaConfig() {
 function caricaStato() {
   if (!existsSync(FILE_STATO)) return S.statoIniziale(config);
   try {
-    const salvato = { ...S.statoIniziale(config), ...JSON.parse(readFileSync(FILE_STATO, "utf8")) };
+    const iniziale = S.statoIniziale(config);
+    const salvato = { ...iniziale, ...JSON.parse(readFileSync(FILE_STATO, "utf8")) };
+    // Widget e impostazioni aggiunti dopo: chi ha uno stato salvato prima li trova accesi.
+    salvato.visibili = { ...iniziale.visibili, ...salvato.visibili };
+    salvato.suoni = { ...iniziale.suoni, ...salvato.suoni };
     // Stato di una versione precedente (tre voti per categoria): la traccia in corso riparte da zero.
     if (Array.isArray(salvato.corrente?.voti?.beat)) salvato.corrente = S.tracciaVuota();
     if (Array.isArray(salvato.giudici)) salvato.giudici = { ...config.giudici };
@@ -247,10 +251,20 @@ const comandi = {
   premio({ testo }) {
     stato.premio = pulisci(testo);
   },
+  invito({ testo }) {
+    stato.invito = pulisci(testo, 200);
+  },
+  suoni(args) {
+    S.impostaSuoni(stato, args);
+  },
+  // Fa suonare un effetto su overlay o regia (dove sono attivi i suoni): per provarli prima della live.
+  provaSuono({ nome = "entrata" }) {
+    emetti("suono", { nome: pulisci(nome, 30) });
+  },
   demo() {
     const ora = Date.now();
-    const { premio, giudici, tiktokUtente, neroAutomatico, neroUltimo } = stato;
-    stato = { ...S.statoIniziale(config), premio, giudici, tiktokUtente, neroAutomatico, neroUltimo };
+    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo } = stato;
+    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo };
     const finti = [
       ["Specchi Neri", "Nove", 8.4],
       ["Fuori Orario", "Kappa 23", 7.9],
@@ -273,8 +287,8 @@ const comandi = {
   },
   // La traccia che suona su Nero in quel momento torna sul tabellone al giro successivo.
   nuovaSerata() {
-    const { premio, giudici, tiktokUtente, neroAutomatico } = stato;
-    stato = { ...S.statoIniziale(config), premio, giudici, tiktokUtente, neroAutomatico };
+    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico } = stato;
+    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, tiktokUtente, neroAutomatico };
   },
 };
 

@@ -18,7 +18,7 @@
     <span class="conn" id="tiktok-stato" title="Chat TikTok">TikTok</span>
     <span class="conn" id="nero-stato" title="Traccia in riproduzione su Nero.fan">Nero</span>
     <nav>
-      <a href="/overlay?anteprima=1" target="_blank" rel="noopener">Anteprima overlay ↗</a>
+      <a href="/overlay?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok e senza suoni">Anteprima overlay ↗</a>
       <button type="button" id="aiuto">Scorciatoie</button>
     </nav>
   </header>
@@ -128,11 +128,37 @@
 
       <h2>In onda</h2>
       <div class="interruttori">
+        <label class="interruttore"><input type="checkbox" data-widget="premio"> Premio in palio</label>
         <label class="interruttore"><input type="checkbox" data-widget="tabellone"> Tabellone</label>
         <label class="interruttore"><input type="checkbox" data-widget="classifica"> Classifica</label>
         <label class="interruttore"><input type="checkbox" data-widget="timer"> Countdown</label>
       </div>
       <p class="nota">Con la classifica nascosta, dopo ogni conferma compare da sola per 15 secondi.</p>
+
+      <h2>Suoni</h2>
+      <div class="suoni">
+        <label>Suonano
+          <select id="suoni-dove">
+            <option value="overlay">nell'overlay (LIVE Studio)</option>
+            <option value="regia">in questa pagina</option>
+            <option value="spenti">spenti</option>
+          </select>
+        </label>
+        <label>Volume <input type="range" id="suoni-volume" min="0" max="1" step="0.05"></label>
+      </div>
+      <div class="azioni prova-suoni">
+        <span class="nota">Prova:</span>
+        <button class="piccolo" data-suono="nuovaTraccia">Nuova traccia</button>
+        <button class="piccolo" data-suono="voto">Voto</button>
+        <button class="piccolo" data-suono="chatApre">Voto chat</button>
+        <button class="piccolo" data-suono="calcolo">Punteggio</button>
+        <button class="piccolo" data-suono="entrata">Nuova entrata</button>
+        <button class="piccolo" data-suono="sale">Scalata</button>
+        <button class="piccolo" data-suono="primo">Primo posto</button>
+        <button class="piccolo" data-suono="allarme">Ultimi 30′</button>
+        <button class="piccolo" data-suono="vincitore">Vincitore</button>
+      </div>
+      <p class="nota" id="suoni-nota"></p>
 
       <h2>Serata</h2>
       <form id="f-premio" class="modulo riga-modulo" autocomplete="off">
@@ -146,6 +172,11 @@
           <option value="Beat + Mix + Master"></option>
         </datalist>
       </form>
+      <form id="f-invito" class="modulo riga-modulo" autocomplete="off">
+        <input id="invito" placeholder="Frasi sotto il premio, separate da |" maxlength="200" title="A rotazione ogni 6 secondi sotto il premio. Separale con |">
+        <button>Salva frasi</button>
+      </form>
+      <p class="nota">Sotto il premio, a rotazione: spiegate a chi entra in live come si partecipa. Es. <code>La traccia più votata vince | Manda la tua traccia: link in bio</code></p>
       <form id="f-giudici" class="modulo giudici" autocomplete="off">
         <label>Beat <input name="beat" maxlength="40"></label>
         <label>Voce <input name="voce" maxlength="40"></label>

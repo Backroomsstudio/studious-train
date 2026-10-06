@@ -171,3 +171,19 @@ test("la coda segue le priorità di Nero: throne, super skip, skip, standard", (
   ];
   assert.deepEqual(S.ordinaCoda(coda).map((v) => v.id), ["t", "k1", "k2", "s"]);
 });
+
+test("suoni e frasi sotto il premio: valori di partenza e controlli", () => {
+  const stato = S.statoIniziale(config);
+  assert.deepEqual(stato.suoni, { dove: "overlay", volume: 0.8 });
+  assert.match(stato.invito, /\|/);
+  assert.equal(stato.visibili.premio, true);
+
+  S.impostaSuoni(stato, { dove: "regia", volume: "0.456" });
+  assert.deepEqual(stato.suoni, { dove: "regia", volume: 0.46 });
+  assert.throws(() => S.impostaSuoni(stato, { dove: "cuffie" }));
+  assert.throws(() => S.impostaSuoni(stato, { volume: 2 }));
+
+  const foto = S.istantanea(stato, config, 0);
+  assert.equal(foto.suoni.dove, "regia");
+  assert.equal(foto.invito, stato.invito);
+});

@@ -1,6 +1,8 @@
 // Regia: voti dei giudici, voto della chat TikTok, conferma, coda Nero.fan, classifica, countdown e spareggio.
 // Ogni azione è un comando al server; la pagina si ridisegna dallo stato che torna indietro.
 import { collega, formatta, durata } from "./connessione.js";
+import { suona, volume, audioPronto } from "./suoni.js";
+import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, RITARDO_CLASSIFICA_MS } from "./eventi-sonori.js";
 
 const $ = (sel) => document.querySelector(sel);
 const CATEGORIE = ["beat", "voce", "mix"];
@@ -10,8 +12,10 @@ let stato = null;
 let primoDisegno = true;
 
 const conn = collega({
-  suStato(s) {
+  suStato(s, eventi) {
+    const prima = stato;
     stato = s;
+    suoniRegia(prima, s, eventi);
     disegna(s);
     primoDisegno = false;
   },
@@ -71,6 +75,23 @@ function riempi(input, valore) {
 }
 
 const haVoti = (t) => CATEGORIE.some((c) => t.punteggi[c] !== null) || t.punteggi.chatVoti > 0;
+
+// ---------- Suoni ----------
+// Se la regia sceglie "in questa pagina", gli effetti suonano qui (da catturare come audio del PC in LIVE Studio).
+const suonaQui = () => stato?.suoni.dove === "regia";
+
+function riproduci(suoni, ritardoBase = 0) {
+  if (!suonaQui() || !suoni.length) return;
+  volume(stato.suoni.volume);
+  for (const x of suoni) suona(x.nome, x.dati, ritardoBase + (x.ritardo ?? 0));
+}
+
+function suoniRegia(prima, dopo, eventi) {
+  riproduci(suoniTraccia(prima, dopo, eventi));
+  if (prima && eventi.some((e) => e.nome === "classifica")) {
+    riproduci(suoniClassifica(cambiClassifica(prima.classifica, dopo.classifica)), RITARDO_CLASSIFICA_MS);
+  }
+}
 
 // ---------- Disegno ----------
 function disegna(s) {
@@ -217,6 +238,17 @@ function togliRisultato(r) {
 
 function disegnaSerata(s) {
   riempi($("#premio"), s.premio);
+  riempi($("#invito"), s.invito);
+  riempi($("#suoni-dove"), s.suoni.dove);
+  riempi($("#suoni-volume"), s.suoni.volume);
+  $("#suoni-nota").textContent =
+    s.suoni.dove === "overlay"
+      ? "Suonano dalla sorgente Link di LIVE Studio. Se in diretta non si sentono, scegliete «in questa pagina» e in LIVE Studio aggiungete l'audio del PC."
+      : s.suoni.dove === "regia"
+        ? audioPronto()
+          ? "Suonano da questa pagina: tenetela aperta e catturate l'audio del PC in LIVE Studio."
+          : "Suonano da questa pagina: fate un clic qui per attivare l'audio del browser."
+        : "Effetti sonori spenti.";
   for (const cat of CATEGORIE) riempi($(`#f-giudici [name="${cat}"]`), s.giudici[cat]);
   riempi($("#tiktok"), s.tiktok.utente ? `@${s.tiktok.utente}` : "");
   if (primoDisegno) $("#minuti").value = s.durataCountdownMinuti;
@@ -230,10 +262,15 @@ function disegnaSerata(s) {
 }
 
 // Countdown e tempo della chat: aggiornati 4 volte al secondo.
+let msPrecedente = null;
 setInterval(() => {
   if (!stato) return;
   const c = stato.countdown;
   const ms = c.fineAlle !== null ? c.fineAlle - conn.ora() : c.rimanenteMs;
+  if (c.fineAlle !== null) {
+    riproduci(suoniTimer(msPrecedente, ms));
+    msPrecedente = ms;
+  } else msPrecedente = null;
   $("#timer").textContent = ms !== null ? `${durata(ms)}${c.rimanenteMs !== null ? " ⏸" : ""}` : c.scaduto ? "scaduto" : "--:--";
   $("#t-pausa").firstChild.textContent = c.rimanenteMs !== null ? "Riprendi " : "Pausa ";
 
@@ -359,6 +396,18 @@ $("#f-premio").addEventListener("submit", async (e) => {
   e.preventDefault();
   if ((await invia("premio", { testo: $("#premio").value })).ok) avviso("Premio aggiornato", "ok");
 });
+$("#f-invito").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if ((await invia("invito", { testo: $("#invito").value })).ok) avviso("Frasi aggiornate", "ok");
+});
+$("#suoni-dove").addEventListener("change", (e) => invia("suoni", { dove: e.target.value }));
+$("#suoni-volume").addEventListener("change", (e) => invia("suoni", { volume: Number(e.target.value) }));
+for (const bottone of document.querySelectorAll("[data-suono]")) {
+  bottone.addEventListener("click", () => {
+    if (stato?.suoni.dove === "spenti") return avviso("I suoni sono spenti: scegliete dove farli suonare", "errore");
+    invia("provaSuono", { nome: bottone.dataset.suono });
+  });
+}
 $("#f-giudici").addEventListener("submit", async (e) => {
   e.preventDefault();
   if ((await invia("giudici", Object.fromEntries(new FormData(e.target)))).ok) avviso("Giudici aggiornati", "ok");

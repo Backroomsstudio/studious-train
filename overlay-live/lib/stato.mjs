@@ -3,7 +3,10 @@
 import { randomUUID } from "node:crypto";
 
 export const CATEGORIE = ["beat", "voce", "mix"];
-export const WIDGET = ["tabellone", "classifica", "timer"];
+export const WIDGET = ["premio", "tabellone", "classifica", "timer"];
+export const DOVE_SUONI = ["overlay", "regia", "spenti"];
+// Sotto il premio, a rotazione: spiega a chi entra in live come partecipare. Righe separate da "|".
+export const INVITO_PREDEFINITO = "La traccia più votata vince | Manda la tua traccia: link in bio";
 const ORDINE_TIER = { throne: 0, superskip: 1, skip: 2, standard: 3 };
 
 export function statoIniziale(config) {
@@ -15,6 +18,8 @@ export function statoIniziale(config) {
     vincitore: null,
     spareggio: null,
     premio: config.premio,
+    invito: config.invito ?? INVITO_PREDEFINITO,
+    suoni: suoniIniziali(config),
     giudici: { ...config.giudici },
     nascondiVoti: false,
     visibili: Object.fromEntries(WIDGET.map((w) => [w, true])),
@@ -24,6 +29,20 @@ export function statoIniziale(config) {
     neroUltimo: null,
     neroInArrivo: null,
   };
+}
+
+export const suoniIniziali = (config) => ({ dove: config.suoni?.dove ?? "overlay", volume: config.suoni?.volume ?? 0.8 });
+
+export function impostaSuoni(stato, { dove, volume }) {
+  if (dove !== undefined) {
+    if (!DOVE_SUONI.includes(dove)) throw new Error("Scegli dove suonano: overlay, regia o spenti");
+    stato.suoni.dove = dove;
+  }
+  if (volume !== undefined) {
+    const v = Number(volume);
+    if (!Number.isFinite(v) || v < 0 || v > 1) throw new Error("Volume tra 0 e 1");
+    stato.suoni.volume = Math.round(v * 100) / 100;
+  }
 }
 
 export const haVoti = (traccia) => CATEGORIE.some((c) => traccia.voti[c] !== null) || Object.keys(traccia.chat.voti).length > 0;
@@ -247,6 +266,8 @@ export function istantanea(stato, config, ora) {
     giudici: stato.giudici,
     topN: config.topN,
     premio: stato.premio,
+    invito: stato.invito,
+    suoni: stato.suoni,
     durataCountdownMinuti: config.durataCountdownMinuti,
     nascondiVoti: stato.nascondiVoti,
     visibili: stato.visibili,

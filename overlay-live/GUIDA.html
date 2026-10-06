@@ -226,6 +226,7 @@ dl.problemi dd strong { color: var(--testo); }
       <li><a href="#ogni-live">Prima di ogni live</a></li>
       <li><a href="#traccia">Il giro di ogni traccia</a></li>
       <li><a href="#fine">Fine gara e vincitore</a></li>
+      <li><a href="#suoni">Effetti sonori</a></li>
       <li><a href="#dopo">Dopo la live</a></li>
       <li><a href="#nero"><span class="facoltativo">Coda automatica Nero.fan</span></a></li>
       <li><a href="#rete"><span class="facoltativo">Regia da tablet o portatile</span></a></li>
@@ -333,7 +334,7 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
       <h3>5. Aggiungi l'overlay in TikTok LIVE Studio</h3>
       <div class="affiancati">
         <figure class="figura">
-          <img src="mockup/verticale.jpg" alt="Overlay verticale: countdown in alto a sinistra, classifica Top 5 in alto a destra, tabellone con Beat, Voce, Mix e Chat in basso" width="1080" height="1920" loading="lazy">
+          <img src="mockup/verticale.jpg" alt="Overlay verticale: premio in palio in alto, sotto la classifica Top 5 a sinistra e il countdown a destra, in basso il tabellone con Beat, Voce, Mix e Chat" width="1080" height="1920" loading="lazy">
           <figcaption>Così appare sopra la camera, con i dati demo.</figcaption>
         </figure>
         <div>
@@ -345,12 +346,18 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
               <div class="copia"><code>http://127.0.0.1:4747/overlay.html</code><button type="button">Copia</button></div>
               <p>Deve finire con <strong>.html</strong>: senza, LIVE Studio risponde «Inserisci l'URL corretto». Se chiede le dimensioni: larghezza <strong>1080</strong>, altezza <strong>1920</strong>.</p>
             </li>
-            <li><p>Allarga la sorgente finché copre tutto lo schermo verticale, dagli angoli fino ai bordi.</p></li>
+            <li><p>Allarga la sorgente finché copre tutto lo schermo verticale, dagli angoli fino ai bordi. Non spostarla e non ridimensionarla a mano: i riquadri sono già al loro posto.</p></li>
+            <li><p>Se avevi aggiunto una sorgente per ogni riquadro (classifica, timer, tabellone), toglile: adesso basta questa.</p></li>
             <li><p>Trascinala in cima alla lista delle sorgenti, così sta sopra la camera.</p></li>
           </ol>
         </div>
       </div>
-      <p>Countdown e classifica stanno in alto, sotto il nome e gli spettatori di TikTok. Il tabellone sta sopra la zona dei commenti. Le posizioni sono già pensate per non finire sotto l'interfaccia dell'app.</p>
+      <p>Dall'alto: il <strong>premio in palio</strong> bello grande, sotto la <strong>classifica</strong> a sinistra e il <strong>countdown</strong> a destra, in basso il <strong>tabellone</strong> e, quando si vota, la barra verde «Vota in chat». Le posizioni sono quelle dello screenshot della vostra diretta.</p>
+      <p>Sui telefoni TikTok riempie lo schermo in altezza e <strong>taglia un pezzo a destra e a sinistra</strong> (circa 100 pixel per lato su 1080). Per questo tutto sta un po' più dentro dei bordi. Per controllare: apri <code class="in">http://127.0.0.1:4747/overlay?anteprima=1&amp;guide=1</code>. Le strisce rosse sono i lati tagliati, i riquadri gialli le zone coperte dall'app.</p>
+      <figure class="figura">
+        <img src="mockup/zone-telefono.jpg" alt="L'overlay con le guide: strisce rosse ai lati tagliati sui telefoni, riquadri gialli in alto e in basso dove TikTok mette nome della live e pulsanti" width="1080" height="1920" loading="lazy" style="max-width:360px">
+        <figcaption>Con <code class="in">?guide=1</code>: niente deve finire nelle zone colorate.</figcaption>
+      </figure>
       <div class="riquadro da-provare">
         <span class="tag">Da controllare la prima volta</span>
         <p>Questa parte non è ancora stata provata dentro LIVE Studio. Lo sfondo dell'overlay deve essere <strong>trasparente</strong>: vedi la camera e sopra i riquadri. Se invece vedi uno sfondo nero o la sorgente resta vuota, guarda <a href="#problemi">Se qualcosa non va</a>.</p>
@@ -370,7 +377,8 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
         <li><p>Premi <strong>Nuova serata</strong> → <strong>OK</strong> per ripartire da zero.</p>
           <div class="riquadro attenzione"><span class="tag">Attenzione</span><p>Nuova serata cancella la classifica della volta prima. Fallo solo all'inizio di una live, mai durante.</p></div>
         </li>
-        <li><p>In <strong>Serata</strong> <span class="zona">10</span> scrivi il premio di stasera e premi <strong>Salva premio</strong>. Controlla i nomi dei giudici. L'account <strong>@backrooms.studios</strong> è già impostato.</p></li>
+        <li><p>In <strong>Serata</strong> <span class="zona">11</span> scrivi il premio di stasera e premi <strong>Salva premio</strong>: compare in grande in cima all'overlay. Sotto il premio girano le frasi di <strong>Salva frasi</strong>, separate da <code class="in">|</code>: usatele per dire a chi entra come partecipare. Controlla i nomi dei giudici. L'account <strong>@backrooms.studios</strong> è già impostato.</p></li>
+        <li><p>In <strong>Suoni</strong> <span class="zona">10</span> premi un pulsante di <strong>Prova</strong> e controlla che il suono esca in diretta (vedi <a href="#suoni">Effetti sonori</a>).</p></li>
         <li><p>Apri TikTok LIVE Studio, controlla che si veda l'overlay e vai in diretta.</p></li>
         <li><p>Entro un minuto dall'inizio della live, in alto nella regia <span class="zona">1</span> compare <span class="etichetta-ui verde">TikTok in ascolto</span>. Prima della diretta c'è <span class="etichetta-ui arancio">TikTok in attesa</span>: è normale, riprova da solo ogni minuto.</p></li>
         <li><p>Quando inizia la gara: in <strong>Countdown</strong> <span class="zona">8</span> lascia <strong>180</strong> minuti e premi <strong>Avvia</strong>. Partono le 3 ore.</p></li>
@@ -383,7 +391,7 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
       <p class="intro">La regia la usa una persona sola. I numeri gialli sono le zone della regia nell'immagine.</p>
 
       <figure class="figura">
-        <img src="mockup/regia.jpg" alt="La regia con le zone numerate da 1 a 10" width="1440" height="1110" loading="lazy">
+        <img src="mockup/regia.jpg" alt="La regia con le zone numerate da 1 a 11" width="1440" height="1586" loading="lazy">
         <figcaption>La regia con i dati demo.</figcaption>
       </figure>
       <ul class="legenda">
@@ -396,7 +404,8 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
         <li><span class="zona">7</span> Classifica completa</li>
         <li><span class="zona">8</span> Countdown e vincitore</li>
         <li><span class="zona">9</span> Riquadri visibili in onda</li>
-        <li><span class="zona">10</span> Premio, giudici, account TikTok</li>
+        <li><span class="zona">10</span> Effetti sonori</li>
+        <li><span class="zona">11</span> Premio, frasi sotto il premio, giudici, account TikTok</li>
       </ul>
 
       <ol class="passi" style="margin-top:28px">
@@ -413,7 +422,7 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
           <p><strong>Scrivi i voti dei giudici</strong> in <span class="zona">4</span>: Beat (Daniele), Voce (Plugghe), Mix (Freya). Da 0 a 10, anche mezzi punti come <code class="in">7.5</code>. Con <kbd>Invio</kbd> passi alla casella successiva. I voti compaiono subito in overlay.</p>
         </li>
         <li>
-          <p><strong>Apri il voto della chat</strong> con <kbd>F2</kbd> (o <strong>Apri voto chat</strong> in <span class="zona">5</span>). In overlay compare «Scrivi nei commenti un voto da 0 a 10» con il tempo che scorre. Ditelo anche a voce in diretta.</p>
+          <p><strong>Apri il voto della chat</strong> con <kbd>F2</kbd> (o <strong>Apri voto chat</strong> in <span class="zona">5</span>). Sotto il tabellone compare la barra verde «Vota in chat da 0 a 10» con il tempo che scorre. Ditelo anche a voce in diretta.</p>
           <ul>
             <li>Valgono i commenti con solo il voto: <code class="in">8</code>, <code class="in">7.5</code>, <code class="in">7,5</code>, <code class="in">9/10</code>, <code class="in">!voto 8</code>. «Bella, 8» non vale.</li>
             <li>Un voto a persona: se uno scrive due volte, vale l'ultimo.</li>
@@ -423,7 +432,7 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
         </li>
         <li>
           <p><strong>Conferma</strong> con <kbd>F4</kbd> (o <strong>Conferma punteggio</strong> in <span class="zona">6</span>). Il totale è la media di Beat, Voce, Mix e Chat, ognuno al 25%. Se in chat non vota nessuno, è la media dei tre giudici.</p>
-          <p>La traccia entra in classifica con l'animazione. Se finisce nella Top 5, in overlay compare «Nuova entrata». Nella regia leggi per esempio «Confermato: 2° in classifica».</p>
+          <p>Il totale conta per un secondo e mezzo e si «timbra», poi la classifica si muove. A destra, sotto il countdown, compare una notifica: «Nuova entrata», «Sale al 2° posto» oppure, in oro, «Nuovo primo posto!». I primi tre hanno la casella oro, argento e bronzo; il primo ha la corona accanto al titolo. Nella regia leggi per esempio «Confermato: 2° in classifica».</p>
         </li>
         <li><p><strong>Passa alla prossima</strong> con <kbd>F8</kbd>. Il tabellone si svuota e ricominci dal punto 1.</p></li>
       </ol>
@@ -451,10 +460,29 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
       <ul class="punti">
         <li><kbd>F9</kbd> o <strong>Pausa</strong> lo ferma, di nuovo <kbd>F9</kbd> lo fa ripartire.</li>
         <li><strong>+5′</strong> e <strong>−5′</strong> aggiungono o tolgono 5 minuti. <strong>Azzera</strong> lo spegne.</li>
+        <li>Negli <strong>ultimi 30 minuti</strong> il countdown diventa rosso e lampeggia, con una sirena. Nell'ultimo minuto lampeggia più veloce; negli ultimi 10 secondi c'è un tic al secondo.</li>
         <li>Se il PC si riavvia durante la live, il countdown riprende dal punto giusto.</li>
       </ul>
       <h3>In onda</h3>
-      <p>In <span class="zona">9</span> togli la spunta per nascondere tabellone, classifica o countdown. Con la classifica nascosta, dopo ogni conferma compare da sola per 15 secondi.</p>
+      <p>In <span class="zona">9</span> togli la spunta per nascondere premio, tabellone, classifica o countdown. Con la classifica nascosta, dopo ogni conferma compare da sola per 15 secondi.</p>
+    </section>
+
+    <!-- SUONI -->
+    <section id="suoni">
+      <h2><small>Per tenere viva la live</small>Effetti sonori</h2>
+      <p>Ogni momento ha il suo suono: nuova traccia, voto di un giudice (più alto il voto, più alta la nota), apertura e chiusura del voto chat, un «pop» leggero per i voti della chat, calcolo del punteggio con colpo finale, nuova entrata, scalata, uscita dalla top, fanfara per il nuovo primo posto, sirena degli ultimi 30 minuti, tic finali, rullo di tamburi per il vincitore, battito per lo spareggio.</p>
+      <p>Si regolano in <strong>Suoni</strong> <span class="zona">10</span>:</p>
+      <ul class="punti">
+        <li><strong>Suonano nell'overlay (LIVE Studio)</strong>: escono dalla sorgente Link, come la grafica. È la scelta di partenza.</li>
+        <li><strong>Suonano in questa pagina</strong>: escono dalla regia. Serve se in diretta i suoni dell'overlay non si sentono: in LIVE Studio aggiungi l'audio del PC (audio di sistema) e tieni la regia aperta. Fai un clic nella regia, altrimenti il browser non fa partire l'audio.</li>
+        <li><strong>Spenti</strong>: nessun suono.</li>
+        <li><strong>Volume</strong>: vale per tutti gli effetti. Teneteli sotto la musica: devono accompagnare, non coprire la traccia.</li>
+        <li>I pulsanti di <strong>Prova</strong> fanno suonare un effetto dove è impostato. L'anteprima della regia (<em>Anteprima overlay ↗</em>) è muta apposta, così non si sentono doppi.</li>
+      </ul>
+      <div class="riquadro da-provare">
+        <span class="tag">Da controllare la prima volta</span>
+        <p>Non sappiamo ancora se la sorgente Link di LIVE Studio manda in diretta l'audio della pagina. Premi <strong>Prova → Primo posto</strong> e ascolta da un telefono collegato alla live. Se non si sente, passa a «in questa pagina».</p>
+      </div>
     </section>
 
     <!-- DOPO -->
@@ -553,8 +581,16 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
           <dd>Controlla le spunte in <strong>In onda</strong> <span class="zona">9</span>. Se è rimasta la schermata del vincitore, premi <strong>Chiudi schermata finale</strong>.</dd>
         </div>
         <div>
+          <dt>In diretta non si sentono gli effetti sonori</dt>
+          <dd>In <strong>Suoni</strong> <span class="zona">10</span> controlla che non siano spenti e che il volume non sia a zero. Se sono impostati «nell'overlay», passa a «in questa pagina», aggiungi in LIVE Studio l'audio del PC e fai un clic nella regia. Prova con <strong>Prova → Primo posto</strong>.</dd>
+        </div>
+        <div>
+          <dt>Un riquadro è tagliato sul telefono o finisce sotto i pulsanti di TikTok</dt>
+          <dd>Apri <code class="in">http://127.0.0.1:4747/overlay?anteprima=1&amp;guide=1</code> e confronta con l'anteprima di LIVE Studio. Le posizioni sono numeri in pixel in cima al file <code class="in">public/css/overlay.css</code>: chiedi a Claude di spostarle, allegando uno screenshot dell'anteprima.</dd>
+        </div>
+        <div>
           <dt>Siamo in diretta ma la regia dice «TikTok in attesa»</dt>
-          <dd>Aspetta un paio di minuti: riprova ogni minuto. Controlla in <strong>Serata</strong> <span class="zona">10</span> che l'account sia <strong>@backrooms.studios</strong>, con la «s» finale, e premi <strong>Collega chat</strong>. Se leggi «Nessuna live trovata», il nome dell'account è sbagliato.</dd>
+          <dd>Aspetta un paio di minuti: riprova ogni minuto. Controlla in <strong>Serata</strong> <span class="zona">11</span> che l'account sia <strong>@backrooms.studios</strong>, con la «s» finale, e premi <strong>Collega chat</strong>. Se leggi «Nessuna live trovata», il nome dell'account è sbagliato.</dd>
         </div>
         <div>
           <dt>La chat scrive i voti ma non vengono contati</dt>

@@ -353,8 +353,28 @@ input::placeholder {
   text-transform: uppercase;
   color: var(--testo-tenue);
 }
-#f-tiktok {
+#f-tiktok,
+#f-invito {
   margin-top: 10px;
+}
+.suoni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  align-items: center;
+}
+.suoni label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+#suoni-volume {
+  width: 140px;
+  padding: 0;
+  accent-color: #a066ff;
+}
+.prova-suoni button {
+  font-size: 12px;
 }
 
 .spareggio {
