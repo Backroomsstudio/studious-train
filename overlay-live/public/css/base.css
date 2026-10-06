@@ -1,0 +1,67 @@
+/* Stile comune Backrooms: nero profondo, cromo liquido, accenti gotici (dal logo BR). */
+:root {
+  --nero: #050506;
+  --pannello: rgba(7, 7, 9, 0.9);
+  --testo: #eef0f3;
+  --testo-tenue: #8e949d;
+  --argento: #d6dae0;
+  --linea: rgba(255, 255, 255, 0.12);
+  --rosso-live: #ff3046;
+
+  --font-gotico: "Grenze Gotisch", "UnifrakturCook", Georgia, serif;
+  --font-dati: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+
+  /* Il cromo del logo: bianco, grigio, una banda scura al centro, poi di nuovo luce. */
+  --cromo: linear-gradient(180deg, #ffffff 0%, #eef1f4 24%, #a4aab3 46%, #3c4047 53%, #c8cdd4 66%, #ffffff 84%, #9ea4ac 100%);
+  --cromo-orizzontale: linear-gradient(90deg, #6d727a 0%, #f4f6f8 18%, #8d929a 38%, #ffffff 55%, #5d6168 76%, #e9ecef 100%);
+  --bordo-cromo: linear-gradient(135deg, #ffffff 0%, #5f646c 22%, #f3f5f7 46%, #3f434a 70%, #e3e6ea 100%);
+}
+
+.cromo {
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, transparent 62%) no-repeat,
+    var(--cromo);
+  background-size: 260% 100%, 100% 100%;
+  background-position: 160% 0, 0 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.85)) drop-shadow(0 0 14px rgba(255, 255, 255, 0.14));
+}
+
+.cromo.luccica {
+  animation: luccichio 7s ease-in-out infinite;
+}
+
+@keyframes luccichio {
+  0%, 62% { background-position: 160% 0, 0 0; }
+  100% { background-position: -60% 0, 0 0; }
+}
+
+/* Bordo cromato sottile, disegnato con una maschera così il fondo resta scuro. */
+.bordo-cromo {
+  position: relative;
+}
+.bordo-cromo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: var(--bordo-cromo);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.etichetta {
+  font: 600 15px/1 var(--font-dati);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--testo-tenue);
+}
+
+.punta {
+  fill: url(#g-cromo);
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.45));
+}

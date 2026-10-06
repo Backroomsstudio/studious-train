@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Regia live · Backrooms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&family=Grenze+Gotisch:wght@700;800&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/regia.css">
+</head>
+<body>
+  <header class="testata">
+    <img src="/assets/logo-br.png" alt="" class="testata-logo">
+    <h1 class="cromo">Regia</h1>
+    <span class="conn" id="conn">offline</span>
+    <span class="conn" id="tiktok-stato" title="Chat TikTok">TikTok</span>
+    <span class="conn" id="nero-stato" title="Traccia in riproduzione su Nero.fan">Nero</span>
+    <nav>
+      <a href="/overlay?anteprima=1" target="_blank" rel="noopener">Anteprima overlay ↗</a>
+      <button type="button" id="aiuto">Scorciatoie</button>
+    </nav>
+  </header>
+
+  <main class="griglia">
+    <!-- TRACCIA E CODA -->
+    <section class="scheda">
+      <h2>In ascolto</h2>
+      <div class="corrente" title="Clic per correggere i nomi">
+        <span class="tier-badge" id="c-tier" hidden></span>
+        <div class="corrente-titolo" id="c-titolo">—</div>
+        <div class="corrente-artista" id="c-artista"></div>
+      </div>
+      <div class="arrivo" id="nero-arrivo" hidden>
+        <p>Su Nero ora suona <b id="arrivo-titolo"></b> di <b id="arrivo-artista"></b>. Conferma i voti con <kbd>F4</kbd>, poi passa con <kbd>F8</kbd>.</p>
+        <button type="button" id="arrivo-passa" class="piccolo">Passa ora</button>
+      </div>
+      <label class="interruttore"><input type="checkbox" id="nero-auto"> Traccia automatica da Nero.fan</label>
+      <p class="nota" id="nero-messaggio"></p>
+      <form id="f-traccia" class="modulo" autocomplete="off">
+        <input name="titolo" placeholder="Titolo traccia" maxlength="120">
+        <input name="artista" placeholder="Artista" maxlength="120">
+        <div class="azioni">
+          <button class="primario" value="ascolta">In ascolto ora</button>
+          <button value="coda">Metti in coda</button>
+          <button value="correggi" title="Cambia i nomi senza azzerare i voti">Correggi nomi</button>
+        </div>
+      </form>
+
+      <h3>Coda <span class="conta" id="coda-conta"></span></h3>
+      <p class="nota" id="coda-vuota">Con la traccia automatica non serve: quello che suona su Nero va da solo sul tabellone. Qui puoi mettere in coda tracce a mano.</p>
+      <ol class="lista" id="coda"></ol>
+
+      <details class="nero" id="nero">
+        <summary>Coda su Nero.fan</summary>
+        <iframe id="nero-embed" title="Coda Nero.fan" loading="lazy" allow="clipboard-write"></iframe>
+      </details>
+    </section>
+
+    <!-- VOTI -->
+    <section class="scheda">
+      <h2>Voti</h2>
+      <div class="voti" id="voti">
+        <label class="voto" data-cat="beat"><span class="voto-cat">Beat</span><span class="voto-giudice"></span><input type="number" min="0" max="10" step="0.5" inputmode="decimal" data-cat="beat"></label>
+        <label class="voto" data-cat="voce"><span class="voto-cat">Voce</span><span class="voto-giudice"></span><input type="number" min="0" max="10" step="0.5" inputmode="decimal" data-cat="voce"></label>
+        <label class="voto" data-cat="mix"><span class="voto-cat">Mix</span><span class="voto-giudice"></span><input type="number" min="0" max="10" step="0.5" inputmode="decimal" data-cat="mix"></label>
+      </div>
+      <label class="interruttore"><input type="checkbox" id="nascondi"> Nascondi i voti in overlay fino alla conferma</label>
+
+      <h3>Voto chat TikTok</h3>
+      <div class="chat-stato">
+        <div><span class="grande cromo" id="chat-media">—</span><small id="chat-voti">0 voti</small></div>
+        <div class="chat-tempo" id="chat-tempo">chiuso</div>
+      </div>
+      <div class="azioni">
+        <button id="chat-apri" class="primario">Apri voto chat <kbd>F2</kbd></button>
+        <select id="chat-secondi" aria-label="Durata voto chat">
+          <option value="30">30 s</option>
+          <option value="60" selected>60 s</option>
+          <option value="90">90 s</option>
+          <option value="120">2 min</option>
+          <option value="0">senza limite</option>
+        </select>
+        <button id="chat-azzera">Azzera</button>
+        <button id="chat-simula" title="Solo per le prove">Simula 10 voti</button>
+      </div>
+      <ul class="ultimi" id="chat-ultimi"></ul>
+
+      <div class="conferma">
+        <div>
+          <div class="etichetta">Totale</div>
+          <div class="grande cromo" id="totale">—</div>
+          <div class="nota" id="totale-stato"></div>
+        </div>
+        <div class="azioni colonna">
+          <button id="conferma" class="primario forte">Conferma punteggio <kbd>F4</kbd></button>
+          <button id="prossima">Prossima traccia <kbd>F8</kbd></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLASSIFICA, COUNTDOWN, SERATA -->
+    <section class="scheda">
+      <div class="spareggio" id="spareggio" hidden>
+        <h2>Spareggio</h2>
+        <p class="nota">Pari merito in testa: l'overlay mostra lo spareggio. Scegliete il vincitore.</p>
+        <ol class="lista" id="spa-candidati"></ol>
+      </div>
+
+      <h2>Classifica <span class="conta" id="cl-conta"></span></h2>
+      <ol class="lista classifica" id="classifica"></ol>
+
+      <h2>Countdown</h2>
+      <div class="timer-regia cromo" id="timer">--:--</div>
+      <div class="azioni">
+        <input type="number" id="minuti" min="1" max="600" aria-label="Minuti"> <span class="nota">min</span>
+        <button id="t-avvia" class="primario">Avvia</button>
+        <button id="t-pausa">Pausa <kbd>F9</kbd></button>
+        <button id="t-piu">+5′</button>
+        <button id="t-meno">−5′</button>
+        <button id="t-azzera">Azzera</button>
+      </div>
+      <div class="azioni">
+        <button id="proclama">Proclama vincitore ora</button>
+        <button id="chiudi-vincitore">Chiudi schermata finale</button>
+      </div>
+
+      <h2>In onda</h2>
+      <div class="interruttori">
+        <label class="interruttore"><input type="checkbox" data-widget="tabellone"> Tabellone</label>
+        <label class="interruttore"><input type="checkbox" data-widget="classifica"> Classifica</label>
+        <label class="interruttore"><input type="checkbox" data-widget="timer"> Countdown</label>
+      </div>
+      <p class="nota">Con la classifica nascosta, dopo ogni conferma compare da sola per 15 secondi.</p>
+
+      <h2>Serata</h2>
+      <form id="f-premio" class="modulo riga-modulo" autocomplete="off">
+        <input id="premio" list="premi" placeholder="Premio in palio" maxlength="120">
+        <button>Salva premio</button>
+        <datalist id="premi">
+          <option value="Mix"></option>
+          <option value="Master"></option>
+          <option value="Mix + Master"></option>
+          <option value="Beat"></option>
+          <option value="Beat + Mix + Master"></option>
+        </datalist>
+      </form>
+      <form id="f-giudici" class="modulo giudici" autocomplete="off">
+        <label>Beat <input name="beat" maxlength="40"></label>
+        <label>Voce <input name="voce" maxlength="40"></label>
+        <label>Mix <input name="mix" maxlength="40"></label>
+        <button>Salva giudici</button>
+      </form>
+      <form id="f-tiktok" class="modulo riga-modulo" autocomplete="off">
+        <input id="tiktok" placeholder="@account TikTok che va in diretta" maxlength="40">
+        <button>Collega chat</button>
+      </form>
+      <p class="nota" id="tiktok-messaggio"></p>
+      <div class="azioni">
+        <button id="demo">Carica dati demo</button>
+        <button id="nuova-serata" class="pericolo">Nuova serata</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="avvisi" id="avvisi" aria-live="polite"></div>
+
+  <dialog id="d-aiuto">
+    <h2>Scorciatoie</h2>
+    <dl>
+      <dt><kbd>F2</kbd></dt><dd>Apri / chiudi il voto della chat</dd>
+      <dt><kbd>F4</kbd> o <kbd>Ctrl</kbd>+<kbd>Invio</kbd></dt><dd>Conferma il punteggio</dd>
+      <dt><kbd>F8</kbd></dt><dd>Prossima traccia</dd>
+      <dt><kbd>F9</kbd></dt><dd>Pausa / riprendi il countdown</dd>
+      <dt><kbd>Invio</kbd> in un voto</dt><dd>Passa al voto successivo</dd>
+    </dl>
+    <p class="nota">Stream Deck: ogni azione è anche un <code>POST http://127.0.0.1:4747/api/&lt;comando&gt;</code> con <code>Content-Type: application/json</code> (es. <code>conferma</code>, <code>apriChat</code>, <code>prossima</code>). Elenco completo nel README.</p>
+    <form method="dialog"><button class="primario">Chiudi</button></form>
+  </dialog>
+
+  <script type="module" src="/js/regia.js"></script>
+</body>
+</html>

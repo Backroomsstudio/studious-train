@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Overlay live · Backrooms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Grenze+Gotisch:wght@600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/overlay.css">
+</head>
+<body class="verticale">
+  <!-- Elementi grafici condivisi: gradiente cromato e la "punta" a stella del logo -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="g-cromo" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffffff"/>
+        <stop offset="0.44" stop-color="#a3a9b1"/>
+        <stop offset="0.52" stop-color="#3b3f46"/>
+        <stop offset="0.68" stop-color="#eceff2"/>
+        <stop offset="1" stop-color="#8f959d"/>
+      </linearGradient>
+      <symbol id="punta" viewBox="0 0 100 100">
+        <path d="M50 0C53 35 65 47 100 50 65 53 53 65 50 100 47 65 35 53 0 50 35 47 47 35 50 0Z"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="palco">
+    <!-- TIMER -->
+    <section class="pannello bordo-cromo timer spento" data-widget="timer">
+      <svg class="punta punta-alto"><use href="#punta"/></svg>
+      <div class="etichetta timer-etichetta">Il vincitore si decide tra</div>
+      <div class="timer-cifre cromo luccica" id="timer-cifre">00:00</div>
+      <div class="timer-premio"><span class="etichetta">In palio</span> <span id="timer-premio"></span></div>
+    </section>
+
+    <!-- CLASSIFICA -->
+    <section class="pannello bordo-cromo classifica" data-widget="classifica">
+      <svg class="punta punta-alto"><use href="#punta"/></svg>
+      <header class="cl-testa">
+        <div>
+          <h2 class="cl-titolo cromo luccica">Classifica</h2>
+          <div class="etichetta">della live</div>
+        </div>
+        <div class="cl-top"><span class="etichetta">Top</span> <b class="cromo" id="cl-n">5</b></div>
+      </header>
+      <div class="cl-lista" id="cl-lista"></div>
+      <div class="cl-avviso" id="cl-avviso"></div>
+    </section>
+
+    <!-- TABELLONE TRACCIA IN ASCOLTO -->
+    <section class="pannello bordo-cromo tabellone" data-widget="tabellone">
+      <svg class="punta punta-alto"><use href="#punta"/></svg>
+      <div class="tab-alto">
+        <div class="tab-info">
+          <header class="tab-testa">
+            <img class="tab-logo" src="/assets/logo-br.png" alt="">
+            <span class="etichetta">In ascolto</span>
+            <span class="tier" id="t-tier" hidden></span>
+          </header>
+          <h1 class="tab-titolo cromo luccica" id="t-titolo">In attesa della traccia</h1>
+          <p class="tab-artista" id="t-artista"></p>
+        </div>
+        <div class="totale">
+          <div class="etichetta">Totale · <span class="totale-stato" id="totale-stato">provvisorio</span></div>
+          <div class="totale-valore cromo"><span id="totale">—</span><small>/10</small></div>
+          <div class="totale-posizione" id="totale-posizione"></div>
+        </div>
+      </div>
+
+      <div class="categorie">
+        <div class="cat" data-cat="beat">
+          <div class="cat-testa"><span class="cat-nome">Beat</span><span class="cat-giudice"></span></div>
+          <span class="cat-valore cromo">—</span>
+          <div class="barra"><i></i></div>
+        </div>
+        <div class="cat" data-cat="voce">
+          <div class="cat-testa"><span class="cat-nome">Voce</span><span class="cat-giudice"></span></div>
+          <span class="cat-valore cromo">—</span>
+          <div class="barra"><i></i></div>
+        </div>
+        <div class="cat" data-cat="mix">
+          <div class="cat-testa"><span class="cat-nome">Mix</span><span class="cat-giudice"></span></div>
+          <span class="cat-valore cromo">—</span>
+          <div class="barra"><i></i></div>
+        </div>
+        <div class="cat cat-chat" data-cat="chat">
+          <div class="cat-testa"><span class="cat-nome">Chat</span><span class="cat-giudice"><span class="punto-live"></span><span id="chat-voti">0 voti</span></span></div>
+          <span class="cat-valore cromo">—</span>
+          <div class="barra"><i></i></div>
+        </div>
+      </div>
+
+      <div class="chat-cta">
+        <span>Scrivi nei commenti un voto da <b>0</b> a <b>10</b></span>
+        <span class="chat-timer" id="chat-timer"></span>
+      </div>
+    </section>
+
+    <!-- VINCITORE (schermo intero) -->
+    <section class="schermo vincitore" id="vincitore" data-widget="vincitore">
+      <div class="vin-raggi"></div>
+      <canvas class="vin-scintille" id="vin-scintille"></canvas>
+      <div class="vin-contenuto">
+        <img class="vin-logo pezzo" src="/assets/logo-br.png" alt="" style="--d: 0s">
+        <div class="vin-sopra pezzo" style="--d: .5s">Il vincitore della live</div>
+        <div class="vin-titolo cromo luccica pezzo" id="vin-titolo" style="--d: .9s"></div>
+        <div class="vin-artista pezzo" id="vin-artista" style="--d: 1.2s"></div>
+        <div class="vin-punti pezzo" style="--d: 1.5s"><span class="cromo" id="vin-punti"></span><small>/10</small></div>
+        <div class="vin-premio bordo-cromo pezzo" style="--d: 1.9s">
+          <svg class="punta"><use href="#punta"/></svg>
+          <span>Vince</span> <b id="vin-premio"></b>
+          <svg class="punta"><use href="#punta"/></svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- SPAREGGIO: pari merito in testa, decidono i giudici -->
+    <section class="schermo spareggio" id="spareggio" data-widget="vincitore">
+      <div class="vin-raggi"></div>
+      <div class="vin-contenuto">
+        <div class="spa-titolo cromo luccica pezzo" style="--d: 0s">Spareggio</div>
+        <div class="vin-sopra pezzo" style="--d: .4s">Pari merito · decidono i giudici</div>
+        <div class="spa-lista" id="spa-lista"></div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="/js/overlay.js"></script>
+</body>
+</html>
