@@ -488,8 +488,6 @@ const NOMI_ICONE = {
   logo: "Logo BR",
 };
 
-let velocitaInMano = false; // il cursore della velocità si sta trascinando
-
 function disegnaSenzaPremio(s) {
   const sp = s.senzaPremio;
   mostra($("#layout"), s.layout);
@@ -506,7 +504,8 @@ function disegnaSenzaPremio(s) {
   mostra(ogni, String(sp.richiamoOgniMinuti));
   mostra($("#sp-suono-traccia"), sp.suonoTraccia);
   for (const input of document.querySelectorAll("#sp-durate input")) riempi(input, sp.durate[input.dataset.tier]);
-  if (!velocitaInMano) mostra($("#sp-velocita"), sp.velocita);
+  // mentre lo si trascina il cursore resta dov'è; rilasciato, torna a mostrare la velocità in onda
+  if (!$("#sp-velocita").matches(":active")) mostra($("#sp-velocita"), sp.velocita);
   scriviVelocita(Number($("#sp-velocita").value));
   $("#sp-in-ascolto").checked = sp.inAscoltoNellaBarra;
   $("#sp-ascoltate").checked = sp.ascoltateNellaBarra;
@@ -614,12 +613,8 @@ $("#sp-durate").addEventListener("change", async (e) => {
   // valore rifiutato: il campo torna a quello in onda
   if (!esito.ok && stato) input.value = stato.senzaPremio.durate[input.dataset.tier];
 });
-$("#sp-velocita").addEventListener("input", (e) => {
-  velocitaInMano = true;
-  scriviVelocita(Number(e.target.value));
-});
+$("#sp-velocita").addEventListener("input", (e) => scriviVelocita(Number(e.target.value)));
 $("#sp-velocita").addEventListener("change", (e) => {
-  velocitaInMano = false;
   e.target.blur();
   senzaPremio({ velocita: Number(e.target.value) });
 });
@@ -655,8 +650,13 @@ $("#sp-aggiungi").addEventListener("click", () => {
   $("#sp-voci").append(riga);
   riga.querySelector('[name="etichetta"]').focus();
 });
-$("#sp-ripristina").addEventListener("click", () => {
-  if (confirm("Ripristinare banner, barra, scheda e spot come all'inizio?")) invia("ripristinaSenzaPremio");
+$("#sp-ripristina").addEventListener("click", async () => {
+  if (!confirm("Ripristinare banner, barra, scheda e spot come all'inizio?")) return;
+  const esito = await invia("ripristinaSenzaPremio");
+  if (!esito.ok) return;
+  // le modifiche non salvate vanno via: i campi mostrano i predefiniti appena ripristinati
+  for (const modulo of ["#f-sp-banner", "#f-sp-spot"]) salvato($(modulo));
+  if (stato) disegnaSenzaPremio(stato);
 });
 
 // Scorciatoie: funzionano anche col cursore dentro un campo.

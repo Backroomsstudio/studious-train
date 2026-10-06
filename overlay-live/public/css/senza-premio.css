@@ -134,8 +134,7 @@ body.sp.anteprima {
 .sp-sopra span {
   flex: 0 1 auto;
   min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
+  white-space: nowrap; /* niente overflow: hidden, taglierebbe l'alone; adattaTesto misura comunque */
   margin-right: -0.34em; /* la spaziatura dopo l'ultima lettera non sposta il centro */
 }
 .sp-sopra i {
