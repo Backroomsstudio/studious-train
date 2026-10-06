@@ -128,3 +128,94 @@ test("fondiBattle: uno stato in corso valido resta com'è", () => {
   const dopo = B.fondiBattle(JSON.parse(JSON.stringify(stato.battle)));
   assert.deepEqual(dopo, stato.battle);
 });
+
+// ---------- Impostazioni dalla regia ----------
+
+test("scontro: nomi e Instagram puliti", () => {
+  const stato = nuovo();
+  B.impostaScontro(stato, { sx: { nome: "  Lince ", instagram: "https://www.instagram.com/lince.music/?hl=it" }, dx: { nome: "Nove" } });
+  assert.deepEqual(stato.battle.sx, { nome: "Lince", instagram: "lince.music" });
+  assert.deepEqual(stato.battle.dx, { nome: "Nove", instagram: "" });
+  B.impostaScontro(stato, { dx: { instagram: "@nove.mc" } });
+  assert.deepEqual(stato.battle.dx, { nome: "Nove", instagram: "nove.mc" }, "cambia solo il campo scritto");
+});
+
+test("scontro: errori e atomicità", () => {
+  const stato = nuovo();
+  assert.throws(() => B.impostaScontro(stato, { sx: { nome: "x".repeat(25) } }), /24 caratteri/);
+  assert.throws(() => B.impostaScontro(stato, { sx: { nome: "Kappa" }, dx: { instagram: "non valido!" } }));
+  assert.equal(stato.battle.sx.nome, "", "una parte sbagliata: non cambia niente");
+  stato.battle.fase = "battle";
+  assert.throws(() => B.impostaScontro(stato, { sx: { nome: "Lince" } }), /Cambia i nomi/);
+});
+
+test("modalità: scelta e testo", () => {
+  const stato = nuovo();
+  B.impostaModalita(stato, { scelta: "tematica", testo: "Vicenza di notte" });
+  assert.equal(stato.battle.modalita.scelta, "tematica");
+  assert.equal(stato.battle.modalita.elenco.find((m) => m.id === "tematica").testo, "Vicenza di notte");
+  assert.throws(() => B.impostaModalita(stato, { scelta: "stileLibero", testo: "x" }), /non ha testo/);
+  assert.throws(() => B.impostaModalita(stato, { scelta: "custom" }), /spenta|non trovata/);
+  assert.throws(() => B.impostaModalita(stato, { scelta: "boh" }), /non trovata/);
+
+  const undici = Array.from({ length: 11 }, (_, i) => ({ id: `m${i}`, nome: `M${i}`, conTesto: false, attiva: true }));
+  assert.throws(() => B.impostaModalita(stato, { elenco: undici }), /10/);
+
+  const elenco = [...stato.battle.modalita.elenco, { nome: "Rime baciate", conTesto: false, attiva: true }];
+  B.impostaModalita(stato, { elenco });
+  const nuova = stato.battle.modalita.elenco.at(-1);
+  assert.ok(nuova.id, "la voce nuova riceve un id");
+  B.impostaModalita(stato, { scelta: nuova.id });
+  assert.equal(stato.battle.modalita.scelta, nuova.id);
+});
+
+test("modalità: la voce in onda non si può spegnere o togliere", () => {
+  const stato = nuovo();
+  const spenta = stato.battle.modalita.elenco.map((m) => (m.id === "stileLibero" ? { ...m, attiva: false } : m));
+  assert.throws(() => B.impostaModalita(stato, { elenco: spenta }), /in onda/);
+  assert.equal(stato.battle.modalita.elenco[0].attiva, true);
+});
+
+test("timer, giudici e pop-up", () => {
+  const stato = nuovo();
+  B.impostaTimer(stato, { durataSecondi: "120" });
+  assert.equal(stato.battle.timer.durataSecondi, 120);
+  for (const valore of [9, 601]) assert.throws(() => B.impostaTimer(stato, { durataSecondi: valore }), /tra 10 e 600/);
+
+  B.impostaGiudici(stato, { luca: "Luca C." });
+  assert.deepEqual(stato.battle.giudici.map((g) => g.nome), ["Luca C.", "Freya", "Daniele"]);
+  assert.throws(() => B.impostaGiudici(stato, { freya: "" }), /vuoto/);
+  assert.throws(() => B.impostaGiudici(stato, { luca: "Gigi", daniele: "x".repeat(25) }));
+  assert.equal(stato.battle.giudici[0].nome, "Luca C.", "atomico");
+
+  const popup = stato.battle.popup.elenco;
+  const nove = Array.from({ length: 9 }, (_, i) => ({ icona: "dm", titolo: `P${i}`, sopra: "", sotto: "" }));
+  assert.throws(() => B.impostaPopup(stato, { elenco: nove }), /8/);
+  assert.throws(() => B.impostaPopup(stato, { ogniMinuti: 31 }));
+  assert.throws(() => B.impostaPopup(stato, { durata: 3 }));
+  B.impostaPopup(stato, { ogniMinuti: 0, durata: 12 });
+  assert.deepEqual([stato.battle.popup.ogniMinuti, stato.battle.popup.durata], [0, 12]);
+  assert.deepEqual(stato.battle.popup.elenco, popup);
+});
+
+test("nuova serata conserva la configurazione", () => {
+  const stato = nuovo();
+  B.impostaGiudici(stato, { luca: "Luca C." });
+  B.impostaModalita(stato, { scelta: "tematica", testo: "Vicenza di notte" });
+  B.impostaTimer(stato, { durataSecondi: 120 });
+  B.impostaPopup(stato, { ogniMinuti: 7 });
+  B.impostaScontro(stato, { sx: { nome: "Lince" }, dx: { nome: "Nove" } });
+  stato.battle.round = 5;
+  stato.battle.giudici[0].voti.sx = 8;
+  votiChat(stato, 2, 1);
+  const n = B.battleNuovaSerata(stato.battle);
+  assert.equal(n.round, 1);
+  assert.equal(n.fase, "attesa");
+  assert.deepEqual(n.chat, { aperta: false, voti: {} });
+  assert.equal(n.sx.nome, "");
+  assert.equal(n.giudici[0].voti.sx, null);
+  assert.equal(n.giudici[0].nome, "Luca C.");
+  assert.deepEqual(n.modalita, stato.battle.modalita);
+  assert.equal(n.timer.durataSecondi, 120);
+  assert.equal(n.popup.ogniMinuti, 7);
+});

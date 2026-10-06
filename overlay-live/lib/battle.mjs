@@ -274,3 +274,71 @@ export function istantaneaBattle(battle) {
   const c = conteggi(chat);
   return { ...resto, chat: { aperta: chat.aperta, sx: c.sx, dx: c.dx, voti: c.voti }, quota: quota(chat) };
 }
+
+// ---------- Impostazioni dalla regia ----------
+// Si controlla tutto su una copia: un errore non lascia metà modifica (come impostaStudio).
+
+// Nomi e Instagram dei due rapper. Si cambiano tra un round e l'altro: a round avviato servono un Reset.
+export function impostaScontro(stato, { sx, dx } = {}) {
+  const b = stato.battle;
+  if (b.fase !== "attesa") throw new Error("Cambia i nomi prima di avviare il round (usa Reset)");
+  const nuovi = { sx: { ...b.sx }, dx: { ...b.dx } };
+  for (const [lato, modifica] of [["sx", sx], ["dx", dx]]) {
+    if (modifica === undefined) continue;
+    if (!oggetto(modifica)) throw new Error("Rapper: servono nome e Instagram");
+    if (modifica.nome !== undefined) nuovi[lato].nome = testo(modifica.nome, MAX_NOME, "Nome del rapper");
+    if (modifica.instagram !== undefined) nuovi[lato].instagram = pulisciInstagram(modifica.instagram);
+  }
+  b.sx = nuovi.sx;
+  b.dx = nuovi.dx;
+}
+
+// Modalità di gioco: l'elenco (massimo 10, si possono aggiungere voci), quella in onda e il suo testo (tema o situazione).
+export function impostaModalita(stato, { scelta, testo: nuovoTesto, elenco } = {}) {
+  const m = JSON.parse(JSON.stringify(stato.battle.modalita));
+  if (elenco !== undefined) m.elenco = controllaModalita(elenco);
+  if (scelta !== undefined) {
+    if (!m.elenco.some((v) => v.id === scelta && v.attiva)) throw new Error("Modalità non trovata o spenta");
+    m.scelta = scelta;
+  }
+  const inOnda = m.elenco.find((v) => v.id === m.scelta && v.attiva);
+  if (!inOnda) throw new Error("La modalità in onda deve restare nell'elenco e accesa: scegline un'altra");
+  if (nuovoTesto !== undefined) {
+    if (!inOnda.conTesto) throw new Error("Questa modalità non ha testo");
+    inOnda.testo = testo(nuovoTesto, 40, "Testo della modalità");
+  }
+  stato.battle.modalita = m;
+}
+
+// Durata del prossimo round: il round in corso non cambia.
+export function impostaTimer(stato, { durataSecondi } = {}) {
+  stato.battle.timer.durataSecondi = numeroTra(durataSecondi, DURATA_MIN, DURATA_MAX, "Durata del round (secondi)");
+}
+
+export function impostaGiudici(stato, nomi = {}) {
+  const nuovi = {};
+  for (const id of GIUDICI_BATTLE) if (nomi[id] !== undefined) nuovi[id] = testo(nomi[id], MAX_NOME, "Nome del giudice", { obbligatorio: true });
+  for (const g of stato.battle.giudici) if (nuovi[g.id] !== undefined) g.nome = nuovi[g.id];
+}
+
+// Pop-up sociali: stessi pannelli delle comparse dello studio (icona, riga sopra, titolo, riga sotto).
+export function impostaPopup(stato, { elenco, ogniMinuti, durata } = {}) {
+  const p = JSON.parse(JSON.stringify(stato.battle.popup));
+  if (elenco !== undefined) p.elenco = controllaComparse(elenco, MAX_POPUP, { elenco: "Pop-up", voce: "Pop-up" });
+  if (ogniMinuti !== undefined) p.ogniMinuti = numeroTra(ogniMinuti, 0, 30, "Pop-up automatici (minuti)");
+  if (durata !== undefined) p.durata = numeroTra(durata, 4, 20, "Durata del pop-up (secondi)");
+  stato.battle.popup = p;
+}
+
+// Nuova serata: round, chat, voti, risultato e tabellone ripartono da zero; nomi dei giudici, modalità,
+// durata del timer e pop-up restano quelli scelti.
+export function battleNuovaSerata(battle) {
+  const base = battleIniziale();
+  return {
+    ...base,
+    giudici: base.giudici.map((g, i) => ({ ...g, nome: battle.giudici[i].nome })),
+    modalita: battle.modalita,
+    timer: timerVuoto(battle.timer.durataSecondi),
+    popup: battle.popup,
+  };
+}
