@@ -109,6 +109,17 @@ function adattaTesto(el, massimo, minimo) {
 const premio = { radice: $(".premio"), testo: $("#premio-testo"), invito: $("#premio-invito") };
 let righeInvito = [];
 let indiceInvito = 0;
+// Un indirizzo nella frase (es. nero.fan/backrooms) resta minuscolo ed evidenziato.
+const LINK = /([a-z0-9-]+\.[a-z]{2,}(?:\/\S*)?)/i;
+
+function scriviInvito(testo) {
+  premio.invito.replaceChildren(
+    ...String(testo)
+      .split(LINK)
+      .map((pezzo, i) => (i % 2 ? Object.assign(document.createElement("b"), { className: "link", textContent: pezzo }) : pezzo)),
+  );
+  adattaTesto(premio.invito, 27, 19);
+}
 
 function disegnaPremio(s) {
   premio.radice.classList.toggle("fuori", !s.visibili.premio);
@@ -125,7 +136,7 @@ function disegnaPremio(s) {
   if (righe.join("|") !== righeInvito.join("|")) {
     righeInvito = righe;
     indiceInvito = 0;
-    premio.invito.textContent = righe[0] ?? "";
+    scriviInvito(righe[0] ?? "");
   }
 }
 
@@ -135,7 +146,7 @@ setInterval(() => {
   premio.invito.classList.add("cambia");
   setTimeout(() => {
     indiceInvito = (indiceInvito + 1) % righeInvito.length;
-    premio.invito.textContent = righeInvito[indiceInvito];
+    scriviInvito(righeInvito[indiceInvito]);
     premio.invito.classList.remove("cambia");
   }, 450);
 }, CAMBIO_INVITO_MS);
@@ -528,5 +539,6 @@ function scintille(tela) {
 document.fonts?.ready.then(() => {
   adattaTesto(tab.titolo, 56, 30);
   if (premio.testo.textContent) adattaTesto(premio.testo, 76, 40);
+  adattaTesto(premio.invito, 27, 19);
   for (const riga of righeClassifica.values()) adattaTesto(riga.traccia, 27, 18);
 });

@@ -184,6 +184,13 @@ body.anteprima {
   color: #fff;
   transition: opacity 0.45s ease, transform 0.45s ease;
 }
+.premio-invito .link {
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: #ffd863;
+  text-shadow: 0 0 14px rgba(255, 200, 60, 0.6);
+}
 .premio-invito.cambia {
   opacity: 0;
   transform: translateY(10px);

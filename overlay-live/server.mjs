@@ -60,6 +60,7 @@ function caricaStato() {
     // Widget e impostazioni aggiunti dopo: chi ha uno stato salvato prima li trova accesi.
     salvato.visibili = { ...iniziale.visibili, ...salvato.visibili };
     salvato.suoni = { ...iniziale.suoni, ...salvato.suoni };
+    if (S.INVITI_SUPERATI.includes(salvato.invito)) salvato.invito = iniziale.invito;
     // Stato di una versione precedente (tre voti per categoria): la traccia in corso riparte da zero.
     if (Array.isArray(salvato.corrente?.voti?.beat)) salvato.corrente = S.tracciaVuota();
     if (Array.isArray(salvato.giudici)) salvato.giudici = { ...config.giudici };

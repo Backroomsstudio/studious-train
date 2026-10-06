@@ -187,3 +187,8 @@ test("suoni e frasi sotto il premio: valori di partenza e controlli", () => {
   assert.equal(foto.suoni.dove, "regia");
   assert.equal(foto.invito, stato.invito);
 });
+
+test("la frase predefinita sotto il premio porta su nero.fan/backrooms", () => {
+  assert.match(S.INVITO_PREDEFINITO, /nero\.fan\/backrooms/);
+  assert.ok(!S.INVITI_SUPERATI.includes(S.INVITO_PREDEFINITO));
+});

@@ -6,7 +6,9 @@ export const CATEGORIE = ["beat", "voce", "mix"];
 export const WIDGET = ["premio", "tabellone", "classifica", "timer"];
 export const DOVE_SUONI = ["overlay", "regia", "spenti"];
 // Sotto il premio, a rotazione: spiega a chi entra in live come partecipare. Righe separate da "|".
-export const INVITO_PREDEFINITO = "La traccia più votata vince | Manda la tua traccia: link in bio";
+export const INVITO_PREDEFINITO = "La traccia più votata vince | Manda la tua traccia su nero.fan/backrooms";
+// Frasi predefinite delle versioni precedenti: chi non le ha cambiate passa a quella nuova.
+export const INVITI_SUPERATI = ["La traccia più votata vince | Manda la tua traccia: link in bio"];
 const ORDINE_TIER = { throne: 0, superskip: 1, skip: 2, standard: 3 };
 
 export function statoIniziale(config) {

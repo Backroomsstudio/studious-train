@@ -131,7 +131,7 @@ Il tunnel espone solo la porta del webhook, non la regia.
 | `widget` | `{ "nome": "premio"\|"tabellone"\|"classifica"\|"timer", "visibile": true }` |
 | `nascondiVoti` | `{ "attivo": true }`: l'overlay mostra "?" fino alla conferma |
 | `premio` | `{ "testo": "Mix + Master" }` |
-| `invito` | `{ "testo": "La traccia più votata vince \| Manda la tua traccia: link in bio" }` |
+| `invito` | `{ "testo": "La traccia più votata vince \| Manda la tua traccia su nero.fan/backrooms" }` |
 | `suoni` | `{ "dove"?: "overlay"\|"regia"\|"spenti", "volume"?: 0.8 }` |
 | `provaSuono` | `{ "nome": "primo" }`: fa suonare un effetto dove sono attivi i suoni (es. da un tasto dello Stream Deck) |
 | `togliRisultato` | `{ "id" }` |
