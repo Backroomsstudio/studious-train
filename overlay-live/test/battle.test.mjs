@@ -219,3 +219,222 @@ test("nuova serata conserva la configurazione", () => {
   assert.equal(n.timer.durataSecondi, 120);
   assert.equal(n.popup.ogniMinuti, 7);
 });
+
+// ---------- Fasi del round ----------
+
+const T = 1_000_000;
+const gong = (quando) => ({ nome: "gong", dati: { quando } });
+
+function pronto(stato) {
+  B.impostaScontro(stato, { sx: { nome: "Lince" }, dx: { nome: "Nove" } });
+}
+
+// Porta il round fino alla fase «voto»: nomi, 3-2-1, battle e fine anticipata.
+function giocaFinoAlVoto(stato, t = T) {
+  pronto(stato);
+  B.avvia(stato, t);
+  B.passaSeTocca(stato, t + B.CONTO_MS);
+  B.termina(stato, t + B.CONTO_MS + 1000);
+}
+
+// Scrive i voti dei tre giudici per entrambi i lati dalla regia.
+function scriviVoti(stato, sx, dx) {
+  for (const [i, id] of B.GIUDICI_BATTLE.entries()) {
+    B.votoGiudice(stato, { giudice: id, lato: "sx", valore: sx[i] });
+    B.votoGiudice(stato, { giudice: id, lato: "dx", valore: dx[i] });
+  }
+}
+
+test("avvia: servono i nomi e parte il 3-2-1", () => {
+  const stato = nuovo();
+  assert.throws(() => B.avvia(stato, T), /Mancano i nomi/);
+  B.impostaScontro(stato, { sx: { nome: "lince" }, dx: { nome: "Lince" } });
+  assert.throws(() => B.avvia(stato, T), /nomi diversi/);
+  B.impostaScontro(stato, { dx: { nome: "Nove" } });
+  stato.visibili.bracket = true;
+  B.avvia(stato, T);
+  assert.equal(stato.battle.fase, "countdown");
+  assert.equal(stato.battle.conto.finoAlle, T + 3000);
+  assert.equal(stato.visibili.bracket, false);
+  assert.throws(() => B.avvia(stato, T + 1), /già avviato/);
+});
+
+test("passaSeTocca: fine del conto → battle, gong d'inizio, chat aperta", () => {
+  const stato = nuovo();
+  pronto(stato);
+  B.avvia(stato, T);
+  assert.deepEqual(B.passaSeTocca(stato, T + 2999), []);
+  assert.equal(stato.battle.fase, "countdown");
+  assert.deepEqual(B.passaSeTocca(stato, T + 3000), [gong("inizio")]);
+  assert.equal(stato.battle.fase, "battle");
+  assert.equal(stato.battle.chat.aperta, true);
+  assert.equal(stato.battle.timer.fineAlle, T + 3000 + 90_000);
+  assert.equal(stato.battle.conto.finoAlle, null);
+});
+
+test("scadenza del timer → voto, chat chiusa, gong di fine, una volta sola", () => {
+  const stato = nuovo();
+  pronto(stato);
+  B.avvia(stato, T);
+  B.passaSeTocca(stato, T + 3000);
+  assert.equal(B.votoChatBattle(stato, { piattaforma: "tiktok", utente: "a" }, "sx", T + 4000), true);
+  const fine = stato.battle.timer.fineAlle;
+  assert.deepEqual(B.passaSeTocca(stato, fine - 1), []);
+  assert.deepEqual(B.passaSeTocca(stato, fine), [gong("fine")]);
+  assert.equal(stato.battle.fase, "voto");
+  assert.equal(stato.battle.chat.aperta, false);
+  assert.equal(stato.battle.timer.scaduto, true);
+  assert.equal(B.votoChatBattle(stato, { piattaforma: "tiktok", utente: "tardi" }, "dx", fine + 1), false, "voti dopo il gong non contano");
+  assert.deepEqual(B.passaSeTocca(stato, fine + 1000), []);
+});
+
+test("pausa e ripresa del timer", () => {
+  const stato = nuovo();
+  pronto(stato);
+  assert.throws(() => B.timerAzione(stato, "pausa", T), /battle/);
+  B.avvia(stato, T);
+  const t0 = T + B.CONTO_MS;
+  B.passaSeTocca(stato, t0);
+  assert.equal(stato.battle.timer.fineAlle, t0 + 90_000);
+  B.timerAzione(stato, "pausa", t0 + 10_000);
+  assert.deepEqual([stato.battle.timer.rimanenteMs, stato.battle.timer.fineAlle], [80_000, null]);
+  assert.deepEqual(B.passaSeTocca(stato, t0 + 200_000), [], "in pausa il timer non scade");
+  B.timerAzione(stato, "riprendi", t0 + 50_000);
+  assert.equal(stato.battle.timer.fineAlle, t0 + 130_000);
+  assert.throws(() => B.timerAzione(stato, "salta", t0), /non valida/);
+});
+
+test("termina: dal battle al voto; fuori dal battle errore", () => {
+  const stato = nuovo();
+  assert.throws(() => B.termina(stato, T), /non è in corso/);
+  pronto(stato);
+  B.avvia(stato, T);
+  B.passaSeTocca(stato, T + 3000);
+  assert.deepEqual(B.termina(stato, T + 5000), [gong("fine")]);
+  assert.equal(stato.battle.fase, "voto");
+});
+
+test("riavvio del server a metà round: un solo gong, niente scadenze immediate", () => {
+  const stato = nuovo();
+  pronto(stato);
+  B.avvia(stato, T);
+  B.passaSeTocca(stato, T + 3000);
+  const fine = stato.battle.timer.fineAlle;
+  assert.deepEqual(B.passaSeTocca(stato, fine + 3_600_000), [gong("fine")]);
+  assert.deepEqual(B.passaSeTocca(stato, fine + 3_600_001), []);
+
+  const altro = nuovo();
+  pronto(altro);
+  B.avvia(altro, T);
+  assert.deepEqual(B.passaSeTocca(altro, T + 3_600_000), [gong("inizio")]);
+  assert.equal(altro.battle.timer.fineAlle, T + 3_600_000 + 90_000, "il timer riparte da ora, non scade subito");
+});
+
+test("voti dei giudici: solo a fine round, un decimale, virgola, cancellazione", () => {
+  const stato = nuovo();
+  pronto(stato);
+  B.avvia(stato, T);
+  B.passaSeTocca(stato, T + 3000);
+  assert.throws(() => B.votoGiudice(stato, { giudice: "luca", lato: "sx", valore: 7 }), /a fine round/);
+  B.termina(stato, T + 5000);
+  B.votoGiudice(stato, { giudice: "luca", lato: "sx", valore: "7,5" });
+  assert.equal(stato.battle.giudici[0].voti.sx, 7.5);
+  assert.throws(() => B.votoGiudice(stato, { giudice: "luca", lato: "sx", valore: 11 }), /tra 0 e 10/);
+  assert.throws(() => B.votoGiudice(stato, { giudice: "gigi", lato: "sx", valore: 7 }), /sconosciuto/);
+  assert.throws(() => B.votoGiudice(stato, { giudice: "luca", lato: "su", valore: 7 }), /sx o dx/);
+  B.votoGiudice(stato, { giudice: "luca", lato: "sx", valore: "" });
+  assert.equal(stato.battle.giudici[0].voti.sx, null);
+});
+
+test("rivela: calcola e registra il round una volta sola", () => {
+  const stato = nuovo();
+  pronto(stato);
+  B.avvia(stato, T);
+  B.passaSeTocca(stato, T + 3000);
+  for (let i = 0; i < 3; i++) B.votoChatBattle(stato, { piattaforma: "tiktok", utente: `s${i}` }, "sx", T + 4000);
+  B.votoChatBattle(stato, { piattaforma: "tiktok", utente: "d0" }, "dx", T + 4000);
+  B.termina(stato, T + 5000);
+  B.votoGiudice(stato, { giudice: "luca", lato: "sx", valore: 8 });
+  assert.throws(() => B.rivela(stato, T + 6000), /Mancano i voti/);
+  assert.equal(stato.battle.fase, "voto", "con voti mancanti la fase non cambia");
+  scriviVoti(stato, [8, 8, 8], [6, 6, 6]);
+  assert.deepEqual(B.rivela(stato, T + 7000), { vincitore: "sx", pari: false });
+  const b = stato.battle;
+  assert.equal(b.fase, "risultato");
+  assert.deepEqual(b.risultato.totali, { sx: 7.88, dx: 5.13 });
+  assert.equal(b.risultato.registrato, true);
+  assert.equal(b.risultato.rivelatoAlle, T + 7000);
+  assert.throws(() => B.rivela(stato, T + 8000), /fine round/);
+});
+
+test("rivela: con un voto di Freya mancante l'errore nomina Freya", () => {
+  const stato = nuovo();
+  giocaFinoAlVoto(stato);
+  B.votoGiudice(stato, { giudice: "luca", lato: "sx", valore: 8 });
+  B.votoGiudice(stato, { giudice: "luca", lato: "dx", valore: 6 });
+  assert.throws(() => B.rivela(stato, T + 9000), /Mancano i voti di Freya/);
+});
+
+test("pari merito: il round resta aperto finché la regia non proclama", () => {
+  const stato = nuovo();
+  pronto(stato);
+  B.avvia(stato, T);
+  B.passaSeTocca(stato, T + 3000);
+  B.votoChatBattle(stato, { piattaforma: "tiktok", utente: "s" }, "sx", T + 4000);
+  B.votoChatBattle(stato, { piattaforma: "tiktok", utente: "d" }, "dx", T + 4000);
+  B.termina(stato, T + 5000);
+  scriviVoti(stato, [8, 7, 9], [7, 8, 9]);
+  assert.deepEqual(B.rivela(stato, T + 6000), { vincitore: null, pari: true });
+  assert.equal(stato.battle.risultato.registrato, false);
+  assert.throws(() => B.prossimo(stato), /Proclama prima/);
+  B.proclamaBattle(stato, "dx");
+  assert.equal(stato.battle.risultato.vincitore, "dx");
+  assert.equal(stato.battle.risultato.registrato, true);
+  assert.throws(() => B.proclamaBattle(stato, "sx"), /pari merito/);
+});
+
+test("proclama: solo con un pari merito", () => {
+  const stato = nuovo();
+  giocaFinoAlVoto(stato);
+  scriviVoti(stato, [8, 8, 8], [6, 6, 6]);
+  B.rivela(stato, T + 6000);
+  assert.throws(() => B.proclamaBattle(stato, "dx"), /pari merito/);
+});
+
+test("prossimo: nuovo round pulito, durata del timer invariata", () => {
+  const stato = nuovo();
+  B.impostaTimer(stato, { durataSecondi: 120 });
+  giocaFinoAlVoto(stato);
+  assert.throws(() => B.prossimo(stato), /non è finito/);
+  scriviVoti(stato, [8, 8, 8], [6, 6, 6]);
+  B.rivela(stato, T + 6000);
+  B.prossimo(stato);
+  const b = stato.battle;
+  assert.equal(b.fase, "attesa");
+  assert.equal(b.round, 2);
+  assert.deepEqual([b.sx.nome, b.dx.nome], ["", ""]);
+  assert.deepEqual(b.chat, { aperta: false, voti: {} });
+  assert.ok(b.giudici.every((g) => g.voti.sx === null && g.voti.dx === null));
+  assert.equal(b.risultato, null);
+  assert.equal(b.timer.fineAlle, null);
+  assert.equal(b.timer.durataSecondi, 120);
+  assert.equal(b.partitaId, null);
+});
+
+test("reset: scarta il round in corso e tiene nomi e numero del round", () => {
+  const stato = nuovo();
+  giocaFinoAlVoto(stato);
+  B.votoGiudice(stato, { giudice: "luca", lato: "sx", valore: 8 });
+  B.reset(stato);
+  const b = stato.battle;
+  assert.equal(b.fase, "attesa");
+  assert.equal(b.round, 1);
+  assert.deepEqual([b.sx.nome, b.dx.nome], ["Lince", "Nove"]);
+  assert.equal(b.giudici[0].voti.sx, null);
+  assert.deepEqual(b.chat, { aperta: false, voti: {} });
+
+  giocaFinoAlVoto(stato, T + 100_000);
+  scriviVoti(stato, [8, 8, 8], [6, 6, 6]);
+  B.rivela(stato, T + 200_000);
+  assert.throws(() => B.reset(stato), /già registrato/);
+});

@@ -342,3 +342,126 @@ export function battleNuovaSerata(battle) {
     popup: battle.popup,
   };
 }
+
+// ---------- Fasi del round ----------
+// attesa → countdown (3-2-1) → battle → voto → risultato. Gli eventi `gong` li emette il server (e li suonano le pagine).
+
+const gong = (quando) => ({ nome: "gong", dati: { quando } });
+
+// Avvia il 3-2-1. Il tabellone si spegne da solo: durante il round tutto lo schermo è dei rapper.
+export function avvia(stato, ora) {
+  const b = stato.battle;
+  if (b.fase !== "attesa") throw new Error("Il round è già avviato");
+  if (!b.sx.nome || !b.dx.nome) throw new Error("Mancano i nomi dei rapper");
+  if (b.sx.nome.toLowerCase() === b.dx.nome.toLowerCase()) throw new Error("I due rapper devono avere nomi diversi");
+  b.fase = "countdown";
+  b.conto.finoAlle = ora + CONTO_MS;
+  stato.visibili.bracket = false;
+}
+
+function chiudiRound(stato) {
+  const b = stato.battle;
+  b.fase = "voto";
+  b.chat.aperta = false;
+  b.timer = { durataSecondi: b.timer.durataSecondi, fineAlle: null, rimanenteMs: null, scaduto: true };
+  return [gong("fine")];
+}
+
+// Controllo a tempo del server (ogni 250 ms): fine del 3-2-1 e fine del timer. Dopo un riavvio lungo il timer riparte
+// da ora (non scade subito) e un round già scaduto chiude con un solo gong.
+export function passaSeTocca(stato, ora) {
+  const b = stato.battle;
+  if (b.fase === "countdown" && b.conto.finoAlle !== null && ora >= b.conto.finoAlle) {
+    b.fase = "battle";
+    b.conto.finoAlle = null;
+    b.timer = { durataSecondi: b.timer.durataSecondi, fineAlle: ora + b.timer.durataSecondi * 1000, rimanenteMs: null, scaduto: false };
+    b.chat.aperta = true;
+    return [gong("inizio")];
+  }
+  if (b.fase === "battle" && b.timer.fineAlle !== null && ora >= b.timer.fineAlle) return chiudiRound(stato);
+  return [];
+}
+
+// Fine anticipata del round (anche con il timer in pausa).
+export function termina(stato, _ora) {
+  if (stato.battle.fase !== "battle") throw new Error("Il round non è in corso");
+  return chiudiRound(stato);
+}
+
+export function timerAzione(stato, azione, ora) {
+  const b = stato.battle;
+  if (b.fase !== "battle") throw new Error("Il timer si ferma solo durante il battle");
+  const t = b.timer;
+  if (azione === "pausa") {
+    if (t.fineAlle !== null) b.timer = { ...t, fineAlle: null, rimanenteMs: Math.max(0, t.fineAlle - ora) };
+  } else if (azione === "riprendi") {
+    if (t.rimanenteMs !== null) b.timer = { ...t, fineAlle: ora + t.rimanenteMs, rimanenteMs: null };
+  } else {
+    throw new Error("Azione del timer non valida: pausa o riprendi");
+  }
+}
+
+// Voto di un giudice a uno dei due rapper; si scrive a fine round, prima di rivelare.
+export function votoGiudice(stato, { giudice, lato, valore }) {
+  const b = stato.battle;
+  if (b.fase !== "voto") throw new Error("I voti dei giudici si scrivono a fine round");
+  const g = b.giudici.find((x) => x.id === giudice);
+  if (!g) throw new Error("Giudice sconosciuto: luca, freya o daniele");
+  if (!LATI.includes(lato)) throw new Error("Lato non valido: sx o dx");
+  g.voti[lato] = normalizzaVoto(valore);
+}
+
+// Segna il round come registrato (una volta sola). Torneo e classifica a punti si aggiornano da qui.
+export function registraRound(stato) {
+  const r = stato.battle.risultato;
+  if (!r || r.registrato) return;
+  r.registrato = true;
+}
+
+// Calcola i totali e mostra il risultato. Con un pari merito il round resta aperto finché la regia non proclama.
+export function rivela(stato, ora) {
+  const b = stato.battle;
+  if (b.fase !== "voto") throw new Error("Si rivela a fine round, dopo i voti dei giudici");
+  const r = calcolaRisultato(b);
+  b.fase = "risultato";
+  b.risultato = { rivelatoAlle: ora, totali: r.totali, parziali: r.parziali, vincitore: r.vincitore, pari: r.pari, registrato: false };
+  if (!r.pari) registraRound(stato);
+  return { vincitore: r.vincitore, pari: r.pari };
+}
+
+export function proclamaBattle(stato, lato) {
+  const r = stato.battle.risultato;
+  if (stato.battle.fase !== "risultato" || !r?.pari || r.vincitore !== null) throw new Error("Il round non è in pari merito");
+  if (!LATI.includes(lato)) throw new Error("Scegli il vincitore: sx o dx");
+  r.vincitore = lato;
+  registraRound(stato);
+}
+
+// Torna ad «attesa» scartando chat, voti, timer e risultato (nomi, round e partita restano a chi li chiama).
+function azzeraRound(b) {
+  b.fase = "attesa";
+  b.chat = { aperta: false, voti: {} };
+  for (const g of b.giudici) g.voti = { sx: null, dx: null };
+  b.risultato = null;
+  b.conto.finoAlle = null;
+  b.timer = timerVuoto(b.timer.durataSecondi);
+}
+
+// Scontro successivo: nomi svuotati, così uno scontro vecchio non va in onda per errore.
+export function prossimo(stato) {
+  const b = stato.battle;
+  if (b.fase !== "risultato") throw new Error("Il round non è finito");
+  if (b.risultato.vincitore === null) throw new Error("Proclama prima il vincitore");
+  azzeraRound(b);
+  b.round += 1;
+  b.sx = rapperVuoto();
+  b.dx = rapperVuoto();
+  b.partitaId = null;
+}
+
+// Scarta il round in corso e rimette i due rapper in attesa; un round già registrato non si annulla.
+export function reset(stato) {
+  const b = stato.battle;
+  if (b.fase === "risultato" && b.risultato?.registrato) throw new Error("Il round è già registrato: usa Prossimo scontro");
+  azzeraRound(b);
+}
