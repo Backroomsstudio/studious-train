@@ -1,0 +1,305 @@
+/* Schermata del vincitore, a tutta pagina (1080 × 1920). Tutto il contenuto sta nella zona libera sotto l'intestazione
+   di TikTok (y 270 → 1180), sopra la chat. Tempi: il rullo dura 1,2 s (--colpo), poi arriva il colpo con il nome;
+   il voto totale conta fino a 3,2 s, i quattro voti entrano subito dopo. Con ?statico=1 si vede lo stato finale. */
+.bt-vittoria {
+  --colpo: 1.2s;
+  --vit: var(--bt-sx);
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  overflow: hidden;
+  background: radial-gradient(75% 36% at 50% 36%, color-mix(in srgb, var(--vit) 38%, transparent), transparent 72%),
+    radial-gradient(90% 60% at 50% 40%, rgba(24, 10, 46, 0.97), rgba(4, 2, 10, 0.985));
+  animation: bt-vit-velo 0.5s ease-out both;
+}
+.bt-vittoria.dx {
+  --vit: var(--bt-dx);
+}
+.bt-vittoria.esce {
+  animation: bt-vit-esce 0.5s ease-in both;
+}
+@keyframes bt-vit-velo {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes bt-vit-esce {
+  to {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
+/* Raggi d'oro che girano piano dietro al nome: arrivano con il colpo. */
+.bt-vit-raggi {
+  position: absolute;
+  left: 50%;
+  top: 560px;
+  width: 2600px;
+  height: 2600px;
+  margin: -1300px 0 0 -1300px;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 213, 74, 0.26) 0deg 6deg, transparent 6deg 18deg);
+  -webkit-mask: radial-gradient(closest-side, #000 8%, transparent 70%);
+  mask: radial-gradient(closest-side, #000 8%, transparent 70%);
+  animation: bt-vit-raggi-entrano 0.7s ease-out var(--colpo) both, bt-vit-gira 50s linear infinite;
+}
+@keyframes bt-vit-raggi-entrano {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes bt-vit-gira {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.bt-vit-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  animation: bt-vit-flash 0.55s ease-out var(--colpo);
+}
+@keyframes bt-vit-flash {
+  from {
+    opacity: 0.85;
+  }
+}
+
+/* Coriandoli: cadono su tutta la pagina dal colpo in poi. Posizione, colore e velocità li dà la pagina (--x --y --d --r --c). */
+.bt-vit-coriandoli {
+  position: absolute;
+  inset: 0;
+}
+.bt-vit-coriandoli i {
+  position: absolute;
+  left: calc(var(--x) * 1%);
+  top: calc(var(--y) * 1%);
+  width: var(--w, 16px);
+  height: calc(var(--w, 16px) * 0.55);
+  background: var(--c);
+  opacity: 0.95;
+  transform: rotate(calc(var(--r) * 1deg));
+}
+body:not(.statico) .bt-vit-coriandoli i {
+  top: -60px;
+  animation: bt-vit-cade var(--d) linear var(--ritardo) infinite backwards;
+}
+@keyframes bt-vit-cade {
+  from {
+    transform: translate3d(0, 0, 0) rotate(calc(var(--r) * 1deg));
+  }
+  to {
+    transform: translate3d(calc(var(--v) * 1px), 2100px, 0) rotate(calc(var(--r) * 1deg + 900deg));
+  }
+}
+
+/* ---------- Contenuto ---------- */
+.bt-vit-contenuto {
+  position: absolute;
+  left: var(--bt-x);
+  top: 262px;
+  width: var(--bt-largo);
+  height: 930px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  animation: bt-vit-scossa 0.45s linear var(--colpo);
+}
+@keyframes bt-vit-scossa {
+  20% {
+    transform: translate(-14px, 8px);
+  }
+  40% {
+    transform: translate(12px, -8px);
+  }
+  60% {
+    transform: translate(-8px, 5px);
+  }
+  80% {
+    transform: translate(5px, -3px);
+  }
+}
+
+.bt-vit-coppa {
+  width: 190px;
+  height: 190px;
+  fill: rgba(255, 213, 74, 0.2);
+  stroke: #ffd54a;
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 22px rgba(255, 213, 74, 0.85));
+  animation: bt-vit-sale 0.9s cubic-bezier(0.2, 1.2, 0.3, 1) 0.1s both, bt-vit-battito 0.55s ease-out var(--colpo);
+}
+@keyframes bt-vit-sale {
+  from {
+    opacity: 0;
+    transform: translateY(160px) scale(0.35);
+  }
+}
+@keyframes bt-vit-battito {
+  40% {
+    transform: scale(1.25);
+    filter: drop-shadow(0 0 60px rgba(255, 240, 160, 1));
+  }
+}
+
+.bt-vit-titolo {
+  max-width: 100%;
+  font: 800 38px/1.1 var(--font-dati);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #ffe27a;
+  white-space: nowrap;
+  overflow: hidden;
+  animation: bt-vit-titolo 0.7s ease-out 0.35s both;
+}
+@keyframes bt-vit-titolo {
+  from {
+    opacity: 0;
+    letter-spacing: 0.7em;
+  }
+}
+
+/* Il nome arriva con il colpo: grande, dall'alto verso di noi, con un po' di sfocatura che si toglie. */
+.bt-vit-nome {
+  width: 100%;
+  filter: drop-shadow(0 8px 0 rgba(0, 0, 0, 0.65)) drop-shadow(0 0 40px rgba(255, 190, 60, 0.6));
+  animation: bt-vit-nome 0.8s cubic-bezier(0.2, 1.25, 0.3, 1) var(--colpo) both;
+}
+.bt-vit-nome b {
+  animation: bt-vit-sfoca 0.8s ease-out var(--colpo) both;
+}
+@keyframes bt-vit-sfoca {
+  from {
+    filter: blur(24px);
+  }
+}
+.bt-vit-nome b {
+  display: block;
+  height: 190px;
+  font: 900 170px/190px var(--font-dati);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  background: var(--oro-testo);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@keyframes bt-vit-nome {
+  from {
+    opacity: 0;
+    transform: scale(3.2);
+  }
+  45% {
+    opacity: 1;
+  }
+}
+
+.bt-vit-ig {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 700 32px/1 var(--font-dati);
+  letter-spacing: 0.04em;
+  color: #fff;
+  animation: bt-vit-sale-poco 0.5s ease-out calc(var(--colpo) + 0.35s) both;
+}
+.bt-vit-ig svg {
+  width: 32px;
+  height: 32px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+}
+@keyframes bt-vit-sale-poco {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+/* Voto totale: sale da 0 fino al totale (lo scrive la pagina), nel colore del lato del vincitore. */
+.bt-vit-totale {
+  margin-top: 18px;
+  animation: bt-vit-sale-poco 0.5s ease-out calc(var(--colpo) + 0.5s) both;
+}
+.bt-vit-etichetta {
+  font: 800 32px/1 var(--font-dati);
+  letter-spacing: 0.4em;
+  padding-left: 0.4em;
+  text-transform: uppercase;
+  color: var(--viola-chiaro);
+}
+.bt-vit-cifre {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 14px;
+}
+.bt-vit-cifre b {
+  font: 900 250px/1.02 var(--font-dati);
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-shadow: 0 10px 0 rgba(0, 0, 0, 0.6), 0 0 36px var(--vit), 0 0 90px var(--vit);
+}
+.bt-vit-cifre span {
+  font: 800 80px/1 var(--font-dati);
+  color: rgba(255, 255, 255, 0.5);
+}
+.bt-vit-cifre.fine b {
+  animation: bt-vit-timbro 0.5s cubic-bezier(0.2, 1.4, 0.3, 1);
+}
+@keyframes bt-vit-timbro {
+  from {
+    transform: scale(1.22);
+  }
+}
+
+/* I quattro voti: Luca, Freya, Daniele e la chat. */
+.bt-vit-voti {
+  margin-top: 8px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  column-gap: 14px;
+}
+.bt-vit-voto {
+  height: 118px;
+  border-radius: 18px;
+  padding-top: 14px;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, rgba(34, 22, 62, 0.92), rgba(12, 8, 22, 0.95));
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.26), 0 10px 24px rgba(0, 0, 0, 0.5);
+  animation: bt-vit-sale-poco 0.5s cubic-bezier(0.2, 1.2, 0.3, 1) calc(var(--colpo) + 2s + var(--i) * 0.14s) both;
+}
+.bt-vit-voto.chat {
+  box-shadow: inset 0 0 0 2px var(--vit), 0 10px 24px rgba(0, 0, 0, 0.5);
+}
+.bt-vit-voto span {
+  display: block;
+  font: 800 22px/1 var(--font-dati);
+  letter-spacing: 0.26em;
+  padding-left: 0.26em;
+  text-transform: uppercase;
+  color: var(--testo-tenue);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.bt-vit-voto b {
+  display: block;
+  margin-top: 8px;
+  font: 900 62px/1 var(--font-dati);
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.6);
+}

@@ -1,6 +1,7 @@
 // Mockup e controllo di geometria del battle con Playwright (installato a parte: non è una dipendenza di npm test).
 // Uso: node strumenti/mockup-battle.mjs --base http://127.0.0.1:4747 --fase battle [--guida] [--secondi 20]
 //   fasi: attesa, countdown, battle, voto, risultato, pari, torneo, punti
+//   --fase risultato --vittoria: la schermata del vincitore a tutta pagina (mockup/battle-vittoria.jpg)
 // Mette il server in layout battle con i dati di prova della fase, apre la pagina a 1080×1920, controlla che ogni
 // pezzo stia dove dice la tabella della spec (±1 px, e dentro x 116…964 tranne la camera) e salva mockup/battle-<fase>.jpg.
 import { createRequire } from "node:module";
@@ -22,10 +23,14 @@ export const GEOMETRIA = {
   chat: [116, 1456, 848, 78],
   tabellone: [116, 282, 848, 1252],
   conto: [0, 0, 1080, 1920],
+  vittoria: [0, 0, 1080, 1920],
 };
 const FISSI = ["barre", "modalita", "timer", "camera", "artisti", "giudici", "chat"];
 // Pezzi a tutta larghezza: non devono stare dentro x 116…964.
-const A_TUTTA_LARGHEZZA = ["camera", "conto"];
+const A_TUTTA_LARGHEZZA = ["camera", "conto", "vittoria"];
+// Il contenuto della schermata del vincitore sta nella zona libera: sotto l'intestazione di TikTok (230), sopra la chat (1200).
+const Y_MIN = 230;
+const Y_MAX = 1200;
 const TOLLERANZA = 1;
 const X_MIN = 116;
 const X_MAX = 964;
@@ -41,6 +46,7 @@ const guida = args.includes("--guida");
 const secondi = opzione("secondi");
 const conto = opzione("conto");
 const popup = args.includes("--popup");
+const vittoria = args.includes("--vittoria");
 const regia = args.includes("--regia");
 const controlli = args.includes("--controlli");
 
@@ -62,9 +68,31 @@ const attesi = () => {
   const parti = [...FISSI];
   if (popup) parti.push("popup");
   if (conto) parti.push("conto");
+  if (vittoria) parti.push("vittoria");
   if (fase === "torneo" || fase === "punti") parti.push("tabellone");
   return parti;
 };
+
+// La schermata del vincitore: nome intero e ogni pezzo del contenuto dentro x 116…964 e y 230…1200.
+async function controllaVittoria(pagina, errori) {
+  const trovati = await pagina.evaluate(() => {
+    const nome = document.querySelector("#bt-vit-nome");
+    const pezzi = [".bt-vit-coppa", ".bt-vit-titolo", ".bt-vit-nome", "#bt-vit-ig", ".bt-vit-totale", "#bt-vit-voti"].map((sel) => {
+      const e = document.querySelector(sel);
+      const r = e.getBoundingClientRect();
+      return { sel, nascosto: e.hidden, x: r.x, y: r.y, w: r.width, h: r.height };
+    });
+    return { nomeTagliato: nome.scrollWidth > nome.clientWidth, voti: document.querySelectorAll(".bt-vit-voto").length, pezzi };
+  });
+  if (trovati.nomeTagliato) errori.push("vittoria: il nome del vincitore è tagliato");
+  if (trovati.voti !== 4) errori.push(`vittoria: ${trovati.voti} voti invece di 4 (Luca, Freya, Daniele, chat)`);
+  for (const p of trovati.pezzi) {
+    if (p.nascosto) continue;
+    if (p.x < X_MIN - TOLLERANZA || p.x + p.w > X_MAX + TOLLERANZA || p.y < Y_MIN || p.y + p.h > Y_MAX + TOLLERANZA) {
+      errori.push(`vittoria: ${p.sel} fuori dalla zona libera (x ${Math.round(p.x)}…${Math.round(p.x + p.w)}, y ${Math.round(p.y)}…${Math.round(p.y + p.h)})`);
+    }
+  }
+}
 
 // Flusso della regia: layout Battle, nomi, 3-2-1, fine, sei voti, Rivela. Controlla fase e risultato e salva mockup/regia-battle.jpg.
 async function provaRegia() {
@@ -168,12 +196,29 @@ async function provaControlli() {
   const ms = await viva.evaluate(() => window.__via);
   if (ms < 600) errori.push(`«VIA!» resta visibile solo ${ms} ms (minimo 600)`);
   await comando("battleReset");
+
+  // 3. schermata del vincitore con un nome lungo: nome intero, quattro voti, tutto nella zona libera
+  await comando("battleScontro", { sx: { nome: "Rizzo Freestyle Vicenti" }, dx: { nome: "MC Lince" } });
+  await comando("battleAvvia");
+  await viva.waitForTimeout(3600);
+  await comando("battleTermina");
+  for (const giudice of ["luca", "freya", "daniele"]) {
+    await comando("battleVotoGiudice", { giudice, lato: "sx", valore: 9.5 });
+    await comando("battleVotoGiudice", { giudice, lato: "dx", valore: 4 });
+  }
+  await comando("battleRivela");
+  const vincitore = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
+  await vincitore.goto(`${base}/battle.html?anteprima=1&statico=1&vittoria=1`);
+  await vincitore.evaluate(() => document.fonts?.ready);
+  await vincitore.waitForTimeout(600);
+  await controllaVittoria(vincitore, errori);
+  await comando("battleProssimo");
   await browser.close();
   if (errori.length) {
     console.error(`Controlli: problemi\n - ${errori.join("\n - ")}`);
     process.exit(1);
   }
-  console.log(`ok controlli: nomi lunghi dentro i riquadri, «VIA!» visibile ${ms} ms`);
+  console.log(`ok controlli: nomi lunghi dentro i riquadri, «VIA!» visibile ${ms} ms, schermata del vincitore nella zona libera`);
 }
 
 async function main() {
@@ -184,7 +229,7 @@ async function main() {
   const { chromium } = caricaPlaywright();
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const pagina = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
-  const parametri = ["anteprima=1", "statico=1", ...(guida ? ["guide=1"] : []), ...(conto ? [`conto=${conto}`] : []), ...(popup ? ["popup=1"] : [])];
+  const parametri = ["anteprima=1", "statico=1", ...(guida ? ["guide=1"] : []), ...(conto ? [`conto=${conto}`] : []), ...(popup ? ["popup=1"] : []), ...(vittoria ? ["vittoria=1"] : [])];
   await pagina.goto(`${base}/battle.html?${parametri.join("&")}`);
   await pagina.evaluate(() => document.fonts?.ready);
   await pagina.waitForTimeout(700);
@@ -214,7 +259,8 @@ async function main() {
       errori.push(`${parte}: esce da x ${X_MIN}…${X_MAX}`);
     }
   }
-  const file = join(CARTELLA, "mockup", popup ? "battle-popup.jpg" : `battle-${fase}.jpg`);
+  if (vittoria) await controllaVittoria(pagina, errori);
+  const file = join(CARTELLA, "mockup", popup ? "battle-popup.jpg" : vittoria ? "battle-vittoria.jpg" : `battle-${fase}.jpg`);
   await pagina.screenshot({ path: file, type: "jpeg", quality: 88 });
   await browser.close();
   if (errori.length) {

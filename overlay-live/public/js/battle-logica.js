@@ -50,3 +50,50 @@ export function richiestePopup(prima, dopo, eventi = []) {
 export function popupAutomaticoDovuto({ ogniMinuti, ultimaAlle, ora, aperto, consentito }) {
   return ogniMinuti > 0 && consentito && !aperto && ora - ultimaAlle >= ogniMinuti * 60_000;
 }
+
+// ---------- Schermata del vincitore, a tutta pagina ----------
+// Parte a fine rivelazione (RITARDO dopo l'ultimo conteggio): un rullo di tamburo con la scena che si scurisce,
+// poi il colpo: nome, voto totale e i quattro voti. Resta in onda DURATA dall'inizio del rullo, poi si ritira.
+export const RITARDO_VITTORIA_MS = 300;
+export const RULLO_VITTORIA_MS = 1200;
+export const DURATA_VITTORIA_MS = 11_000;
+
+// La rivelazione dei voti è appena cominciata: il round era in corso (battle o voto) e ora c'è il risultato. Il server
+// unisce gli aggiornamenti ravvicinati in un solo messaggio ogni 50 ms: con l'ultimo voto e «Rivela» quasi insieme
+// (scorciatoia, Stream Deck) la pagina può non aver mai visto la fase «voto». Mai al primo disegno, mai da «attesa»
+// (i dati di prova non rifanno suoni e schermata).
+export const rivelazioneNuova = (prima, dopo) =>
+  Boolean(prima) && ["battle", "voto"].includes(prima.battle.fase) && dopo.battle.fase === "risultato" && Boolean(dopo.battle.risultato);
+
+// Se questo aggiornamento deve far partire la schermata (e la fanfara): dopo la rivelazione con un vincitore,
+// appena la regia proclama chi vince un pari merito, o a richiesta («Rivedi vincitore»). Mai al primo disegno.
+export function vittoriaDa(prima, dopo, eventi = []) {
+  const r = dopo?.battle?.risultato;
+  if (!prima || dopo.battle.fase !== "risultato" || !r || r.vincitore === null) return null;
+  if (eventi.some((e) => e.nome === "vittoria")) return { ritardoMs: 0 };
+  if (rivelazioneNuova(prima, dopo)) return { ritardoMs: FINE_RIVELAZIONE_MS + RITARDO_VITTORIA_MS };
+  if (prima.battle.fase === "risultato" && prima.battle.risultato?.vincitore === null) return { ritardoMs: 0 };
+  return null;
+}
+
+// Cosa scrive la schermata: il vincitore, il suo totale (la media di Luca, Freya, Daniele e chat) e i quattro voti.
+// «titolo» dice se questo round ha deciso anche il torneo o la classifica a punti.
+export function datiVittoria(battle) {
+  const r = battle.risultato;
+  if (battle.fase !== "risultato" || !r || r.vincitore === null) return null;
+  const lato = r.vincitore;
+  const nome = battle[lato].nome;
+  const stesso = (altro) => typeof altro === "string" && altro.toLowerCase() === nome.toLowerCase();
+  const { torneo, punti } = battle.tabellone;
+  return {
+    lato,
+    nome,
+    instagram: battle[lato].instagram,
+    totale: r.totali[lato],
+    titolo: stesso(torneo.campione?.nome) ? "torneo" : stesso(punti.vincitore) ? "punti" : "round",
+    voti: [
+      ...battle.giudici.map((g) => ({ chiave: g.id, nome: g.nome, voto: r.parziali[g.id][lato] })),
+      { chiave: "chat", nome: "Chat", voto: r.parziali.chat[lato] },
+    ],
+  };
+}

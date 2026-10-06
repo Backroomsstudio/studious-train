@@ -102,6 +102,7 @@ test("e2e: un round completo", async () => {
     await api("battleVotoGiudice", { giudice, lato: "sx", valore: 8 });
     await api("battleVotoGiudice", { giudice, lato: "dx", valore: 6 });
   }
+  assert.equal((await api("battleVittoria")).stato, 400, "prima della rivelazione non c'è un vincitore");
   const rivela = await api("battleRivela");
   assert.deepEqual(rivela.dati, { vincitore: "sx", pari: false });
 
@@ -112,9 +113,12 @@ test("e2e: un round completo", async () => {
   assert.equal(typeof battle.chat.voti, "number", "nessuna mappa dei voti nell'istantanea");
   assert.equal(battle.sx.instagram, "lince.music");
 
+  assert.equal((await api("battleVittoria")).ok, true, "«Rivedi vincitore»");
+
   await dormi(150);
   const gong = eventi.filter((e) => e.nome === "gong").map((e) => e.dati.quando);
   assert.deepEqual(gong, ["inizio", "fine"]);
+  assert.equal(eventi.filter((e) => e.nome === "vittoria").length, 1, "l'evento che rifà la schermata del vincitore");
 });
 
 test("e2e: con un altro layout la chat non vota il battle", async () => {

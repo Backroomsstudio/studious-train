@@ -10,8 +10,9 @@ export { ICONE, arrotonda, normalizzaVoto, pulisciInstagram };
 export const CATEGORIE = ["beat", "voce", "mix"];
 // banner, barra e scheda sono del layout senza premio (banner in alto, barra che scorre, scheda «Ora in ascolto»);
 // targa, barraStudio e comparse della live session in studio (nome dell'artista, barra dei social, comparse dello studio);
-// barreVita, modalita, timerBattle, giudiciBattle, popupBattle e bracket (il tabellone a torneo o a punti) del battle.
-export const WIDGET = ["premio", "tabellone", "classifica", "timer", "banner", "barra", "scheda", "targa", "barraStudio", "comparse", "barreVita", "modalita", "timerBattle", "giudiciBattle", "popupBattle", "bracket"];
+// barreVita, modalita, timerBattle, giudiciBattle, popupBattle, vittoriaBattle (la schermata del vincitore a tutta pagina)
+// e bracket (il tabellone a torneo o a punti) del battle.
+export const WIDGET = ["premio", "tabellone", "classifica", "timer", "banner", "barra", "scheda", "targa", "barraStudio", "comparse", "barreVita", "modalita", "timerBattle", "giudiciBattle", "popupBattle", "vittoriaBattle", "bracket"];
 export const DOVE_SUONI = ["overlay", "regia", "spenti"];
 // Sotto il premio, a rotazione: spiega a chi entra in live come partecipare. Righe separate da "|".
 export const INVITO_PREDEFINITO = "La traccia più votata vince | Manda la tua traccia su nero.fan/backrooms";

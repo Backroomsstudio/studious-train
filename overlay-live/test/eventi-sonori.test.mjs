@@ -4,6 +4,7 @@ import * as S from "../lib/stato.mjs";
 import * as B from "../lib/battle.mjs";
 import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suoniBattle, suoniTimerBattle, msTimerBattle, suonaIn } from "../public/js/eventi-sonori.js";
 import { NOMI_SUONI, suona } from "../public/js/suoni.js";
+import { FINE_RIVELAZIONE_MS, RITARDO_VITTORIA_MS, RULLO_VITTORIA_MS } from "../public/js/battle-logica.js";
 
 const config = { giudici: { beat: "A", voce: "B", mix: "C" }, pesi: { beat: 1, voce: 1, mix: 1, chat: 1 }, topN: 3, premio: "Mix" };
 const foto = (stato, ora = 0) => structuredClone(S.istantanea(stato, config, ora));
@@ -95,6 +96,7 @@ test("countdown: sirena a 30 minuti e a 1 minuto, tic negli ultimi 10 secondi", 
 
 const TB = 1_000_000;
 const gongEv = (quando) => ({ nome: "gong", dati: { quando } });
+const FANFARA = { nome: "vincitore", dati: { rullo: RULLO_VITTORIA_MS / 1000 } };
 
 function statoBattle() {
   const stato = S.statoIniziale(config);
@@ -177,24 +179,59 @@ test("battle: la rivelazione dei voti suona un voto per giudice e il calcolo del
     { nome: "voto", dati: { valore: 8 }, ritardo: 900 },
     { nome: "voto", dati: { valore: 8 }, ritardo: 1800 },
     { nome: "calcolo", ritardo: 3600 },
+    { ...FANFARA, ritardo: FINE_RIVELAZIONE_MS + RITARDO_VITTORIA_MS },
   ]);
 });
 
-test("battle: il campione della classifica o del torneo fa suonare la fanfara dopo la rivelazione", () => {
+test("battle: ogni vincitore di round fa suonare la fanfara, in tempo con la schermata del vincitore", () => {
   const stato = statoBattle();
-  B.impostaPunti(stato, { artisti: ["Lince", "Nove"], target: 7 });
-  B.impostaTabellone(stato, { modo: "punti" });
   fineRound(stato);
   const prima = foto(stato);
   B.rivela(stato, TB + 9000);
-  assert.equal(stato.battle.tabellone.punti.vincitore, "Lince");
   const suoni = suoniBattle(prima, foto(stato), []);
-  assert.deepEqual(suoni.at(-1), { nome: "vincitore", ritardo: 5700 });
+  assert.deepEqual(suoni.at(-1), { ...FANFARA, ritardo: FINE_RIVELAZIONE_MS + RITARDO_VITTORIA_MS });
+  assert.equal(suoni.filter((x) => x.nome === "vincitore").length, 1, "una sola fanfara, anche se il round chiude il torneo");
+});
 
-  const torneo = foto(statoBattle());
-  const dopo = structuredClone(torneo);
+test("battle: suoni e fanfara partono anche se la pagina non ha visto la fase «voto» (messaggi uniti ogni 50 ms)", () => {
+  const stato = statoBattle();
+  B.avvia(stato, TB);
+  B.passaSeTocca(stato, TB + B.CONTO_MS);
+  const inCorso = foto(stato); // ultimo stato visto: il round è ancora in corso
+  B.termina(stato, TB + B.CONTO_MS + 1000);
+  for (const id of B.GIUDICI_BATTLE) {
+    B.votoGiudice(stato, { giudice: id, lato: "sx", valore: 8 });
+    B.votoGiudice(stato, { giudice: id, lato: "dx", valore: 6 });
+  }
+  B.rivela(stato, TB + 9000);
+  const suoni = suoniBattle(inCorso, foto(stato), []);
+  assert.deepEqual(suoni.map((x) => x.nome), ["voto", "voto", "voto", "calcolo", "vincitore"]);
+});
+
+test("battle: con un pari merito la fanfara aspetta la proclamazione", () => {
+  const stato = statoBattle();
+  B.avvia(stato, TB);
+  B.passaSeTocca(stato, TB + B.CONTO_MS);
+  B.termina(stato, TB + B.CONTO_MS + 1000);
+  for (const id of B.GIUDICI_BATTLE) for (const lato of ["sx", "dx"]) B.votoGiudice(stato, { giudice: id, lato, valore: 7 });
+  const prima = foto(stato);
+  B.rivela(stato, TB + 9000);
+  assert.equal(stato.battle.risultato.pari, true);
+  assert.equal(suoniBattle(prima, foto(stato), []).some((x) => x.nome === "vincitore"), false, "niente fanfara senza vincitore");
+  const pari = foto(stato);
+  B.proclamaBattle(stato, "dx");
+  assert.deepEqual(suoniBattle(pari, foto(stato), []), [{ ...FANFARA, ritardo: 0 }]);
+});
+
+test("battle: «Rivedi vincitore» rifà la fanfara; il campione da solo non basta", () => {
+  const stato = statoBattle();
+  fineRound(stato);
+  B.rivela(stato, TB + 9000);
+  const fatto = foto(stato);
+  assert.deepEqual(suoniBattle(fatto, fatto, [{ nome: "vittoria", dati: {} }]), [{ ...FANFARA, ritardo: 0 }]);
+  const dopo = structuredClone(fatto);
   dopo.battle.tabellone.torneo.campione = { nome: "Lince", instagram: "" };
-  assert.deepEqual(suoniBattle(torneo, dopo, []), [{ nome: "vincitore", ritardo: 0 }], "già rivelato: la fanfara parte subito");
+  assert.deepEqual(suoniBattle(fatto, dopo, []), [], "il campione nasce sempre con un round: la fanfara è già partita da lì");
 });
 
 test("battle: suona solo la pagina del layout in onda e gli effetti nuovi esistono", () => {

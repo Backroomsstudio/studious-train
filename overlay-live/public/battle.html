@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/css/overlay.css">
   <link rel="stylesheet" href="/css/battle.css">
   <link rel="stylesheet" href="/css/battle-tabellone.css">
+  <link rel="stylesheet" href="/css/battle-vittoria.css">
 </head>
 <body class="verticale bt">
   <!-- Elementi grafici: gradienti, punta e icone dei social disegnate da noi (come nel layout studio) -->
@@ -138,6 +139,25 @@
     <!-- 3-2-1 prima del via, a tutto schermo -->
     <section class="bt-conto" data-parte="conto" id="bt-conto" hidden>
       <div class="bt-conto-numero" id="bt-conto-numero"></div>
+    </section>
+
+    <!-- SCHERMATA DEL VINCITORE, a tutta pagina: rullo, poi nome, voto totale (media di Luca, Freya, Daniele e chat) e i quattro voti.
+         Parte da sola a fine rivelazione; la regia la rifà con «Rivedi vincitore» -->
+    <section class="bt-vittoria" data-parte="vittoria" id="bt-vittoria" hidden>
+      <i class="bt-vit-raggi"></i>
+      <div class="bt-vit-coriandoli" id="bt-vit-coriandoli" aria-hidden="true"></div>
+      <div class="bt-vit-contenuto">
+        <svg class="bt-vit-coppa" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-trofeo"/></svg>
+        <div class="bt-vit-titolo" id="bt-vit-titolo"></div>
+        <div class="bt-vit-nome"><b id="bt-vit-nome"></b></div>
+        <div class="bt-vit-ig" id="bt-vit-ig"><svg><use href="#ic-instagram"/></svg><span></span></div>
+        <div class="bt-vit-totale">
+          <div class="bt-vit-etichetta">Voto totale</div>
+          <div class="bt-vit-cifre"><b id="bt-vit-cifre">0,00</b><span>/10</span></div>
+        </div>
+        <div class="bt-vit-voti" id="bt-vit-voti"></div>
+      </div>
+      <i class="bt-vit-flash"></i>
     </section>
 
     <!-- Solo con ?guide=1: tagli dei telefoni e zone coperte dall'app TikTok -->

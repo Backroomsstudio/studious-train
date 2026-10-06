@@ -397,6 +397,12 @@ const comandi = {
   battleProclama({ lato }) {
     B.proclamaBattle(stato, lato);
   },
+  // «Rivedi vincitore»: rifà la schermata a tutta pagina (e la fanfara) del round appena deciso.
+  battleVittoria() {
+    const r = stato.battle.risultato;
+    if (stato.battle.fase !== "risultato" || !r || r.vincitore === null) throw new Error("Il vincitore non c'è ancora: rivela i voti o proclama il pari merito");
+    emetti("vittoria", {});
+  },
   tabellone(args) {
     B.impostaTabellone(stato, args);
   },

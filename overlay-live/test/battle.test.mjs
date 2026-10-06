@@ -33,6 +33,7 @@ test("partenza: stato battle di default", () => {
   assert.equal(S.LAYOUT.length, 4);
   assert.equal(S.LAYOUT[3], "battle");
   assert.equal(stato.visibili.bracket, false);
+  assert.equal(stato.visibili.vittoriaBattle, true, "la schermata del vincitore parte accesa");
   assert.equal(stato.visibili.barreVita, true);
   assert.equal(S.istantanea(stato, config, 0).battle.chat.voti, 0);
 });

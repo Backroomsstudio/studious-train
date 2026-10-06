@@ -3,8 +3,9 @@
 // 3-2-1 a tutto schermo, pop-up social. Disegna lo stato che arriva dal server; qui non si inserisce nessun dato.
 // Parametri URL: ?anteprima=1 (sfondo nero e finta camera), ?guide=1 (zone dei telefoni e di TikTok),
 // ?statico=1 (senza animazioni né suoni, per i mockup), ?muto=1 (nessun suono da questa pagina),
-// ?conto=N (3-2-1 fermo sul numero N), ?popup=1 (primo pop-up fermo, per i mockup),
-// ?w=barre,modalita,timer,camera,artisti,giudici,chat,popup,tabellone,conto (parti da includere).
+// ?conto=N (3-2-1 fermo sul numero N), ?popup=1 (primo pop-up fermo, per i mockup), ?vittoria=1 (con ?statico=1:
+// la schermata del vincitore ferma, per i mockup),
+// ?w=barre,modalita,timer,camera,artisti,giudici,chat,popup,tabellone,conto,vittoria (parti da includere).
 import { collega, durata } from "./connessione.js";
 import { suona, volume } from "./suoni.js";
 import { suoniBattle, suoniTimerBattle, msTimerBattle, suonaIn } from "./eventi-sonori.js";
@@ -20,6 +21,10 @@ import {
   popupConsentito,
   richiestePopup,
   popupAutomaticoDovuto,
+  vittoriaDa,
+  datiVittoria,
+  RULLO_VITTORIA_MS,
+  DURATA_VITTORIA_MS,
 } from "./battle-logica.js";
 
 const LARGHEZZA = 1080;
@@ -29,10 +34,11 @@ const STATICO = parametri.has("statico");
 const MUTO = parametri.has("muto") || STATICO;
 const CONTO_FISSO = Number(parametri.get("conto")) || 0; // solo per i mockup
 const POPUP_FISSO = parametri.has("popup"); // solo per i mockup
-const TUTTE_LE_PARTI = "barre,modalita,timer,camera,artisti,giudici,chat,popup,tabellone,conto";
+const VITTORIA_FISSA = parametri.has("vittoria"); // solo per i mockup (con ?statico=1)
+const TUTTE_LE_PARTI = "barre,modalita,timer,camera,artisti,giudici,chat,popup,tabellone,conto,vittoria";
 const PARTI = (parametri.get("w") ?? TUTTE_LE_PARTI).split(",");
 // Quale interruttore «In onda» della regia accende ogni parte (camera e box degli artisti sono sempre in onda).
-const WIDGET = { barre: "barreVita", modalita: "modalita", timer: "timerBattle", giudici: "giudiciBattle", chat: "giudiciBattle", popup: "popupBattle", tabellone: "bracket" };
+const WIDGET = { barre: "barreVita", modalita: "modalita", timer: "timerBattle", giudici: "giudiciBattle", chat: "giudiciBattle", popup: "popupBattle", tabellone: "bracket", vittoria: "vittoriaBattle" };
 const SVG = "http://www.w3.org/2000/svg";
 const LATI = ["sx", "dx"];
 
@@ -111,6 +117,8 @@ const conn = collega({
     disegna(s);
     effetti(prima, s, eventi);
     popupDaEventi(prima, s, eventi);
+    programmaVittoria(prima, s, eventi);
+    if (primoDisegno && STATICO && VITTORIA_FISSA) vittoriaFerma(s);
     if (primoDisegno && POPUP_FISSO) mostraPopup(null, { fisso: true, scelto: s.battle.popup.elenco[0] });
     primoDisegno = false;
   },
@@ -230,6 +238,7 @@ function tick() {
   aggiornaTimer();
   aggiornaConto();
   aggiornaRivelazione();
+  aggiornaVittoria();
   popupAutomatico();
 }
 if (!STATICO) setInterval(tick, 50);
@@ -363,6 +372,129 @@ function scriviBarraRisultato(r, passi, trascorso, valore) {
   if (finito && r.vincitore) {
     for (const lato of LATI) $(`.bt-artista.${lato}`).classList.add(lato === r.vincitore ? "vincitore" : "perdente");
   }
+}
+
+// ---------- Schermata del vincitore, a tutta pagina ----------
+// Parte da sola (vittoriaDa dice quando: dopo la rivelazione, alla proclamazione di un pari, a richiesta della regia),
+// resta DURATA_VITTORIA_MS dall'inizio del rullo e si ritira. Nome e voti si scrivono una sola volta, all'inizio;
+// il voto totale conta da 0 al totale (media di Luca, Freya, Daniele e chat) subito dopo il colpo, quando entra la scritta.
+const TITOLI_VITTORIA = { round: "Il vincitore è", torneo: "Il campione del torneo è", punti: "Il vincitore della classifica è" };
+const COLORI_CORIANDOLI = ["#ffd54a", "#fff2a8", "#36dcff", "#ff4fd8", "#ffffff", "#a066ff"];
+const INIZIO_CONTEGGIO_MS = RULLO_VITTORIA_MS + 500;
+const DURATA_CONTEGGIO_MS = 1500;
+const USCITA_VITTORIA_MS = 500;
+const vittoria = { strato: $("#bt-vittoria"), fase: "nascosta", inizio: 0, daAlle: null, dati: null, timbrato: false, chiusura: null };
+vittoria.strato.style.setProperty("--colpo", `${RULLO_VITTORIA_MS}ms`);
+
+// Coriandoli sempre uguali (generatore fisso): per i mockup contano posizione e colore, non il caso.
+function creaCoriandoli() {
+  let seme = 7;
+  const caso = () => (seme = (seme * 16807) % 2147483647) / 2147483647;
+  $("#bt-vit-coriandoli").replaceChildren(
+    ...Array.from({ length: 46 }, (_, i) => {
+      const el = document.createElement("i");
+      const proprieta = {
+        "--x": (caso() * 100).toFixed(1),
+        "--y": (caso() * 100).toFixed(1),
+        "--d": `${(3 + caso() * 2.5).toFixed(2)}s`,
+        "--ritardo": `${(RULLO_VITTORIA_MS / 1000 + caso() * 2.5).toFixed(2)}s`,
+        "--r": Math.round(caso() * 360),
+        "--v": Math.round(caso() * 320 - 160),
+        "--w": `${10 + Math.round(caso() * 12)}px`,
+        "--c": COLORI_CORIANDOLI[i % COLORI_CORIANDOLI.length],
+      };
+      for (const [k, v] of Object.entries(proprieta)) el.style.setProperty(k, v);
+      return el;
+    }),
+  );
+}
+creaCoriandoli();
+
+function programmaVittoria(prima, s, eventi) {
+  if (STATICO) return;
+  const v = vittoriaDa(prima, s, eventi);
+  if (v) vittoria.daAlle = performance.now() + v.ritardoMs;
+}
+
+function mostraVittoria(dati, adesso) {
+  const { strato } = vittoria;
+  clearTimeout(vittoria.chiusura);
+  Object.assign(vittoria, { dati, inizio: adesso, fase: "dentro", timbrato: false });
+  strato.classList.remove("esce");
+  strato.classList.toggle("sx", dati.lato === "sx");
+  strato.classList.toggle("dx", dati.lato === "dx");
+  strato.hidden = true; // nascosto e riacceso: le animazioni ripartono dall'inizio (anche con «Rivedi vincitore»)
+  void strato.offsetWidth;
+  strato.hidden = false;
+  const titolo = $("#bt-vit-titolo");
+  titolo.textContent = TITOLI_VITTORIA[dati.titolo];
+  adattaTesto(titolo, 38, 22);
+  const nome = $("#bt-vit-nome");
+  nome.textContent = dati.nome;
+  adattaTesto(nome, 170, 56);
+  const ig = $("#bt-vit-ig");
+  ig.hidden = !dati.instagram;
+  ig.querySelector("span").textContent = dati.instagram ? `@${dati.instagram}` : "";
+  $("#bt-vit-voti").replaceChildren(
+    ...dati.voti.map((v, i) => {
+      const box = nodo("div", `bt-vit-voto${v.chiave === "chat" ? " chat" : ""}`);
+      box.style.setProperty("--i", i);
+      const etichetta = nodo("span", "", v.nome);
+      box.append(etichetta, nodo("b", "", voto(v.voto)));
+      adattaTesto(etichetta, 22, 12);
+      return box;
+    }),
+  );
+  $(".bt-vit-cifre").classList.remove("fine");
+  scrivi($("#bt-vit-cifre"), conta(STATICO ? dati.totale : 0, 2));
+}
+
+function animaVittoria(adesso) {
+  const t = adesso - vittoria.inizio;
+  const p = Math.min(1, Math.max(0, (t - INIZIO_CONTEGGIO_MS) / DURATA_CONTEGGIO_MS));
+  scrivi($("#bt-vit-cifre"), conta(vittoria.dati.totale * uscitaLenta(p), 2));
+  if (p >= 1 && !vittoria.timbrato) {
+    vittoria.timbrato = true;
+    rilancia($(".bt-vit-cifre"), "fine"); // il numero «timbra» quando arriva al totale
+  }
+  if (t >= DURATA_VITTORIA_MS) {
+    vittoria.fase = "esce";
+    vittoria.strato.classList.add("esce");
+    vittoria.chiusura = setTimeout(chiudiVittoria, USCITA_VITTORIA_MS);
+  }
+}
+
+function chiudiVittoria() {
+  clearTimeout(vittoria.chiusura);
+  vittoria.fase = "nascosta";
+  vittoria.strato.classList.remove("esce");
+  vittoria.strato.hidden = true;
+}
+
+function aggiornaVittoria() {
+  const dati = datiVittoria(stato.battle);
+  const accesa = PARTI.includes("vittoria") && stato.visibili.vittoriaBattle !== false;
+  if (!dati || !accesa) {
+    vittoria.daAlle = null;
+    if (vittoria.fase !== "nascosta") chiudiVittoria();
+    vittoria.strato.hidden = true;
+    return;
+  }
+  const adesso = performance.now();
+  if (vittoria.daAlle !== null && adesso >= vittoria.daAlle) {
+    vittoria.daAlle = null;
+    mostraVittoria(dati, adesso);
+  }
+  if (vittoria.fase === "dentro" && !STATICO) animaVittoria(adesso);
+  vittoria.strato.hidden = vittoria.fase === "nascosta";
+}
+
+// Solo per i mockup (?statico=1&vittoria=1): la schermata già nello stato finale.
+function vittoriaFerma(s) {
+  const dati = datiVittoria(s.battle);
+  if (!dati) return;
+  mostraVittoria(dati, 0);
+  vittoria.strato.hidden = false;
 }
 
 // ---------- Pop-up social ----------

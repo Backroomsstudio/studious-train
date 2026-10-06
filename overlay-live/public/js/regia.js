@@ -961,6 +961,7 @@ function disegnaGiudiciRegia(b) {
     bottone.textContent = `Vince ${b[lato].nome || (lato === "sx" ? "sinistra" : "destra")}`;
   }
   $("#bt-prossimo").disabled = !(r && r.vincitore !== null);
+  $("#bt-vittoria").disabled = !(r && r.vincitore !== null);
   $("#bt-reset").disabled = b.fase === "attesa" || Boolean(r?.registrato);
   $("#bt-esito").textContent = !r ? "" : pari ? "Pari merito: scegliete chi vince." : `Vince ${b[r.vincitore].nome} · ${votoBattle(r.totali.sx)} contro ${votoBattle(r.totali.dx)}`;
 }
@@ -1146,6 +1147,7 @@ $("#bt-giudici").addEventListener("keydown", (e) => {
 $("#bt-rivela").addEventListener("click", battleRivela);
 for (const lato of LATI_BATTLE) $(`#bt-proclama-${lato}`).addEventListener("click", () => invia("battleProclama", { lato }));
 $("#bt-prossimo").addEventListener("click", battleProssimo);
+$("#bt-vittoria").addEventListener("click", () => invia("battleVittoria"));
 $("#bt-reset").addEventListener("click", () => {
   if (confirm("Scartare il round in corso? Nomi e numero del round restano.")) invia("battleReset");
 });

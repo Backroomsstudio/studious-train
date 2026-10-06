@@ -8,6 +8,12 @@ import {
   numeroConto,
   RIVELAZIONE,
   FINE_RIVELAZIONE_MS,
+  RITARDO_VITTORIA_MS,
+  RULLO_VITTORIA_MS,
+  DURATA_VITTORIA_MS,
+  vittoriaDa,
+  datiVittoria,
+  rivelazioneNuova,
   sequenzaRivelazione,
   popupConsentito,
   richiestePopup,
@@ -85,4 +91,74 @@ test("pop-up automatico: dovuto solo dopo l'intervallo, se consentito e non già
   assert.equal(popupAutomaticoDovuto({ ...base, ogniMinuti: 0 }), false, "0 = solo a mano");
   assert.equal(popupAutomaticoDovuto({ ...base, aperto: true }), false);
   assert.equal(popupAutomaticoDovuto({ ...base, consentito: false }), false);
+});
+
+// ---------- Schermata del vincitore ----------
+
+const parziali = { luca: { sx: 8, dx: 6 }, freya: { sx: 7.5, dx: 6.5 }, daniele: { sx: 8, dx: 5 }, chat: { sx: 8, dx: 2 } };
+const esito = (vincitore, registrato = true) => ({ rivelatoAlle: 1, totali: { sx: 7.88, dx: 4.88 }, parziali, vincitore, pari: vincitore === null, registrato });
+const fotoBattle = (fase, risultato, tabellone = {}) => ({
+  battle: {
+    fase,
+    risultato,
+    sx: { nome: "Lince", instagram: "lince.music" },
+    dx: { nome: "Nove", instagram: "" },
+    giudici: [{ id: "luca", nome: "Luca" }, { id: "freya", nome: "Freya" }, { id: "daniele", nome: "Dani" }],
+    tabellone: { modo: "torneo", torneo: { campione: null }, punti: { vincitore: null }, ...tabellone },
+  },
+});
+
+test("vittoria: parte a fine rivelazione, dopo la proclamazione di un pari o a richiesta della regia", () => {
+  const voto = fotoBattle("voto", null);
+  const vinto = fotoBattle("risultato", esito("sx"));
+  assert.equal(RULLO_VITTORIA_MS < DURATA_VITTORIA_MS, true);
+  assert.deepEqual(vittoriaDa(null, vinto, []), null, "mai al primo disegno");
+  assert.deepEqual(vittoriaDa(voto, vinto, []), { ritardoMs: FINE_RIVELAZIONE_MS + RITARDO_VITTORIA_MS }, "dopo i voti e il totale");
+  assert.equal(vittoriaDa(voto, fotoBattle("risultato", esito(null, false)), []), null, "pari merito: nessun vincitore");
+  assert.deepEqual(vittoriaDa(fotoBattle("risultato", esito(null, false)), vinto, []), { ritardoMs: 0 }, "proclamato: subito");
+  assert.deepEqual(vittoriaDa(vinto, vinto, [{ nome: "vittoria", dati: {} }]), { ritardoMs: 0 }, "«Rivedi vincitore»");
+  assert.equal(vittoriaDa(vinto, vinto, [{ nome: "gong", dati: {} }]), null, "un altro evento non la rifà");
+  assert.equal(vittoriaDa(vinto, vinto, []), null, "un aggiornamento qualsiasi non la rifà");
+  assert.equal(vittoriaDa(voto, fotoBattle("voto", null), [{ nome: "vittoria", dati: {} }]), null, "senza vincitore niente replay");
+});
+
+test("vittoria: nome, totale e i quattro voti del vincitore (per destra e sinistra)", () => {
+  assert.equal(datiVittoria(fotoBattle("voto", null).battle), null);
+  assert.equal(datiVittoria(fotoBattle("risultato", esito(null, false)).battle), null, "pari merito");
+  assert.deepEqual(datiVittoria(fotoBattle("risultato", esito("sx")).battle), {
+    lato: "sx",
+    nome: "Lince",
+    instagram: "lince.music",
+    totale: 7.88,
+    titolo: "round",
+    voti: [
+      { chiave: "luca", nome: "Luca", voto: 8 },
+      { chiave: "freya", nome: "Freya", voto: 7.5 },
+      { chiave: "daniele", nome: "Dani", voto: 8 },
+      { chiave: "chat", nome: "Chat", voto: 8 },
+    ],
+  });
+  const dx = datiVittoria(fotoBattle("risultato", { ...esito("dx"), totali: { sx: 4.88, dx: 7.88 } }).battle);
+  assert.deepEqual([dx.lato, dx.nome, dx.totale, dx.voti.map((v) => v.voto)], ["dx", "Nove", 7.88, [6, 6.5, 5, 2]]);
+});
+
+test("vittoria: il titolo dice se il round ha deciso il torneo o la classifica", () => {
+  const con = (tabellone) => datiVittoria(fotoBattle("risultato", esito("sx"), tabellone).battle).titolo;
+  assert.equal(con({}), "round");
+  assert.equal(con({ torneo: { campione: { nome: "lince" } } }), "torneo", "stesso nome, maiuscole a parte");
+  assert.equal(con({ torneo: { campione: { nome: "Nove" } } }), "round", "il campione è un altro");
+  assert.equal(con({ punti: { vincitore: "Lince" } }), "punti");
+});
+
+test("rivelazione: il server unisce gli aggiornamenti ravvicinati, la pagina può non vedere mai la fase «voto»", () => {
+  const vinto = fotoBattle("risultato", esito("sx"));
+  for (const fase of ["voto", "battle"]) {
+    const prima = fotoBattle(fase, null);
+    assert.equal(rivelazioneNuova(prima, vinto), true, `da «${fase}»`);
+    assert.deepEqual(vittoriaDa(prima, vinto, []), { ritardoMs: FINE_RIVELAZIONE_MS + RITARDO_VITTORIA_MS }, `la schermata parte anche da «${fase}»`);
+  }
+  assert.equal(rivelazioneNuova(null, vinto), false, "mai al primo disegno");
+  assert.equal(rivelazioneNuova(fotoBattle("attesa", null), vinto), false, "dati di prova a round fermo: niente rivelazione");
+  assert.equal(rivelazioneNuova(vinto, vinto), false, "già in risultato");
+  assert.equal(rivelazioneNuova(fotoBattle("voto", null), fotoBattle("voto", null)), false);
 });

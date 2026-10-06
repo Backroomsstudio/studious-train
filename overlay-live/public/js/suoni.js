@@ -262,9 +262,8 @@ const effetti = {
     rumore(t, { tipo: "highpass", f: 3000, dur: 0.03, vol: 0.1, riv: 0 });
     if (ultimi) colpo(t, 0.35);
   },
-  // Vincitore: rullo di tamburo, colpo, fanfara e pioggia di scintille.
-  vincitore(t) {
-    const rullo = 2;
+  // Vincitore: rullo di tamburo, colpo, fanfara e pioggia di scintille. Il rullo dura 2 s (1,2 s nel battle).
+  vincitore(t, { rullo = 2 } = {}) {
     for (let x = 0, i = 0; x < rullo; x += 0.055, i++) rullante(t + x, 0.06 + (x / rullo) * 0.26);
     const f = t + rullo;
     colpo(f, 1.1);

@@ -116,6 +116,7 @@ Un round:
 3. La chat vota scrivendo `1` o `sx` (rapper a sinistra) e `2` o `dx` (a destra), con o senza `!`: un voto per utente, vale l'ultimo. Un punteggio come `8` qui non conta. Le barre della vita mostrano la quota in %, e con 0 voti sono a metà.
 4. A zero (o con **Termina**) suona il gong e si chiude la chat. La regia scrive i sei voti dei giudici (0–10, un decimale; `Invio` passa al campo dopo). **Rivela (F4)** li mostra uno alla volta con il conteggio, poi la chat e il totale.
 5. **Totale** = media di Luca, Freya, Daniele e chat (10 × la sua quota), 25% ciascuno. Con un pari merito la regia sceglie con **Vince …**. **Prossimo scontro (F8)** svuota i nomi (con il torneo carica il prossimo scontro) e riparte da 1.
+6. **Schermata del vincitore**: finita la rivelazione il vincitore esce **a tutta pagina**. Un rullo di tamburo con la scena che si scurisce e i raggi d'oro, poi il colpo: il nome in oro, il **voto totale** (la media di Luca, Freya, Daniele e chat) che conta da 0 e, sotto, i quattro voti. Resta in onda 11 secondi e si ritira da sola; con un pari merito arriva appena la regia sceglie con **Vince …**. **Rivedi vincitore** la rifà (Stream Deck: `POST /api/battleVittoria`), **Prossimo scontro** la chiude. Se il round ha deciso il torneo o la classifica il titolo diventa «Il campione del torneo è» / «Il vincitore della classifica è». Si spegne da *In onda → Schermata vincitore*. Tutto il contenuto sta nella zona libera (y 230–1200, x 116–964), sopra la chat di TikTok.
 
 Il timer diventa rosso e lampeggia negli ultimi 30 secondi; **Pausa (F9)** lo ferma. Gong, bip del 3-2-1 e schiocco del fulmine sono sintetizzati come gli altri effetti: suonano solo dalla pagina del layout in onda (come per la gara) e si provano dai pulsanti *Gong*, *Conto* e *Spacco* in *Suoni*.
 
@@ -140,15 +141,15 @@ Il timer diventa rosso e lampeggia negli ultimi 30 secondi; **Pausa (F9)** lo fe
 | Barra «Vota in chat» | 116 | 1456 | 848 × 78 |
 | Tabellone | 116 | 282 | 848 × 1252 |
 
-Giudici e barra della chat stanno nella zona dei commenti di TikTok (1200–1700): con la chat molto attiva i commenti coprono la parte sinistra dei box. Si cambiano nel blocco di variabili in cima a `public/css/battle.css`. **Se la camera nella vostra scena è 4:3 (circa y 550 → 1363)**, cambiate `--bt-y-camera` e `--bt-h-camera`: box degli artisti, giudici e barra della chat seguono il fondo della camera; barre della vita, modalità, timer e pop-up restano dove sono. Parametri: `?anteprima=1` (sfondo nero e finta camera), `&guide=1` (tagli dei telefoni e zone di TikTok), `&statico=1`, `&muto=1`, `&conto=3` (3-2-1 fermo), `&popup=1` (primo pop-up fermo), `?w=barre,modalita,timer,camera,artisti,giudici,chat,popup,tabellone,conto`.
+Giudici e barra della chat stanno nella zona dei commenti di TikTok (1200–1700): con la chat molto attiva i commenti coprono la parte sinistra dei box. Si cambiano nel blocco di variabili in cima a `public/css/battle.css`. **Se la camera nella vostra scena è 4:3 (circa y 550 → 1363)**, cambiate `--bt-y-camera` e `--bt-h-camera`: box degli artisti, giudici e barra della chat seguono il fondo della camera; barre della vita, modalità, timer e pop-up restano dove sono. Parametri: `?anteprima=1` (sfondo nero e finta camera), `&guide=1` (tagli dei telefoni e zone di TikTok), `&statico=1`, `&muto=1`, `&conto=3` (3-2-1 fermo), `&popup=1` (primo pop-up fermo), `&vittoria=1` (con `&statico=1`: la schermata del vincitore ferma), `?w=barre,modalita,timer,camera,artisti,giudici,chat,popup,tabellone,conto,vittoria`.
 
-Per rifare i mockup e controllare che ogni pezzo stia dove dice la tabella (serve Playwright installato a parte, non fa parte di `npm test`): `node strumenti/mockup-battle.mjs --base http://127.0.0.1:4747 --fase battle` (fasi: `attesa`, `countdown`, `battle`, `voto`, `risultato`, `pari`, `torneo`, `punti`; opzioni `--guida`, `--secondi N`, `--conto N`, `--popup`), per provare la regia `--regia`, e `--controlli` per verificare che i nomi lunghi entrino nei riquadri e che «VIA!» resti visibile. **Usatelo su una porta di prova, non durante la diretta**: i dati di prova azzerano torneo e punti. I dati di prova li mette il comando `battleDemo`.
+Per rifare i mockup e controllare che ogni pezzo stia dove dice la tabella (serve Playwright installato a parte, non fa parte di `npm test`): `node strumenti/mockup-battle.mjs --base http://127.0.0.1:4747 --fase battle` (fasi: `attesa`, `countdown`, `battle`, `voto`, `risultato`, `pari`, `torneo`, `punti`; opzioni `--guida`, `--secondi N`, `--conto N`, `--popup`, e `--fase risultato --vittoria` per la schermata del vincitore, con il controllo che stia nella zona libera), per provare la regia `--regia`, e `--controlli` per verificare che i nomi lunghi entrino nei riquadri e che «VIA!» resti visibile. **Usatelo su una porta di prova, non durante la diretta**: i dati di prova azzerano torneo e punti. I dati di prova li mette il comando `battleDemo`.
 
 ## Effetti sonori
 
 Ogni animazione ha il suo effetto, sintetizzato al momento con Web Audio (`public/js/suoni.js`: nessun file audio, nessun diritto d'autore): nuova traccia, voto dei giudici (la nota sale col voto), voto nascosto, apertura/chiusura del voto chat, pop dei voti della chat, calcolo del punteggio con colpo finale, nuova entrata, scalata, uscita dalla top, fanfara del nuovo primo posto, premio cambiato, sirena a 30 minuti e a 1 minuto dalla fine, tic negli ultimi 10 secondi, rullo e fanfara del vincitore, battito dello spareggio; nel layout senza premio `inAscolto` (traccia nuova, con un tocco in più per Skip, Super Skip e Throne) e la campanella del richiamo. Quale effetto parte e quando lo decide `public/js/eventi-sonori.js` (testato in `test/eventi-sonori.test.mjs`).
 
-Per il battle: `gong` (via e fine), `conto` (i tre bip del 3-2-1), `spacco` (il fulmine) e, riusati dalla gara, sirena a 30 secondi dalla fine, tic negli ultimi 10, `voto` e `calcolo` per i giudici e `vincitore` per il campione del tabellone; quando partono lo decide `suoniBattle` in `eventi-sonori.js`.
+Per il battle: `gong` (via e fine), `conto` (i tre bip del 3-2-1), `spacco` (il fulmine) e, riusati dalla gara, sirena a 30 secondi dalla fine, tic negli ultimi 10, `voto` e `calcolo` per i giudici e `vincitore` (rullo e fanfara) per la schermata del vincitore di ogni round; quando partono lo decide `suoniBattle` in `eventi-sonori.js`.
 
 Dalla regia (*Suoni*): dove suonano (nell'overlay, nella regia o spenti), volume e pulsanti di prova. Suona solo la pagina del layout **In onda** scelto in testata (gara o senza premio). Se la sorgente Link di LIVE Studio non manda l'audio in diretta, si sceglie «in questa pagina» e si cattura l'audio del PC.
 
@@ -238,7 +239,7 @@ Il tunnel espone solo la porta del webhook, non la regia.
 | `countdown` | `{ "azione": "avvia"\|"pausa"\|"riprendi"\|"aggiungi"\|"azzera", "minuti"? }` |
 | `proclama` | `{}` chiude la gara (spareggio se c'è pari merito) · `{ "id" }` sceglie il vincitore |
 | `nascondiVincitore` | `{}`: chiude la schermata finale |
-| `widget` | `{ "nome": "premio"\|"tabellone"\|"classifica"\|"timer"\|"banner"\|"barra"\|"scheda"\|"targa"\|"barraStudio"\|"comparse"\|"barreVita"\|"modalita"\|"timerBattle"\|"giudiciBattle"\|"popupBattle"\|"bracket", "visibile": true }` |
+| `widget` | `{ "nome": "premio"\|"tabellone"\|"classifica"\|"timer"\|"banner"\|"barra"\|"scheda"\|"targa"\|"barraStudio"\|"comparse"\|"barreVita"\|"modalita"\|"timerBattle"\|"giudiciBattle"\|"popupBattle"\|"vittoriaBattle"\|"bracket", "visibile": true }` |
 | `nascondiVoti` | `{ "attivo": true }`: l'overlay mostra "?" fino alla conferma |
 | `premio` | `{ "testo": "Mix + Master" }` |
 | `invito` | `{ "testo": "La traccia più votata vince \| Manda la tua traccia su nero.fan/backrooms" }` |
@@ -261,6 +262,7 @@ Il tunnel espone solo la porta del webhook, non la regia.
 | `battleVotoGiudice` | `{ "giudice": "luca"\|"freya"\|"daniele", "lato": "sx"\|"dx", "valore": 8.5 }`: solo a fine round |
 | `battleGiudici` | `{ "luca"?, "freya"?, "daniele"? }`: nomi dei giudici |
 | `battleRivela`, `battleProclama` | `{}` mostra i voti e il totale · `{ "lato": "sx"\|"dx" }` decide un pari merito |
+| `battleVittoria` | `{}`: «Rivedi vincitore», rifà la schermata a tutta pagina (solo con un vincitore) |
 | `tabellone` | `{ "modo"?: "torneo"\|"punti", "visibile"?: true }` |
 | `torneo`, `torneoCarica` | `{ "azione": "crea"\|"sorteggia"\|"azzera", "partecipanti"?: ["…"] }` (4 o 8) · `{ "id": "q1"\|…\|"f1" }` |
 | `punti` | `{ "artisti"?: ["…"], "target"?: 30, "azzera"?: true }` |
