@@ -438,3 +438,182 @@ test("reset: scarta il round in corso e tiene nomi e numero del round", () => {
   B.rivela(stato, T + 200_000);
   assert.throws(() => B.reset(stato), /già registrato/);
 });
+
+// ---------- Torneo e classifica a punti ----------
+
+// Un round intero con i nomi già caricati: vince `lato` (8,8,8 contro 6,6,6, chat 50/50 → totali 7.25 e 5.75).
+function faiRound(stato, t, lato) {
+  B.avvia(stato, t);
+  B.passaSeTocca(stato, t + B.CONTO_MS);
+  B.termina(stato, t + B.CONTO_MS + 1000);
+  const altro = lato === "sx" ? "dx" : "sx";
+  for (const id of B.GIUDICI_BATTLE) {
+    B.votoGiudice(stato, { giudice: id, lato, valore: 8 });
+    B.votoGiudice(stato, { giudice: id, lato: altro, valore: 6 });
+  }
+  B.rivela(stato, t + B.CONTO_MS + 2000);
+}
+
+const nomiPartite = (stato) => stato.battle.tabellone.torneo.partite.map((p) => p.id);
+const partita = (stato, id) => stato.battle.tabellone.torneo.partite.find((p) => p.id === id);
+
+test("torneo: 8 partecipanti in quarti, semifinali e finale", () => {
+  const stato = nuovo();
+  B.creaTorneo(stato, ["A", "B", "C", "D", "E", "F", "G", "H"]);
+  assert.deepEqual(nomiPartite(stato), ["q1", "q2", "q3", "q4", "s1", "s2", "f1"]);
+  assert.equal(partita(stato, "q1").sx.nome, "A");
+  assert.equal(partita(stato, "q1").dx.nome, "B");
+  assert.equal(partita(stato, "q4").dx.nome, "H");
+  assert.equal(partita(stato, "s1").sx, null);
+  assert.throws(() => B.creaTorneo(stato, ["A", "B", "C", "D", "E"]), /4 o 8/);
+  assert.throws(() => B.creaTorneo(stato, ["A", "a", "C", "D"]), /duplicati/);
+  assert.throws(() => B.creaTorneo(stato, ["A", "B", "C", "x".repeat(25)]), /24 caratteri/);
+  assert.throws(() => B.creaTorneo(stato, ["A", "B", "C", ""]), /manca il nome/);
+  B.creaTorneo(stato, [{ nome: "A", instagram: "@a.mc" }, "B", "C", "D"]);
+  assert.deepEqual(nomiPartite(stato), ["s1", "s2", "f1"]);
+  assert.equal(partita(stato, "s1").sx.instagram, "a.mc");
+});
+
+test("torneo: il sorteggio mescola senza perdere nessuno", () => {
+  const stato = nuovo();
+  B.creaTorneo(stato, ["A", "B", "C", "D"]);
+  B.sorteggiaTorneo(stato, () => 0);
+  const nomi = stato.battle.tabellone.torneo.partecipanti.map((p) => p.nome);
+  assert.deepEqual([...nomi].sort(), ["A", "B", "C", "D"]);
+  assert.notDeepEqual(nomi, ["A", "B", "C", "D"]);
+  assert.equal(partita(stato, "s1").sx.nome, nomi[0]);
+  assert.ok(stato.battle.tabellone.torneo.partite.every((p) => p.vincitore === null));
+  B.caricaPartita(stato, "s1");
+  faiRound(stato, T, "sx");
+  assert.throws(() => B.sorteggiaTorneo(stato, () => 0), /già iniziato/);
+});
+
+test("torneo: avanzamento, scontri caricati da soli e campione", () => {
+  const stato = nuovo();
+  B.creaTorneo(stato, ["A", "B", "C", "D"]);
+  B.caricaPartita(stato, "s1");
+  assert.deepEqual([stato.battle.sx.nome, stato.battle.dx.nome, stato.battle.partitaId], ["A", "B", "s1"]);
+  faiRound(stato, T, "sx");
+  assert.equal(partita(stato, "s1").vincitore, "sx");
+  assert.deepEqual(partita(stato, "s1").totali, { sx: 7.25, dx: 5.75 });
+  assert.equal(partita(stato, "f1").sx.nome, "A");
+  B.prossimo(stato);
+  assert.deepEqual([stato.battle.sx.nome, stato.battle.dx.nome, stato.battle.partitaId], ["C", "D", "s2"]);
+  faiRound(stato, T + 100_000, "dx");
+  assert.equal(partita(stato, "f1").dx.nome, "D");
+  B.prossimo(stato);
+  assert.deepEqual([stato.battle.sx.nome, stato.battle.dx.nome, stato.battle.partitaId], ["A", "D", "f1"]);
+  faiRound(stato, T + 200_000, "dx");
+  assert.equal(stato.battle.tabellone.torneo.campione.nome, "D");
+});
+
+test("torneo: i quarti portano i vincitori alle semifinali giuste", () => {
+  const stato = nuovo();
+  B.creaTorneo(stato, ["A", "B", "C", "D", "E", "F", "G", "H"]);
+  let t = T;
+  for (const [id, lato] of [["q1", "dx"], ["q2", "sx"], ["q3", "sx"], ["q4", "dx"]]) {
+    B.caricaPartita(stato, id);
+    faiRound(stato, t, lato);
+    B.prossimo(stato);
+    B.reset(stato);
+    t += 100_000;
+  }
+  assert.deepEqual([partita(stato, "s1").sx.nome, partita(stato, "s1").dx.nome], ["B", "C"]);
+  assert.deepEqual([partita(stato, "s2").sx.nome, partita(stato, "s2").dx.nome], ["E", "H"]);
+});
+
+test("torneo: caricamenti non validi", () => {
+  const stato = nuovo();
+  B.creaTorneo(stato, ["A", "B", "C", "D"]);
+  assert.throws(() => B.caricaPartita(stato, "f1"), /non è ancora definita/);
+  assert.throws(() => B.caricaPartita(stato, "zz"), /non trovata/);
+  B.caricaPartita(stato, "s1");
+  faiRound(stato, T, "sx");
+  B.prossimo(stato);
+  assert.throws(() => B.caricaPartita(stato, "s1"), /già stata giocata/);
+  B.avvia(stato, T + 100_000);
+  assert.throws(() => B.caricaPartita(stato, "s2"), /prima di avviare/);
+});
+
+test("torneo: azzera", () => {
+  const stato = nuovo();
+  B.creaTorneo(stato, ["A", "B", "C", "D"]);
+  B.azzeraTorneo(stato);
+  assert.deepEqual(stato.battle.tabellone.torneo, { partecipanti: [], partite: [], campione: null });
+});
+
+test("punti: si sommano i totali di entrambi e vince chi arriva al target", () => {
+  const stato = nuovo();
+  B.impostaPunti(stato, { artisti: ["Lince", "Nove", "Kappa"], target: 14 });
+  B.impostaTabellone(stato, { modo: "punti" });
+  pronto(stato);
+  faiRound(stato, T, "sx");
+  const artista = (nome) => stato.battle.tabellone.punti.artisti.find((a) => a.nome === nome);
+  assert.deepEqual([artista("Lince").punti, artista("Lince").round], [7.25, [7.25]]);
+  assert.equal(artista("Nove").punti, 5.75);
+  assert.equal(artista("Kappa").punti, 0);
+  assert.equal(stato.battle.tabellone.punti.vincitore, null);
+  B.prossimo(stato);
+  pronto(stato);
+  faiRound(stato, T + 100_000, "sx");
+  assert.deepEqual([artista("Lince").punti, artista("Nove").punti], [14.5, 11.5]);
+  assert.equal(stato.battle.tabellone.punti.vincitore, "Lince");
+});
+
+test("punti: due artisti oltre il target nello stesso round, vince il totale del round più alto", () => {
+  const stato = nuovo();
+  B.impostaPunti(stato, { artisti: [{ nome: "Lince", punti: 14.5 }, { nome: "Nove", punti: 14.5 }], target: 15 });
+  B.impostaTabellone(stato, { modo: "punti" });
+  pronto(stato);
+  faiRound(stato, T, "sx");
+  const [lince, nove] = stato.battle.tabellone.punti.artisti;
+  assert.deepEqual([lince.punti, nove.punti], [21.75, 20.25]);
+  assert.equal(stato.battle.tabellone.punti.vincitore, "Lince");
+});
+
+test("punti: artista fuori elenco, nomi doppi e troppi artisti", () => {
+  const stato = nuovo();
+  B.impostaPunti(stato, { artisti: ["Lince", "Nove"], target: 14 });
+  B.impostaTabellone(stato, { modo: "punti" });
+  B.impostaScontro(stato, { sx: { nome: "Lince" }, dx: { nome: "Zeta" } });
+  faiRound(stato, T, "sx");
+  assert.deepEqual(stato.battle.tabellone.punti.artisti.map((a) => [a.nome, a.punti]), [["Lince", 7.25], ["Nove", 0]]);
+  assert.throws(() => B.impostaPunti(stato, { artisti: ["Lince", "lince"] }), /duplicati/);
+  assert.throws(() => B.impostaPunti(stato, { artisti: Array.from({ length: 11 }, (_, i) => `A${i}`) }), /10/);
+  assert.throws(() => B.impostaPunti(stato, { target: 0 }), /tra 1 e 1000/);
+  B.impostaPunti(stato, { azzera: true });
+  assert.ok(stato.battle.tabellone.punti.artisti.every((a) => a.punti === 0 && a.round.length === 0));
+});
+
+test("registrazione: una sola volta e solo nel tabellone attivo", () => {
+  const stato = nuovo();
+  B.impostaPunti(stato, { artisti: ["A", "B"], target: 30 });
+  B.creaTorneo(stato, ["A", "B", "C", "D"]);
+  B.caricaPartita(stato, "s1");
+  B.impostaTabellone(stato, { modo: "punti" });
+  faiRound(stato, T, "sx");
+  const punti = () => stato.battle.tabellone.punti.artisti.map((a) => a.punti);
+  assert.deepEqual(punti(), [7.25, 5.75]);
+  B.registraRound(stato);
+  B.registraRound(stato);
+  assert.deepEqual(punti(), [7.25, 5.75], "nessun doppio conteggio");
+  assert.equal(partita(stato, "s1").vincitore, null, "il torneo non è il tabellone attivo");
+
+  const altro = nuovo();
+  B.impostaPunti(altro, { artisti: ["A", "B"], target: 30 });
+  B.creaTorneo(altro, ["A", "B", "C", "D"]);
+  B.caricaPartita(altro, "s1");
+  faiRound(altro, T, "sx");
+  assert.equal(partita(altro, "s1").vincitore, "sx");
+  assert.deepEqual(altro.battle.tabellone.punti.artisti.map((a) => a.punti), [0, 0], "i punti non sono il tabellone attivo");
+});
+
+test("tabellone: modo e visibilità", () => {
+  const stato = nuovo();
+  B.impostaTabellone(stato, { modo: "punti", visibile: true });
+  assert.equal(stato.battle.tabellone.modo, "punti");
+  assert.equal(stato.visibili.bracket, true);
+  assert.throws(() => B.impostaTabellone(stato, { modo: "boh" }), /torneo o punti/);
+  assert.throws(() => B.impostaTabellone(stato, { visibile: "sì" }), /sì o no/);
+  assert.equal(stato.battle.tabellone.modo, "punti", "atomico");
+});
