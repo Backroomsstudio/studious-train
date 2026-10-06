@@ -1,6 +1,10 @@
 // Logica della serata: voto dei giudici (uno per categoria), voto della chat, totale, classifica,
 // countdown e spareggio. Solo funzioni sullo stato, senza I/O: il server le chiama e salva su disco.
 import { randomUUID } from "node:crypto";
+import { ICONE, oggetto, testo, numeroTra, siNo, arrotonda, normalizzaVoto, pulisciInstagram, controllaComparse } from "./validazione.mjs";
+
+// Questi cinque restano esportati da qui: li usano server, regia e test.
+export { ICONE, arrotonda, normalizzaVoto, pulisciInstagram };
 
 export const CATEGORIE = ["beat", "voce", "mix"];
 // banner, barra e scheda sono del layout senza premio (banner in alto, barra che scorre, scheda «Ora in ascolto»);
@@ -16,7 +20,6 @@ const ORDINE_TIER = { throne: 0, superskip: 1, skip: 2, standard: 3 };
 // o la live session in studio (studio.html, split screen fonico · artista · DAW, senza suoni).
 // Suona solo la pagina del layout scelto, così due sorgenti caricate in LIVE Studio non suonano insieme.
 export const LAYOUT = ["gara", "senzaPremio", "studio"];
-export const ICONE = ["nero", "instagram", "tiktok", "instagram+tiktok", "twitch", "kick", "youtube", "spotify", "whatsapp", "dm", "sito", "microfono", "logo"];
 const MAX_COMPARSE = 8;
 export const TIER_SCHEDA = ["standard", "skip", "superskip", "throne"];
 // Suono quando parte una traccia nel layout senza premio: leggero, quello della gara, oppure niente.
@@ -85,8 +88,6 @@ export function senzaPremioIniziale() {
   };
 }
 
-const oggetto = (x) => Boolean(x) && typeof x === "object" && !Array.isArray(x);
-
 // Uno stato salvato da una versione precedente (senza questi campi, o con solo una parte) li ritrova completi.
 // Ogni valore salvato passa dagli stessi controlli della regia: quelli rotti tornano al predefinito.
 export function fondiSenzaPremio(salvato) {
@@ -106,25 +107,6 @@ export function fondiSenzaPremio(salvato) {
     }
   }
   return prova.senzaPremio;
-}
-
-function testo(valore, max, nome, { obbligatorio = false } = {}) {
-  if (typeof valore !== "string") throw new Error(`${nome}: serve un testo`);
-  const pulito = valore.trim();
-  if (obbligatorio && !pulito) throw new Error(`${nome}: non può essere vuoto`);
-  if (pulito.length > max) throw new Error(`${nome}: al massimo ${max} caratteri`);
-  return pulito;
-}
-
-function numeroTra(valore, min, max, nome) {
-  const n = typeof valore === "number" || (typeof valore === "string" && valore.trim()) ? Number(valore) : NaN;
-  if (!Number.isFinite(n) || n < min || n > max) throw new Error(`${nome}: tra ${min} e ${max}`);
-  return Math.round(n);
-}
-
-function siNo(valore, nome) {
-  if (typeof valore !== "boolean") throw new Error(`${nome}: sì o no (true o false)`);
-  return valore;
 }
 
 // Modifiche dalla regia (o dall'API). Si controlla tutto su una copia: un errore non lascia metà modifica.
@@ -202,44 +184,13 @@ export function studioIniziale() {
   };
 }
 
-// Accetta «@nome», «nome» o il link del profilo (instagram.com/nome/?hl=it): resta solo il nome, senza @.
-export function pulisciInstagram(valore) {
-  if (typeof valore !== "string") throw new Error("Instagram: serve un testo");
-  const nome = valore
-    .trim()
-    .replace(/^(https?:\/\/)?(www\.)?instagram\.com\//i, "")
-    .replace(/^@+/, "")
-    .replace(/[/?#].*$/, "");
-  if (nome.length > 30) throw new Error("Instagram: al massimo 30 caratteri");
-  if (nome && !/^[a-z0-9._]+$/i.test(nome)) throw new Error("Instagram: solo lettere, numeri, punto e trattino basso (es. @nome.artista)");
-  return nome;
-}
-
 // Modifiche dalla regia (o dall'API), controllate su una copia come per il layout senza premio.
 export function impostaStudio(stato, modifiche = {}) {
   const st = JSON.parse(JSON.stringify(stato.studio));
   if (modifiche.etichetta !== undefined) st.etichetta = testo(modifiche.etichetta, 32, "Riga sopra il nome");
   if (modifiche.artista !== undefined) st.artista = testo(modifiche.artista, 32, "Nome dell'artista");
   if (modifiche.instagram !== undefined) st.instagram = pulisciInstagram(modifiche.instagram);
-  if (modifiche.comparse !== undefined) {
-    if (!Array.isArray(modifiche.comparse)) throw new Error("Comparse: serve l'elenco");
-    if (modifiche.comparse.length > MAX_COMPARSE) throw new Error(`Comparse: al massimo ${MAX_COMPARSE}`);
-    st.comparse = modifiche.comparse.map((c, i) => {
-      const n = `Comparsa ${i + 1}`;
-      if (!oggetto(c)) throw new Error(`${n}: servono i testi`);
-      if (!ICONE.includes(c.icona)) throw new Error(`${n}: icona sconosciuta`);
-      const comparsa = {
-        id: typeof c.id === "string" && c.id ? c.id.slice(0, 40) : randomUUID(),
-        attiva: c.attiva !== false,
-        icona: c.icona,
-        sopra: testo(c.sopra ?? "", 40, `${n} (riga sopra)`),
-        titolo: testo(c.titolo ?? "", 28, `${n} (titolo)`),
-        sotto: testo(c.sotto ?? "", 60, `${n} (riga sotto)`),
-      };
-      if (comparsa.attiva && !comparsa.titolo) throw new Error(`${n}: manca il titolo`);
-      return comparsa;
-    });
-  }
+  if (modifiche.comparse !== undefined) st.comparse = controllaComparse(modifiche.comparse, MAX_COMPARSE);
   if (modifiche.comparsaOgniMinuti !== undefined) st.comparsaOgniMinuti = numeroTra(modifiche.comparsaOgniMinuti, 0, 30, "Comparse automatiche (minuti)");
   if (modifiche.durataComparsa !== undefined) st.durataComparsa = numeroTra(modifiche.durataComparsa, 4, 20, "Durata della comparsa (secondi)");
   if (modifiche.velocita !== undefined) st.velocita = numeroTra(modifiche.velocita, 40, 160, "Velocità della barra (pixel al secondo)");
@@ -359,8 +310,6 @@ export function tracciaVuota(dati = {}) {
 const countdownVuoto = () => ({ fineAlle: null, rimanenteMs: null, scaduto: false });
 const countdownChiuso = () => ({ fineAlle: null, rimanenteMs: null, scaduto: true });
 
-export const arrotonda = (x, cifre) => (x === null ? null : Math.round(x * 10 ** cifre) / 10 ** cifre);
-
 export function media(valori) {
   const numeri = valori.filter((v) => typeof v === "number");
   return numeri.length ? numeri.reduce((a, b) => a + b, 0) / numeri.length : null;
@@ -395,13 +344,6 @@ export function primiPariMerito(risultati) {
 
 export const ordinaCoda = (coda) =>
   [...coda].sort((a, b) => (ORDINE_TIER[a.tier] ?? 9) - (ORDINE_TIER[b.tier] ?? 9) || a.ricevutoAlle - b.ricevutoAlle);
-
-export function normalizzaVoto(valore) {
-  if (valore === null || valore === undefined || valore === "") return null;
-  const n = Number(String(valore).replace(",", "."));
-  if (!Number.isFinite(n) || n < 0 || n > 10) throw new Error("Il voto deve essere tra 0 e 10");
-  return Math.round(n * 10) / 10;
-}
 
 export function impostaVoto(stato, { categoria, valore }) {
   if (!CATEGORIE.includes(categoria)) throw new Error("Categoria non valida");
