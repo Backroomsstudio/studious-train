@@ -21,8 +21,11 @@ export const GEOMETRIA = {
   giudici: [116, 1292, 848, 150],
   chat: [116, 1456, 848, 78],
   tabellone: [116, 282, 848, 1252],
+  conto: [0, 0, 1080, 1920],
 };
 const FISSI = ["barre", "modalita", "timer", "camera", "artisti", "giudici", "chat"];
+// Pezzi a tutta larghezza: non devono stare dentro x 116…964.
+const A_TUTTA_LARGHEZZA = ["camera", "conto"];
 const TOLLERANZA = 1;
 const X_MIN = 116;
 const X_MAX = 964;
@@ -56,6 +59,7 @@ async function comando(nome, corpo = {}) {
 const attesi = () => {
   const parti = [...FISSI];
   if (popup) parti.push("popup");
+  if (conto) parti.push("conto");
   if (fase === "torneo" || fase === "punti") parti.push("tabellone");
   return parti;
 };
@@ -92,11 +96,11 @@ async function main() {
     if ([x, y, w, h].some((v, i) => Math.abs(v - trovato[i]) > TOLLERANZA)) {
       errori.push(`${parte}: trovato [${trovato.map((n) => Math.round(n)).join(", ")}], atteso [${x}, ${y}, ${w}, ${h}]`);
     }
-    if (parte !== "camera" && (rect.x < X_MIN - TOLLERANZA || rect.x + rect.w > X_MAX + TOLLERANZA)) {
+    if (!A_TUTTA_LARGHEZZA.includes(parte) && (rect.x < X_MIN - TOLLERANZA || rect.x + rect.w > X_MAX + TOLLERANZA)) {
       errori.push(`${parte}: esce da x ${X_MIN}…${X_MAX}`);
     }
   }
-  const file = join(CARTELLA, "mockup", `battle-${fase}${popup ? "-popup" : ""}.jpg`);
+  const file = join(CARTELLA, "mockup", popup ? "battle-popup.jpg" : `battle-${fase}.jpg`);
   await pagina.screenshot({ path: file, type: "jpeg", quality: 88 });
   await browser.close();
   if (errori.length) {

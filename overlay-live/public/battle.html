@@ -30,6 +30,12 @@
         <stop offset="0.8" stop-color="#ffd659"/>
         <stop offset="1" stop-color="#b87808"/>
       </linearGradient>
+      <linearGradient id="g-vs" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fff6b0"/>
+        <stop offset="0.35" stop-color="#ffd23a"/>
+        <stop offset="0.7" stop-color="#ff8a1a"/>
+        <stop offset="1" stop-color="#e03a00"/>
+      </linearGradient>
       <symbol id="punta" viewBox="0 0 100 100">
         <path d="M50 0C53 35 65 47 100 50 65 53 53 65 50 100 47 65 35 53 0 50 35 47 47 35 50 0Z"/>
       </symbol>
@@ -72,10 +78,33 @@
       <div class="bt-timer-cifre" id="bt-timer-cifre"></div>
     </section>
 
+    <!-- POP-UP SOCIAL: compaiono a intervalli (Back Rooms, Rime Vicentine), mai durante il round -->
+    <section class="bt-popup bt-vetro" data-parte="popup" id="bt-popup">
+      <div class="bt-popup-icona" id="bt-popup-icona"></div>
+      <div class="bt-popup-testi">
+        <div class="bt-popup-sopra" id="bt-popup-sopra"></div>
+        <div class="bt-popup-titolo" id="bt-popup-titolo"></div>
+      </div>
+      <div class="bt-popup-sotto" id="bt-popup-sotto"></div>
+    </section>
+
     <!-- CAMERA: cornice attorno alla sorgente di LIVE Studio (fili neon, staffe d'angolo) -->
     <section class="bt-camera" data-parte="camera">
       <i class="bt-filo alto"></i><i class="bt-filo basso"></i>
       <i class="bt-staffa as"></i><i class="bt-staffa ad"></i><i class="bt-staffa bs"></i><i class="bt-staffa bd"></i>
+      <i class="bt-lampo"></i>
+      <!-- Spacco a fulmine: divide la camera a metà (stile «intervista doppia») dal via in poi -->
+      <div class="bt-spacco" id="bt-spacco" hidden>
+        <svg viewBox="0 0 60 608" preserveAspectRatio="none"><polyline class="bt-fulmine" points="30,0 40,58 20,122 42,190 18,262 40,332 22,402 42,470 20,540 30,608"/></svg>
+      </div>
+      <div class="bt-vs" id="bt-vs" hidden>
+        <i class="bt-onda"></i>
+        <svg viewBox="0 0 220 190" aria-label="VS">
+          <path class="bt-vs-fulmine" d="M128 4 L66 104 L104 104 L82 186 L158 76 L120 76 Z"/>
+          <text class="bt-vs-testo" x="110" y="134" text-anchor="middle">VS</text>
+        </svg>
+      </div>
+      <div class="bt-stop" id="bt-stop">STOP</div>
     </section>
 
     <!-- BOX DEGLI ARTISTI: in basso ai due lati della camera -->
@@ -99,6 +128,11 @@
     <section class="bt-chat" data-parte="chat">
       <div class="bt-chat-testo" id="bt-chat-testo"></div>
       <div class="bt-chat-conta" id="bt-chat-conta"></div>
+    </section>
+
+    <!-- 3-2-1 prima del via, a tutto schermo -->
+    <section class="bt-conto" data-parte="conto" id="bt-conto" hidden>
+      <div class="bt-conto-numero" id="bt-conto-numero"></div>
     </section>
 
     <!-- Solo con ?guide=1: tagli dei telefoni e zone coperte dall'app TikTok -->
