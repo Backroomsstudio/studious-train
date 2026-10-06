@@ -1,8 +1,10 @@
-// Regia: voti dei giudici, voto della chat TikTok, conferma, coda Nero.fan, classifica, countdown e spareggio.
+// Regia: voti dei giudici, voto della chat TikTok, conferma, coda Nero.fan, classifica, countdown e spareggio;
+// in più il layout senza premio delle live giornaliere (banner, barra che scorre, scheda «Ora in ascolto», spot).
 // Ogni azione è un comando al server; la pagina si ridisegna dallo stato che torna indietro.
 import { collega, formatta, durata } from "./connessione.js";
 import { suona, volume, audioPronto } from "./suoni.js";
-import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, RITARDO_CLASSIFICA_MS } from "./eventi-sonori.js";
+import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suoniSenzaPremio, suonaIn, RITARDO_CLASSIFICA_MS } from "./eventi-sonori.js";
+import { vociBarra, stimaGiroSecondi } from "./barra.js";
 
 const $ = (sel) => document.querySelector(sel);
 const CATEGORIE = ["beat", "voce", "mix"];
@@ -77,8 +79,11 @@ function riempi(input, valore) {
 const haVoti = (t) => CATEGORIE.some((c) => t.punteggi[c] !== null) || t.punteggi.chatVoti > 0;
 
 // ---------- Suoni ----------
-// Se la regia sceglie "in questa pagina", gli effetti suonano qui (da catturare come audio del PC in LIVE Studio).
-const suonaQui = () => stato?.suoni.dove === "regia";
+// Se la regia sceglie "in questa pagina", gli effetti suonano qui (da catturare come audio del PC in LIVE Studio),
+// con le regole del layout in onda: gara con premio o senza premio.
+const suonaQui = () => suonaIn(stato, stato?.layout ?? "gara", "regia");
+const inGara = () => (stato?.layout ?? "gara") === "gara";
+let ultimaTracciaAlle = -Infinity;
 
 function riproduci(suoni, ritardoBase = 0) {
   if (!suonaQui() || !suoni.length) return;
@@ -87,6 +92,12 @@ function riproduci(suoni, ritardoBase = 0) {
 }
 
 function suoniRegia(prima, dopo, eventi) {
+  if (!inGara()) {
+    const ora = performance.now();
+    const suoni = suoniSenzaPremio(prima, dopo, eventi, { ora, ultimaTracciaAlle });
+    if (suoni.some((x) => x.traccia)) ultimaTracciaAlle = ora;
+    return riproduci(suoni);
+  }
   riproduci(suoniTraccia(prima, dopo, eventi));
   if (prima && eventi.some((e) => e.nome === "classifica")) {
     riproduci(suoniClassifica(cambiClassifica(prima.classifica, dopo.classifica)), RITARDO_CLASSIFICA_MS);
@@ -102,6 +113,7 @@ function disegna(s) {
   disegnaSpareggio(s);
   disegnaClassifica(s);
   disegnaSerata(s);
+  disegnaSenzaPremio(s);
 }
 
 function disegnaTraccia(s) {
@@ -247,7 +259,7 @@ function disegnaSerata(s) {
   riempi($("#suoni-volume"), s.suoni.volume);
   $("#suoni-nota").textContent =
     s.suoni.dove === "overlay"
-      ? "Suonano dalla sorgente Link di LIVE Studio. Se in diretta non si sentono, scegliete «in questa pagina» e in LIVE Studio aggiungete l'audio del PC."
+      ? `Suonano dalla sorgente Link di LIVE Studio (${s.layout === "senzaPremio" ? "/senza-premio.html, il layout in onda" : "/overlay.html, la gara in onda"}). Se in diretta non si sentono, scegliete «in questa pagina» e in LIVE Studio aggiungete l'audio del PC.`
       : s.suoni.dove === "regia"
         ? audioPronto()
           ? "Suonano da questa pagina: tenetela aperta e catturate l'audio del PC in LIVE Studio."
@@ -272,7 +284,7 @@ setInterval(() => {
   const c = stato.countdown;
   const ms = c.fineAlle !== null ? c.fineAlle - conn.ora() : c.rimanenteMs;
   if (c.fineAlle !== null) {
-    riproduci(suoniTimer(msPrecedente, ms));
+    if (inGara()) riproduci(suoniTimer(msPrecedente, ms));
     msPrecedente = ms;
   } else msPrecedente = null;
   $("#timer").textContent = ms !== null ? `${durata(ms)}${c.rimanenteMs !== null ? " ⏸" : ""}` : c.scaduto ? "scaduto" : "--:--";
@@ -409,7 +421,7 @@ $("#suoni-volume").addEventListener("change", (e) => invia("suoni", { volume: Nu
 for (const bottone of document.querySelectorAll("[data-suono]")) {
   bottone.addEventListener("click", () => {
     if (stato?.suoni.dove === "spenti") return avviso("I suoni sono spenti: scegliete dove farli suonare", "errore");
-    invia("provaSuono", { nome: bottone.dataset.suono });
+    invia("provaSuono", { nome: bottone.dataset.suono, dati: JSON.parse(bottone.dataset.dati ?? "null") });
   });
 }
 $("#f-giudici").addEventListener("submit", async (e) => {
@@ -428,6 +440,159 @@ $("#nuova-serata").addEventListener("click", () => {
 });
 
 $("#aiuto").addEventListener("click", () => $("#d-aiuto").showModal());
+
+// ---------- Layout senza premio ----------
+const NOMI_ICONE = {
+  nero: "Nero.fan (nota)",
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  "instagram+tiktok": "Instagram+TikTok",
+  twitch: "Twitch",
+  kick: "Kick",
+  youtube: "YouTube",
+  spotify: "Spotify",
+  whatsapp: "WhatsApp",
+  sito: "Sito (globo)",
+  microfono: "Studio (microfono)",
+  logo: "Logo BR",
+};
+
+function disegnaSenzaPremio(s) {
+  const sp = s.senzaPremio;
+  riempi($("#layout"), s.layout);
+  $("#sp-regia").classList.toggle("attivo", s.layout === "senzaPremio");
+  const banner = $("#f-sp-banner");
+  for (const campo of ["sopra", "titolo", "pillola", "link"]) riempi(banner[campo], sp[campo]);
+  const spot = $("#f-sp-spot");
+  for (const campo of ["sopra", "titolo", "sotto"]) riempi(spot[campo], sp.spot[campo]);
+  riempi($("#sp-richiamo-ogni"), String(sp.richiamoOgniMinuti));
+  riempi($("#sp-suono-traccia"), sp.suonoTraccia);
+  for (const input of document.querySelectorAll("#sp-durate input")) riempi(input, sp.durate[input.dataset.tier]);
+  riempi($("#sp-velocita"), sp.velocita);
+  scriviVelocita(Number($("#sp-velocita").value));
+  $("#sp-in-ascolto").checked = sp.inAscoltoNellaBarra;
+  $("#sp-ascoltate").checked = sp.ascoltateNellaBarra;
+  $("#sp-loghi").checked = sp.loghiBarra;
+  $("#sp-filo").checked = sp.filoCamera;
+  disegnaVoci(s);
+}
+
+function scriviVelocita(v) {
+  if (!stato) return;
+  const giro = stimaGiroSecondi(vociBarra(stato), v);
+  $("#sp-velocita-testo").textContent = `${v} px/s · un giro ≈ ${giro} s`;
+  $("#sp-velocita-nota").textContent =
+    v > 120 ? "Sopra 120 il testo in movimento si legge peggio nella diretta." : giro > 75 ? "Giro lungo: spegnete una voce o alzate la velocità." : "";
+}
+
+// Elenco delle voci della barra: si ridisegna dallo stato solo quando l'operatore non ci sta scrivendo.
+function disegnaVoci(s, forza = false) {
+  const lista = $("#sp-voci");
+  if (!forza && lista.contains(document.activeElement)) return;
+  const firma = JSON.stringify(s.senzaPremio.voci);
+  if (!forza && lista.dataset.firma === firma) return;
+  lista.dataset.firma = firma;
+  lista.replaceChildren(...s.senzaPremio.voci.map(rigaVoce));
+}
+
+function rigaVoce(v = {}) {
+  const scelta = el("select", { name: "icona", "aria-label": "Icona" }, ...Object.entries(NOMI_ICONE).map(([valore, nome]) => el("option", { value: valore }, nome)));
+  scelta.value = v.icona ?? "sito";
+  const attiva = el("input", { type: "checkbox", name: "attiva", title: "In onda" });
+  attiva.checked = v.attiva !== false;
+  const etichetta = el("input", { name: "etichetta", maxlength: "28", placeholder: "Etichetta (es. Seguici)" });
+  etichetta.value = v.etichetta ?? "";
+  const testo = el("input", { name: "testo", maxlength: "40", placeholder: "Testo (es. @backrooms.studios)" });
+  testo.value = v.testo ?? "";
+  return el(
+    "li",
+    { "data-id": v.id ?? "" },
+    attiva,
+    scelta,
+    etichetta,
+    testo,
+    el("button", { type: "button", class: "piccolo", "data-sposta": "-1", title: "Sposta su" }, "↑"),
+    el("button", { type: "button", class: "piccolo", "data-sposta": "1", title: "Sposta giù" }, "↓"),
+    el("button", { type: "button", class: "piccolo", "data-togli": "", title: "Togli" }, "✕"),
+  );
+}
+
+// Le righe ancora vuote (appena aggiunte) non si mandano.
+function leggiVoci() {
+  return [...$("#sp-voci").children]
+    .map((li) => ({
+      id: li.dataset.id || undefined,
+      attiva: li.querySelector('[name="attiva"]').checked,
+      icona: li.querySelector('[name="icona"]').value,
+      etichetta: li.querySelector('[name="etichetta"]').value,
+      testo: li.querySelector('[name="testo"]').value,
+    }))
+    .filter((v) => v.etichetta.trim() || v.testo.trim());
+}
+
+async function salvaVoci(voci = leggiVoci()) {
+  const esito = await invia("senzaPremio", { voci });
+  if (esito.ok) avviso("Barra aggiornata", "ok");
+  else if (stato) disegnaVoci(stato, true);
+}
+
+const senzaPremio = async (modifiche, messaggio) => {
+  const esito = await invia("senzaPremio", modifiche);
+  if (esito.ok && messaggio) avviso(messaggio, "ok");
+  return esito;
+};
+
+$("#layout").addEventListener("change", (e) => invia("layout", { nome: e.target.value }));
+$("#sp-richiamo").addEventListener("click", () => invia("richiamo"));
+$("#sp-spot").addEventListener("click", () => invia("spotStudio"));
+$("#sp-ripeti").addEventListener("click", () => invia("ripetiScheda"));
+for (const bottone of document.querySelectorAll("[data-prova-scheda]")) {
+  bottone.addEventListener("click", () => invia("provaScheda", { tier: bottone.dataset.provaScheda }));
+}
+$("#f-sp-banner").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const f = e.target;
+  senzaPremio({ sopra: f.sopra.value, titolo: f.titolo.value, pillola: f.pillola.value, link: f.link.value }, "Banner aggiornato");
+});
+$("#f-sp-spot").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const f = e.target;
+  senzaPremio({ spot: { sopra: f.sopra.value, titolo: f.titolo.value, sotto: f.sotto.value } }, "Spot aggiornato");
+});
+$("#sp-richiamo-ogni").addEventListener("change", (e) => senzaPremio({ richiamoOgniMinuti: Number(e.target.value) }));
+$("#sp-suono-traccia").addEventListener("change", (e) => senzaPremio({ suonoTraccia: e.target.value }));
+$("#sp-durate").addEventListener("change", (e) => {
+  const input = e.target.closest("input");
+  if (input) senzaPremio({ durate: { [input.dataset.tier]: Number(input.value) } }, "Scheda aggiornata");
+});
+$("#sp-velocita").addEventListener("input", (e) => scriviVelocita(Number(e.target.value)));
+$("#sp-velocita").addEventListener("change", (e) => senzaPremio({ velocita: Number(e.target.value) }));
+for (const [id, chiave] of [["#sp-in-ascolto", "inAscoltoNellaBarra"], ["#sp-ascoltate", "ascoltateNellaBarra"], ["#sp-loghi", "loghiBarra"], ["#sp-filo", "filoCamera"]]) {
+  $(id).addEventListener("change", (e) => senzaPremio({ [chiave]: e.target.checked }));
+}
+$("#sp-voci").addEventListener("change", () => salvaVoci());
+$("#sp-voci").addEventListener("click", (e) => {
+  const bottone = e.target.closest("button");
+  if (!bottone) return;
+  const righe = [...$("#sp-voci").children];
+  const i = righe.indexOf(bottone.closest("li"));
+  if (bottone.dataset.togli !== undefined) righe.splice(i, 1);
+  else {
+    const j = i + Number(bottone.dataset.sposta);
+    if (j < 0 || j >= righe.length) return;
+    [righe[i], righe[j]] = [righe[j], righe[i]];
+  }
+  $("#sp-voci").replaceChildren(...righe);
+  salvaVoci();
+});
+$("#sp-aggiungi").addEventListener("click", () => {
+  const riga = rigaVoce({ attiva: true, icona: "sito" });
+  $("#sp-voci").append(riga);
+  riga.querySelector('[name="etichetta"]').focus();
+});
+$("#sp-ripristina").addEventListener("click", () => {
+  if (confirm("Ripristinare banner, barra, scheda e spot come all'inizio?")) invia("ripristinaSenzaPremio");
+});
 
 // Scorciatoie: funzionano anche col cursore dentro un campo.
 addEventListener("keydown", (e) => {

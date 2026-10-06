@@ -6,6 +6,8 @@ export const RITARDO_CLASSIFICA_MS = 1700;
 export const SOGLIA_URGENTE_MS = 30 * 60_000;
 
 const CATEGORIE = ["beat", "voce", "mix"];
+// Pulsante «Prova» della regia: l'effetto scelto, con i suoi dati (es. il tier per «inAscolto»).
+const prova = (e) => (e.dati.dati && Object.keys(e.dati.dati).length ? { nome: e.dati.nome, dati: e.dati.dati } : { nome: e.dati.nome });
 const chiaveVincitore = (s) => (s.vincitore?.visibile ? `${s.vincitore.id}@${s.vincitore.proclamatoAlle}` : null);
 const votiNascosti = (s) => s.nascondiVoti && !s.corrente.confermato;
 
@@ -13,7 +15,7 @@ const votiNascosti = (s) => s.nascondiVoti && !s.corrente.confermato;
 export function suoniTraccia(prima, dopo, eventi = []) {
   if (!prima) return [];
   const suoni = [];
-  for (const e of eventi) if (e.nome === "suono") suoni.push({ nome: e.dati.nome });
+  for (const e of eventi) if (e.nome === "suono") suoni.push(prova(e));
 
   const vincitore = chiaveVincitore(dopo);
   if (vincitore && vincitore !== chiaveVincitore(prima)) return [...suoni, { nome: "vincitore" }];
@@ -78,4 +80,45 @@ export function suoniTimer(msPrima, msDopo) {
   const [s1, s2] = [Math.ceil(msPrima / 1000), Math.ceil(msDopo / 1000)];
   if (s2 <= 10 && s2 !== s1) return [{ nome: "tic", dati: { ultimi: s2 <= 3 } }];
   return [];
+}
+
+// ---------- Layout senza premio (live giornaliere di ascolto) ----------
+// La scheda «Ora in ascolto» sale dalla barra in 0,6 s: la campana di «inAscolto» arriva quando atterra.
+export const SALITA_SCHEDA_MS = 600;
+export const USCITA_SCHEDA_MS = 500;
+export const DURATA_SPOT_MS = 10_000;
+export const RICHIAMO_MS = 2400;
+// Se la regia salta più tracce di fila, al massimo un suono ogni 8 secondi.
+export const PAUSA_MIN_TRACCIA_MS = 8000;
+
+// Suona solo la pagina del layout in onda, e solo dove la regia ha scelto (overlay, regia).
+export const suonaIn = (s, layout, dove) => (s?.layout ?? "gara") === layout && s?.suoni?.dove === dove;
+
+// Cosa deve comparire nella scheda: la traccia nuova (non al primo disegno), le prove e lo spot dello studio.
+export function richiesteScheda(prima, dopo, eventi = []) {
+  if (!prima || dopo.visibili?.scheda === false) return [];
+  const richieste = [];
+  const t = dopo.corrente;
+  if (t.id !== prima.corrente.id && t.titolo.trim()) {
+    richieste.push({ tipo: "ascolto", traccia: { titolo: t.titolo, artista: t.artista, tier: t.tier }, conSuono: true, daCorrente: true });
+  }
+  for (const e of eventi) {
+    if (e.nome === "scheda" && e.dati?.traccia) richieste.push({ tipo: "ascolto", traccia: e.dati.traccia, conSuono: Boolean(e.dati.conSuono) });
+    if (e.nome === "studio") richieste.push({ tipo: "studio" });
+  }
+  return richieste;
+}
+
+// Pochi suoni, perché la musica degli artisti non va coperta: la traccia nuova, il richiamo premuto a mano, le prove.
+export function suoniSenzaPremio(prima, dopo, eventi = [], { ora = 0, ultimaTracciaAlle = -Infinity } = {}) {
+  if (!prima) return [];
+  const suoni = [];
+  for (const e of eventi) if (e.nome === "suono") suoni.push(prova(e));
+  if (eventi.some((e) => e.nome === "richiamo" && e.dati?.manuale)) suoni.push({ nome: "premio" });
+  const scelta = dopo.senzaPremio?.suonoTraccia ?? "delicato";
+  const traccia = richiesteScheda(prima, dopo, eventi).find((r) => r.tipo === "ascolto" && r.conSuono);
+  if (traccia && scelta !== "nessuno" && ora - ultimaTracciaAlle >= PAUSA_MIN_TRACCIA_MS) {
+    suoni.push({ nome: scelta === "pieno" ? "nuovaTraccia" : "inAscolto", dati: { tier: traccia.traccia.tier ?? null }, traccia: true });
+  }
+  return suoni;
 }

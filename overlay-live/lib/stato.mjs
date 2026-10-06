@@ -3,13 +3,24 @@
 import { randomUUID } from "node:crypto";
 
 export const CATEGORIE = ["beat", "voce", "mix"];
-export const WIDGET = ["premio", "tabellone", "classifica", "timer"];
+// Gli ultimi tre sono del layout senza premio: banner in alto, barra che scorre, scheda «Ora in ascolto».
+export const WIDGET = ["premio", "tabellone", "classifica", "timer", "banner", "barra", "scheda"];
 export const DOVE_SUONI = ["overlay", "regia", "spenti"];
 // Sotto il premio, a rotazione: spiega a chi entra in live come partecipare. Righe separate da "|".
 export const INVITO_PREDEFINITO = "La traccia più votata vince | Manda la tua traccia su nero.fan/backrooms";
 // Frasi predefinite delle versioni precedenti: chi non le ha cambiate passa a quella nuova.
 export const INVITI_SUPERATI = ["La traccia più votata vince | Manda la tua traccia: link in bio"];
 const ORDINE_TIER = { throne: 0, superskip: 1, skip: 2, standard: 3 };
+// Layout in onda: la gara con premio (overlay.html) o la live giornaliera di ascolto (senza-premio.html).
+// Suona solo la pagina del layout scelto, così due sorgenti caricate in LIVE Studio non suonano insieme.
+export const LAYOUT = ["gara", "senzaPremio"];
+export const ICONE = ["nero", "instagram", "tiktok", "instagram+tiktok", "twitch", "kick", "youtube", "spotify", "whatsapp", "sito", "microfono", "logo"];
+export const TIER_SCHEDA = ["standard", "skip", "superskip", "throne"];
+// Suono quando parte una traccia nel layout senza premio: leggero, quello della gara, oppure niente.
+export const SUONI_TRACCIA = ["delicato", "pieno", "nessuno"];
+const MAX_VOCI = 12;
+const MAX_VOCI_ACCESE = 8;
+const MAX_ASCOLTATE = 200;
 
 export function statoIniziale(config) {
   return {
@@ -31,7 +42,136 @@ export function statoIniziale(config) {
     neroUltimo: null,
     neroInArrivo: null,
     ultimaConfermaAlle: null,
+    layout: LAYOUT.includes(config.layout) ? config.layout : "gara",
+    senzaPremio: senzaPremioIniziale(),
+    // Tracce ascoltate nella serata (per «Oggi abbiamo ascoltato N tracce»).
+    ascoltate: [],
   };
+}
+
+// Live giornaliere senza premio: banner «Mandaci la tua musica», barra dei social che scorre,
+// scheda «Ora in ascolto» quando su Nero parte una traccia, spot dello studio.
+export function senzaPremioIniziale() {
+  return {
+    sopra: "Mandaci",
+    titolo: "La tua musica!",
+    pillola: "Link in bio",
+    link: "nero.fan/backrooms",
+    voci: [
+      { id: "nero", attiva: true, icona: "nero", etichetta: "Manda la tua traccia", testo: "nero.fan/backrooms" },
+      { id: "social", attiva: true, icona: "instagram+tiktok", etichetta: "Seguici", testo: "@backrooms.studios" },
+      { id: "twitch", attiva: true, icona: "twitch", etichetta: "Twitch", testo: "@backrooms_studio" },
+      { id: "kick", attiva: true, icona: "kick", etichetta: "Kick", testo: "@backrooms_studio" },
+      { id: "sito", attiva: true, icona: "microfono", etichetta: "Registra da noi", testo: "backroomsstudio.it" },
+    ],
+    velocita: 80, // pixel al secondo
+    inAscoltoNellaBarra: true,
+    ascoltateNellaBarra: true, // «Oggi abbiamo ascoltato N tracce», da 3 tracce in su
+    loghiBarra: true,
+    filoCamera: true,
+    // Secondi in cui resta la scheda «Ora in ascolto»: chi paga si vede più a lungo.
+    durate: { standard: 8, skip: 10, superskip: 12, throne: 15 },
+    suonoTraccia: "delicato",
+    richiamoOgniMinuti: 5, // il link del banner «chiama» da solo, senza suono (0 = mai)
+    spot: { sopra: "Backrooms Studio · Vicenza", titolo: "Vuoi suonare così?", sotto: "Registrazione, mix e master · backroomsstudio.it" },
+  };
+}
+
+const vociValide = (voci) =>
+  Array.isArray(voci) && voci.every((v) => ICONE.includes(v?.icona) && typeof v.testo === "string" && typeof v.etichetta === "string");
+
+// Uno stato salvato da una versione precedente (senza questi campi, o con solo una parte) li ritrova completi.
+export function fondiSenzaPremio(salvato) {
+  const base = senzaPremioIniziale();
+  if (!salvato || typeof salvato !== "object" || Array.isArray(salvato)) return base;
+  return {
+    ...base,
+    ...salvato,
+    voci: vociValide(salvato.voci) ? salvato.voci : base.voci,
+    durate: { ...base.durate, ...salvato.durate },
+    spot: { ...base.spot, ...salvato.spot },
+    suonoTraccia: SUONI_TRACCIA.includes(salvato.suonoTraccia) ? salvato.suonoTraccia : base.suonoTraccia,
+  };
+}
+
+function testo(valore, max, nome, { obbligatorio = false } = {}) {
+  if (typeof valore !== "string") throw new Error(`${nome}: serve un testo`);
+  const pulito = valore.trim();
+  if (obbligatorio && !pulito) throw new Error(`${nome}: non può essere vuoto`);
+  if (pulito.length > max) throw new Error(`${nome}: al massimo ${max} caratteri`);
+  return pulito;
+}
+
+function numeroTra(valore, min, max, nome) {
+  const n = Number(valore);
+  if (valore === null || valore === "" || !Number.isFinite(n) || n < min || n > max) throw new Error(`${nome}: tra ${min} e ${max}`);
+  return Math.round(n);
+}
+
+// Modifiche dalla regia (o dall'API). Si controlla tutto su una copia: un errore non lascia metà modifica.
+export function impostaSenzaPremio(stato, modifiche = {}) {
+  const sp = JSON.parse(JSON.stringify(stato.senzaPremio));
+  if (modifiche.sopra !== undefined) sp.sopra = testo(modifiche.sopra, 24, "Riga sopra il titolo");
+  if (modifiche.titolo !== undefined) sp.titolo = testo(modifiche.titolo, 28, "Titolo del banner", { obbligatorio: true });
+  if (modifiche.pillola !== undefined) sp.pillola = testo(modifiche.pillola, 24, "Riga «link in bio»");
+  if (modifiche.link !== undefined) sp.link = testo(modifiche.link, 40, "Link del banner", { obbligatorio: true });
+  if (modifiche.voci !== undefined) {
+    if (!Array.isArray(modifiche.voci)) throw new Error("Barra: serve l'elenco delle voci");
+    if (modifiche.voci.length > MAX_VOCI) throw new Error(`Barra: al massimo ${MAX_VOCI} voci`);
+    sp.voci = modifiche.voci.map((v, i) => {
+      const n = `Barra, voce ${i + 1}`;
+      if (!ICONE.includes(v?.icona)) throw new Error(`${n}: icona sconosciuta`);
+      const voce = {
+        id: typeof v.id === "string" && v.id ? v.id.slice(0, 40) : randomUUID(),
+        attiva: v.attiva !== false,
+        icona: v.icona,
+        etichetta: testo(v.etichetta ?? "", 28, `${n} (etichetta)`),
+        testo: testo(v.testo ?? "", 40, `${n} (testo)`),
+      };
+      if (voce.attiva && !voce.testo) throw new Error(`${n}: manca il testo`);
+      return voce;
+    });
+    const accese = sp.voci.filter((v) => v.attiva).length;
+    if (accese > MAX_VOCI_ACCESE) throw new Error(`Barra: al massimo ${MAX_VOCI_ACCESE} voci accese, spegnetene una`);
+  }
+  if (modifiche.velocita !== undefined) sp.velocita = numeroTra(modifiche.velocita, 40, 160, "Velocità della barra (pixel al secondo)");
+  for (const chiave of ["inAscoltoNellaBarra", "ascoltateNellaBarra", "loghiBarra", "filoCamera"]) {
+    if (modifiche[chiave] !== undefined) sp[chiave] = Boolean(modifiche[chiave]);
+  }
+  if (modifiche.durate !== undefined) {
+    for (const [tier, secondi] of Object.entries(modifiche.durate ?? {})) {
+      if (!TIER_SCHEDA.includes(tier)) throw new Error("Durata della scheda: tipo di invio sconosciuto");
+      sp.durate[tier] = numeroTra(secondi, 4, 20, "Durata della scheda (secondi)");
+    }
+  }
+  if (modifiche.suonoTraccia !== undefined) {
+    if (!SUONI_TRACCIA.includes(modifiche.suonoTraccia)) throw new Error("Suono della traccia: delicato, pieno o nessuno");
+    sp.suonoTraccia = modifiche.suonoTraccia;
+  }
+  if (modifiche.richiamoOgniMinuti !== undefined) sp.richiamoOgniMinuti = numeroTra(modifiche.richiamoOgniMinuti, 0, 30, "Richiamo automatico (minuti)");
+  if (modifiche.spot !== undefined) {
+    const spot = modifiche.spot ?? {};
+    if (spot.sopra !== undefined) sp.spot.sopra = testo(spot.sopra, 40, "Spot, riga sopra");
+    if (spot.titolo !== undefined) sp.spot.titolo = testo(spot.titolo, 28, "Spot, titolo", { obbligatorio: true });
+    if (spot.sotto !== undefined) sp.spot.sotto = testo(spot.sotto, 60, "Spot, riga sotto");
+  }
+  stato.senzaPremio = sp;
+}
+
+export function impostaLayout(stato, nome) {
+  if (!LAYOUT.includes(nome)) throw new Error("Layout sconosciuto: gara o senzaPremio");
+  stato.layout = nome;
+}
+
+// Ogni traccia andata in ascolto (con un titolo) conta una volta sola, anche se la regia la rimette.
+export function registraAscolto(stato, ora) {
+  const t = stato.corrente;
+  if (!t.titolo) return false;
+  const ultima = stato.ascoltate.at(-1);
+  if (stato.ascoltate.some((a) => a.id === t.id) || (ultima && ultima.titolo === t.titolo && ultima.artista === t.artista)) return false;
+  stato.ascoltate.push({ id: t.id, titolo: t.titolo, artista: t.artista, tier: t.tier, alle: ora });
+  if (stato.ascoltate.length > MAX_ASCOLTATE) stato.ascoltate.splice(0, stato.ascoltate.length - MAX_ASCOLTATE);
+  return true;
 }
 
 export const suoniIniziali = (config) => ({ dove: config.suoni?.dove ?? "overlay", volume: config.suoni?.volume ?? 0.8 });
@@ -50,7 +190,7 @@ export function impostaSuoni(stato, { dove, volume }) {
 
 export const haVoti = (traccia) => CATEGORIE.some((c) => traccia.voti[c] !== null) || Object.keys(traccia.chat.voti).length > 0;
 
-// Nuova traccia in riproduzione su Nero: va da sola sul tabellone. Aspetta in neroInArrivo se quella
+// Nuova traccia in riproduzione su Nero: va da sola sul tabellone. Nella gara aspetta in neroInArrivo se quella
 // attuale ha voti non ancora confermati (la regia conferma con F4), oppure se è stata confermata da meno
 // di `attesaMs` (il pubblico vede il punteggio e la classifica che si muove); poi passa con passaSeTocca.
 export function tracciaDaNero(stato, traccia, { ora = 0, attesaMs = 0 } = {}) {
@@ -60,9 +200,10 @@ export function tracciaDaNero(stato, traccia, { ora = 0, attesaMs = 0 } = {}) {
   const { titolo, artista, tier } = traccia;
   stato.coda = stato.coda.filter((v) => !(v.titolo === titolo && v.artista === artista));
   if (stato.corrente.titolo === titolo && stato.corrente.artista === artista) return true;
-  const aspetta = stato.corrente.confermato
-    ? attesaMs > 0 && ora - (stato.ultimaConfermaAlle ?? -Infinity) < attesaMs
-    : haVoti(stato.corrente);
+  // Nel layout senza premio non si vota: la traccia passa subito, anche se restano voti di una gara.
+  const aspetta =
+    stato.layout !== "senzaPremio" &&
+    (stato.corrente.confermato ? attesaMs > 0 && ora - (stato.ultimaConfermaAlle ?? -Infinity) < attesaMs : haVoti(stato.corrente));
   if (aspetta) {
     stato.neroInArrivo = { titolo, artista, tier };
   } else {
@@ -304,5 +445,8 @@ export function istantanea(stato, config, ora) {
     countdown: stato.countdown,
     vincitore: stato.vincitore,
     spareggio: stato.spareggio,
+    layout: stato.layout,
+    senzaPremio: stato.senzaPremio,
+    ascoltate: stato.ascoltate.length,
   };
 }

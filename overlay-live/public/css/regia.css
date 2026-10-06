@@ -541,3 +541,136 @@ code {
   font-size: 12px;
   color: var(--argento);
 }
+
+/* ---------- Layout in onda (testata) ---------- */
+.layout-scelta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 6px;
+  font: 700 13px/1 var(--font-dati);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--argento);
+}
+.layout-scelta select {
+  padding: 6px 8px;
+  font: 700 14px/1.2 var(--font-dati);
+  letter-spacing: 0.04em;
+}
+
+/* ---------- Senza premio ---------- */
+.sp-regia {
+  grid-column: 1 / -1;
+}
+.sp-regia.attivo {
+  border-color: rgba(160, 102, 255, 0.7);
+  box-shadow: 0 0 30px rgba(160, 102, 255, 0.25);
+}
+.sp-regia code {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.sp-colonne {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.4fr) 290px;
+  gap: 26px;
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .sp-colonne {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.sp-colonna > h3:first-child {
+  margin-top: 0;
+}
+.sp-campi {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+}
+.sp-campi label,
+.sp-durate label {
+  display: grid;
+  gap: 4px;
+  font: 600 12px/1 var(--font-dati);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--testo-tenue);
+}
+.sp-campi input,
+.sp-durate input {
+  font: 500 15px/1.3 "Barlow", system-ui, sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--testo);
+}
+.sp-campi .largo {
+  grid-column: 1 / -1;
+}
+.sp-campi button {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+.sp-riga {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 12px 0 4px;
+}
+.sp-durate {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.sp-voci {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.sp-voci li {
+  display: grid;
+  grid-template-columns: auto 164px minmax(0, 0.85fr) minmax(0, 1.15fr) auto auto auto;
+  gap: 6px;
+  align-items: center;
+}
+.sp-voci input:not([type="checkbox"]),
+.sp-voci select {
+  padding: 7px 8px;
+  font-size: 14px;
+}
+.sp-voci input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+.sp-voci li:has(input[type="checkbox"]:not(:checked)) input:not([type="checkbox"]),
+.sp-voci li:has(input[type="checkbox"]:not(:checked)) select {
+  opacity: 0.45;
+}
+.sp-anteprima-colonna {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+.sp-anteprima-colonna a {
+  color: var(--argento);
+}
+.sp-anteprima {
+  width: 270px;
+  height: 480px;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--linea);
+  background: #000;
+}
+.sp-anteprima iframe {
+  width: 1080px;
+  height: 1920px;
+  border: 0;
+  transform: scale(0.25);
+  transform-origin: 0 0;
+}

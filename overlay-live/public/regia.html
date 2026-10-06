@@ -17,8 +17,15 @@
     <span class="conn" id="conn">offline</span>
     <span class="conn" id="tiktok-stato" title="Chat TikTok">TikTok</span>
     <span class="conn" id="nero-stato" title="Traccia in riproduzione su Nero.fan">Nero</span>
+    <label class="layout-scelta" title="Suona solo la pagina del layout in onda. Senza premio: la traccia di Nero passa subito, senza aspettare i voti.">In onda
+      <select id="layout">
+        <option value="gara">Gara con premio</option>
+        <option value="senzaPremio">Senza premio</option>
+      </select>
+    </label>
     <nav>
-      <a href="/overlay?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok e senza suoni">Anteprima overlay ↗</a>
+      <a href="/overlay?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok e senza suoni">Anteprima gara ↗</a>
+      <a href="/senza-premio.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok e senza suoni">Anteprima senza premio ↗</a>
       <button type="button" id="aiuto">Scorciatoie</button>
     </nav>
   </header>
@@ -157,6 +164,9 @@
         <button class="piccolo" data-suono="primo">Primo posto</button>
         <button class="piccolo" data-suono="allarme">Ultimi 30′</button>
         <button class="piccolo" data-suono="vincitore">Vincitore</button>
+        <button class="piccolo" data-suono="inAscolto" title="Layout senza premio: traccia nuova">In ascolto</button>
+        <button class="piccolo" data-suono="inAscolto" data-dati='{"tier":"throne"}' title="Layout senza premio: traccia nuova Throne">In ascolto Throne</button>
+        <button class="piccolo" data-suono="premio" title="Layout senza premio: richiamo del link">Richiamo</button>
       </div>
       <p class="nota" id="suoni-nota"></p>
 
@@ -193,6 +203,98 @@
         <button id="nuova-serata" class="pericolo">Nuova serata</button>
       </div>
     </section>
+
+    <!-- LAYOUT SENZA PREMIO: live giornaliere di ascolto -->
+    <section class="scheda sp-regia" id="sp-regia">
+      <h2>Senza premio <span class="conta">live giornaliere · sorgente Link <code>/senza-premio.html</code></span></h2>
+      <div class="sp-colonne">
+        <div class="sp-colonna">
+          <div class="azioni">
+            <button id="sp-richiamo" class="primario" title="Il link del banner si illumina d'oro, con la campanella. Stream Deck: POST /api/richiamo">Richiamo link</button>
+            <button id="sp-spot" title="Scheda «Vuoi suonare così?» per 10 secondi, senza suono. Stream Deck: POST /api/spotStudio">Spot studio</button>
+            <button id="sp-ripeti" title="Rimostra la scheda della traccia in ascolto, senza suono">Ripeti scheda</button>
+          </div>
+
+          <h3>Banner</h3>
+          <form id="f-sp-banner" class="modulo sp-campi" autocomplete="off">
+            <label>Riga sopra <input name="sopra" maxlength="24"></label>
+            <label>Titolo <input name="titolo" maxlength="28" required></label>
+            <label>Riga piccola <input name="pillola" maxlength="24"></label>
+            <label>Link <input name="link" maxlength="40" required></label>
+            <button>Salva banner</button>
+          </form>
+          <label class="sp-riga">Richiamo automatico
+            <select id="sp-richiamo-ogni">
+              <option value="0">spento</option>
+              <option value="3">ogni 3 minuti</option>
+              <option value="5">ogni 5 minuti</option>
+              <option value="10">ogni 10 minuti</option>
+              <option value="15">ogni 15 minuti</option>
+            </select>
+          </label>
+          <p class="nota">Il richiamo automatico è muto; quello a mano fa la campanella.</p>
+
+          <h3>Scheda «Ora in ascolto»</h3>
+          <p class="nota">Sale dalla barra quando su Nero parte una traccia. Chi paga resta di più (secondi):</p>
+          <div class="sp-durate" id="sp-durate">
+            <label>Gratis <input type="number" min="4" max="20" data-tier="standard"></label>
+            <label>Skip <input type="number" min="4" max="20" data-tier="skip"></label>
+            <label>Super Skip <input type="number" min="4" max="20" data-tier="superskip"></label>
+            <label>Throne <input type="number" min="4" max="20" data-tier="throne"></label>
+          </div>
+          <label class="sp-riga">Suono quando parte una traccia
+            <select id="sp-suono-traccia">
+              <option value="delicato">delicato (non copre la musica)</option>
+              <option value="pieno">pieno (come nella gara)</option>
+              <option value="nessuno">nessuno</option>
+            </select>
+          </label>
+          <div class="azioni">
+            <span class="nota">Prova scheda:</span>
+            <button class="piccolo" data-prova-scheda="standard">Gratis</button>
+            <button class="piccolo" data-prova-scheda="skip">Skip</button>
+            <button class="piccolo" data-prova-scheda="superskip">Super Skip</button>
+            <button class="piccolo" data-prova-scheda="throne">Throne</button>
+          </div>
+
+          <h3>Spot studio</h3>
+          <form id="f-sp-spot" class="modulo sp-campi" autocomplete="off">
+            <label class="largo">Riga sopra <input name="sopra" maxlength="40"></label>
+            <label>Titolo <input name="titolo" maxlength="28" required></label>
+            <label class="largo">Riga sotto <input name="sotto" maxlength="60"></label>
+            <button>Salva spot</button>
+          </form>
+        </div>
+
+        <div class="sp-colonna">
+          <h3>Barra che scorre</h3>
+          <p class="nota">Una riga per voce, nell'ordine in cui passano. Spunta = in onda (massimo 8). Le modifiche vanno in onda appena esci dal campo.</p>
+          <ol class="sp-voci" id="sp-voci"></ol>
+          <div class="azioni">
+            <button id="sp-aggiungi" class="piccolo">+ Aggiungi voce</button>
+            <button id="sp-ripristina" class="piccolo pericolo" title="Testi, social e impostazioni di partenza">Ripristina predefiniti</button>
+          </div>
+          <label class="sp-riga">Velocità <input type="range" id="sp-velocita" min="40" max="160" step="10"> <span id="sp-velocita-testo"></span></label>
+          <p class="nota" id="sp-velocita-nota"></p>
+          <label class="interruttore"><input type="checkbox" id="sp-in-ascolto"> Traccia in ascolto nella barra</label>
+          <label class="interruttore"><input type="checkbox" id="sp-ascoltate"> «Oggi abbiamo ascoltato N tracce» (da 3 tracce)</label>
+          <label class="interruttore"><input type="checkbox" id="sp-loghi"> Loghi BR ai lati della barra</label>
+          <label class="interruttore"><input type="checkbox" id="sp-filo"> Filo luminoso sopra la camera</label>
+
+          <h3>In onda</h3>
+          <div class="interruttori">
+            <label class="interruttore"><input type="checkbox" data-widget="banner"> Banner</label>
+            <label class="interruttore"><input type="checkbox" data-widget="barra"> Barra che scorre</label>
+            <label class="interruttore"><input type="checkbox" data-widget="scheda"> Scheda e spot</label>
+          </div>
+        </div>
+
+        <div class="sp-colonna sp-anteprima-colonna">
+          <div class="sp-anteprima"><iframe src="/senza-premio.html?anteprima=1&amp;muto=1" title="Anteprima del layout senza premio" width="1080" height="1920" loading="lazy"></iframe></div>
+          <a href="/senza-premio.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener">Apri grande, con le zone ↗</a>
+        </div>
+      </div>
+    </section>
   </main>
 
   <div class="avvisi" id="avvisi" aria-live="polite"></div>
@@ -206,7 +308,7 @@
       <dt><kbd>F9</kbd></dt><dd>Pausa / riprendi il countdown</dd>
       <dt><kbd>Invio</kbd> in un voto</dt><dd>Passa al voto successivo</dd>
     </dl>
-    <p class="nota">Stream Deck: ogni azione è anche un <code>POST http://127.0.0.1:4747/api/&lt;comando&gt;</code> con <code>Content-Type: application/json</code> (es. <code>conferma</code>, <code>apriChat</code>, <code>prossima</code>). Elenco completo nel README.</p>
+    <p class="nota">Stream Deck: ogni azione è anche un <code>POST http://127.0.0.1:4747/api/&lt;comando&gt;</code> con <code>Content-Type: application/json</code> (es. <code>conferma</code>, <code>apriChat</code>, <code>prossima</code>; senza premio: <code>richiamo</code>, <code>spotStudio</code>, <code>ripetiScheda</code>). Elenco completo nel README.</p>
     <form method="dialog"><button class="primario">Chiudi</button></form>
   </dialog>
 

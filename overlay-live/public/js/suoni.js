@@ -182,6 +182,21 @@ const effetti = {
     ottoni(t + 0.62, [48, 55, 60, 64], { dur: 0.6, vol: 0.1, apri: 4200 });
     scintille(t + 0.66, 6, 0.3);
   },
+  // Traccia nuova nelle live senza premio: leggero, senza colpo, per non coprire la musica appena partita.
+  // La campana arriva a 0,6 s, quando la scheda «Ora in ascolto» atterra sulla barra. Chi paga ha qualcosa in più.
+  inAscolto(t, { tier = null } = {}) {
+    whoosh(t, 0.55, true, 0.16);
+    campana(t + 0.6, 79, { dur: 0.9, vol: 0.13, pan: -0.2 });
+    campana(t + 0.7, 84, { dur: 1.2, vol: 0.15, pan: 0.2 });
+    scintille(t + 0.62, 5, 0.4, 0.04);
+    if (tier === "skip" || tier === "superskip") campana(t + 0.82, tier === "superskip" ? 91 : 88, { dur: 1, vol: 0.1 });
+    if (tier === "throne") {
+      ottoni(t + 0.6, [60, 64, 67, 72], { dur: 0.9, vol: 0.07, apri: 4200 });
+      campana(t + 0.82, 88, { dur: 1.1, vol: 0.11 });
+      campana(t + 0.94, 91, { dur: 1.4, vol: 0.1 });
+      scintille(t + 0.8, 12, 0.9, 0.05);
+    }
+  },
   // Calcolo del punteggio: salita di 1,5 s con tic che accelerano, poi il colpo sul risultato.
   calcolo(t) {
     const salita = 1.5;

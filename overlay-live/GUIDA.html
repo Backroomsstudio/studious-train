@@ -228,6 +228,7 @@ dl.problemi dd strong { color: var(--testo); }
       <li><a href="#fine">Fine gara e vincitore</a></li>
       <li><a href="#suoni">Effetti sonori</a></li>
       <li><a href="#dopo">Dopo la live</a></li>
+      <li><a href="#senza-premio">Live senza premio (giornaliere)</a></li>
       <li><a href="#nero"><span class="facoltativo">Coda automatica Nero.fan</span></a></li>
       <li><a href="#rete"><span class="facoltativo">Regia da tablet o portatile</span></a></li>
       <li><a href="#problemi">Se qualcosa non va</a></li>
@@ -245,7 +246,7 @@ dl.problemi dd strong { color: var(--testo); }
     <!-- IN BREVE -->
     <section id="in-breve">
       <h2>In breve</h2>
-      <p class="intro">Le quattro cose da ricordare quando la guida è già stata seguita una volta.</p>
+      <p class="intro">Le cose da ricordare quando la guida è già stata seguita una volta.</p>
       <div class="in-breve">
         <div class="scheda">
           <h3>Avvio</h3>
@@ -267,6 +268,11 @@ dl.problemi dd strong { color: var(--testo); }
         <div class="scheda">
           <h3>Sorgente Link in LIVE Studio</h3>
           <div class="copia"><code>http://127.0.0.1:4747/overlay.html</code><button type="button">Copia</button></div>
+        </div>
+        <div class="scheda">
+          <h3>Live giornaliere senza premio</h3>
+          <div class="copia"><code>http://127.0.0.1:4747/senza-premio.html</code><button type="button">Copia</button></div>
+          <p style="margin-top:8px">Nella regia, in alto: <strong>In onda → Senza premio</strong>. Vedi <a href="#senza-premio">Live senza premio</a>.</p>
         </div>
       </div>
       <p style="margin-top:14px">Giudici: <strong>Daniele</strong> Beat, <strong>Plugghe</strong> Voce, <strong>Freya</strong> Mix. La chat vale come un quarto giudice (25%). Account TikTok: <strong>@backrooms.studios</strong>.</p>
@@ -311,6 +317,7 @@ dl.problemi dd strong { color: var(--testo); }
 <pre class="finestra">Overlay live pronto
   Regia:   http://127.0.0.1:4747/regia
   Overlay: http://127.0.0.1:4747/overlay.html   (sorgente Link in TikTok LIVE Studio, 1080x1920)
+  Senza premio: http://127.0.0.1:4747/senza-premio.html   (live giornaliere di ascolto, 1080x1920)
 
 Nero.fan: manca nero.segreto in config.json, i webhook verranno rifiutati.
 Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
@@ -328,7 +335,7 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
           <p>In alto a sinistra deve esserci <span class="etichetta-ui verde">Connesso</span>. Aggiungila ai preferiti.</p>
         </li>
         <li><p>In fondo a destra premi <strong>Carica dati demo</strong> → <strong>OK</strong>. Compaiono una traccia con i voti, una classifica e una coda finte.</p></li>
-        <li><p>In alto a destra premi <strong>Anteprima overlay ↗</strong>: vedi l'overlay come lo vedranno gli spettatori, su sfondo scuro.</p></li>
+        <li><p>In alto a destra premi <strong>Anteprima gara ↗</strong>: vedi l'overlay come lo vedranno gli spettatori, su sfondo scuro.</p></li>
       </ol>
 
       <h3>5. Aggiungi l'overlay in TikTok LIVE Studio</h3>
@@ -392,7 +399,7 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
       <p class="intro">La regia la usa una persona sola. I numeri gialli sono le zone della regia nell'immagine.</p>
 
       <figure class="figura">
-        <img src="mockup/regia.jpg" alt="La regia con le zone numerate da 1 a 11" width="1440" height="1586" loading="lazy">
+        <img src="mockup/regia.jpg" alt="La regia con le zone numerate da 1 a 13" width="1440" height="2605" loading="lazy">
         <figcaption>La regia con i dati demo.</figcaption>
       </figure>
       <ul class="legenda">
@@ -407,6 +414,8 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
         <li><span class="zona">9</span> Riquadri visibili in onda</li>
         <li><span class="zona">10</span> Effetti sonori</li>
         <li><span class="zona">11</span> Premio, frasi sotto il premio, giudici, account TikTok</li>
+        <li><span class="zona">12</span> Layout senza premio delle live giornaliere (vedi <a href="#senza-premio">Live senza premio</a>)</li>
+        <li><span class="zona">13</span> In onda: gara con premio o senza premio</li>
       </ul>
 
       <ol class="passi" style="margin-top:28px">
@@ -486,7 +495,8 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
         <li><strong>Suonano in questa pagina</strong>: escono dalla regia. Serve se in diretta i suoni dell'overlay non si sentono: in LIVE Studio aggiungi l'audio del PC (audio di sistema) e tieni la regia aperta. Fai un clic nella regia, altrimenti il browser non fa partire l'audio.</li>
         <li><strong>Spenti</strong>: nessun suono.</li>
         <li><strong>Volume</strong>: vale per tutti gli effetti. Teneteli sotto la musica: devono accompagnare, non coprire la traccia.</li>
-        <li>I pulsanti di <strong>Prova</strong> fanno suonare un effetto dove è impostato. L'anteprima della regia (<em>Anteprima overlay ↗</em>) è muta apposta, così non si sentono doppi.</li>
+        <li>I pulsanti di <strong>Prova</strong> fanno suonare un effetto dove è impostato. Le anteprime della regia (<em>Anteprima gara ↗</em>, <em>Anteprima senza premio ↗</em> e quella piccola nella sezione Senza premio) sono mute apposta, così non si sentono doppi.</li>
+        <li>Suona solo il layout scelto in <strong>In onda</strong> <span class="zona">13</span>: se in LIVE Studio avete caricato sia la gara sia il layout senza premio, non partono suoni doppi.</li>
       </ul>
       <div class="riquadro da-provare">
         <span class="tag">Da controllare la prima volta</span>
@@ -498,6 +508,62 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
     <section id="dopo">
       <h2>Dopo la live</h2>
       <p>Chiudi la finestra nera con la X. Classifica e voti restano salvati nel file <code class="in">dati\stato.json</code>: alla prossima live riaprila e premi <strong>Nuova serata</strong>.</p>
+    </section>
+
+    <!-- SENZA PREMIO -->
+    <section id="senza-premio">
+      <h2><small>Live giornaliere</small>Layout senza premio</h2>
+      <p class="intro">Per le live in cui ascoltate la musica delle persone senza regalare nulla. Niente premio, voti, classifica né countdown: in alto il banner che spiega come mandarvi la musica, sotto la camera una barra che scorre con tutti i vostri social, e una scheda «Ora in ascolto» che sale quando su Nero parte una traccia.</p>
+
+      <div class="affiancati">
+        <figure class="figura">
+          <img src="mockup/senza-premio.jpg" alt="Layout senza premio: banner «Mandaci la tua musica!» con link in bio e nero.fan/backrooms in oro, finta camera, scheda Ora in ascolto con una traccia Throne, barra con i social sotto la camera" width="1080" height="1920" loading="lazy">
+          <figcaption>Con una traccia Throne in ascolto. Al posto della scritta grigia «Camera» c'è la vostra camera.</figcaption>
+        </figure>
+        <div>
+          <h3>Una volta sola: la scena in LIVE Studio</h3>
+          <ol class="passi">
+            <li><p>Apri la scena delle live giornaliere e <strong>togli</strong> il vecchio banner «Mandaci la tua musica», la scritta «qui scrivi social e tutto che scorre» e i loghi BR: li rifà l'overlay, con i vostri colori e le animazioni.</p></li>
+            <li><p><strong>Aggiungi fonte</strong> → <strong>Link</strong> e incolla:</p>
+              <div class="copia"><code>http://127.0.0.1:4747/senza-premio.html</code><button type="button">Copia</button></div>
+              <p>Larghezza <strong>1080</strong>, altezza <strong>1920</strong>. Allargala su tutta la tela e trascinala in cima alla lista delle sorgenti, come per la gara.</p>
+            </li>
+            <li><p>Per controllare le posizioni: <code class="in">http://127.0.0.1:4747/senza-premio.html?anteprima=1&amp;guide=1</code>. Il riquadro azzurro è la camera, quello bianco la zona dove sui telefoni escono i commenti.</p></li>
+          </ol>
+        </div>
+      </div>
+
+      <h3>A ogni live giornaliera</h3>
+      <ol class="passi">
+        <li><p>Avvia <strong>AVVIA.cmd</strong> e apri la regia, come sempre.</p></li>
+        <li><p>In alto nella regia, in <strong>In onda</strong> <span class="zona">13</span>, scegli <strong>Senza premio</strong>. Serve per due cose: suona solo questo layout, e la traccia di Nero passa subito, senza aspettare voti.</p></li>
+        <li><p>Avvia la sessione live su <strong>nero.fan</strong>. Ogni traccia che parte su Nero sale nella scheda «Ora in ascolto», con un suono leggero che non copre la musica, e passa anche nella barra.</p></li>
+        <li><p>Non serve <strong>Nuova serata</strong>, a meno che non vogliate azzerare il conto «Oggi abbiamo ascoltato N tracce» (compare nella barra da 3 tracce in su).</p></li>
+      </ol>
+
+      <h3>Durante la live: tre pulsanti</h3>
+      <p>Sono in cima alla sezione <strong>Senza premio</strong> <span class="zona">12</span>:</p>
+      <ul class="punti">
+        <li><strong>Richiamo link</strong>: il banner diventa d'oro, i loghi girano e <strong>nero.fan/backrooms</strong> pulsa, con una campanella. Usatelo quando dite a voce «mandateci la vostra musica» o quando entra tanta gente. Ogni 5 minuti lo fa anche da solo, senza suono.</li>
+        <li><strong>Spot studio</strong>: per 10 secondi sale la scheda «Vuoi suonare così? · Registrazione, mix e master · backroomsstudio.it». Il momento giusto è quando una traccia è bella ma suonerebbe meglio con un mix fatto bene: è lì che chi ascolta pensa a voi.</li>
+        <li><strong>Ripeti scheda</strong>: rimostra la traccia in ascolto, senza suono (per chi è appena entrato).</li>
+      </ul>
+
+      <h3>Cosa si cambia dalla regia</h3>
+      <ul class="punti">
+        <li><strong>Banner</strong>: le quattro righe («Mandaci», «La tua musica!», «Link in bio», il link) e il richiamo automatico.</li>
+        <li><strong>Barra che scorre</strong>: una riga per voce, nell'ordine in cui passano. Spunta = in onda (massimo 8), icona, etichetta (es. <em>Seguici</em>) e testo (es. <em>@backrooms.studios</em>). Le frecce cambiano l'ordine, <strong>✕</strong> toglie, <strong>+ Aggiungi voce</strong> aggiunge (per esempio YouTube o Spotify quando li aprirete). Si salva da solo quando esci dal campo. Sotto: la velocità (80 di partenza; sopra 120 si legge peggio) e gli interruttori.</li>
+        <li><strong>Scheda «Ora in ascolto»</strong>: quanti secondi resta per ogni tipo di invio. Di partenza gratis 8, Skip 10, Super Skip 12, Throne 15: chi paga si vede di più (Skip con bordo cromato, Super Skip magenta, Throne tutto d'oro con la corona). È quello che gli spettatori vedono comprando un invio veloce. Con <strong>Prova scheda</strong> vedete come appare ognuno.</li>
+        <li><strong>Suono quando parte una traccia</strong>: delicato (consigliato), pieno come nella gara, oppure nessuno.</li>
+        <li><strong>Spot studio</strong>: le tre righe dello spot.</li>
+        <li><strong>In onda</strong>: banner, barra e scheda si possono nascondere uno per uno.</li>
+      </ul>
+      <p>A destra c'è un'anteprima piccola, muta, che si aggiorna dal vivo.</p>
+
+      <div class="riquadro da-provare">
+        <span class="tag">Da controllare la prima volta</span>
+        <p>Guardate una live da un telefono. I commenti escono in basso a sinistra e possono coprire l'inizio della barra e della scheda. La scheda arriva appena sotto il mento di chi parla: se vi sedete più in basso, diteci e la alziamo o la accorciamo.</p>
+      </div>
     </section>
 
     <!-- NERO -->

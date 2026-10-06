@@ -2,13 +2,15 @@
 
 Overlay per le live di recensione su TikTok: premio in palio in grande, tabellone della traccia in ascolto (Beat, Voce e Mix, ognuno col suo giudice, più il voto della chat), classifica Top 5 animata con podio oro/argento/bronzo e corona, countdown di 3 ore (rosso e lampeggiante negli ultimi 30 minuti), notifiche, effetti sonori, schermata del vincitore e spareggio. Gira in locale sul PC della diretta e non dipende dal sito Next.js.
 
+Lo stesso server fa anche il **layout senza premio** per le live giornaliere di ascolto (`/senza-premio.html`): banner «Mandaci la tua musica!» con `nero.fan/backrooms`, barra che scorre con i social, scheda «Ora in ascolto» che sale quando su Nero parte una traccia, spot dello studio. Stessa regia, stessa traccia automatica da Nero, stessi suoni (vedi [Layout senza premio](#layout-senza-premio)).
+
 ```
-Nero.fan ─webhook─▶ ┐
-Commenti TikTok ──▶ │  server.mjs (Node, porta 4747) ──WebSocket──▶ /overlay  (sorgente Link in TikTok LIVE Studio)
-Regia / Stream Deck ▶ ┘  stato + dati/stato.json ─────────────────▶ /regia    (browser della regia)
+Nero.fan ─webhook─▶ ┐                                        ┌──▶ /overlay.html       (gara con premio, sorgente Link)
+Commenti TikTok ──▶ │  server.mjs (Node, porta 4747) ─WebSocket─┼──▶ /senza-premio.html  (live giornaliere, sorgente Link)
+Regia / Stream Deck ▶ ┘  stato + dati/stato.json                 └──▶ /regia               (browser della regia)
 ```
 
-Anteprime in [`mockup/`](mockup): verticale, ultimi minuti (timer rosso e nuovo primo posto), zone del telefono, orizzontale, vincitore, spareggio e la regia.
+Anteprime in [`mockup/`](mockup): verticale, ultimi minuti (timer rosso e nuovo primo posto), zone del telefono, orizzontale, vincitore, spareggio, la regia e il layout senza premio (`senza-premio*.jpg`).
 
 **Guida passo passo per la regia** (installazione sul PC fisso, TikTok LIVE Studio, uso durante la live, problemi comuni): [`GUIDA.html`](GUIDA.html), si apre con un doppio clic.
 
@@ -47,11 +49,36 @@ Si cambiano nel blocco di variabili in cima a `public/css/overlay.css`. Con `?gu
 
 Per vedere l'overlay in un browser normale: `http://127.0.0.1:4747/overlay?anteprima=1` (sfondo scuro al posto della trasparenza). Altri parametri: `&guide=1` (zone del telefono), `&muto=1` (nessun suono).
 
+## Layout senza premio
+
+Per le live giornaliere in cui si ascolta la musica delle persone senza regalare nulla. In LIVE Studio: sorgente **Link** `http://127.0.0.1:4747/senza-premio.html`, 1080×1920, stesa su tutta la tela (sfondo trasparente). Dalla scena vanno tolti il vecchio banner e la scritta segnaposto «qui scrivi social e tutto che scorre». Nella regia, in alto: **In onda → Senza premio**.
+
+- **Banner**: «MANDACI» · «La tua musica!» (gotico cromato) · «Link in bio» · `nero.fan/backrooms` in oro, con i loghi BR ai lati. Ogni 5 minuti (regolabile, muto) e con *Richiamo link* (campanella) il link si illumina d'oro e i loghi girano.
+- **Barra che scorre** sotto la camera, a filo dei bordi: social e link con icone disegnate da noi (Nero.fan, Instagram + TikTok `@backrooms.studios`, Twitch e Kick `@backrooms_studio`, `backroomsstudio.it`), la traccia in ascolto e, da 3 tracce, «Oggi abbiamo ascoltato N tracce». Scorre a 80 px/s (40–160); il contenuto nuovo entra da destra, quello che si sta leggendo non salta mai.
+- **Scheda «Ora in ascolto»**: sale da dietro la barra quando su Nero parte una traccia, con vinile che gira. Chi paga si vede di più e più a lungo: gratis 8 s, Skip 10 (bordo cromo), Super Skip 12 (magenta), Throne 15 (oro, corona e punte d'oro). Suono `inAscolto` delicato (picco 0,27, metà di quello della gara), oppure «pieno» o nessuno.
+- **Spot studio**: «Vuoi suonare così? · Registrazione, mix e master · backroomsstudio.it» per 10 secondi, muto, quando la regia preme *Spot studio*.
+- In questo layout la traccia di Nero passa subito, senza aspettare voti (non c'è gara). Suona solo la pagina del layout in onda: con tutte e due le sorgenti caricate in LIVE Studio non partono suoni doppi.
+
+### Posizioni senza premio (pixel della tela 1080×1920)
+
+Misurate sull'anteprima dello studio (cornice 421×923, k = 0,4807: visibile x 102…978). Camera da y 634 a 1265; sotto la barra (da 1358) restano liberi i commenti dei telefoni.
+
+| Pezzo | x | y | larghezza × altezza |
+|---|---|---|---|
+| Banner | 116 | 284 | 848 × 330 |
+| Loghi del banner | 136 e 820 | 470 | 124 × 124 |
+| Filo luminoso sopra la camera | 0 | 630 | 1080 × 2 |
+| Scheda «Ora in ascolto» | 116 | 1106 | 848 × 148 (esce da dietro la barra) |
+| Barra che scorre | 0 | 1266 | 1080 × 92 (testo leggibile pieno tra x 232 e 848, sfuma sotto i loghi) |
+| Loghi della barra | 120 e 892 | 1278 | 68 × 68 |
+
+Si cambiano nel blocco di variabili in cima a `public/css/senza-premio.css`. Parametri: `?anteprima=1` (sfondo nero e finta camera), `&guide=1` (zone del telefono, camera, commenti), `&muto=1`, `&statico=1`, `&scheda=ascolto|studio|skip|superskip|throne` (scheda ferma, per i mockup), `?w=banner,barra,scheda`.
+
 ## Effetti sonori
 
-Ogni animazione ha il suo effetto, sintetizzato al momento con Web Audio (`public/js/suoni.js`: nessun file audio, nessun diritto d'autore): nuova traccia, voto dei giudici (la nota sale col voto), voto nascosto, apertura/chiusura del voto chat, pop dei voti della chat, calcolo del punteggio con colpo finale, nuova entrata, scalata, uscita dalla top, fanfara del nuovo primo posto, premio cambiato, sirena a 30 minuti e a 1 minuto dalla fine, tic negli ultimi 10 secondi, rullo e fanfara del vincitore, battito dello spareggio. Quale effetto parte e quando lo decide `public/js/eventi-sonori.js` (testato in `test/eventi-sonori.test.mjs`).
+Ogni animazione ha il suo effetto, sintetizzato al momento con Web Audio (`public/js/suoni.js`: nessun file audio, nessun diritto d'autore): nuova traccia, voto dei giudici (la nota sale col voto), voto nascosto, apertura/chiusura del voto chat, pop dei voti della chat, calcolo del punteggio con colpo finale, nuova entrata, scalata, uscita dalla top, fanfara del nuovo primo posto, premio cambiato, sirena a 30 minuti e a 1 minuto dalla fine, tic negli ultimi 10 secondi, rullo e fanfara del vincitore, battito dello spareggio; nel layout senza premio `inAscolto` (traccia nuova, con un tocco in più per Skip, Super Skip e Throne) e la campanella del richiamo. Quale effetto parte e quando lo decide `public/js/eventi-sonori.js` (testato in `test/eventi-sonori.test.mjs`).
 
-Dalla regia (*Suoni*): dove suonano (nell'overlay, nella regia o spenti), volume e pulsanti di prova. Se la sorgente Link di LIVE Studio non manda l'audio in diretta, si sceglie «in questa pagina» e si cattura l'audio del PC.
+Dalla regia (*Suoni*): dove suonano (nell'overlay, nella regia o spenti), volume e pulsanti di prova. Suona solo la pagina del layout **In onda** scelto in testata (gara o senza premio). Se la sorgente Link di LIVE Studio non manda l'audio in diretta, si sceglie «in questa pagina» e si cattura l'audio del PC.
 
 ## Regia
 
@@ -92,13 +119,14 @@ La chat accetta `8`, `7.5`, `7,5`, `9/10`, `!voto 8`. Un voto per utente (vale l
 | `nero.automatico` | Traccia automatica da Nero accesa all'avvio (si cambia dalla regia) |
 | `nero.attesaDopoConfermaSecondi` | Secondi dopo la conferma prima che arrivi la traccia successiva di Nero (10) |
 | `nero.segreto` | Signing secret dei webhook Nero.fan |
+| `layout` | Layout in onda all'avvio: `"gara"` (predefinito) o `"senzaPremio"` (si cambia dalla regia) |
 | `host`, `pinRegia` | Regia da altri dispositivi in rete (vedi sopra) |
 
 ## Nero.fan
 
 **Traccia in riproduzione (automatica, senza configurare niente).** Ogni 3 secondi il server legge la coda pubblica di `nero.username` (`api.nero.fan/users/<username>/profile` → sessione live, poi `/queue/<sessione>/slim` → `current`). Quando su Nero parte un'altra traccia, titolo, artista e tier vanno da soli sul tabellone e nell'overlay. Serve la sessione live avviata su nero.fan e la spunta *Traccia automatica da Nero.fan* nella regia.
 
-- Se la traccia sul tabellone ha voti non confermati, la nuova aspetta (`neroInArrivo`, riquadro nella regia): i voti non si perdono.
+- Nel layout senza premio passa sempre subito. Nella gara, se la traccia sul tabellone ha voti non confermati, la nuova aspetta (`neroInArrivo`, riquadro nella regia): i voti non si perdono.
 - Dopo la conferma resta sul tabellone per `nero.attesaDopoConfermaSecondi` (10) secondi, il tempo di mostrare punteggio e classifica, poi arriva da sola la traccia successiva. `F8` / *Passa ora* la porta subito. Con `0` passa solo con `F8`.
 - Per provarlo senza Nero: `NERO_API=http://127.0.0.1:<porta> npm start` con un server che risponde agli stessi due indirizzi.
 
@@ -136,22 +164,29 @@ Il tunnel espone solo la porta del webhook, non la regia.
 | `countdown` | `{ "azione": "avvia"\|"pausa"\|"riprendi"\|"aggiungi"\|"azzera", "minuti"? }` |
 | `proclama` | `{}` chiude la gara (spareggio se c'è pari merito) · `{ "id" }` sceglie il vincitore |
 | `nascondiVincitore` | `{}`: chiude la schermata finale |
-| `widget` | `{ "nome": "premio"\|"tabellone"\|"classifica"\|"timer", "visibile": true }` |
+| `widget` | `{ "nome": "premio"\|"tabellone"\|"classifica"\|"timer"\|"banner"\|"barra"\|"scheda", "visibile": true }` |
 | `nascondiVoti` | `{ "attivo": true }`: l'overlay mostra "?" fino alla conferma |
 | `premio` | `{ "testo": "Mix + Master" }` |
 | `invito` | `{ "testo": "La traccia più votata vince \| Manda la tua traccia su nero.fan/backrooms" }` |
 | `suoni` | `{ "dove"?: "overlay"\|"regia"\|"spenti", "volume"?: 0.8 }` |
-| `provaSuono` | `{ "nome": "primo" }`: fa suonare un effetto dove sono attivi i suoni (es. da un tasto dello Stream Deck) |
+| `provaSuono` | `{ "nome": "primo", "dati"?: { "tier": "throne" } }`: fa suonare un effetto dove sono attivi i suoni (es. da un tasto dello Stream Deck) |
+| `layout` | `{ "nome": "gara"\|"senzaPremio" }`: layout in onda (chi suona, e se la traccia di Nero aspetta i voti) |
+| `senzaPremio` | Uno o più campi: `sopra`, `titolo`, `pillola`, `link` (testi del banner); `voci` (`[{ "attiva", "icona", "etichetta", "testo" }]`, icone `nero`, `instagram`, `tiktok`, `instagram+tiktok`, `twitch`, `kick`, `youtube`, `spotify`, `whatsapp`, `sito`, `microfono`, `logo`; massimo 12, 8 accese, testo fino a 40 caratteri); `velocita` (40–160); `inAscoltoNellaBarra`, `ascoltateNellaBarra`, `loghiBarra`, `filoCamera`; `durate` (`{ "standard", "skip", "superskip", "throne" }`, 4–20 s); `suonoTraccia` (`"delicato"\|"pieno"\|"nessuno"`); `richiamoOgniMinuti` (0–30); `spot` (`{ "sopra", "titolo", "sotto" }`) |
+| `ripristinaSenzaPremio` | `{}`: testi, social e impostazioni di partenza |
+| `richiamo` | `{}`: il link del banner si illumina, con la campanella |
+| `spotStudio` | `{}`: scheda «Vuoi suonare così?» per 10 secondi |
+| `ripetiScheda` | `{}`: rimostra la scheda della traccia in ascolto, senza suono |
+| `provaScheda` | `{ "tier": "standard"\|"skip"\|"superskip"\|"throne" }`: scheda di prova, senza cambiare traccia |
 | `togliRisultato` | `{ "id" }` |
 | `demo`, `nuovaSerata` | `{}` |
 
 ## Struttura
 
 - `server.mjs`: HTTP, WebSocket, comandi, webhook Nero, collegamento TikTok
-- `lib/stato.mjs`: punteggi, classifica, countdown, spareggio (logica pura, testata)
+- `lib/stato.mjs`: punteggi, classifica, countdown, spareggio, impostazioni del layout senza premio, tracce ascoltate (logica pura, testata)
 - `lib/chat.mjs`: riconoscimento dei voti e lettura dei commenti TikTok (`tiktok-live-connector`)
 - `lib/nero.mjs`: verifica firma e lettura dei webhook Nero.fan
-- `public/`: overlay e regia (HTML/CSS/JS senza build); `public/js/suoni.js` sintetizza gli effetti, `public/js/eventi-sonori.js` decide quando partono
+- `public/`: overlay della gara, layout senza premio e regia (HTML/CSS/JS senza build); `public/js/suoni.js` sintetizza gli effetti, `public/js/eventi-sonori.js` decide quando partono, `public/js/barra.js` mette in fila le voci della barra che scorre
 - `mockup/`: anteprime generate dall'overlay vero (`?anteprima=1&statico=1`)
 
 Test: `npm test`

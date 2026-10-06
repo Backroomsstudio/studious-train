@@ -5,7 +5,7 @@
 // ?muto=1 (nessun suono da questa pagina), ?statico=1 (senza animazioni né suoni, per i mockup).
 import { collega, formatta, durata } from "./connessione.js";
 import { suona, volume } from "./suoni.js";
-import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, RITARDO_CLASSIFICA_MS, SOGLIA_URGENTE_MS } from "./eventi-sonori.js";
+import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suonaIn, RITARDO_CLASSIFICA_MS, SOGLIA_URGENTE_MS } from "./eventi-sonori.js";
 
 const parametri = new URLSearchParams(location.search);
 const ORIZZONTALE = parametri.get("formato") === "orizzontale";
@@ -51,9 +51,10 @@ const conn = collega({
   },
 });
 
-// Gli effetti suonano qui solo se la regia ha scelto "overlay" (altrimenti suonano nella regia, o sono spenti).
+// Gli effetti suonano qui solo se la regia ha scelto "overlay" (altrimenti suonano nella regia, o sono spenti)
+// e se in onda c'è la gara: con il layout senza premio suona l'altra pagina.
 function riproduci(suoni) {
-  if (MUTO || !suoni.length || stato?.suoni?.dove !== "overlay") return;
+  if (MUTO || !suoni.length || !suonaIn(stato, "gara", "overlay")) return;
   volume(stato.suoni.volume);
   for (const s of suoni) suona(s.nome, s.dati, s.ritardo ?? 0);
 }

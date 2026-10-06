@@ -16,8 +16,15 @@ const CARTELLA = dirname(fileURLToPath(import.meta.url));
 const PUBBLICA = join(CARTELLA, "public");
 const FILE_STATO = join(CARTELLA, "dati", "stato.json");
 // TikTok LIVE Studio accetta nella sorgente Link solo indirizzi con un ".parola" (es. ".html"):
-// per questo l'overlay risponde anche come /overlay.html.
-const PAGINE = { "/": "regia.html", "/regia": "regia.html", "/overlay": "overlay.html", "/overlay.html": "overlay.html" };
+// per questo l'overlay risponde anche come /overlay.html (e il layout delle live giornaliere come /senza-premio.html).
+const PAGINE = {
+  "/": "regia.html",
+  "/regia": "regia.html",
+  "/overlay": "overlay.html",
+  "/overlay.html": "overlay.html",
+  "/senza-premio": "senza-premio.html",
+  "/senza-premio.html": "senza-premio.html",
+};
 const TIPI = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -63,6 +70,10 @@ function caricaStato() {
     salvato.visibili = { ...iniziale.visibili, ...salvato.visibili };
     salvato.suoni = { ...iniziale.suoni, ...salvato.suoni };
     if (S.INVITI_SUPERATI.includes(salvato.invito)) salvato.invito = iniziale.invito;
+    // Layout senza premio (aggiunto dopo): impostazioni complete anche da uno stato vecchio.
+    salvato.senzaPremio = S.fondiSenzaPremio(salvato.senzaPremio);
+    if (!S.LAYOUT.includes(salvato.layout)) salvato.layout = iniziale.layout;
+    if (!Array.isArray(salvato.ascoltate)) salvato.ascoltate = [];
     // Stato di una versione precedente (tre voti per categoria): la traccia in corso riparte da zero.
     if (Array.isArray(salvato.corrente?.voti?.beat)) salvato.corrente = S.tracciaVuota();
     if (Array.isArray(salvato.giudici)) salvato.giudici = { ...config.giudici };
@@ -103,6 +114,7 @@ function emetti(nome, dati) {
 }
 
 function cambiato() {
+  S.registraAscolto(stato, Date.now());
   salvaPresto();
   invioProgrammato ??= setTimeout(inviaATutti, 50);
 }
@@ -261,13 +273,41 @@ const comandi = {
     S.impostaSuoni(stato, args);
   },
   // Fa suonare un effetto su overlay o regia (dove sono attivi i suoni): per provarli prima della live.
-  provaSuono({ nome = "entrata" }) {
-    emetti("suono", { nome: pulisci(nome, 30) });
+  provaSuono({ nome = "entrata", dati = null }) {
+    emetti("suono", { nome: pulisci(nome, 30), dati: dati && typeof dati === "object" && !Array.isArray(dati) ? dati : {} });
+  },
+  // --- Layout senza premio (live giornaliere di ascolto) ---
+  layout({ nome }) {
+    S.impostaLayout(stato, nome);
+  },
+  senzaPremio(modifiche) {
+    S.impostaSenzaPremio(stato, modifiche);
+  },
+  ripristinaSenzaPremio() {
+    stato.senzaPremio = S.senzaPremioIniziale();
+  },
+  // Il link del banner «chiama» (con la campanella, se i suoni sono accesi).
+  richiamo() {
+    emetti("richiamo", { manuale: true });
+  },
+  // Rimostra la scheda della traccia in ascolto, senza suono.
+  ripetiScheda() {
+    const { titolo, artista, tier } = stato.corrente;
+    if (!titolo) throw new Error("Nessuna traccia in ascolto da mostrare");
+    emetti("scheda", { traccia: { titolo, artista, tier }, conSuono: false });
+  },
+  // Scheda di prova (non cambia la traccia in ascolto): per vedere come appare un invio Skip, Super Skip o Throne.
+  provaScheda({ tier = "throne" }) {
+    if (!S.TIER_SCHEDA.includes(tier)) throw new Error("Tipo di invio: standard, skip, superskip o throne");
+    emetti("scheda", { traccia: { titolo: "Notti a Vicenza", artista: "Lince", tier }, conSuono: true });
+  },
+  spotStudio() {
+    emetti("studio", {});
   },
   demo() {
     const ora = Date.now();
-    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo } = stato;
-    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo };
+    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio } = stato;
+    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio };
     const finti = [
       ["Specchi Neri", "Nove", 8.4],
       ["Fuori Orario", "Kappa 23", 7.9],
@@ -275,7 +315,9 @@ const comandi = {
       ["Cromo", "Vale B", 6.8],
     ];
     finti.forEach(([titolo, artista, totale], i) => {
-      stato.risultati.push({ id: randomUUID(), titolo, artista, tier: null, beat: totale, voce: totale, mix: totale, chat: totale, chatVoti: 40 + i * 7, totale, confermatoAlle: ora - (5 - i) * 600_000 });
+      const id = randomUUID();
+      stato.risultati.push({ id, titolo, artista, tier: null, beat: totale, voce: totale, mix: totale, chat: totale, chatVoti: 40 + i * 7, totale, confermatoAlle: ora - (5 - i) * 600_000 });
+      stato.ascoltate.push({ id, titolo, artista, tier: null, alle: ora - (5 - i) * 600_000 });
     });
     stato.corrente = S.tracciaVuota({ titolo: "Notti a Vicenza", artista: "Lince", tier: "throne" });
     Object.assign(stato.corrente.voti, { beat: 8.5, voce: 7.5, mix: 9 });
@@ -290,8 +332,8 @@ const comandi = {
   },
   // La traccia che suona su Nero in quel momento torna sul tabellone al giro successivo.
   nuovaSerata() {
-    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico } = stato;
-    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, tiktokUtente, neroAutomatico };
+    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, layout, senzaPremio } = stato;
+    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, layout, senzaPremio };
   },
 };
 
@@ -427,7 +469,10 @@ wss.on("connection", (ws) => {
 
 server.listen(config.porta, config.host, () => {
   const base = `http://${config.host === "0.0.0.0" ? "localhost" : config.host}:${config.porta}`;
-  console.log(`\nOverlay live pronto\n  Regia:   ${base}/regia\n  Overlay: ${base}/overlay.html   (sorgente Link in TikTok LIVE Studio, 1080x1920)\n`);
+  console.log(
+    `\nOverlay live pronto\n  Regia:   ${base}/regia\n  Overlay: ${base}/overlay.html   (sorgente Link in TikTok LIVE Studio, 1080x1920)\n` +
+      `  Senza premio: ${base}/senza-premio.html   (live giornaliere di ascolto, 1080x1920)\n`,
+  );
   if (config.host !== "127.0.0.1" && !config.pinRegia) console.warn("Attenzione: server visibile in rete senza pinRegia.");
 });
 
