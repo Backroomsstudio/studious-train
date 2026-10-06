@@ -728,3 +728,97 @@ code {
   border-color: #ffd863;
   box-shadow: 0 0 0 2px rgba(255, 216, 99, 0.25);
 }
+
+/* ---------- Battle ---------- */
+.bt-stato {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--linea);
+  color: var(--argento);
+}
+.bt-stato b {
+  font-family: var(--font-dati);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.bt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.chip {
+  padding: 6px 12px;
+  border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--argento);
+  font: 700 14px/1.2 var(--font-dati);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.chip.scelta {
+  background: linear-gradient(135deg, rgba(160, 102, 255, 0.55), rgba(54, 220, 255, 0.35));
+  border-color: #cdb2ff;
+  color: #fff;
+}
+.bt-giudici {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+.bt-giudici b {
+  font: 800 13px/1.2 var(--font-dati);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--argento);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bt-giudici #bt-sx-nome-giudici {
+  color: var(--ciano);
+}
+.bt-giudici #bt-dx-nome-giudici {
+  color: var(--magenta);
+}
+.bt-voto {
+  text-align: center;
+  font: 800 22px/1 var(--font-dati);
+}
+.bt-voto:disabled {
+  opacity: 0.4;
+}
+.bt-dettagli {
+  margin-top: 8px;
+}
+.bt-dettagli summary {
+  cursor: pointer;
+  color: var(--argento);
+}
+.bt-lista {
+  list-style: none;
+  margin: 8px 0 10px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.bt-lista li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.bt-lista .interruttore {
+  margin: 0;
+  font-size: 13px;
+}

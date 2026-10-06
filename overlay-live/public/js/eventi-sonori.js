@@ -152,6 +152,7 @@ export function suoniBattle(prima, dopo, eventi = []) {
   const a = prima.battle;
   const b = dopo.battle;
   const suoni = [];
+  for (const e of eventi) if (e.nome === "suono") suoni.push(prova(e)); // pulsanti Prova della regia
   if (a.fase !== "countdown" && b.fase === "countdown") {
     for (const n of [3, 2, 1]) suoni.push({ nome: "conto", dati: { n }, ritardo: (3 - n) * 1000 });
   }

@@ -188,3 +188,11 @@ test("battle: suona solo la pagina del layout in onda e gli effetti nuovi esisto
   for (const nome of ["gong", "conto", "spacco"]) assert.ok(NOMI_SUONI.includes(nome), nome);
   assert.doesNotThrow(() => suona("gong"), "senza audio del browser non fa niente");
 });
+
+test("battle: i pulsanti Prova della regia fanno suonare l'effetto scelto", () => {
+  const stato = statoBattle();
+  const prova = (dati) => [{ nome: "suono", dati }];
+  assert.deepEqual(suoniBattle(foto(stato), foto(stato), prova({ nome: "gong" })), [{ nome: "gong" }]);
+  assert.deepEqual(suoniBattle(foto(stato), foto(stato), prova({ nome: "conto", dati: { n: 1 } })), [{ nome: "conto", dati: { n: 1 } }]);
+  assert.deepEqual(suoniBattle(null, foto(stato), prova({ nome: "gong" })), [], "mai al primo disegno");
+});

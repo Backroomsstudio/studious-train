@@ -18,17 +18,19 @@
     <span class="conn" id="conn">offline</span>
     <span class="conn" id="tiktok-stato" title="Chat TikTok">TikTok</span>
     <span class="conn" id="nero-stato" title="Traccia in riproduzione su Nero.fan">Nero</span>
-    <label class="layout-scelta" title="Suona solo la pagina del layout in onda. Senza premio e live session: la traccia di Nero passa subito, senza aspettare i voti. Live session in studio: nessun suono.">In onda
+    <label class="layout-scelta" title="Suona solo la pagina del layout in onda. Senza premio e live session: la traccia di Nero passa subito, senza aspettare i voti. Live session in studio: nessun suono. Battle: la chat vota «1» o «2».">In onda
       <select id="layout">
         <option value="gara">Gara con premio</option>
         <option value="senzaPremio">Senza premio</option>
         <option value="studio">Live session in studio</option>
+        <option value="battle">Battle</option>
       </select>
     </label>
     <nav>
       <a href="/overlay?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok e senza suoni">Anteprima gara ↗</a>
       <a href="/senza-premio.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok e senza suoni">Anteprima senza premio ↗</a>
       <a href="/studio.html?anteprima=1&amp;guide=1" target="_blank" rel="noopener" title="Con le zone dei tre schermi e quelle coperte dall'app TikTok">Anteprima studio ↗</a>
+      <a href="/battle.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok e senza suoni">Anteprima battle ↗</a>
       <button type="button" id="aiuto">Scorciatoie</button>
     </nav>
   </header>
@@ -170,6 +172,9 @@
         <button class="piccolo" data-suono="inAscolto" title="Layout senza premio: traccia nuova">In ascolto</button>
         <button class="piccolo" data-suono="inAscolto" data-dati='{"tier":"throne"}' title="Layout senza premio: traccia nuova Throne">In ascolto Throne</button>
         <button class="piccolo" data-suono="premio" title="Layout senza premio: richiamo del link">Richiamo</button>
+        <button class="piccolo" data-suono="gong" title="Battle: gong">Gong</button>
+        <button class="piccolo" data-suono="conto" title="Battle: bip del 3-2-1">Conto</button>
+        <button class="piccolo" data-suono="spacco" title="Battle: fulmine che divide la camera">Spacco</button>
       </div>
       <p class="nota" id="suoni-nota"></p>
 
@@ -363,6 +368,99 @@
         </div>
       </div>
     </section>
+
+    <!-- BATTLE: scontro tra due rapper, barre dal voto della chat, giudici, tabellone -->
+    <section class="scheda sp-regia bt-regia" id="bt-regia">
+      <h2>Battle <span class="conta">scontro · giudici · tabellone · sorgente Link <code>/battle.html</code> · la chat vota <code>1</code> o <code>2</code></span></h2>
+      <div class="sp-colonne">
+        <div class="sp-colonna">
+          <h3>Round</h3>
+          <p class="bt-stato"><b id="bt-fase"></b> · <span id="bt-round"></span> · <span id="bt-tempo"></span><br><span id="bt-quota"></span></p>
+          <form id="f-bt-scontro" class="modulo sp-campi" autocomplete="off">
+            <label>Sinistra · nome <input name="sxNome" maxlength="24" placeholder="es. Lince"></label>
+            <label>Instagram <input name="sxInstagram" maxlength="80" placeholder="@nome.artista"></label>
+            <label>Destra · nome <input name="dxNome" maxlength="24" placeholder="es. Nove"></label>
+            <label>Instagram <input name="dxInstagram" maxlength="80" placeholder="@nome.artista"></label>
+            <div class="azioni largo">
+              <button class="primario" title="Si cambiano tra un round e l'altro">Applica nomi</button>
+            </div>
+          </form>
+          <div class="azioni">
+            <button id="bt-avvia" class="primario" title="3-2-1 e via. Scorciatoia F2. Stream Deck: POST /api/battleAvvia">Avvia (F2)</button>
+            <button id="bt-pausa" title="Scorciatoia F9">Pausa</button>
+            <button id="bt-termina" title="Fine anticipata: gong e voto dei giudici">Termina</button>
+          </div>
+          <label class="sp-riga">Durata del round <input type="number" id="bt-durata" min="10" max="600" class="st-numero"> secondi</label>
+          <div class="azioni">
+            <button class="piccolo" data-durata="60">60″</button>
+            <button class="piccolo" data-durata="90">90″</button>
+            <button class="piccolo" data-durata="120">120″</button>
+            <button class="piccolo" data-durata="180">180″</button>
+          </div>
+
+          <h3>Modalità</h3>
+          <div class="bt-chips" id="bt-modalita"></div>
+          <label class="sp-riga" id="bt-testo-riga">Testo <input id="bt-testo" maxlength="40" placeholder="es. Vicenza di notte"></label>
+          <details class="bt-dettagli">
+            <summary>Modifica l'elenco delle modalità</summary>
+            <p class="nota">Spunta = selezionabile (massimo 10). «Con testo» aggiunge lo slot per il tema o la situazione. La modalità in onda non si può spegnere.</p>
+            <ol class="bt-lista" id="bt-modalita-lista"></ol>
+            <div class="azioni"><button id="bt-modalita-aggiungi" class="piccolo">+ Aggiungi modalità</button></div>
+          </details>
+        </div>
+
+        <div class="sp-colonna">
+          <h3>Giudici</h3>
+          <p class="nota">I voti si scrivono a fine round (da 0 a 10, anche con la virgola). <kbd>Invio</kbd> salva e passa al campo dopo.</p>
+          <div class="bt-giudici" id="bt-giudici">
+            <span></span><b id="bt-sx-nome-giudici"></b><b id="bt-dx-nome-giudici"></b>
+          </div>
+          <div class="azioni">
+            <button id="bt-rivela" class="primario" title="Mostra i voti uno alla volta e il totale. Scorciatoia F4">Rivela (F4)</button>
+            <button id="bt-proclama-sx" class="piccolo" title="Solo con un pari merito"></button>
+            <button id="bt-proclama-dx" class="piccolo" title="Solo con un pari merito"></button>
+          </div>
+          <div class="azioni">
+            <button id="bt-prossimo" class="primario" title="Svuota i nomi (con il torneo carica il prossimo scontro). Scorciatoia F8">Prossimo scontro (F8)</button>
+            <button id="bt-reset" class="piccolo pericolo" title="Scarta il round in corso">Reset round</button>
+          </div>
+          <p class="nota" id="bt-esito"></p>
+
+          <h3>Pop-up social</h3>
+          <p class="nota">Compaiono sopra la camera, mai durante il round. Titolo in gotico, fino a 28 caratteri. Si salva da solo quando esci dal campo.</p>
+          <ol class="st-comparse" id="bt-popup-lista"></ol>
+          <div class="azioni">
+            <button id="bt-popup-mostra" class="primario" title="Stream Deck: POST /api/battlePopup">Mostra la prossima</button>
+            <button id="bt-popup-aggiungi" class="piccolo">+ Aggiungi pop-up</button>
+          </div>
+          <label class="sp-riga">Da soli
+            <select id="bt-popup-ogni">
+              <option value="0">spenti (solo a mano)</option>
+              <option value="2">ogni 2 minuti</option>
+              <option value="3">ogni 3 minuti</option>
+              <option value="4">ogni 4 minuti</option>
+              <option value="5">ogni 5 minuti</option>
+              <option value="10">ogni 10 minuti</option>
+            </select>
+          </label>
+          <label class="sp-riga">Restano su <input type="number" id="bt-popup-durata" min="4" max="20" class="st-numero"> secondi</label>
+
+          <h3>In onda</h3>
+          <div class="interruttori">
+            <label class="interruttore"><input type="checkbox" data-widget="barreVita"> Barre della vita</label>
+            <label class="interruttore"><input type="checkbox" data-widget="modalita"> Modalità</label>
+            <label class="interruttore"><input type="checkbox" data-widget="timerBattle"> Timer</label>
+            <label class="interruttore"><input type="checkbox" data-widget="giudiciBattle"> Giudici e voto chat</label>
+            <label class="interruttore"><input type="checkbox" data-widget="popupBattle"> Pop-up social</label>
+          </div>
+        </div>
+
+        <div class="sp-colonna sp-anteprima-colonna">
+          <div class="sp-anteprima"><iframe src="/battle.html?anteprima=1&amp;muto=1" title="Anteprima del battle" width="1080" height="1920" loading="lazy"></iframe></div>
+          <a href="/battle.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener">Apri grande, con le zone ↗</a>
+        </div>
+      </div>
+    </section>
   </main>
 
   <div class="avvisi" id="avvisi" aria-live="polite"></div>
@@ -376,7 +474,14 @@
       <dt><kbd>F9</kbd></dt><dd>Pausa / riprendi il countdown</dd>
       <dt><kbd>Invio</kbd> in un voto</dt><dd>Passa al voto successivo</dd>
     </dl>
-    <p class="nota">Stream Deck: ogni azione è anche un <code>POST http://127.0.0.1:4747/api/&lt;comando&gt;</code> con <code>Content-Type: application/json</code> (es. <code>conferma</code>, <code>apriChat</code>, <code>prossima</code>; senza premio: <code>richiamo</code>, <code>spotStudio</code>, <code>ripetiScheda</code>; live session in studio: <code>comparsa</code>). Elenco completo nel README.</p>
+    <h2>Con il Battle in onda</h2>
+    <dl>
+      <dt><kbd>F2</kbd></dt><dd>Avvia il round (3-2-1)</dd>
+      <dt><kbd>F4</kbd> o <kbd>Ctrl</kbd>+<kbd>Invio</kbd></dt><dd>Rivela i voti dei giudici</dd>
+      <dt><kbd>F8</kbd></dt><dd>Prossimo scontro</dd>
+      <dt><kbd>F9</kbd></dt><dd>Pausa / riprendi il timer</dd>
+    </dl>
+    <p class="nota">Stream Deck: ogni azione è anche un <code>POST http://127.0.0.1:4747/api/&lt;comando&gt;</code> con <code>Content-Type: application/json</code> (es. <code>conferma</code>, <code>apriChat</code>, <code>prossima</code>; senza premio: <code>richiamo</code>, <code>spotStudio</code>, <code>ripetiScheda</code>; live session in studio: <code>comparsa</code>; battle: <code>battleAvvia</code>, <code>battleRivela</code>, <code>battleProssimo</code>). Elenco completo nel README.</p>
     <form method="dialog"><button class="primario">Chiudi</button></form>
   </dialog>
 

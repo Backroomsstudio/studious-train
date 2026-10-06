@@ -41,6 +41,7 @@ const guida = args.includes("--guida");
 const secondi = opzione("secondi");
 const conto = opzione("conto");
 const popup = args.includes("--popup");
+const regia = args.includes("--regia");
 
 function caricaPlaywright() {
   try {
@@ -64,7 +65,50 @@ const attesi = () => {
   return parti;
 };
 
+// Flusso della regia: layout Battle, nomi, 3-2-1, fine, sei voti, Rivela. Controlla fase e risultato e salva mockup/regia-battle.jpg.
+async function provaRegia() {
+  await comando("nuovaSerata");
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const pagina = await browser.newPage({ viewport: { width: 1500, height: 2400 } });
+  const errori = [];
+  pagina.setDefaultTimeout(5000);
+  pagina.on("pageerror", (e) => errori.push(`pagina: ${e.message}`));
+  await pagina.goto(`${base}/regia`);
+  await pagina.selectOption("#layout", "battle");
+  await pagina.waitForSelector("#bt-regia.attivo", { timeout: 3000 });
+  const scontro = '#f-bt-scontro';
+  await pagina.fill(`${scontro} [name="sxNome"]`, "Lince");
+  await pagina.fill(`${scontro} [name="sxInstagram"]`, "@lince.music");
+  await pagina.fill(`${scontro} [name="dxNome"]`, "Nove");
+  await pagina.click(`${scontro} button.primario`);
+  await pagina.waitForFunction(() => document.querySelector("#bt-sx-nome-giudici")?.textContent.includes("Lince"), null, { timeout: 3000 });
+  await pagina.click("#bt-avvia");
+  await pagina.waitForTimeout(3700);
+  await pagina.click("#bt-termina");
+  for (const giudice of ["luca", "freya", "daniele"]) {
+    for (const [lato, valore] of [["sx", "8"], ["dx", "6"]]) {
+      const campo = pagina.locator(`[data-giudice="${giudice}"][data-lato="${lato}"]`);
+      await campo.fill(valore);
+      await campo.press("Enter");
+    }
+  }
+  await pagina.waitForTimeout(300);
+  await pagina.click("#bt-rivela");
+  await pagina.waitForFunction(() => document.querySelector("#bt-fase")?.textContent.includes("Risultato"), null, { timeout: 3000 });
+  const stato = await (await fetch(`${base}/api/stato`)).json();
+  if (stato.battle.fase !== "risultato" || stato.battle.risultato?.vincitore !== "sx") errori.push(`stato inatteso: ${stato.battle.fase}, vincitore ${stato.battle.risultato?.vincitore}`);
+  await (await pagina.$("#bt-regia")).screenshot({ path: join(CARTELLA, "mockup", "regia-battle.jpg"), type: "jpeg", quality: 85 });
+  await browser.close();
+  if (errori.length) {
+    console.error(`Regia battle: problemi\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log("ok regia: flusso completo, mockup in mockup/regia-battle.jpg");
+}
+
 async function main() {
+  if (regia) return provaRegia();
   await comando("layout", { nome: "battle" });
   await comando("battleDemo", { fase, ...(secondi ? { secondi: Number(secondi) } : {}) });
   const { chromium } = caricaPlaywright();

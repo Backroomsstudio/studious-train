@@ -1,10 +1,12 @@
 // Regia: voti dei giudici, voto della chat TikTok, conferma, coda Nero.fan, classifica, countdown e spareggio;
 // in più il layout senza premio delle live giornaliere (banner, barra che scorre, scheda «Ora in ascolto», spot)
-// e la live session in studio (nome e Instagram dell'artista, comparse dello studio, nessun suono).
+// la live session in studio (nome e Instagram dell'artista, comparse dello studio, nessun suono)
+// e il battle (scontro tra due rapper: nomi, modalità, timer, voti dei giudici, tabellone, pop-up).
 // Ogni azione è un comando al server; la pagina si ridisegna dallo stato che torna indietro.
 import { collega, formatta, durata } from "./connessione.js";
 import { suona, volume, audioPronto } from "./suoni.js";
-import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suoniSenzaPremio, suonaIn, RITARDO_CLASSIFICA_MS } from "./eventi-sonori.js";
+import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suoniSenzaPremio, suoniBattle, suonaIn, RITARDO_CLASSIFICA_MS } from "./eventi-sonori.js";
+import { percentuali, rimanenteBattleMs } from "./battle-logica.js";
 import { vociBarra, stimaGiroSecondi } from "./barra.js";
 import { vociStudio } from "./studio-logica.js";
 
@@ -114,6 +116,7 @@ function riproduci(suoni, ritardoBase = 0) {
 
 function suoniRegia(prima, dopo, eventi) {
   if (dopo.layout === "studio") return; // live session in studio: l'artista registra, nessun suono
+  if (dopo.layout === "battle") return riproduci(suoniBattle(prima, dopo, eventi));
   if (!inGara()) {
     const ora = performance.now();
     const suoni = suoniSenzaPremio(prima, dopo, eventi, { ora, ultimaTracciaAlle });
@@ -137,6 +140,7 @@ function disegna(s) {
   disegnaSerata(s);
   disegnaSenzaPremio(s);
   disegnaStudio(s);
+  disegnaBattle(s);
 }
 
 function disegnaTraccia(s) {
@@ -284,7 +288,7 @@ function disegnaSerata(s) {
     s.layout === "studio"
       ? "In onda c'è la live session in studio: nessun effetto sonoro, per non disturbare chi registra."
       : s.suoni.dove === "overlay"
-      ? `Suonano dalla sorgente Link di LIVE Studio (${s.layout === "senzaPremio" ? "/senza-premio.html, il layout in onda" : "/overlay.html, la gara in onda"}). Se in diretta non si sentono, scegliete «in questa pagina» e in LIVE Studio aggiungete l'audio del PC.`
+      ? `Suonano dalla sorgente Link di LIVE Studio (${s.layout === "senzaPremio" ? "/senza-premio.html, il layout in onda" : s.layout === "battle" ? "/battle.html, il battle in onda" : "/overlay.html, la gara in onda"}). Se in diretta non si sentono, scegliete «in questa pagina» e in LIVE Studio aggiungete l'audio del PC.`
       : s.suoni.dove === "regia"
         ? audioPronto()
           ? "Suonano da questa pagina: tenetela aperta e catturate l'audio del PC in LIVE Studio."
@@ -731,8 +735,8 @@ function rigaComparsa(c = {}) {
 }
 
 // Una comparsa nuova si manda quando ha il titolo (o se è spenta e ha almeno un testo).
-function leggiComparse() {
-  return [...$("#st-comparse").children]
+function leggiComparse(lista = $("#st-comparse")) {
+  return [...lista.children]
     .map((li) => {
       const valore = (nome) => li.querySelector(`[name="${nome}"]`).value;
       return {
@@ -793,23 +797,27 @@ $("#st-velocita").addEventListener("change", (e) => {
   e.target.blur();
   studio({ velocita: Number(e.target.value) });
 });
-$("#st-comparse").addEventListener("change", () => salvaComparse());
-$("#st-comparse").addEventListener("click", (e) => {
-  const bottone = e.target.closest("button");
-  if (!bottone) return;
-  const li = bottone.closest("li");
-  if (bottone.dataset.mostra !== undefined) return invia("comparsa", { id: li.dataset.id });
-  const righe = [...$("#st-comparse").children];
-  const i = righe.indexOf(li);
-  if (bottone.dataset.togli !== undefined) righe.splice(i, 1);
-  else {
-    const j = i + Number(bottone.dataset.sposta);
-    if (j < 0 || j >= righe.length) return;
-    [righe[i], righe[j]] = [righe[j], righe[i]];
-  }
-  $("#st-comparse").replaceChildren(...righe);
-  salvaComparse();
-});
+// Elenco di pannelli (comparse dello studio, pop-up del battle): si salva all'uscita da un campo; ▶ mostra, ↑ ↓ riordinano, ✕ toglie.
+function collegaListaComparse(lista, { mostra: mostraPannello, salva }) {
+  lista.addEventListener("change", () => salva());
+  lista.addEventListener("click", (e) => {
+    const bottone = e.target.closest("button");
+    if (!bottone) return;
+    const li = bottone.closest("li");
+    if (bottone.dataset.mostra !== undefined) return mostraPannello(li.dataset.id);
+    const righe = [...lista.children];
+    const i = righe.indexOf(li);
+    if (bottone.dataset.togli !== undefined) righe.splice(i, 1);
+    else {
+      const j = i + Number(bottone.dataset.sposta);
+      if (j < 0 || j >= righe.length) return;
+      [righe[i], righe[j]] = [righe[j], righe[i]];
+    }
+    lista.replaceChildren(...righe);
+    salva();
+  });
+}
+collegaListaComparse($("#st-comparse"), { mostra: (id) => invia("comparsa", { id }), salva: () => salvaComparse() });
 $("#st-aggiungi").addEventListener("click", () => {
   const riga = rigaComparsa({ attiva: true, icona: "microfono" });
   $("#st-comparse").append(riga);
@@ -819,10 +827,236 @@ $("#st-ripristina").addEventListener("click", () => {
   if (confirm("Ripristinare comparse, velocità e impostazioni della live session come all'inizio? Il nome dell'artista resta.")) invia("ripristinaStudio");
 });
 
-// Scorciatoie: funzionano anche col cursore dentro un campo.
+
+// ---------- Battle ----------
+const FASI_BATTLE = { attesa: "In attesa", countdown: "3-2-1", battle: "Battle in corso", voto: "Voto dei giudici", risultato: "Risultato" };
+const GIUDICI_BATTLE = [["luca", "Luca"], ["freya", "Freya"], ["daniele", "Daniele"]];
+const LATI_BATTLE = ["sx", "dx"];
+const votoBattle = (v) => (v === null || v === undefined ? "" : String(v).replace(".", ","));
+
+// Campi dei giudici (nome e un voto per ciascun rapper): si costruiscono una volta.
+for (const [id, nome] of GIUDICI_BATTLE) {
+  const voto = (lato) => el("input", { class: "bt-voto", inputmode: "decimal", autocomplete: "off", placeholder: "?", "data-giudice": id, "data-lato": lato, "aria-label": `Voto di ${nome}, ${lato === "sx" ? "sinistra" : "destra"}` });
+  $("#bt-giudici").append(el("input", { class: "bt-nome-giudice", maxlength: "24", "data-nome-giudice": id, "aria-label": `Nome del giudice ${nome}`, value: nome }), voto("sx"), voto("dx"));
+}
+
+function disegnaBattle(s) {
+  const b = s.battle;
+  $("#bt-regia").classList.toggle("attivo", s.layout === "battle");
+  const perc = percentuali(b.quota);
+  $("#bt-fase").textContent = FASI_BATTLE[b.fase];
+  $("#bt-round").textContent = `Round ${b.round}`;
+  $("#bt-quota").textContent = `Chat: ${perc.sx}% ${b.sx.nome || "sinistra"} · ${perc.dx}% ${b.dx.nome || "destra"} · ${b.chat.voti} ${b.chat.voti === 1 ? "voto" : "voti"}`;
+  aggiornaTempoBattle();
+
+  const attesa = b.fase === "attesa";
+  const f = $("#f-bt-scontro");
+  riempi(f.sxNome, b.sx.nome);
+  riempi(f.sxInstagram, b.sx.instagram ? `@${b.sx.instagram}` : "");
+  riempi(f.dxNome, b.dx.nome);
+  riempi(f.dxInstagram, b.dx.instagram ? `@${b.dx.instagram}` : "");
+  for (const campo of f.elements) campo.disabled = !attesa;
+  const inBattle = b.fase === "battle";
+  $("#bt-avvia").disabled = !attesa;
+  $("#bt-pausa").disabled = !inBattle;
+  $("#bt-pausa").textContent = b.timer.fineAlle === null && b.timer.rimanenteMs !== null ? "Riprendi" : "Pausa";
+  $("#bt-termina").disabled = !inBattle;
+  riempi($("#bt-durata"), b.timer.durataSecondi);
+  disegnaModalitaRegia(b);
+  disegnaGiudiciRegia(b);
+  disegnaPopupRegia(s);
+}
+
+function aggiornaTempoBattle() {
+  if (stato) $("#bt-tempo").textContent = durata(rimanenteBattleMs(stato.battle, conn.ora()));
+}
+setInterval(aggiornaTempoBattle, 250);
+
+// ----- Modalità: una scelta rapida per ogni voce accesa, il testo (tema o situazione) e l'elenco modificabile -----
+function disegnaModalitaRegia(b) {
+  const chips = $("#bt-modalita");
+  const firma = JSON.stringify([b.modalita.scelta, b.modalita.elenco.map((m) => [m.id, m.nome, m.attiva])]);
+  if (chips.dataset.firma !== firma) {
+    chips.dataset.firma = firma;
+    chips.replaceChildren(
+      ...b.modalita.elenco
+        .filter((m) => m.attiva)
+        .map((m) =>
+          el("button", { type: "button", class: m.id === b.modalita.scelta ? "chip scelta" : "chip", "aria-pressed": String(m.id === b.modalita.scelta), onclick: () => invia("battleModalita", { scelta: m.id }) }, m.nome),
+        ),
+    );
+  }
+  const scelta = b.modalita.elenco.find((m) => m.id === b.modalita.scelta);
+  $("#bt-testo-riga").hidden = !scelta?.conTesto;
+  $("#bt-testo").placeholder = scelta ? `${scelta.nome}…` : "";
+  riempi($("#bt-testo"), scelta?.testo ?? "");
+  disegnaListaModalita(b);
+}
+
+function disegnaListaModalita(b, forza = false) {
+  const lista = $("#bt-modalita-lista");
+  if (!forza && lista.contains(document.activeElement)) return;
+  const firma = JSON.stringify(b.modalita.elenco);
+  if (!forza && lista.dataset.firma === firma) return;
+  lista.dataset.firma = firma;
+  lista.replaceChildren(...b.modalita.elenco.map(rigaModalita));
+}
+
+function rigaModalita(m = {}) {
+  const attiva = el("input", { type: "checkbox", name: "attiva", title: "Selezionabile" });
+  attiva.checked = m.attiva !== false;
+  const nome = el("input", { name: "nome", maxlength: "24", placeholder: "Nome della modalità" });
+  nome.value = m.nome ?? "";
+  const conTesto = el("input", { type: "checkbox", name: "conTesto" });
+  conTesto.checked = m.conTesto === true;
+  return el("li", { "data-id": m.id ?? "", "data-testo": m.testo ?? "" }, attiva, nome, el("label", { class: "interruttore" }, conTesto, " con testo"), el("button", { type: "button", class: "piccolo", "data-togli": "", title: "Togli" }, "✕"));
+}
+
+function leggiModalita() {
+  return [...$("#bt-modalita-lista").children]
+    .map((li) => ({
+      id: li.dataset.id || undefined,
+      attiva: li.querySelector('[name="attiva"]').checked,
+      nome: li.querySelector('[name="nome"]').value,
+      conTesto: li.querySelector('[name="conTesto"]').checked,
+      testo: li.dataset.testo,
+    }))
+    .filter((m) => m.id || m.nome.trim());
+}
+
+async function salvaModalita() {
+  const esito = await invia("battleModalita", { elenco: leggiModalita() });
+  if (esito.ok) avviso("Modalità aggiornate", "ok");
+  else if (stato) disegnaListaModalita(stato.battle, true);
+}
+
+// ----- Giudici: sei voti, Rivela e Proclama -----
+function disegnaGiudiciRegia(b) {
+  $("#bt-sx-nome-giudici").textContent = b.sx.nome || "Sinistra";
+  $("#bt-dx-nome-giudici").textContent = b.dx.nome || "Destra";
+  const voto = b.fase === "voto";
+  for (const g of b.giudici) {
+    riempi($(`[data-nome-giudice="${g.id}"]`), g.nome);
+    for (const lato of LATI_BATTLE) {
+      const campo = $(`[data-giudice="${g.id}"][data-lato="${lato}"]`);
+      campo.disabled = !voto;
+      riempi(campo, votoBattle(g.voti[lato]));
+    }
+  }
+  const r = b.fase === "risultato" ? b.risultato : null;
+  const pari = Boolean(r?.pari && r.vincitore === null);
+  $("#bt-rivela").disabled = !voto;
+  for (const lato of LATI_BATTLE) {
+    const bottone = $(`#bt-proclama-${lato}`);
+    bottone.disabled = !pari;
+    bottone.textContent = `Vince ${b[lato].nome || (lato === "sx" ? "sinistra" : "destra")}`;
+  }
+  $("#bt-prossimo").disabled = !(r && r.vincitore !== null);
+  $("#bt-reset").disabled = b.fase === "attesa" || Boolean(r?.registrato);
+  $("#bt-esito").textContent = !r ? "" : pari ? "Pari merito: scegliete chi vince." : `Vince ${b[r.vincitore].nome} · ${votoBattle(r.totali.sx)} contro ${votoBattle(r.totali.dx)}`;
+}
+
+// ----- Pop-up social -----
+function disegnaPopupRegia(s, forza = false) {
+  const p = s.battle.popup;
+  const lista = $("#bt-popup-lista");
+  const firma = JSON.stringify(p.elenco);
+  if (forza || (!lista.contains(document.activeElement) && lista.dataset.firma !== firma)) {
+    lista.dataset.firma = firma;
+    lista.replaceChildren(...p.elenco.map(rigaComparsa));
+  }
+  const ogni = $("#bt-popup-ogni");
+  if (![...ogni.options].some((o) => Number(o.value) === p.ogniMinuti)) ogni.append(el("option", { value: String(p.ogniMinuti) }, `ogni ${p.ogniMinuti} minuti`));
+  mostra(ogni, String(p.ogniMinuti));
+  riempi($("#bt-popup-durata"), p.durata);
+}
+
+async function salvaPopup(elenco = leggiComparse($("#bt-popup-lista"))) {
+  if (stato && firmaComparse(elenco) === firmaComparse(stato.battle.popup.elenco)) return;
+  const esito = await invia("battlePopup", { elenco });
+  if (esito.ok) avviso("Pop-up aggiornati", "ok");
+  else if (stato) disegnaPopupRegia(stato, true);
+}
+
+// ----- Comandi del battle -----
+const battleAvvia = () => invia("battleAvvia");
+const battleRivela = () => invia("battleRivela");
+const battleProssimo = () => invia("battleProssimo");
+const battlePausa = () => stato && invia("battleTimer", { azione: stato.battle.timer.fineAlle !== null ? "pausa" : "riprendi" });
+const battleDurata = (secondi) => invia("battleTimer", { durataSecondi: Number(secondi) });
+
+$("#f-bt-scontro").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const esito = await invia("battleScontro", { sx: { nome: f.sxNome.value, instagram: f.sxInstagram.value }, dx: { nome: f.dxNome.value, instagram: f.dxInstagram.value } });
+  if (esito.ok) {
+    salvato(f); // al prossimo stato i campi Instagram mostrano il nome pulito, con la @
+    avviso("Scontro pronto", "ok");
+  }
+});
+$("#bt-avvia").addEventListener("click", battleAvvia);
+$("#bt-pausa").addEventListener("click", battlePausa);
+$("#bt-termina").addEventListener("click", () => invia("battleTermina"));
+$("#bt-durata").addEventListener("change", async (e) => {
+  const esito = await battleDurata(e.target.value);
+  if (!esito.ok && stato) e.target.value = stato.battle.timer.durataSecondi;
+});
+for (const bottone of document.querySelectorAll("[data-durata]")) bottone.addEventListener("click", () => battleDurata(bottone.dataset.durata));
+
+$("#bt-testo").addEventListener("change", (e) => invia("battleModalita", { testo: e.target.value }));
+$("#bt-modalita-lista").addEventListener("change", () => salvaModalita());
+$("#bt-modalita-lista").addEventListener("click", (e) => {
+  const bottone = e.target.closest("button");
+  if (!bottone) return;
+  bottone.closest("li").remove();
+  salvaModalita();
+});
+$("#bt-modalita-aggiungi").addEventListener("click", () => {
+  const riga = rigaModalita({ attiva: true });
+  $("#bt-modalita-lista").append(riga);
+  riga.querySelector('[name="nome"]').focus();
+});
+
+// Voti dei giudici: si salvano all'uscita dal campo; Invio passa al campo dopo (l'ultimo esce dal campo).
+$("#bt-giudici").addEventListener("change", async (e) => {
+  const campo = e.target;
+  if (campo.dataset.nomeGiudice) return invia("battleGiudici", { [campo.dataset.nomeGiudice]: campo.value });
+  if (!campo.dataset.giudice) return;
+  const esito = await invia("battleVotoGiudice", { giudice: campo.dataset.giudice, lato: campo.dataset.lato, valore: campo.value });
+  if (!esito.ok && stato) disegnaGiudiciRegia(stato.battle);
+});
+$("#bt-giudici").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || !e.target.dataset.giudice) return;
+  e.preventDefault();
+  const campi = [...document.querySelectorAll("#bt-giudici [data-giudice]")];
+  (campi[campi.indexOf(e.target) + 1] ?? e.target).focus();
+  if (e.target === campi.at(-1)) e.target.blur();
+});
+$("#bt-rivela").addEventListener("click", battleRivela);
+for (const lato of LATI_BATTLE) $(`#bt-proclama-${lato}`).addEventListener("click", () => invia("battleProclama", { lato }));
+$("#bt-prossimo").addEventListener("click", battleProssimo);
+$("#bt-reset").addEventListener("click", () => {
+  if (confirm("Scartare il round in corso? Nomi e numero del round restano.")) invia("battleReset");
+});
+
+collegaListaComparse($("#bt-popup-lista"), { mostra: (id) => invia("battlePopup", { id }), salva: () => salvaPopup() });
+$("#bt-popup-mostra").addEventListener("click", () => invia("battlePopup", {}));
+$("#bt-popup-aggiungi").addEventListener("click", () => {
+  const riga = rigaComparsa({ attiva: true, icona: "logo" });
+  $("#bt-popup-lista").append(riga);
+  riga.querySelector('[name="titolo"]').focus();
+});
+scegli("#bt-popup-ogni", (v) => invia("battlePopup", { ogniMinuti: Number(v) }));
+$("#bt-popup-durata").addEventListener("change", async (e) => {
+  const esito = await invia("battlePopup", { durata: Number(e.target.value) });
+  if (!esito.ok && stato) e.target.value = stato.battle.popup.durata;
+});
+
+// Scorciatoie: funzionano anche col cursore dentro un campo. Con il battle in onda fanno altro (vedi «Scorciatoie»).
 addEventListener("keydown", (e) => {
-  const azioni = { F2: alternaChat, F4: conferma, F8: prossima, F9: alternaPausa };
-  const azione = e.key === "Enter" && e.ctrlKey ? conferma : azioni[e.key];
+  const inBattle = stato?.layout === "battle";
+  const azioni = inBattle ? { F2: battleAvvia, F4: battleRivela, F8: battleProssimo, F9: battlePausa } : { F2: alternaChat, F4: conferma, F8: prossima, F9: alternaPausa };
+  const azione = e.key === "Enter" && e.ctrlKey ? (inBattle ? battleRivela : conferma) : azioni[e.key];
   if (!azione || e.repeat) return;
   e.preventDefault();
   azione();
