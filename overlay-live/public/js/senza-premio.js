@@ -357,7 +357,7 @@ function riempiScheda(r) {
 // Corpi della scheda: il gotico non scende sotto 34 px (poi i puntini), il resto in Barlow sì.
 function adattaScheda(tipo) {
   if (tipo === "studio") {
-    adattaTesto(scheda.titolo, 54, 34); // gotico
+    adattaTesto(scheda.titolo, 52, 34); // gotico
     adattaTesto(scheda.artista, 30, 24);
   } else {
     adattaTesto(scheda.titolo, 54, 32);

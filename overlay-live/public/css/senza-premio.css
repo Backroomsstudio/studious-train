@@ -387,7 +387,7 @@ body.sp.anteprima {
   top: calc(var(--sp-y-scheda) - 1010px);
   width: var(--sp-largo);
   height: 148px;
-  padding: 10px 22px;
+  padding: 8px 22px; /* testa 30 + 4 + titolo 58 + artista 40 = 132 */
   display: grid;
   grid-template-columns: minmax(0, 1fr) 108px;
   gap: 20px;
@@ -570,9 +570,9 @@ body.sp.anteprima {
   display: block;
 }
 .sp-scheda.studio .sp-scheda-titolo {
-  font: 900 56px/1.1 var(--font-gotico);
+  font: 900 52px/1.04 var(--font-gotico);
   text-transform: none;
-  padding: 0 4px 6px 0;
+  padding: 0 4px 2px 0;
   background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, transparent 62%) no-repeat, var(--cromo);
   background-size: 260% 100%, 100% 100%;
   background-position: 160% 0, 0 0;
@@ -583,7 +583,8 @@ body.sp.anteprima {
   filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.85)) drop-shadow(0 0 14px rgba(255, 255, 255, 0.14));
 }
 .sp-scheda.studio .sp-scheda-artista {
-  font: 800 30px/42px var(--font-dati);
+  height: 36px;
+  font: 800 30px/36px var(--font-dati);
   color: #fff;
 }
 
