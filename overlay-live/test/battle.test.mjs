@@ -679,3 +679,18 @@ test("battleDemo conserva la configurazione già scelta", () => {
   B.battleDemo(stato, "battle", T);
   assert.equal(stato.battle.giudici[0].nome, "Luca C.");
 });
+
+test("punti: rimettere l'elenco non azzera punti e round di chi c'è già", () => {
+  const stato = nuovo();
+  B.impostaPunti(stato, { artisti: ["Lince", "Nove"], target: 14 });
+  B.impostaTabellone(stato, { modo: "punti" });
+  pronto(stato);
+  faiRound(stato, T, "sx");
+  B.impostaPunti(stato, { artisti: ["lince", "Nove", "Kappa"] });
+  const [lince, nove, kappa] = stato.battle.tabellone.punti.artisti;
+  assert.deepEqual([lince.nome, lince.punti, lince.round], ["lince", 7.25, [7.25]], "resta com'è, col nome scritto adesso");
+  assert.deepEqual([nove.punti, nove.round], [5.75, [5.75]]);
+  assert.deepEqual([kappa.punti, kappa.round], [0, []]);
+  B.impostaPunti(stato, { artisti: [{ nome: "Lince", punti: 3 }] });
+  assert.deepEqual(stato.battle.tabellone.punti.artisti.map((a) => [a.punti, a.round]), [[3, []]], "con punti dati a mano si riparte da quelli");
+});

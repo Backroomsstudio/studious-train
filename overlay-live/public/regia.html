@@ -426,6 +426,35 @@
           </div>
           <p class="nota" id="bt-esito"></p>
 
+          <h3>Tabellone</h3>
+          <div class="azioni">
+            <button id="bt-bracket" class="primario" title="Copre camera e widget; si spegne da solo quando parte un round. Stream Deck: POST /api/tabellone">Mostra il tabellone</button>
+          </div>
+          <div class="bt-chips" id="bt-modo-tabellone">
+            <button type="button" class="chip" data-modo="torneo">Torneo</button>
+            <button type="button" class="chip" data-modo="punti">Classifica a punti</button>
+          </div>
+          <div id="bt-torneo-box">
+            <label class="sp-riga">Partecipanti: 4 o 8, uno per riga (si sfidano 1-2, 3-4…)</label>
+            <textarea id="bt-partecipanti" rows="8" placeholder="Lince&#10;Nove&#10;Kappa&#10;Mira"></textarea>
+            <div class="azioni">
+              <button id="bt-torneo-crea" class="primario" title="Si crea tra un round e l'altro">Crea il torneo</button>
+              <button id="bt-torneo-sorteggia" class="piccolo" title="Mescola i partecipanti, solo a torneo non iniziato">Sorteggia</button>
+              <button id="bt-torneo-azzera" class="piccolo pericolo">Azzera</button>
+            </div>
+            <ol class="bt-lista bt-partite" id="bt-partite"></ol>
+          </div>
+          <div id="bt-punti-box">
+            <label class="sp-riga">Artisti: uno per riga, massimo 10</label>
+            <textarea id="bt-artisti-punti" rows="6" placeholder="Lince&#10;Nove"></textarea>
+            <div class="azioni">
+              <button id="bt-punti-salva" class="primario" title="Chi c'è già tiene i suoi punti">Salva l'elenco</button>
+              <button id="bt-punti-azzera" class="piccolo pericolo">Azzera i punti</button>
+            </div>
+            <label class="sp-riga">Target <input type="number" id="bt-target" min="1" max="1000" class="st-numero"> punti</label>
+            <p class="nota" id="bt-punti-stato"></p>
+          </div>
+
           <h3>Pop-up social</h3>
           <p class="nota">Compaiono sopra la camera, mai durante il round. Titolo in gotico, fino a 28 caratteri. Si salva da solo quando esci dal campo.</p>
           <ol class="st-comparse" id="bt-popup-lista"></ol>
@@ -452,6 +481,7 @@
             <label class="interruttore"><input type="checkbox" data-widget="timerBattle"> Timer</label>
             <label class="interruttore"><input type="checkbox" data-widget="giudiciBattle"> Giudici e voto chat</label>
             <label class="interruttore"><input type="checkbox" data-widget="popupBattle"> Pop-up social</label>
+            <label class="interruttore"><input type="checkbox" data-widget="bracket"> Tabellone</label>
           </div>
         </div>
 

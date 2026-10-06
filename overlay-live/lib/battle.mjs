@@ -583,12 +583,17 @@ export function impostaPunti(stato, { artisti, target, azzera } = {}) {
   if (artisti !== undefined) {
     if (!Array.isArray(artisti)) throw new Error("Classifica: serve l'elenco degli artisti");
     if (artisti.length > MAX_ARTISTI_PUNTI) throw new Error(`Classifica: al massimo ${MAX_ARTISTI_PUNTI} artisti`);
+    const attuali = p.artisti;
     p.artisti = artisti.map((a, i) => {
       const dati = typeof a === "string" ? { nome: a } : a;
       if (!oggetto(dati)) throw new Error(`Artista ${i + 1}: serve il nome`);
+      const nome = testo(dati.nome, MAX_NOME, `Artista ${i + 1}`, { obbligatorio: true });
+      // Chi c'è già e non ha punti dati a mano tiene punti e round: rimettere l'elenco non azzera la serata.
+      const presente = dati.punti === undefined ? attuali.find((x) => x.nome.toLowerCase() === nome.toLowerCase()) : null;
+      if (presente) return { nome, punti: presente.punti, round: presente.round };
       const punti = dati.punti === undefined ? 0 : Number(dati.punti);
       if (!Number.isFinite(punti) || punti < 0) throw new Error(`Artista ${i + 1}: punti non validi`);
-      return { nome: testo(dati.nome, MAX_NOME, `Artista ${i + 1}`, { obbligatorio: true }), punti: arrotonda(punti, 2), round: [] };
+      return { nome, punti: arrotonda(punti, 2), round: [] };
     });
     nomiUnici(p.artisti.map((a) => a.nome));
   }

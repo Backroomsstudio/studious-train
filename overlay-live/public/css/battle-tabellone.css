@@ -1,0 +1,295 @@
+/* Tabellone del battle: pannello opaco x 116 → 964, y 282 → 1534 (variabili in battle.css) che copre camera e widget.
+   Torneo: albero verticale (quarti, semifinali, finale con trofeo). Classifica: righe ordinate per punti con barra verso il target. */
+.bt-tabellone {
+  left: var(--bt-x);
+  top: var(--bt-y-tabellone);
+  width: var(--bt-largo);
+  height: var(--bt-h-tabellone);
+  z-index: 8;
+  padding-top: 28px;
+  overflow: hidden;
+  background: radial-gradient(90% 40% at 50% 0%, rgba(160, 102, 255, 0.28), transparent 70%), linear-gradient(180deg, #1b1233, #09060f);
+}
+.bt-tabellone:not([hidden]) {
+  animation: bt-tab-entra 0.6s cubic-bezier(0.2, 1, 0.3, 1) both;
+}
+@keyframes bt-tab-entra {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.bt-tab-testa {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 28px;
+}
+.bt-tab-testa h2 {
+  margin: 0;
+  font: 900 60px/1 var(--font-dati);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.bt-tab-testa .etichetta {
+  font-size: 22px;
+}
+.bt-vuoto {
+  margin: 120px 0 0;
+  text-align: center;
+  font: 800 34px/1.2 var(--font-dati);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--testo-tenue);
+}
+
+/* ---------- Albero del torneo ---------- */
+.bt-albero {
+  position: relative;
+  width: 800px;
+  height: 930px;
+  margin: 70px 24px 0;
+}
+.bt-collegamenti {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+.bt-collegamenti path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+.bt-collegamenti path.fatto {
+  stroke: #ffd54a;
+  filter: drop-shadow(0 0 6px rgba(255, 213, 74, 0.7));
+}
+.bt-turno {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font: 800 22px/1 var(--font-dati);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--viola-chiaro);
+}
+.bt-turno.lato {
+  width: auto;
+  text-align: left;
+}
+.bt-carta {
+  position: absolute;
+  width: 188px;
+  height: 112px;
+  box-sizing: border-box;
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(34, 22, 62, 0.97), rgba(12, 8, 22, 0.98));
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.28), 0 10px 24px rgba(0, 0, 0, 0.5);
+}
+.bt-carta.in-campo {
+  box-shadow: inset 0 0 0 3px #36dcff, 0 0 28px rgba(54, 220, 255, 0.7), 0 10px 24px rgba(0, 0, 0, 0.5);
+  animation: bt-in-campo 1.6s ease-in-out infinite;
+}
+@keyframes bt-in-campo {
+  50% {
+    box-shadow: inset 0 0 0 3px #b6f3ff, 0 0 40px rgba(54, 220, 255, 0.95), 0 10px 24px rgba(0, 0, 0, 0.5);
+  }
+}
+.bt-carta-riga {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 56px;
+  padding: 0 12px;
+  font: 800 28px/1 var(--font-dati);
+  text-transform: uppercase;
+  color: #fff;
+}
+.bt-carta-riga + .bt-carta-riga {
+  border-top: 2px solid rgba(255, 255, 255, 0.18);
+}
+.bt-carta-riga.ignoto {
+  color: rgba(255, 255, 255, 0.35);
+}
+.bt-carta-nome {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bt-carta-riga b {
+  flex: none;
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  color: var(--testo-tenue);
+}
+.bt-carta.giocata .bt-carta-riga:not(.vince) {
+  opacity: 0.45;
+}
+.bt-carta-riga.vince {
+  background: linear-gradient(90deg, rgba(255, 213, 74, 0.38), rgba(255, 213, 74, 0.08));
+}
+.bt-carta-riga.vince b {
+  color: #ffe27a;
+}
+.bt-trofeo {
+  position: absolute;
+  width: 76px;
+  height: 76px;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.bt-trofeo.vinto {
+  stroke: #ffd54a;
+  filter: drop-shadow(0 0 14px rgba(255, 213, 74, 0.9));
+}
+.bt-campione {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  text-align: center;
+}
+.bt-campione b {
+  display: block;
+  margin-top: 6px;
+  font: 900 76px/1 var(--font-dati);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--oro-testo);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.6));
+}
+.bt-campione .etichetta {
+  font-size: 22px;
+  color: #ffe27a;
+}
+
+/* ---------- Classifica a punti ---------- */
+.bt-punti {
+  margin-top: 18px;
+  padding: 0 24px;
+  display: grid;
+  gap: 8px;
+}
+.bt-vince {
+  padding: 8px 0;
+  text-align: center;
+  border-radius: 14px;
+  background: var(--podio-oro);
+  font: 900 46px/1.1 var(--font-dati);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #2a1c00;
+}
+.bt-riga-punti {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  height: 94px;
+  padding: 0 18px 0 12px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(34, 22, 62, 0.95), rgba(12, 8, 22, 0.97));
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.22);
+}
+.bt-pos {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font: 900 32px/1 var(--font-dati);
+  color: #fff;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4);
+}
+.bt-riga-punti.primo .bt-pos {
+  background: var(--podio-oro);
+  color: #2a1c00;
+}
+.bt-riga-punti.secondo .bt-pos {
+  background: var(--podio-argento);
+  color: #1c2026;
+}
+.bt-riga-punti.terzo .bt-pos {
+  background: var(--podio-bronzo);
+  color: #2e1805;
+}
+.bt-art-centro {
+  min-width: 0;
+}
+.bt-art-nome {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font: 900 38px/1 var(--font-dati);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.bt-tag {
+  padding: 3px 10px;
+  border-radius: 8px;
+  background: var(--ciano);
+  font: 800 18px/1.1 var(--font-dati);
+  font-style: normal;
+  letter-spacing: 0.14em;
+  color: #04202a;
+}
+.bt-barra-target {
+  margin-top: 6px;
+  height: 10px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+}
+.bt-barra-target i {
+  display: block;
+  height: 100%;
+  width: calc(var(--p, 0) * 100%);
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--viola), var(--magenta));
+}
+.bt-chips-round {
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
+  height: 24px;
+}
+.bt-chips-round span {
+  padding: 0 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  font: 700 20px/24px var(--font-dati);
+  font-variant-numeric: tabular-nums;
+  color: var(--viola-chiaro);
+}
+.bt-totale {
+  font: 900 60px/1 var(--font-dati);
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.6);
+}
+.bt-riga-punti.vincitore {
+  box-shadow: inset 0 0 0 3px #ffe27a, 0 0 34px rgba(255, 213, 74, 0.6);
+}
+.bt-riga-punti.vincitore .bt-totale {
+  color: #ffe27a;
+}
+.bt-riga-punti.in-campo {
+  box-shadow: inset 0 0 0 3px #36dcff, 0 0 24px rgba(54, 220, 255, 0.5);
+}

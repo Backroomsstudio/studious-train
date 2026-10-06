@@ -864,6 +864,7 @@ function disegnaBattle(s) {
   riempi($("#bt-durata"), b.timer.durataSecondi);
   disegnaModalitaRegia(b);
   disegnaGiudiciRegia(b);
+  disegnaTabelloneRegia(s);
   disegnaPopupRegia(s);
 }
 
@@ -955,6 +956,85 @@ function disegnaGiudiciRegia(b) {
   $("#bt-reset").disabled = b.fase === "attesa" || Boolean(r?.registrato);
   $("#bt-esito").textContent = !r ? "" : pari ? "Pari merito: scegliete chi vince." : `Vince ${b[r.vincitore].nome} · ${votoBattle(r.totali.sx)} contro ${votoBattle(r.totali.dx)}`;
 }
+
+
+// ----- Tabellone: torneo (setup e partite) o classifica a punti -----
+const righeDiTesto = (testo) => testo.split("\n").map((r) => r.trim()).filter(Boolean);
+
+function disegnaTabelloneRegia(s) {
+  const b = s.battle;
+  const t = b.tabellone;
+  $("#bt-bracket").textContent = s.visibili.bracket ? "Nascondi il tabellone" : "Mostra il tabellone";
+  for (const chip of document.querySelectorAll("#bt-modo-tabellone [data-modo]")) {
+    const scelto = chip.dataset.modo === t.modo;
+    chip.classList.toggle("scelta", scelto);
+    chip.setAttribute("aria-pressed", String(scelto));
+  }
+  $("#bt-torneo-box").hidden = t.modo !== "torneo";
+  $("#bt-punti-box").hidden = t.modo !== "punti";
+
+  riempi($("#bt-partecipanti"), t.torneo.partecipanti.map((p) => p.nome).join("\n"));
+  $("#bt-torneo-crea").disabled = b.fase !== "attesa";
+  $("#bt-torneo-sorteggia").disabled = !t.torneo.partecipanti.length || t.torneo.partite.some((p) => p.vincitore !== null);
+  disegnaPartiteRegia(b);
+
+  riempi($("#bt-artisti-punti"), t.punti.artisti.map((a) => a.nome).join("\n"));
+  riempi($("#bt-target"), t.punti.target);
+  $("#bt-punti-stato").textContent = t.punti.vincitore ? `Ha vinto ${t.punti.vincitore}.` : t.punti.artisti.length ? `Vince chi arriva a ${t.punti.target} punti.` : "";
+}
+
+// Elenco delle partite: si ridisegna solo quando cambia qualcosa (così un clic su «Carica» non si perde).
+function disegnaPartiteRegia(b) {
+  const lista = $("#bt-partite");
+  const firma = JSON.stringify([b.tabellone.torneo.partite, b.partitaId, b.fase]);
+  if (lista.dataset.firma === firma) return;
+  lista.dataset.firma = firma;
+  const nome = (r) => r?.nome ?? "—";
+  lista.replaceChildren(
+    ...b.tabellone.torneo.partite.map((p) => {
+      const giocabile = p.sx && p.dx && p.vincitore === null && b.fase === "attesa";
+      return el(
+        "li",
+        { class: p.id === b.partitaId ? "in-campo" : "" },
+        el("span", {}, `${p.id.toUpperCase()} · ${nome(p.sx)} contro ${nome(p.dx)}`),
+        el("span", { class: "nota" }, p.vincitore ? `Vince ${nome(p[p.vincitore])} (${votoBattle(p.totali.sx)} - ${votoBattle(p.totali.dx)})` : ""),
+        el("button", { type: "button", class: "piccolo", ...(giocabile ? {} : { disabled: "" }), onclick: () => invia("torneoCarica", { id: p.id }) }, "Carica"),
+      );
+    }),
+  );
+}
+
+// Un elenco scritto a mano non si sovrascrive finché non è stato salvato.
+for (const campo of [$("#bt-partecipanti"), $("#bt-artisti-punti")]) campo.addEventListener("input", () => (campo.dataset.modificato = "1"));
+const elencoSalvato = (campo) => delete campo.dataset.modificato;
+
+$("#bt-bracket").addEventListener("click", () => stato && invia("tabellone", { visibile: !stato.visibili.bracket }));
+for (const chip of document.querySelectorAll("#bt-modo-tabellone [data-modo]")) chip.addEventListener("click", () => invia("tabellone", { modo: chip.dataset.modo }));
+$("#bt-torneo-crea").addEventListener("click", async () => {
+  const esito = await invia("torneo", { azione: "crea", partecipanti: righeDiTesto($("#bt-partecipanti").value) });
+  if (esito.ok) {
+    elencoSalvato($("#bt-partecipanti"));
+    avviso("Torneo creato", "ok");
+  }
+});
+$("#bt-torneo-sorteggia").addEventListener("click", () => invia("torneo", { azione: "sorteggia" }));
+$("#bt-torneo-azzera").addEventListener("click", () => {
+  if (confirm("Azzerare il torneo? Si perdono partecipanti e risultati.")) invia("torneo", { azione: "azzera" });
+});
+$("#bt-punti-salva").addEventListener("click", async () => {
+  const esito = await invia("punti", { artisti: righeDiTesto($("#bt-artisti-punti").value) });
+  if (esito.ok) {
+    elencoSalvato($("#bt-artisti-punti"));
+    avviso("Elenco salvato", "ok");
+  }
+});
+$("#bt-target").addEventListener("change", async (e) => {
+  const esito = await invia("punti", { target: Number(e.target.value) });
+  if (!esito.ok && stato) e.target.value = stato.battle.tabellone.punti.target;
+});
+$("#bt-punti-azzera").addEventListener("click", () => {
+  if (confirm("Azzerare i punti di tutti gli artisti?")) invia("punti", { azzera: true });
+});
 
 // ----- Pop-up social -----
 function disegnaPopupRegia(s, forza = false) {

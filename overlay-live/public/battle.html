@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/css/base.css">
   <link rel="stylesheet" href="/css/overlay.css">
   <link rel="stylesheet" href="/css/battle.css">
+  <link rel="stylesheet" href="/css/battle-tabellone.css">
 </head>
 <body class="verticale bt">
   <!-- Elementi grafici: gradienti, punta e icone dei social disegnate da noi (come nel layout studio) -->
@@ -36,6 +37,7 @@
         <stop offset="0.7" stop-color="#ff8a1a"/>
         <stop offset="1" stop-color="#e03a00"/>
       </linearGradient>
+      <symbol id="ic-trofeo" viewBox="0 0 24 24"><path d="M7 3h10v5a5 5 0 0 1-10 0z"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3M12 13v4M9 17h6M8 21h8"/></symbol>
       <symbol id="punta" viewBox="0 0 100 100">
         <path d="M50 0C53 35 65 47 100 50 65 53 53 65 50 100 47 65 35 53 0 50 35 47 47 35 50 0Z"/>
       </symbol>
@@ -129,6 +131,9 @@
       <div class="bt-chat-testo" id="bt-chat-testo"></div>
       <div class="bt-chat-conta" id="bt-chat-conta"></div>
     </section>
+
+    <!-- TABELLONE: torneo a eliminazione o classifica a punti. Copre camera e widget, si accende dalla regia -->
+    <section class="bt-tabellone bt-vetro" data-parte="tabellone" id="bt-tabellone" hidden></section>
 
     <!-- 3-2-1 prima del via, a tutto schermo -->
     <section class="bt-conto" data-parte="conto" id="bt-conto" hidden>

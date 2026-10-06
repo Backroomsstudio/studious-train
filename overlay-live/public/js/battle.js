@@ -9,6 +9,7 @@ import { collega, durata } from "./connessione.js";
 import { suona, volume } from "./suoni.js";
 import { suoniBattle, suonaIn } from "./eventi-sonori.js";
 import { prossimaComparsa } from "./studio-logica.js";
+import { disegnaTabellone } from "./battle-tabellone.js";
 import {
   percentuali,
   rimanenteBattleMs,
@@ -135,6 +136,8 @@ function disegna(s) {
   disegnaArtisti(b);
   disegnaCamera(b);
   disegnaChat(b);
+  const tabellone = $("#bt-tabellone");
+  if (!tabellone.hidden) disegnaTabellone(tabellone, b);
   tick();
 }
 

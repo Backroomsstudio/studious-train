@@ -83,6 +83,16 @@ async function provaRegia() {
   await pagina.fill(`${scontro} [name="dxNome"]`, "Nove");
   await pagina.click(`${scontro} button.primario`);
   await pagina.waitForFunction(() => document.querySelector("#bt-sx-nome-giudici")?.textContent.includes("Lince"), null, { timeout: 3000 });
+  // Tabellone: torneo da 4, creato dalla regia, acceso e spento.
+  await pagina.click('#bt-modo-tabellone [data-modo="torneo"]');
+  await pagina.fill("#bt-partecipanti", "Lince\nNove\nKappa\nMira");
+  await pagina.click("#bt-torneo-crea");
+  await pagina.waitForFunction(() => document.querySelectorAll("#bt-partite li").length === 3);
+  await pagina.click("#bt-bracket");
+  await pagina.waitForFunction(() => document.querySelector("#bt-bracket").textContent.includes("Nascondi"));
+  if (!(await (await fetch(`${base}/api/stato`)).json()).visibili.bracket) errori.push("il tabellone non si è acceso");
+  await pagina.click("#bt-bracket");
+  await pagina.waitForFunction(() => document.querySelector("#bt-bracket").textContent.includes("Mostra"));
   await pagina.click("#bt-avvia");
   await pagina.waitForTimeout(3700);
   await pagina.click("#bt-termina");
