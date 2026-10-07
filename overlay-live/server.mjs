@@ -14,6 +14,7 @@ import * as D from "./lib/drum.mjs";
 import * as F from "./lib/formati.mjs";
 import { impostaTesti } from "./lib/testi.mjs";
 import { corpo, numeroTra, siNo } from "./lib/validazione.mjs";
+import { LimiteFrequenza, leggiAudio } from "./lib/audio.mjs";
 import { avviaTikTok, leggiVoto } from "./lib/chat.mjs";
 import { firmaValida, versoCoda, avviaNero } from "./lib/nero.mjs";
 
@@ -721,11 +722,29 @@ const server = http.createServer(async (req, res) => {
 const wss = new WebSocketServer({
   server,
   path: "/ws",
+  // I messaggi veri (comandi, livelli audio) sono di poche centinaia di byte: un messaggio più grande chiude il socket.
+  maxPayload: 256 * 1024,
   // Una pagina di un altro sito non può aprire il WebSocket della regia.
   verifyClient: ({ origin, req }) => hostValido(req.headers.host) && (!origin || origineDi(origin) === req.headers.host),
 });
 
+// I livelli dell'equalizzatore (Drum) arrivano dalla regia, che ascolta l'audio di FL Studio, e vanno alle pagine: solo con
+// il Drum in onda, con lo stesso PIN dei comandi, al massimo uno ogni 25 ms per connessione e solo se ben formati.
+// Tutto il resto si scarta in silenzio (nessuna risposta, nessun errore).
+function ritrasmettiAudio(mittente, msg, limite) {
+  if (config.pinRegia && msg.pin !== config.pinRegia) return;
+  if (stato.layout !== "drum") return;
+  if (!limite.permetti(performance.now())) return;
+  const livelli = leggiAudio(msg);
+  if (!livelli) return;
+  const testo = JSON.stringify({ tipo: "audio", ...livelli });
+  for (const client of wss.clients) if (client !== mittente && client.readyState === 1) client.send(testo);
+}
+
 wss.on("connection", (ws) => {
+  // Un messaggio troppo grande o un frame sbagliato fa chiudere il socket: l'errore non deve far cadere il server.
+  ws.on("error", () => {});
+  const limiteAudio = new LimiteFrequenza(25);
   ws.send(JSON.stringify({ tipo: "stato", stato: istantanea(), eventi: [] }));
   ws.on("message", (grezzo) => {
     let msg;
@@ -734,6 +753,7 @@ wss.on("connection", (ws) => {
     } catch {
       return;
     }
+    if (msg?.tipo === "audio") return ritrasmettiAudio(ws, msg, limiteAudio);
     if (msg?.tipo !== "comando") return;
     ws.send(JSON.stringify({ tipo: "esito", id: msg.id, ...esegui(msg.nome, msg.args, msg.pin) }));
   });

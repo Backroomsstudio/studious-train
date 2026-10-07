@@ -315,3 +315,117 @@ test("e2e: dopo un riavvio la scaletta non si ripete", async () => {
     rmSync(cartella, { recursive: true, force: true });
   }
 });
+
+// Un'attesa che non deve durare per sempre: un test che aspetta una chiusura che non arriva deve fallire, non appendersi.
+const entro = (promessa, ms, cosa) => Promise.race([promessa, dormi(ms).then(() => Promise.reject(new Error(`Dopo ${ms} ms: ${cosa}`)))]);
+
+const LIVELLI = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 5, 0];
+const audioDi = (client) => client.messaggi.filter((m) => m.tipo === "audio");
+
+test("e2e: audio ritrasmesso solo con il Drum in onda", { timeout: 20000 }, async () => {
+  const a = await srv.apriWs();
+  const b = await srv.apriWs();
+  try {
+    assert.equal((await srv.api("layout", { nome: "drum" })).ok, true);
+    a.invia({ tipo: "audio", b: LIVELLI, c: 70 });
+    await dormi(300);
+    assert.deepEqual(audioDi(b), [{ tipo: "audio", b: LIVELLI, c: 70 }], "agli altri arrivano solo i livelli");
+    assert.deepEqual(audioDi(a), [], "chi li manda non li riceve");
+
+    assert.equal((await srv.api("layout", { nome: "gara" })).ok, true);
+    a.invia({ tipo: "audio", b: LIVELLI, c: 70 });
+    await dormi(300);
+    assert.equal(audioDi(b).length, 1, "con un altro layout in onda non arriva nulla");
+
+    await srv.api("layout", { nome: "drum" });
+    a.invia({ tipo: "audio", b: LIVELLI.map((x) => x + 0.4), c: 120, pin: "inutile", x: "extra" });
+    await dormi(300);
+    assert.deepEqual(audioDi(b).at(-1), { tipo: "audio", b: LIVELLI, c: 100 }, "i valori si limitano e il resto non passa");
+  } finally {
+    a.chiudi();
+    b.chiudi();
+  }
+});
+
+test("e2e: audio malformato o a raffica", { timeout: 20000 }, async () => {
+  await srv.api("layout", { nome: "drum" });
+  const a = await srv.apriWs();
+  const b = await srv.apriWs();
+  const aperti = [a, b];
+  try {
+    const dieci = LIVELLI.slice(0, 11);
+    for (const rotto of [
+      { tipo: "audio", b: dieci, c: 10 },
+      { tipo: "audio", b: [...LIVELLI, 7], c: 10 },
+      { tipo: "audio", b: [...dieci, null], c: 10 }, // un NaN in JSON diventa null
+      { tipo: "audio", b: [...dieci, "7"], c: 10 },
+      { tipo: "audio", b: LIVELLI, c: "forte" },
+      { tipo: "audio", b: "123456789012", c: 10 },
+      { tipo: "audio", c: 10 },
+      { tipo: "audio", b: null },
+      { tipo: "audio" },
+    ]) {
+      a.invia(rotto);
+      await dormi(40);
+    }
+    a.ws.send("{non è json");
+    await dormi(40);
+    a.ws.send("[1, 2, 3]");
+    await dormi(40);
+    a.ws.send("null");
+    await dormi(40);
+    assert.deepEqual(audioDi(b), [], "nessun messaggio sbagliato viene ritrasmesso");
+
+    // un messaggio enorme: il server chiude quel socket e resta in piedi
+    const chiuso = new Promise((ok) => a.ws.once("close", ok));
+    a.ws.send(JSON.stringify({ tipo: "audio", b: LIVELLI, c: 1, riempimento: "x".repeat(1024 * 1024) }));
+    await entro(chiuso, 3000, "il server doveva chiudere il socket del messaggio enorme");
+    assert.equal((await srv.statoCorrente()).layout, "drum", "il server risponde ancora");
+    const c = await srv.apriWs();
+    aperti.push(c);
+    c.invia({ tipo: "audio", b: LIVELLI, c: 33 });
+    await dormi(300);
+    assert.deepEqual(audioDi(b), [{ tipo: "audio", b: LIVELLI, c: 33 }], "un nuovo client funziona subito, e il messaggio enorme non è passato");
+    assert.equal((await srv.api("layout", { nome: "drum" })).ok, true, "anche i comandi");
+
+    // una raffica di 40 messaggi senza pausa: ne passano pochi
+    const d = await srv.apriWs();
+    aperti.push(d);
+    await dormi(60);
+    const prima = audioDi(b).length;
+    for (let i = 0; i < 40; i++) d.invia({ tipo: "audio", b: LIVELLI, c: i });
+    await dormi(400);
+    const passati = audioDi(b).length - prima;
+    assert.ok(passati >= 1 && passati <= 4, `della raffica sono passati ${passati} messaggi`);
+  } finally {
+    for (const client of aperti) client.chiudi();
+  }
+});
+
+test("e2e: audio con PIN", { timeout: 20000 }, async () => {
+  const protetto = await avviaServer({ config: { pinRegia: "1234" } });
+  const a = await protetto.apriWs();
+  const b = await protetto.apriWs();
+  try {
+    const senza = await protetto.api("layout", { nome: "drum" });
+    assert.equal(senza.stato, 400);
+    assert.match(senza.errore, /PIN/);
+    assert.equal((await protetto.api("layout", { nome: "drum" }, { pin: "1234" })).ok, true);
+
+    a.invia({ tipo: "audio", b: LIVELLI, c: 70 });
+    await dormi(60);
+    a.invia({ tipo: "audio", b: LIVELLI, c: 70, pin: "0000" });
+    await dormi(60);
+    a.invia({ tipo: "audio", b: LIVELLI, c: 70, pin: 1234 });
+    await dormi(300);
+    assert.deepEqual(audioDi(b), [], "senza PIN, con un PIN sbagliato o di un altro tipo non arriva nulla");
+
+    a.invia({ tipo: "audio", b: LIVELLI, c: 70, pin: "1234" });
+    await dormi(300);
+    assert.deepEqual(audioDi(b), [{ tipo: "audio", b: LIVELLI, c: 70 }], "con il PIN giusto sì, e il PIN non viaggia");
+  } finally {
+    a.chiudi();
+    b.chiudi();
+    await protetto.ferma();
+  }
+});
