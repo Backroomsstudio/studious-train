@@ -49,6 +49,10 @@ export const TITOLO_REACTION_PREDEFINITO = { sopra: "Ogni giovedì · ore 01:00"
 // Dimensione di un gruppo di testi scelta in regia, come moltiplicatore (100% → 1).
 export const scalaTesto = (testi, id) => (testi?.[id] ?? 100) / 100;
 
+// Lo stato di ogni voce del pannello Tematiche del podcast: le precedenti all'attiva sono fatte, l'attiva è una, le altre prossime.
+export const statiTematiche = (quante = 0, attiva) =>
+  Array.from({ length: quante }, (_, i) => (i < attiva ? "fatta" : i === attiva ? "attiva" : "prossima"));
+
 // Velocità della fascia social del layout, in pixel al secondo.
 export const velocitaFascia = (s, layout) => s[layout]?.velocita ?? 80;
 

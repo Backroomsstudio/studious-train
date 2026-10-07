@@ -1,7 +1,7 @@
 // Parti pure delle pagine dei quattro layout nuovi (voci della fascia social, simboli, dimensione dei testi).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { vociFascia, velocitaFascia, ETICHETTE_TESTI, scalaTesto, NOMI_ICONE, NOMI_ICONE_REGALO, STILE_PRESET, stileTitolo, TITOLO_REACTION_PREDEFINITO } from "../public/js/formati-logica.js";
+import { vociFascia, velocitaFascia, ETICHETTE_TESTI, scalaTesto, NOMI_ICONE, NOMI_ICONE_REGALO, STILE_PRESET, stileTitolo, TITOLO_REACTION_PREDEFINITO, statiTematiche } from "../public/js/formati-logica.js";
 import { ID_SIMBOLI, svgSimboli } from "../public/js/simboli.js";
 import { senzaPremioIniziale } from "../lib/stato.mjs";
 import { ICONE } from "../lib/validazione.mjs";
@@ -107,4 +107,13 @@ test("STILE_PRESET e stileTitolo: accento e icona della targa", () => {
 test("TITOLO_REACTION_PREDEFINITO: lo stesso titolo con cui parte la reaction", () => {
   assert.deepEqual(TITOLO_REACTION_PREDEFINITO, reactionIniziale().titolo);
   assert.equal(TITOLO_REACTION_PREDEFINITO.testo, "REACTION RELEASE DELLA SETTIMANA");
+});
+
+test("statiTematiche: le precedenti sono fatte, l'attiva è una sola, le altre sono prossime", () => {
+  assert.deepEqual(statiTematiche(5, 1), ["fatta", "attiva", "prossima", "prossima", "prossima"]);
+  assert.deepEqual(statiTematiche(3, 0), ["attiva", "prossima", "prossima"], "alla prima non c'è nessuna fatta");
+  assert.deepEqual(statiTematiche(3, 2), ["fatta", "fatta", "attiva"], "all'ultima sono tutte fatte tranne lei");
+  assert.deepEqual(statiTematiche(1, 0), ["attiva"]);
+  assert.deepEqual(statiTematiche(0, 0), [], "senza voci non c'è niente da segnare");
+  assert.deepEqual(statiTematiche(undefined, 0), [], "un elenco che manca vale come vuoto");
 });

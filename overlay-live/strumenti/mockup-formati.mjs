@@ -20,6 +20,12 @@
 //   --regia-drum: i controlli del Drum nella regia: Like (+100, +1.000, imposta, riparti da ora), scaletta (salva, errore con il numero di
 //   riga, «Suona ora»), brano in esecuzione, artista ospite, «Dona un…» con il richiamo (anche con F2) e il riempimento; i campi
 //   in uso non si riscrivono; salva mockup/regia-drum.jpg.
+//   --layout podcast [--formato orizzontale] [--stato completo|base]: oltre alla geometria, la targa («Back Rooms Podcast» e la riga
+//   dell'episodio, che cambiano dal vivo e restano accese a «In onda»), le tematiche (fatta, attiva, prossima; il bordo oro che scorre;
+//   l'elenco che cambia dal vivo, anche a pannello spento; la dimensione dei testi; il lato «dx» in orizzontale), la linea e il pannello
+//   che entrano ed escono con la loro animazione (anche spenti e riaccesi subito) e la prima apertura senza animazioni.
+//   --testi-lunghi --layout podcast [--formato orizzontale]: targa e otto tematiche al massimo dei caratteri e poi cortissime, con i
+//   testi al 200%: niente esce dal suo riquadro e niente sparisce.
 //   --testi-lunghi --layout produzione|reaction [--formato orizzontale]: le tre righe del titolo al massimo dei caratteri (produzione 32/28/48,
 //   reaction 40/60/60) con i testi al 200%: ogni riga resta nella sua scatola e dentro la targa, senza coprire le altre.
 //   --regia-doppio: i titoli di Studio Production e Reaction Release nella regia: i chip dei preset, le tre righe che vanno in onda
@@ -73,8 +79,20 @@ export const GEOMETRIA = {
     },
   },
   podcast: {
-    verticale: { fascia: p(0, 1108, 1080, 92), "finto:camera": p(0, 0, 1080, 1920) },
-    orizzontale: { fascia: p(0, 968, 1920, 92), "finto:camera": p(0, 0, 1920, 1080) },
+    verticale: {
+      targa: p(116, 282, 848, 90, true),
+      tematiche: p(116, 400, 848, 480, true),
+      linea: p(538, 240, 4, 860, true),
+      fascia: p(0, 1108, 1080, 92),
+      "finto:camera": p(0, 0, 1080, 1920),
+    },
+    orizzontale: {
+      targa: p(48, 36, 512, 90),
+      tematiche: p(48, 150, 512, 570),
+      linea: p(958, 0, 4, 968),
+      fascia: p(0, 968, 1920, 92),
+      "finto:camera": p(0, 0, 1920, 1080),
+    },
   },
 };
 
@@ -94,7 +112,11 @@ export const PRESENTI = {
   },
   produzione: { verticale: stati("produzione", "verticale", ["base"]) },
   reaction: { verticale: stati("reaction", "verticale", ["base"]), orizzontale: stati("reaction", "orizzontale", ["base"]) },
-  podcast: { verticale: stati("podcast", "verticale", ["completo", "base"]), orizzontale: stati("podcast", "orizzontale", ["completo", "base"]) },
+  // completo: linea e pannello Tematiche accesi; base: spenti (nascosti)
+  podcast: {
+    verticale: { completo: tutti("podcast", "verticale"), base: senza("podcast", "verticale", "linea", "tematiche") },
+    orizzontale: { completo: tutti("podcast", "orizzontale"), base: senza("podcast", "orizzontale", "linea", "tematiche") },
+  },
 };
 const STATO_PREDEFINITO = { drum: "meta", produzione: "base", reaction: "base", podcast: "completo" };
 const BARRA = { drum: "drumBarra", produzione: "prBarra", reaction: "reBarra", podcast: "poBarra" };
@@ -157,7 +179,8 @@ async function preparaStato(fase = stato) {
   if (layout === "produzione") await comando("produzione", { preset: "cooking" });
   if (layout === "reaction") await comando("reaction", { titolo: { sopra: "Ogni giovedì · ore 01:00", testo: "REACTION RELEASE DELLA SETTIMANA", sotto: "" } });
   if (layout === "podcast") {
-    await comando("podcast", { titolo: { testo: "Back Rooms Podcast", sotto: "Puntata 12" }, ospiti: [OSPITE], tematiche: { elenco: TEMATICHE, attiva: 1 } });
+    await comando("formatoTesti", { formato: "podcast", azzera: true });
+    await comando("podcast", { titolo: { testo: "Back Rooms Podcast", sotto: "Puntata 12" }, ospiti: [OSPITE], tematiche: { titolo: "Tematiche di oggi", elenco: TEMATICHE, attiva: 1, lato: "sx" } });
     for (const nome of ["poLinea", "poTematiche"]) await comando("widget", { nome, visibile: stato === "completo" });
   }
 }
@@ -1262,6 +1285,8 @@ async function controllaTitoloVivo(browser, dimensioni, url, errori) {
   const flip = await pagina.evaluate(() => ({ volte: window.__flip, durata: parseFloat(getComputedStyle(document.querySelector("#fm-titolo-testo")).animationDuration) * (getComputedStyle(document.querySelector("#fm-titolo-testo")).animationDuration.endsWith("ms") ? 0.001 : 1) }));
   if (flip.volte < 2) errori.push(`titolo: l'effetto flip doveva partire a ogni cambio (partito ${flip.volte} volte)`);
   if (!(flip.durata > 0 && flip.durata <= 0.4)) errori.push(`titolo: l'effetto flip doveva durare al massimo 400 ms (dura ${flip.durata} s)`);
+  const luccica = await pagina.evaluate(() => getComputedStyle(document.querySelector("#fm-titolo-testo")).animationName);
+  if (!luccica.includes("fm-luccica")) errori.push(`titolo: dopo un cambio lo scintillio del cromo doveva continuare (animazioni: ${luccica})`);
   await cambia({ testo: TITOLO_ATTESO[layout].testo });
   await entro("il titolo di partenza", (t) => t.testo === TITOLO_ATTESO[layout].testo);
 
@@ -1360,6 +1385,331 @@ async function provaTestiLunghiTitolo() {
   console.log(`ok testi lunghi ${layout}${orizzontale ? "/orizzontale" : ""}: le tre righe restano dentro la targa con i testi al 200% (corpi ${visibili.map((l) => `${l.sel.slice(11)} ${Math.round(l.corpo)} px`).join(", ")}), mockup in mockup/${nome}`);
 }
 
+// Il podcast: la targa, le tematiche con la loro tappa attiva, gli ospiti sulla fascia.
+const leggiPodcast = (pagina) =>
+  pagina.evaluate(() => ({
+    targa: document.querySelector("#po-targa-testo")?.textContent,
+    sotto: (() => {
+      const e = document.querySelector("#po-targa-sotto");
+      return e && !e.hidden && getComputedStyle(e).display !== "none" ? e.textContent : null;
+    })(),
+    titoloTematiche: document.querySelector("#po-tematiche-titolo")?.textContent,
+    temi: [...document.querySelectorAll("#po-tematiche .po-tema")].map((t) => {
+      const icona = t.querySelector(".po-tema-segno svg");
+      return { stato: t.dataset.stato, testo: t.querySelector(".po-tema-testo")?.textContent, corpo: parseFloat(getComputedStyle(t.querySelector(".po-tema-testo")).fontSize), y: t.getBoundingClientRect().y, opacita: Number(getComputedStyle(t).opacity), icona: icona && !icona.hasAttribute("hidden") ? icona.querySelector("use").getAttribute("href") : null };
+    }),
+    cursore: (() => {
+      const c = document.querySelector("#po-tematiche .po-cursore");
+      return c ? c.getBoundingClientRect().y : null;
+    })(),
+    fascia: document.querySelector("#sp-nastro")?.textContent ?? "",
+  }));
+
+const STATI_TEMI = (attiva, quanti) => Array.from({ length: quanti }, (_, i) => (i < attiva ? "fatta" : i === attiva ? "attiva" : "prossima"));
+
+async function controllaPodcast(pagina, errori) {
+  const t = await leggiPodcast(pagina);
+  if (t.targa !== "Back Rooms Podcast") errori.push(`targa: «${t.targa}» invece di «Back Rooms Podcast»`);
+  if (t.sotto !== "Puntata 12") errori.push(`targa, riga episodio: «${t.sotto}» invece di «Puntata 12»`);
+  if (!t.fascia.includes("Lince · @lince.music")) errori.push(`la fascia doveva contenere l'ospite «Lince · @lince.music»: «${t.fascia.replace(/\s+/g, " ").slice(0, 120)}»`);
+  if (stato === "completo") {
+    if (t.titoloTematiche !== "Tematiche di oggi") errori.push(`pannello Tematiche: intestazione «${t.titoloTematiche}»`);
+    const atteso = STATI_TEMI(1, 5);
+    if (JSON.stringify(t.temi.map((x) => x.stato)) !== JSON.stringify(atteso)) errori.push(`le tematiche hanno gli stati ${JSON.stringify(t.temi.map((x) => x.stato))}, attesi ${JSON.stringify(atteso)}`);
+    if (JSON.stringify(t.temi.map((x) => x.testo)) !== JSON.stringify(TEMATICHE)) errori.push(`i testi delle tematiche sono ${JSON.stringify(t.temi.map((x) => x.testo))}`);
+    const ICONA = { fatta: "#ic-spunta", attiva: "#ic-play", prossima: null };
+    for (const [i, voce] of t.temi.entries()) {
+      if (voce.icona !== ICONA[voce.stato]) errori.push(`tematica ${i + 1} (${voce.stato}): segno ${voce.icona} invece di ${ICONA[voce.stato]}`);
+      if (voce.stato === "fatta" ? !(voce.opacita < 0.7) : !(voce.opacita > 0.99)) errori.push(`tematica ${i + 1} (${voce.stato}): opacità ${voce.opacita} (le fatte sono attenuate, le altre no)`);
+      if (!(voce.corpo >= 14)) errori.push(`tematica ${i + 1}: il testo è sparito (corpo ${voce.corpo} px)`);
+    }
+  }
+}
+
+// Con `lato: "dx"`: in orizzontale il pannello va a destra (x 1360), in verticale resta al centro.
+async function controllaPodcastLato(browser, dimensioni, url, errori) {
+  await comando("podcast", { tematiche: { lato: "dx" } });
+  const pagina = await browser.newPage({ viewport: dimensioni });
+  pagina.on("pageerror", (e) => errori.push(`pagina (lato dx): ${e.message}`));
+  await pagina.goto(url);
+  await pagina.evaluate(() => document.fonts?.ready);
+  await pagina.waitForTimeout(600);
+  const r = await pagina.evaluate(() => {
+    const b = document.querySelector('[data-parte="tematiche"]').getBoundingClientRect();
+    return [b.x, b.y, b.width, b.height];
+  });
+  const atteso = formato === "orizzontale" ? [1360, 150, 512, 570] : GEOMETRIA.podcast.verticale.tematiche.r;
+  if (atteso.some((v, i) => Math.abs(v - r[i]) > TOLLERANZA)) errori.push(`con lato «dx» il pannello Tematiche è [${r.map(Math.round).join(", ")}], atteso [${atteso.join(", ")}]`);
+  await pagina.close();
+  await comando("podcast", { tematiche: { lato: "sx" } });
+}
+
+// Dal vivo: titolo che cambia, tematica attiva che avanza (con il bordo che si sposta), linea e pannello che entrano ed escono.
+async function controllaPodcastVivo(browser, dimensioni, url, errori) {
+  const pagina = await browser.newPage({ viewport: dimensioni });
+  pagina.on("pageerror", (e) => errori.push(`pagina (dal vivo): ${e.message}`));
+  await pagina.goto(url.replace("&statico=1", ""));
+  await pagina.evaluate(() => document.fonts?.ready);
+  await pagina.waitForTimeout(2800);
+  const entro = async (descrizione, condizione, ms = 700) => {
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) {
+      if (await condizione()) return true;
+      await pagina.waitForTimeout(40);
+    }
+    errori.push(`${descrizione} non è comparso entro ${ms} ms`);
+    return false;
+  };
+  const stati = async () => (await leggiPodcast(pagina)).temi.map((t) => t.stato);
+  const uguali = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+  await comando("podcast", { titolo: { testo: "Puntata 3", sotto: "Con Lince" } });
+  await entro("il titolo «Puntata 3» con «Con Lince»", async () => {
+    const t = await leggiPodcast(pagina);
+    return t.targa === "Puntata 3" && t.sotto === "Con Lince";
+  });
+  await comando("podcast", { titolo: { testo: "Back Rooms Podcast", sotto: "Puntata 12" } });
+  await entro("il titolo di partenza", async () => (await leggiPodcast(pagina)).targa === "Back Rooms Podcast");
+  const luccica = await pagina.evaluate(() => getComputedStyle(document.querySelector("#po-targa-testo")).animationName);
+  if (!luccica.includes("fm-luccica")) errori.push(`targa: dopo un cambio lo scintillio del cromo doveva continuare (animazioni: ${luccica})`);
+
+  // la targa si spegne e si riaccende con «In onda» (poTitolo)
+  const opacita = (sel) => pagina.evaluate((x) => Number(getComputedStyle(document.querySelector(x)).opacity), sel);
+  await comando("widget", { nome: "poTitolo", visibile: false });
+  await entro("la targa spenta (dissolta)", async () => (await opacita("#po-targa")) < 0.05, 1200);
+  await comando("widget", { nome: "poTitolo", visibile: true });
+  await entro("la targa riaccesa", async () => (await opacita("#po-targa")) > 0.95, 1200);
+
+  // la dimensione dei testi scelta in regia vale subito (senza cambiare le parole) e si toglie con «Ripristina»
+  const corpoTema = () => pagina.evaluate(() => parseFloat(getComputedStyle(document.querySelector("#po-tematiche .po-tema-testo") ?? document.querySelector("#po-targa-testo")).fontSize));
+  const corpoTarga = () => pagina.evaluate(() => parseFloat(getComputedStyle(document.querySelector("#po-targa-testo")).fontSize));
+  const interoTarga = await corpoTarga();
+  await comando("formatoTesti", { formato: "podcast", valori: { targa: 60 } });
+  await pagina.waitForTimeout(300);
+  const piccoloTarga = await corpoTarga();
+  if (!(piccoloTarga < interoTarga * 0.8)) errori.push(`targa: con il testo al 60% il corpo doveva scendere (100%: ${interoTarga} px, 60%: ${piccoloTarga} px)`);
+  await comando("formatoTesti", { formato: "podcast", azzera: true });
+  await pagina.waitForTimeout(300);
+  if (Math.abs((await corpoTarga()) - interoTarga) > 1) errori.push("targa: «Ripristina tutti al 100%» doveva riportare il corpo com'era");
+
+  if (stato === "completo") {
+    const interoTema = await corpoTema();
+    await comando("formatoTesti", { formato: "podcast", valori: { tematiche: 60 } });
+    await pagina.waitForTimeout(300);
+    const piccoloTema = await corpoTema();
+    if (!(piccoloTema < interoTema * 0.8)) errori.push(`tematiche: con il testo al 60% il corpo doveva scendere (100%: ${interoTema} px, 60%: ${piccoloTema} px)`);
+    await comando("formatoTesti", { formato: "podcast", azzera: true });
+    await pagina.waitForTimeout(300);
+    if (Math.abs((await corpoTema()) - interoTema) > 1) errori.push("tematiche: «Ripristina tutti al 100%» doveva riportare il corpo com'era");
+
+    const y0 = (await leggiPodcast(pagina)).temi;
+    const cursore0 = (await leggiPodcast(pagina)).cursore;
+    await comando("podcastTematica", { avanti: true });
+    await entro("la tematica attiva avanzata", async () => uguali(await stati(), STATI_TEMI(2, 5)));
+    await pagina.waitForTimeout(80);
+    const durante = (await leggiPodcast(pagina)).cursore;
+    if (!(durante > cursore0 + 2 && durante < y0[2].y - 2)) errori.push(`il bordo dorato doveva scorrere da una tematica all'altra (partenza y ${Math.round(cursore0)}, dopo 120 ms y ${Math.round(durante)}, arrivo y ${Math.round(y0[2].y)})`);
+    await pagina.waitForTimeout(700); // il bordo si sposta con una transizione
+    const dopo = await leggiPodcast(pagina);
+    if (dopo.cursore === null || Math.abs(dopo.cursore - dopo.temi[2].y) > 3) errori.push(`il bordo dorato doveva stare sulla tematica attiva (bordo y ${dopo.cursore}, riga y ${dopo.temi[2].y})`);
+    if (Math.abs(dopo.temi[2].y - y0[2].y) > 1) errori.push("le righe non dovevano spostarsi quando cambia la tematica attiva");
+    await comando("podcastTematica", { indietro: true });
+    await entro("la tematica attiva tornata", async () => uguali(await stati(), STATI_TEMI(1, 5)));
+
+    // l'intestazione cambia dal vivo
+    await comando("podcast", { tematiche: { titolo: "Altro titolo" } });
+    await entro("l'intestazione «Altro titolo»", async () => (await leggiPodcast(pagina)).titoloTematiche === "Altro titolo");
+    await comando("podcast", { tematiche: { titolo: "Tematiche di oggi" } });
+    await entro("l'intestazione di partenza", async () => (await leggiPodcast(pagina)).titoloTematiche === "Tematiche di oggi");
+
+    // l'elenco cambia dal vivo: meno voci, nessuna voce (sparisce anche il bordo), poi di nuovo le cinque di prima
+    await comando("podcast", { tematiche: { elenco: ["Uno", "Due", "Tre"], attiva: 0 } });
+    await entro("tre tematiche con la prima attiva", async () => uguali(await stati(), STATI_TEMI(0, 3)));
+    const tre = (await leggiPodcast(pagina)).temi.map((x) => x.testo);
+    if (!uguali(tre, ["Uno", "Due", "Tre"])) errori.push(`le tematiche dovevano essere «Uno», «Due», «Tre» (c'è ${JSON.stringify(tre)})`);
+    await comando("podcast", { tematiche: { elenco: [] } });
+    await entro("l'elenco vuoto, senza righe", async () => (await stati()).length === 0);
+    if (!(await pagina.evaluate(() => document.querySelector("#po-cursore").hidden))) errori.push("senza tematiche il bordo oro doveva sparire");
+    await comando("podcast", { tematiche: { elenco: TEMATICHE, attiva: 1 } });
+    await entro("le cinque tematiche di prima", async () => uguali(await stati(), STATI_TEMI(1, 5)));
+    await pagina.waitForTimeout(700);
+
+    const nascosto = (sel) => pagina.evaluate((x) => document.querySelector(x).hidden, sel);
+    // il pannello si dissolve scorrendo e solo dopo l'uscita è nascosto
+    const trasformazione = (sel) => pagina.evaluate((x) => getComputedStyle(document.querySelector(x)).transform, sel);
+    await comando("widget", { nome: "poTematiche", visibile: false });
+    await pagina.waitForTimeout(250);
+    const uscendo = await opacita("#po-tematiche");
+    if (await nascosto("#po-tematiche") || !(uscendo > 0.02 && uscendo < 0.98)) errori.push(`il pannello doveva uscire con una dissolvenza (a 250 ms l'opacità è ${uscendo.toFixed(2)}, nascosto: ${await nascosto("#po-tematiche")})`);
+    await entro("il pannello Tematiche spento (nascosto dopo l'uscita)", () => nascosto("#po-tematiche"), 1200);
+    // le voci cambiate a pannello spento si leggono appena acceso (si misurano a pannello presente, non da nascosto)
+    await comando("podcast", { tematiche: { elenco: ["Altra uno", "Altra due", "Altra tre"], attiva: 1 } });
+    await comando("widget", { nome: "poTematiche", visibile: true });
+    await pagina.waitForTimeout(150);
+    const mezzo = await opacita("#po-tematiche");
+    if (!(mezzo > 0.02 && mezzo < 0.98)) errori.push(`il pannello doveva entrare con una dissolvenza (a 150 ms l'opacità è ${mezzo.toFixed(2)})`);
+    if (["none", "matrix(1, 0, 0, 1, 0, 0)"].includes(await trasformazione("#po-tematiche"))) errori.push("il pannello doveva entrare scorrendo (a 150 ms non è ancora al suo posto)");
+    await entro("il pannello Tematiche riacceso", async () => !(await nascosto("#po-tematiche")) && (await opacita("#po-tematiche")) > 0.98, 1200);
+    const rimesse = (await leggiPodcast(pagina)).temi;
+    if (!uguali(rimesse.map((x) => x.testo), ["Altra uno", "Altra due", "Altra tre"]) || rimesse.some((x) => !(x.corpo >= 14))) errori.push(`le voci cambiate a pannello spento dovevano leggersi appena acceso (${JSON.stringify(rimesse.map((x) => [x.testo, x.corpo]))})`);
+    await comando("podcast", { tematiche: { elenco: TEMATICHE, attiva: 1 } });
+    await entro("le cinque tematiche di prima", async () => uguali(await stati(), STATI_TEMI(1, 5)));
+    await pagina.waitForTimeout(700);
+    // spento e riacceso subito: l'uscita di prima non lo deve nascondere, e il bordo non deve scorrere da dove stava
+    await comando("widget", { nome: "poTematiche", visibile: false });
+    await pagina.waitForTimeout(200);
+    await comando("podcastTematica", { indice: 3 });
+    await comando("widget", { nome: "poTematiche", visibile: true });
+    await pagina.waitForTimeout(100);
+    const subito = await leggiPodcast(pagina);
+    if (subito.cursore === null || Math.abs(subito.cursore - subito.temi[3].y) > 3) errori.push(`riacceso, il bordo doveva stare già sulla tematica attiva (bordo y ${subito.cursore}, riga y ${subito.temi[3].y})`);
+    await pagina.waitForTimeout(1000);
+    if (await nascosto("#po-tematiche")) errori.push("il pannello spento e riacceso subito non doveva restare nascosto dall'uscita di prima");
+    await comando("podcastTematica", { indice: 1 });
+
+    // la linea si ritira verso il centro, poi è nascosta; riaccesa si disegna dal centro verso gli estremi
+    const caselle = () => pagina.evaluate(() => {
+      const r = document.querySelector("#po-linea").getBoundingClientRect();
+      return { y: r.y, h: r.height };
+    });
+    const { r: [, yLinea, , altezzaLinea] } = GEOMETRIA.podcast[formato].linea;
+    await comando("widget", { nome: "poLinea", visibile: false });
+    await pagina.waitForTimeout(250);
+    const inUscita = await caselle();
+    if (await nascosto("#po-linea") || !(inUscita.h > altezzaLinea * 0.03 && inUscita.h < altezzaLinea * 0.97) || (await opacita("#po-linea")) < 0.9) errori.push(`la linea doveva ritirarsi verso il centro, senza svanire (a 250 ms è alta ${Math.round(inUscita.h)} px su ${altezzaLinea}, opacità ${(await opacita("#po-linea")).toFixed(2)})`);
+    await entro("la linea spenta (nascosta dopo che si è ritirata)", () => nascosto("#po-linea"), 1500);
+    await comando("widget", { nome: "poLinea", visibile: true });
+    await pagina.waitForTimeout(150);
+    const mentre = await caselle();
+    if (!(mentre.h > altezzaLinea * 0.03 && mentre.h < altezzaLinea * 0.97)) errori.push(`la linea doveva disegnarsi (a 150 ms è alta ${Math.round(mentre.h)} px su ${altezzaLinea})`);
+    if (Math.abs(mentre.y + mentre.h / 2 - (yLinea + altezzaLinea / 2)) > 3) errori.push("la linea doveva crescere dal centro verso gli estremi");
+    await pagina.waitForTimeout(900);
+    const intera = await caselle();
+    if (Math.abs(intera.h - altezzaLinea) > 2) errori.push(`la linea riaccesa doveva tornare alta ${altezzaLinea} px (è ${Math.round(intera.h)})`);
+    // spenta e riaccesa subito: non deve restare nascosta
+    await comando("widget", { nome: "poLinea", visibile: false });
+    await pagina.waitForTimeout(200);
+    await comando("widget", { nome: "poLinea", visibile: true });
+    await pagina.waitForTimeout(1100);
+    if (await nascosto("#po-linea")) errori.push("la linea spenta e riaccesa subito non doveva restare nascosta dall'uscita di prima");
+  }
+  await pagina.close();
+}
+
+// Alla prima apertura la pagina mostra tutto già com'è, senza animazioni: LIVE Studio può ricaricare la sorgente in qualsiasi momento.
+// Ogni transizione che parte su targa, linea o pannello (e dentro di loro) viene registrata: al primo disegno non ne deve partire nessuna.
+async function controllaPodcastPrimoDisegno(browser, dimensioni, url, errori) {
+  const pagina = await browser.newPage({ viewport: dimensioni });
+  pagina.on("pageerror", (e) => errori.push(`pagina (primo disegno): ${e.message}`));
+  await pagina.addInitScript(() => {
+    window.__transizioni = [];
+    document.addEventListener(
+      "transitionrun",
+      (e) => {
+        const pezzo = e.target.closest?.("#po-targa, #po-linea, #po-tematiche");
+        if (pezzo) window.__transizioni.push(`${pezzo.id}:${e.propertyName}`);
+      },
+      true,
+    );
+  });
+  await pagina.goto(url.replace("&statico=1", ""));
+  await pagina.evaluate(() => document.fonts?.ready);
+  await pagina.waitForTimeout(1500);
+  const m = await pagina.evaluate(() => {
+    const el = (sel) => document.querySelector(sel);
+    const r = el("#po-linea").getBoundingClientRect();
+    const t = el("#po-tematiche");
+    return { transizioni: window.__transizioni, pannello: { opacita: Number(getComputedStyle(t).opacity), nascosto: t.hidden, trasformazione: getComputedStyle(t).transform }, linea: { h: r.height, nascosta: el("#po-linea").hidden }, targa: Number(getComputedStyle(el("#po-targa")).opacity) };
+  });
+  const { r: [, , , altezzaLinea] } = GEOMETRIA.podcast[formato].linea;
+  if (m.transizioni.length) errori.push(`primo disegno: niente doveva animarsi alla prima apertura (transizioni partite: ${[...new Set(m.transizioni)].join(", ")})`);
+  if (m.targa < 0.98) errori.push(`primo disegno: la targa doveva esserci subito (opacità ${m.targa.toFixed(2)})`);
+  if (stato === "completo") {
+    if (m.pannello.nascosto || m.pannello.opacita < 0.98 || !["none", "matrix(1, 0, 0, 1, 0, 0)"].includes(m.pannello.trasformazione)) errori.push(`primo disegno: il pannello Tematiche doveva esserci, fermo (opacità ${m.pannello.opacita.toFixed(2)}, ${m.pannello.trasformazione})`);
+    if (m.linea.nascosta || Math.abs(m.linea.h - altezzaLinea) > 2) errori.push(`primo disegno: la linea doveva esserci per intero (alta ${Math.round(m.linea.h)} px su ${altezzaLinea})`);
+  } else if (!m.pannello.nascosto || !m.linea.nascosta) errori.push("primo disegno: con linea e tematiche spente dovevano essere nascoste subito");
+  await pagina.close();
+}
+
+// Le righe della targa e le otto tematiche al massimo dei caratteri (la larghezza è il limite) e, in un secondo passaggio, con testi
+// cortissimi (il limite è l'altezza della scatola), con i testi al 200%: niente esce dal suo riquadro e niente sparisce.
+async function provaTestiLunghiPodcast() {
+  await preparaStato();
+  await comando("formatoTesti", { formato: "podcast", valori: { targa: 200, tematiche: 200 } });
+  const orizzontale = formato === "orizzontale";
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const pagina = await browser.newPage({ viewport: orizzontale ? { width: 1920, height: 1080 } : { width: 1080, height: 1920 } });
+  const errori = [];
+  pagina.on("pageerror", (e) => errori.push(`pagina: ${e.message}`));
+  const nome = `podcast${orizzontale ? "-orizzontale" : ""}-testi-lunghi.jpg`;
+  const PASSAGGI = [
+    ["testi lunghi", { titolo: { testo: lungo(32), sotto: lungo(48) }, tematiche: { titolo: lungo(32), elenco: Array.from({ length: 8 }, (_, i) => lungo(48 - i)), attiva: 3 } }],
+    ["testi corti", { titolo: { testo: "Podcast", sotto: "Ep. 1" }, tematiche: { titolo: "Oggi", elenco: ["Sì", "No", "Forse", "Mah", "Ok", "Ehi", "Bene", "Via"], attiva: 3 } }],
+  ];
+  for (const [passaggio, dati] of PASSAGGI) {
+    await comando("podcast", dati);
+    await pagina.goto(`${base}/podcast.html?anteprima=1&statico=1${orizzontale ? "&formato=orizzontale" : ""}`);
+    await pagina.evaluate(() => document.fonts?.ready);
+    await pagina.waitForTimeout(800);
+    const misure = await pagina.evaluate(() => {
+      const estensione = (e) => {
+        const r = document.createRange();
+        r.selectNodeContents(e);
+        const b = r.getBoundingClientRect();
+        return { x: b.x, y: b.y + b.height * 0.12, w: b.width, h: b.height * 0.76 }; // l'inchiostro: senza l'aria sopra e sotto le lettere
+      };
+      const rect = (sel) => {
+        const b = document.querySelector(sel).getBoundingClientRect();
+        return { x: b.x, y: b.y, w: b.width, h: b.height };
+      };
+      const riga = (el, contenitore) => {
+        const corpo = parseFloat(getComputedStyle(el).fontSize);
+        const scatola = el.getBoundingClientRect();
+        return { nome: el.id || el.className, contenitore, corpo, scatola: { su: scatola.top, giu: scatola.bottom }, largo: el.scrollWidth > el.clientWidth, alto: el.scrollHeight > el.clientHeight + corpo * 0.3, ...estensione(el) };
+      };
+      const targa = ["#po-targa-testo", "#po-targa-sotto"].map((sel) => riga(document.querySelector(sel), "targa"));
+      const pannello = [document.querySelector("#po-tematiche-titolo"), ...document.querySelectorAll("#po-tematiche .po-tema-testo")].map((e) => riga(e, "tematiche"));
+      return { rettangoli: { targa: rect("#po-targa"), tematiche: rect("#po-tematiche") }, righe: [...targa, ...pannello] };
+    });
+    const errore = (testo) => errori.push(`${passaggio}: ${testo}`);
+    for (const chiave of ["targa", "tematiche"]) {
+      const attesi = GEOMETRIA.podcast[formato][chiave].r;
+      const r = misure.rettangoli[chiave];
+      if (attesi.some((v, i) => Math.abs(v - [r.x, r.y, r.w, r.h][i]) > TOLLERANZA)) errore(`${chiave}: è [${[r.x, r.y, r.w, r.h].map(Math.round).join(", ")}], atteso [${attesi.join(", ")}]`);
+    }
+    for (const l of misure.righe) {
+      const dentro = misure.rettangoli[l.contenitore];
+      if (!(l.corpo >= 12) || !(l.w > 8)) errore(`${l.nome}: il testo è sparito (corpo ${Math.round(l.corpo)} px, largo ${Math.round(l.w)} px)`);
+      if (l.largo) errore(`${l.nome} (${Math.round(l.corpo)} px): il testo esce dalla riga in larghezza`);
+      if (l.alto) errore(`${l.nome} (${Math.round(l.corpo)} px): il testo esce dalla riga in altezza`);
+      if (l.x < dentro.x - 1 || l.x + l.w > dentro.x + dentro.w + 1 || l.y < dentro.y - 1 || l.y + l.h > dentro.y + dentro.h + 1) errore(`${l.nome}: esce da ${l.contenitore}`);
+      if (l.y < l.scatola.su - 2 || l.y + l.h > l.scatola.giu + 2) errore(`${l.nome} (${Math.round(l.corpo)} px): il testo sporge dalla sua scatola`);
+    }
+    for (const gruppo of ["targa", "tematiche"]) {
+      const righe = misure.righe.filter((l) => l.contenitore === gruppo);
+      for (let i = 0; i < righe.length; i++) {
+        for (let j = i + 1; j < righe.length; j++) {
+          const a = righe[i];
+          const b = righe[j];
+          const dy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+          const dx = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+          if (dx > 4 && dy > 0.3 * Math.min(a.h, b.h)) errore(`${a.nome} e ${b.nome} si sovrappongono`);
+        }
+      }
+    }
+    if (passaggio === "testi lunghi") await pagina.screenshot({ path: join(CARTELLA, "mockup", nome), type: "jpeg", quality: 88 });
+  }
+  await comando("formatoTesti", { formato: "podcast", azzera: true });
+  await preparaStato();
+  await browser.close();
+  if (errori.length) {
+    console.error(`Testi lunghi (podcast${orizzontale ? ", orizzontale" : ""}): problemi\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log(`ok testi lunghi podcast${orizzontale ? "/orizzontale" : ""}: con i testi al 200% targa e otto tematiche restano nei loro riquadri e leggibili, lunghissimi e cortissimi, mockup in mockup/${nome}`);
+}
+
 async function main() {
   if (clessidra) return provaClessidra();
   if (sbloccoAnimato) return provaSbloccoAnimato();
@@ -1367,7 +1717,7 @@ async function main() {
   if (audio) return provaAudio();
   if (regiaDrum) return provaRegiaDrum();
   if (regiaDoppio) return provaRegiaDoppio();
-  if (testiLunghi) return layout === "drum" ? provaTestiLunghi() : provaTestiLunghiTitolo();
+  if (testiLunghi) return layout === "drum" ? provaTestiLunghi() : layout === "podcast" ? provaTestiLunghiPodcast() : provaTestiLunghiTitolo();
   if (regia) return provaRegia();
   const tabella = GEOMETRIA[layout]?.[formato];
   const pezziAttesi = PRESENTI[layout]?.[formato]?.[stato];
@@ -1429,9 +1779,15 @@ async function main() {
   await pagina.screenshot({ path: file, type: "jpeg", quality: 88 });
   if (layout === "drum") await controllaDrum(pagina, errori);
   if (layout === "produzione" || layout === "reaction") await controllaTitolo(pagina, errori);
+  if (layout === "podcast") await controllaPodcast(pagina, errori);
   await pagina.close();
   await controllaFasciaViva(browser, dimensioni, url, errori);
   if (layout === "produzione" || layout === "reaction") await controllaTitoloVivo(browser, dimensioni, url, errori);
+  if (layout === "podcast") {
+    if (stato === "completo") await controllaPodcastLato(browser, dimensioni, url, errori);
+    await controllaPodcastPrimoDisegno(browser, dimensioni, url, errori);
+    await controllaPodcastVivo(browser, dimensioni, url, errori);
+  }
   await browser.close();
   if (errori.length) {
     console.error(`Problemi in ${layout}/${formato}/${stato}:\n - ${errori.join("\n - ")}`);

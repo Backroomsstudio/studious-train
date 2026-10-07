@@ -432,6 +432,10 @@ body.fm.anteprima {
 .fm-targa .flip {
   animation: fm-flip 0.38s ease-in-out;
 }
+/* il testo grande continua a scintillare dopo un cambio: il flip si somma allo scintillio del cromo, non lo sostituisce */
+.fm-targa .fm-targa-testo.flip {
+  animation: fm-flip 0.38s ease-in-out, fm-luccica 6s ease-in-out infinite;
+}
 @keyframes fm-flip {
   0% { transform: perspective(700px) rotateX(0deg); opacity: 1; }
   45% { transform: perspective(700px) rotateX(88deg); opacity: 0.15; }
