@@ -24,7 +24,8 @@ const PUBBLICA = join(CARTELLA, "public");
 const FILE_STATO = join(process.env.OVERLAY_DATI ?? join(CARTELLA, "dati"), "stato.json");
 // TikTok LIVE Studio accetta nella sorgente Link solo indirizzi con un ".parola" (es. ".html"):
 // per questo l'overlay risponde anche come /overlay.html (il layout delle live giornaliere come /senza-premio.html,
-// la live session in studio come /studio.html, il battle come /battle.html).
+// la live session in studio come /studio.html, il battle come /battle.html, e i quattro layout di Drum Challenge, Studio
+// Production, Back Rooms Podcast e Reaction Release come /drum.html, /produzione.html, /podcast.html, /reaction.html).
 const PAGINE = {
   "/": "regia.html",
   "/regia": "regia.html",
@@ -36,6 +37,14 @@ const PAGINE = {
   "/studio.html": "studio.html",
   "/battle": "battle.html",
   "/battle.html": "battle.html",
+  "/drum": "drum.html",
+  "/drum.html": "drum.html",
+  "/produzione": "produzione.html",
+  "/produzione.html": "produzione.html",
+  "/podcast": "podcast.html",
+  "/podcast.html": "podcast.html",
+  "/reaction": "reaction.html",
+  "/reaction.html": "reaction.html",
 };
 const TIPI = {
   ".html": "text/html; charset=utf-8",
@@ -765,7 +774,11 @@ server.listen(config.porta, config.host, () => {
     `\nOverlay live pronto\n  Regia:   ${base}/regia\n  Overlay: ${base}/overlay.html   (sorgente Link in TikTok LIVE Studio, 1080x1920)\n` +
       `  Senza premio: ${base}/senza-premio.html   (live giornaliere di ascolto, 1080x1920)\n` +
       `  Live session in studio: ${base}/studio.html   (fonico, artista e DAW, 1080x1920)\n` +
-      `  Battle: ${base}/battle.html   (scontro tra due rapper, 1080x1920)\n`,
+      `  Battle: ${base}/battle.html   (scontro tra due rapper, 1080x1920)\n` +
+      `  Drum Challenge Live: ${base}/drum.html   (Like di TikTok che sbloccano i brani, 1080x1920)\n` +
+      `  Studio Production: ${base}/produzione.html   (webcam e DAW, 1080x1920)\n` +
+      `  Back Rooms Podcast: ${base}/podcast.html   (1080x1920, oppure ${base}/podcast.html?formato=orizzontale 1920x1080)\n` +
+      `  Reaction Release: ${base}/reaction.html   (1080x1920, oppure ${base}/reaction.html?formato=orizzontale 1920x1080)\n`,
   );
   if (config.host !== "127.0.0.1" && !config.pinRegia) console.warn("Attenzione: server visibile in rete senza pinRegia.");
 });

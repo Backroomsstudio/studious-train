@@ -1,10 +1,11 @@
 // Nastro che scorre (barra dei social), come nel layout senza premio: i pezzi usciti a sinistra si tolgono,
 // quelli nuovi si aggiungono a destra, e il contenuto cambia solo fuori dalla vista (quello che si legge non salta mai).
-const BORDO_VISIBILE = 980; // oltre questa x il pezzo non si vede ancora sui telefoni
+const BORDO_VISIBILE = 980; // oltre questa x il pezzo non si vede ancora sui telefoni (barra larga 1080)
 const RIEMPI_FINO = 1500;
 
 // creaPezzo(voce) → elemento; inizio() → x del primo pezzo; velocita() → pixel al secondo (0 = fermo).
-export function creaNastro({ nastro, creaPezzo, inizio, velocita, statico = false }) {
+// bordoVisibile e riempiFino valgono per la barra larga 1080; per quella larga 1920 (layout orizzontali) si passano 1800 e 2400.
+export function creaNastro({ nastro, creaPezzo, inizio, velocita, statico = false, bordoVisibile = BORDO_VISIBILE, riempiFino = RIEMPI_FINO }) {
   let x = 0;
   let pezzi = []; // { el, largo, chiave, tipo }
   let scaletta = [];
@@ -20,7 +21,7 @@ export function creaNastro({ nastro, creaPezzo, inizio, velocita, statico = fals
 
   function riempi() {
     let totale = pezzi.reduce((somma, p) => somma + p.largo, 0);
-    for (let i = 0; i < 40 && x + totale < RIEMPI_FINO; i++) {
+    for (let i = 0; i < 40 && x + totale < riempiFino; i++) {
       const voce = prossimaVoce();
       if (!voce) return;
       const el = creaPezzo(voce);
@@ -57,12 +58,12 @@ export function creaNastro({ nastro, creaPezzo, inizio, velocita, statico = fals
     let sinistra = x;
     let tenuti = 0;
     for (const p of pezzi) {
-      if (sinistra >= BORDO_VISIBILE) break;
+      if (sinistra >= bordoVisibile) break;
       sinistra += p.largo;
       tenuti++;
     }
     for (const p of pezzi.splice(tenuti)) p.el.remove();
-    if (!pezzi.length) x = BORDO_VISIBILE; // barra rimasta vuota: le voci nuove entrano da destra
+    if (!pezzi.length) x = bordoVisibile; // barra rimasta vuota: le voci nuove entrano da destra
     const ultimo = pezzi[pezzi.length - 1];
     let i = ultimo ? scaletta.findIndex((v) => v.chiave === ultimo.chiave) : -1;
     if (i < 0 && ultimo) i = scaletta.findIndex((v) => v.tipo === ultimo.tipo && v.tipo !== "social");

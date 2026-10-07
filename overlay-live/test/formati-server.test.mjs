@@ -429,3 +429,17 @@ test("e2e: audio con PIN", { timeout: 20000 }, async () => {
     await protetto.ferma();
   }
 });
+
+test("e2e: le quattro pagine si aprono con o senza .html", async () => {
+  for (const percorso of ["/drum", "/drum.html", "/produzione", "/produzione.html", "/podcast", "/podcast.html", "/reaction", "/reaction.html"]) {
+    const r = await fetch(`${srv.base}${percorso}`);
+    assert.equal(r.status, 200, percorso);
+    assert.match(r.headers.get("content-type"), /text\/html/, percorso);
+    assert.match(await r.text(), /data-parte="fascia"/, percorso);
+  }
+  for (const [file, tipo] of [["/css/formati.css", /text\/css/], ["/js/pagina.js", /text\/javascript/], ["/js/fascia.js", /text\/javascript/], ["/js/simboli.js", /text\/javascript/], ["/js/formati-logica.js", /text\/javascript/]]) {
+    const r = await fetch(`${srv.base}${file}`);
+    assert.equal(r.status, 200, file);
+    assert.match(r.headers.get("content-type"), tipo, file);
+  }
+});

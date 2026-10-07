@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Studio Production · Backrooms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Grenze+Gotisch:wght@700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/overlay.css">
+  <link rel="stylesheet" href="/css/senza-premio.css">
+  <link rel="stylesheet" href="/css/formati.css">
+</head>
+<body class="fm produzione" data-formato="produzione">
+  <div class="palco">
+    <!-- Solo con ?anteprima=1: al posto della webcam (A, in alto) e dello schermo del PC con FL Studio (B, in basso) -->
+    <div class="fm-finto" data-finto="A" aria-hidden="true"><span>Webcam</span></div>
+    <div class="fm-finto" data-finto="B" aria-hidden="true"><span>DAW · FL Studio</span></div>
+
+    <!-- FASCIA SOCIAL: i social dello studio che scorrono -->
+    <section class="sp-barra fm-fascia" data-parte="fascia">
+      <div class="sp-finestra"><div class="sp-nastro" id="sp-nastro"></div></div>
+      <i class="fm-fascia-vetro"></i>
+      <div class="sp-barra-filo alto"><i class="sp-luce"></i></div>
+      <div class="sp-barra-filo basso fm-filo-basso"><i class="sp-luce"></i></div>
+      <div class="fm-moneta sx" data-moneta style="--ritardo:-5s"></div>
+      <div class="fm-moneta dx" data-moneta style="--ritardo:-1s"></div>
+    </section>
+
+    <!-- Solo con ?guide=1: zona visibile sui telefoni e zone coperte dall'app TikTok (solo verticale) -->
+    <div class="guide" aria-hidden="true">
+      <div class="guida-taglio sx"></div>
+      <div class="guida-taglio dx"></div>
+      <div class="guida-ui alto">Nome live, spettatori, classifiche TikTok</div>
+      <div class="guida-ui basso">Pulsanti TikTok</div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/doppio.js"></script>
+</body>
+</html>
