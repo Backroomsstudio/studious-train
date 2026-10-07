@@ -11,8 +11,19 @@ export const CATEGORIE = ["beat", "voce", "mix"];
 // banner, barra e scheda sono del layout senza premio (banner in alto, barra che scorre, scheda «Ora in ascolto»);
 // targa, barraStudio e comparse della live session in studio (nome dell'artista, barra dei social, comparse dello studio);
 // barreVita, modalita, timerBattle, giudiciBattle, popupBattle, vittoriaBattle (la schermata del vincitore a tutta pagina)
-// e bracket (il tabellone a torneo o a punti) del battle.
-export const WIDGET = ["premio", "tabellone", "classifica", "timer", "banner", "barra", "scheda", "targa", "barraStudio", "comparse", "barreVita", "modalita", "timerBattle", "giudiciBattle", "popupBattle", "vittoriaBattle", "bracket"];
+// e bracket (il tabellone a torneo o a punti) del battle;
+// drum* (cornice con equalizzatore, colonna dei traguardi, brano in esecuzione, «Dona un…», fascia social) del Drum Challenge,
+// pr* (titolo, fascia) di Studio Production, re* (titolo, fascia) di Reaction Release,
+// po* (targa, linea di divisione, pannello Tematiche, fascia) del Back Rooms Podcast.
+export const WIDGET = [
+  "premio", "tabellone", "classifica", "timer", "banner", "barra", "scheda", "targa", "barraStudio", "comparse",
+  "barreVita", "modalita", "timerBattle", "giudiciBattle", "popupBattle", "vittoriaBattle", "bracket",
+  "drumCornice", "drumTraguardi", "drumBrano", "drumPriorita", "drumBarra",
+  "prTitolo", "prBarra", "reTitolo", "reBarra",
+  "poTitolo", "poLinea", "poTematiche", "poBarra",
+];
+// Partono spenti: il tabellone del battle e i due moduli «a comando» del podcast (linea di divisione, pannello Tematiche).
+export const WIDGET_SPENTI = ["bracket", "poLinea", "poTematiche"];
 export const DOVE_SUONI = ["overlay", "regia", "spenti"];
 // Sotto il premio, a rotazione: spiega a chi entra in live come partecipare. Righe separate da "|".
 export const INVITO_PREDEFINITO = "La traccia più votata vince | Manda la tua traccia su nero.fan/backrooms";
@@ -21,9 +32,11 @@ export const INVITI_SUPERATI = ["La traccia più votata vince | Manda la tua tra
 const ORDINE_TIER = { throne: 0, superskip: 1, skip: 2, standard: 3 };
 // Layout in onda: la gara con premio (overlay.html), la live giornaliera di ascolto (senza-premio.html)
 // la live session in studio (studio.html, split screen fonico · artista · DAW, senza suoni)
-// o lo scontro tra due rapper (battle.html, barre della vita dal voto della chat, giudici e tabellone).
+// lo scontro tra due rapper (battle.html, barre della vita dal voto della chat, giudici e tabellone),
+// la sfida alla batteria (drum.html, Like che sbloccano i brani), Studio Production (produzione.html, webcam e DAW),
+// il Back Rooms Podcast (podcast.html, anche 16:9) o la Reaction Release (reaction.html, anche 16:9).
 // Suona solo la pagina del layout scelto, così due sorgenti caricate in LIVE Studio non suonano insieme.
-export const LAYOUT = ["gara", "senzaPremio", "studio", "battle"];
+export const LAYOUT = ["gara", "senzaPremio", "studio", "battle", "drum", "produzione", "podcast", "reaction"];
 const MAX_COMPARSE = 8;
 export const TIER_SCHEDA = ["standard", "skip", "superskip", "throne"];
 // Suono quando parte una traccia nel layout senza premio: leggero, quello della gara, oppure niente.
@@ -49,8 +62,8 @@ export function statoIniziale(config) {
     suoni: suoniIniziali(config),
     giudici: { ...config.giudici },
     nascondiVoti: false,
-    // Il tabellone del battle (bracket) resta spento finché la regia non lo accende.
-    visibili: { ...Object.fromEntries(WIDGET.map((w) => [w, true])), bracket: false },
+    // Il tabellone del battle (bracket) e i moduli a comando del podcast restano spenti finché la regia non li accende.
+    visibili: { ...Object.fromEntries(WIDGET.map((w) => [w, true])), ...Object.fromEntries(WIDGET_SPENTI.map((w) => [w, false])) },
     tiktokUtente: config.tiktok ?? "",
     // Traccia in riproduzione su Nero: l'ultima vista e quella in attesa se la traccia attuale ha voti da confermare.
     neroAutomatico: config.nero?.automatico ?? true,
@@ -168,7 +181,7 @@ export function impostaSenzaPremio(stato, modifiche = {}) {
 }
 
 export function impostaLayout(stato, nome) {
-  if (!LAYOUT.includes(nome)) throw new Error("Layout sconosciuto: gara, senzaPremio, studio o battle");
+  if (!LAYOUT.includes(nome)) throw new Error("Layout sconosciuto: gara, senzaPremio, studio, battle, drum, produzione, podcast o reaction");
   stato.layout = nome;
 }
 

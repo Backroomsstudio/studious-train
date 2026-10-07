@@ -30,7 +30,7 @@ test("partenza: stato battle di default", () => {
   assert.deepEqual(b.modalita.elenco.map((m) => m.id), ["stileLibero", "treQuarti", "tematica", "anni90", "beatAScelta", "situazione", "custom"]);
   assert.deepEqual(b.giudici.map((g) => g.nome), ["Luca", "Freya", "Daniele"]);
   assert.equal(b.tabellone.punti.target, 30);
-  assert.equal(S.LAYOUT.length, 4);
+  assert.equal(S.LAYOUT.length, 8);
   assert.equal(S.LAYOUT[3], "battle");
   assert.equal(stato.visibili.bracket, false);
   assert.equal(stato.visibili.vittoriaBattle, true, "la schermata del vincitore parte accesa");
