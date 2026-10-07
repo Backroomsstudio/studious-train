@@ -247,7 +247,7 @@ body:not(.statico) .bt-vit-coriandoli i {
   gap: 14px;
 }
 .bt-vit-cifre b {
-  font: 900 250px/1.02 var(--font-dati);
+  font: 900 calc(250px * var(--ts-vittoria, 1))/1.02 var(--font-dati);
   font-variant-numeric: tabular-nums;
   color: #fff;
   text-shadow: 0 10px 0 rgba(0, 0, 0, 0.6), 0 0 36px var(--vit), 0 0 90px var(--vit);

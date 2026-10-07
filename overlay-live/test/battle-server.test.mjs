@@ -150,6 +150,14 @@ test("e2e: dati di prova, nuova serata e pop-up", async () => {
   assert.equal(dopo.battle.giudici[0].nome, "Luca");
 });
 
+test("e2e: dimensione dei testi dalla regia", async () => {
+  assert.equal((await api("battleTesti", { modalitaTesto: 150 })).ok, true);
+  assert.equal((await statoCorrente()).battle.testi.modalitaTesto, 150);
+  assert.equal((await api("battleTesti", { modalitaTesto: 10 })).stato, 400);
+  assert.equal((await api("battleTesti", { azzera: true })).ok, true);
+  assert.equal((await statoCorrente()).battle.testi.modalitaTesto, 100);
+});
+
 test("e2e: la pagina del battle si apre come /battle.html e /battle", async () => {
   for (const percorso of ["/battle.html", "/battle"]) {
     const r = await fetch(`${base}${percorso}`);

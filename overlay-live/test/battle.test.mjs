@@ -751,3 +751,24 @@ test("torneo: il sorteggio si fa tra un round e l'altro e scarica la partita car
   B.avvia(stato, T);
   assert.throws(() => B.sorteggiaTorneo(stato, () => 0), /tra un round e l'altro/);
 });
+
+test("dimensione dei testi: parte al 100%, si cambia per testo, si ripristina, resta tra le serate", () => {
+  const stato = S.statoIniziale(config);
+  assert.deepEqual(Object.keys(B.TESTI_BATTLE), ["barreNomi", "modalitaNome", "modalitaTesto", "timer", "artistiNome", "artistiIg", "giudici", "chat", "popup", "vittoria"]);
+  assert.ok(Object.values(stato.battle.testi).every((v) => v === 100));
+  B.impostaTesti(stato, { modalitaTesto: 140, artistiNome: "120" });
+  assert.equal(stato.battle.testi.modalitaTesto, 140);
+  assert.equal(stato.battle.testi.artistiNome, 120);
+  assert.equal(stato.battle.testi.timer, 100, "gli altri non cambiano");
+  assert.throws(() => B.impostaTesti(stato, { timer: 30 }), /60/);
+  assert.throws(() => B.impostaTesti(stato, { timer: 250 }));
+  assert.throws(() => B.impostaTesti(stato, { inventato: 100 }), /sconosciuto/i);
+  assert.equal(stato.battle.testi.timer, 100, "un errore non lascia metà modifica");
+  assert.throws(() => B.impostaTesti(stato, { chat: 150, timer: 9 }));
+  assert.equal(stato.battle.testi.chat, 100);
+  assert.deepEqual(B.battleNuovaSerata(stato.battle).testi, stato.battle.testi);
+  assert.equal(B.fondiBattle({ testi: { timer: 5000, chat: 130 } }).testi.chat, 100, "un salvataggio rotto torna ai predefiniti");
+  assert.equal(B.fondiBattle({ testi: { chat: 130 } }).testi.chat, 130);
+  B.impostaTesti(stato, { azzera: true });
+  assert.ok(Object.values(stato.battle.testi).every((v) => v === 100));
+});

@@ -97,3 +97,6 @@ export function datiVittoria(battle) {
     ],
   };
 }
+
+// Dimensione di un gruppo di testi scelta in regia, come moltiplicatore (100% → 1).
+export const scalaTesto = (battle, id) => (battle?.testi?.[id] ?? 100) / 100;

@@ -840,3 +840,14 @@ code {
 .bt-partite li.in-campo {
   box-shadow: inset 0 0 0 2px var(--ciano);
 }
+
+.bt-testi .sp-riga {
+  display: grid;
+  grid-template-columns: 200px 1fr 52px;
+  align-items: center;
+  gap: 10px;
+}
+.bt-testi-valore {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

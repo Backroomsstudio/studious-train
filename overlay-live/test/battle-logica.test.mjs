@@ -14,6 +14,7 @@ import {
   vittoriaDa,
   datiVittoria,
   rivelazioneNuova,
+  scalaTesto,
   sequenzaRivelazione,
   popupConsentito,
   richiestePopup,
@@ -161,4 +162,10 @@ test("rivelazione: il server unisce gli aggiornamenti ravvicinati, la pagina puÃ
   assert.equal(rivelazioneNuova(fotoBattle("attesa", null), vinto), false, "dati di prova a round fermo: niente rivelazione");
   assert.equal(rivelazioneNuova(vinto, vinto), false, "giÃ  in risultato");
   assert.equal(rivelazioneNuova(fotoBattle("voto", null), fotoBattle("voto", null)), false);
+});
+
+test("scalaTesto: la percentuale scelta in regia diventa un moltiplicatore (1 se manca)", () => {
+  assert.equal(scalaTesto({ testi: { timer: 125 } }, "timer"), 1.25);
+  assert.equal(scalaTesto({ testi: {} }, "timer"), 1);
+  assert.equal(scalaTesto({}, "timer"), 1);
 });

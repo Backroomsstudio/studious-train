@@ -32,8 +32,8 @@
   --bt-y-camera: 656px;
   --bt-h-camera: 608px;
   --bt-fondo-camera: calc(var(--bt-y-camera) + var(--bt-h-camera));
-  --bt-y-artisti: calc(var(--bt-fondo-camera) - 164px);
-  --bt-h-artisti: 96px;
+  --bt-y-artisti: calc(var(--bt-fondo-camera) - 192px);
+  --bt-h-artisti: 124px;
   --bt-y-giudici: calc(var(--bt-fondo-camera) + 28px);
   --bt-h-giudici: 150px;
   --bt-y-chat: calc(var(--bt-y-giudici) + 164px);
@@ -124,7 +124,7 @@ body.bt.anteprima {
   /* i nomi lunghi vanno a capo (fino a 24 caratteri) e il corpo si riduce solo quanto serve */
   white-space: normal;
   overflow-wrap: anywhere;
-  font: 900 36px/1.02 var(--font-dati);
+  font: 900 calc(36px * var(--ts-barreNomi, 1))/1.02 var(--font-dati);
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: #fff;
@@ -215,12 +215,12 @@ body.bt.anteprima {
   top: var(--bt-y-modo);
   width: var(--bt-largo-modo);
   height: var(--bt-h-modo);
-  padding: 18px 26px 0;
+  padding: 12px 26px 0;
   text-align: left;
 }
 .bt-modo-nome {
-  margin-top: 8px;
-  font: 900 48px/1.05 var(--font-dati);
+  margin-top: 4px;
+  font: 900 calc(50px * var(--ts-modalitaNome, 1))/1.05 var(--font-dati);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #fff;
@@ -228,8 +228,8 @@ body.bt.anteprima {
   overflow: hidden;
 }
 .bt-modo-testo {
-  margin-top: 6px;
-  font: 800 38px/1.1 var(--font-gotico);
+  margin-top: 4px;
+  font: 800 calc(40px * var(--ts-modalitaTesto, 1))/1.1 var(--font-gotico);
   white-space: nowrap;
   overflow: hidden;
   background: var(--oro-testo);
@@ -247,9 +247,11 @@ body.bt.anteprima {
 }
 .bt-timer-cifre {
   margin-top: 4px;
-  font: 900 100px/1 var(--font-dati);
+  font: 900 calc(100px * var(--ts-timer, 1))/1 var(--font-dati);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
   color: #fff;
   text-shadow: 0 4px 0 rgba(0, 0, 0, 0.6), 0 0 26px rgba(160, 102, 255, 0.6);
 }
@@ -345,7 +347,7 @@ body.bt.anteprima {
   text-align: right;
 }
 .bt-artista-nome {
-  font: 900 42px/1.1 var(--font-dati);
+  font: 900 calc(54px * var(--ts-artistiNome, 1))/1.1 var(--font-dati);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #fff;
@@ -357,7 +359,7 @@ body.bt.anteprima {
   display: flex;
   align-items: center;
   gap: 10px;
-  font: 700 28px/1 var(--font-dati);
+  font: 700 calc(34px * var(--ts-artistiIg, 1))/1 var(--font-dati);
   letter-spacing: 0.04em;
   color: var(--viola-chiaro);
 }
@@ -365,8 +367,8 @@ body.bt.anteprima {
   justify-content: flex-end;
 }
 .bt-artista-ig svg {
-  width: 28px;
-  height: 28px;
+  width: calc(34px * var(--ts-artistiIg, 1));
+  height: calc(34px * var(--ts-artistiIg, 1));
   fill: none;
   stroke: #ff7ad9;
   stroke-width: 2;
@@ -395,7 +397,7 @@ body.bt.anteprima {
   text-align: center;
 }
 .bt-giudice-nome {
-  font: 800 28px/1 var(--font-dati);
+  font: 800 calc(28px * var(--ts-giudici, 1))/1 var(--font-dati);
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--testo-tenue);
@@ -412,7 +414,7 @@ body.bt.anteprima {
   background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.35), transparent);
 }
 .bt-giudice-voti b {
-  font: 900 76px/1 var(--font-dati);
+  font: 900 calc(76px * var(--ts-giudici, 1))/1 var(--font-dati);
   font-variant-numeric: tabular-nums;
   text-shadow: 0 4px 0 rgba(0, 0, 0, 0.6);
 }
@@ -445,7 +447,7 @@ body.bt.anteprima {
 .bt-chat-testo {
   flex: 1 1 auto;
   min-width: 0;
-  font: 900 34px/1 var(--font-dati);
+  font: 900 calc(34px * var(--ts-chat, 1))/1 var(--font-dati);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: #0a0714;
@@ -462,7 +464,7 @@ body.bt.anteprima {
   padding: 8px 16px;
   border-radius: 12px;
   background: rgba(10, 7, 20, 0.85);
-  font: 800 28px/1 var(--font-dati);
+  font: 800 calc(28px * var(--ts-chat, 1))/1 var(--font-dati);
   letter-spacing: 0.06em;
   color: #fff;
 }
@@ -814,7 +816,7 @@ body.bt.anteprima {
   column-gap: 20px;
 }
 .bt-ris b {
-  font-size: 44px;
+  font-size: calc(44px * var(--ts-chat, 1));
   font-variant-numeric: tabular-nums;
 }
 .bt-ris b:last-child {
@@ -828,4 +830,12 @@ body.bt.anteprima {
 }
 .statico .bt-chat.pari {
   animation: none;
+}
+
+/* Etichette piccole dei riquadri (Modalità, Round): più grandi, seguono il testo del loro riquadro. */
+.bt-modo .etichetta {
+  font-size: calc(18px * var(--ts-modalitaNome, 1));
+}
+.bt-timer .etichetta {
+  font-size: calc(22px * var(--ts-timer, 1));
 }

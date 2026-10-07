@@ -388,6 +388,10 @@ const comandi = {
   battleVotoGiudice(args) {
     B.votoGiudice(stato, args);
   },
+  // Dimensione dei testi dell'overlay: { timer: 120, … } in percento (60–200), oppure { azzera: true }.
+  battleTesti(args) {
+    B.impostaTesti(stato, args);
+  },
   battleGiudici(nomi) {
     B.impostaGiudici(stato, nomi);
   },

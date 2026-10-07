@@ -21,6 +21,7 @@ import {
   popupConsentito,
   richiestePopup,
   popupAutomaticoDovuto,
+  scalaTesto,
   vittoriaDa,
   datiVittoria,
   RULLO_VITTORIA_MS,
@@ -88,7 +89,8 @@ function scrivi(el, testo) {
 function adattaTesto(el, massimo, minimo) {
   let corpo = massimo;
   el.style.fontSize = `${corpo}px`;
-  while ((el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight) && corpo > minimo) {
+  // l'altezza ha una tolleranza: le lettere sporgono di un paio di pixel dalla riga anche quando il testo entra
+  while ((el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight + corpo * 0.3) && corpo > minimo) {
     corpo -= 2;
     el.style.fontSize = `${corpo}px`;
   }
@@ -138,6 +140,7 @@ function riproduci(lista) {
 
 function disegna(s) {
   const b = s.battle;
+  applicaTesti(b);
   for (const el of document.querySelectorAll("[data-parte]")) {
     const widget = WIDGET[el.dataset.parte];
     el.hidden = !PARTI.includes(el.dataset.parte) || (widget !== undefined && s.visibili[widget] === false);
@@ -152,6 +155,12 @@ function disegna(s) {
   tick();
 }
 
+// Dimensione dei testi scelta in regia: --ts-<testo> per i testi fissi, ts() per quelli che si adattano al riquadro.
+const ts = (id) => scalaTesto(stato?.battle, id);
+function applicaTesti(b) {
+  for (const id of Object.keys(b.testi)) palco.style.setProperty(`--ts-${id}`, scalaTesto(b, id));
+}
+
 // ---------- Barre della vita ----------
 function disegnaBarre(b) {
   const nomi = { sx: b.sx.nome || "—", dx: b.dx.nome || "—" };
@@ -159,7 +168,7 @@ function disegnaBarre(b) {
   for (const lato of LATI) {
     const nome = $(`#bt-nome-${lato}`);
     nome.textContent = nomi[lato];
-    adattaTesto(nome, 36, 18);
+    adattaTesto(nome, 36 * ts("barreNomi"), 18);
     $(`#bt-perc-${lato}`).textContent = `${perc[lato]}%`;
     const barra = $(`.bt-barra.${lato}`);
     barra.style.setProperty("--q", b.quota[lato]);
@@ -173,11 +182,11 @@ function disegnaModalita(b) {
   const nome = $("#bt-modo-nome");
   const testo = $("#bt-modo-testo");
   nome.textContent = m?.nome ?? "";
-  adattaTesto(nome, 48, 28);
+  adattaTesto(nome, 50 * ts("modalitaNome"), 28);
   const conTesto = Boolean(m?.conTesto && m.testo);
   testo.hidden = !conTesto;
   testo.textContent = conTesto ? `«${m.testo}»` : "";
-  if (conTesto) adattaTesto(testo, 38, 22);
+  if (conTesto) adattaTesto(testo, 40 * ts("modalitaTesto"), 22);
 }
 
 // ---------- Box degli artisti ----------
@@ -186,7 +195,7 @@ function disegnaArtisti(b) {
     const r = b[lato];
     const nome = $(`#bt-art-nome-${lato}`);
     nome.textContent = r.nome || "—";
-    adattaTesto(nome, 42, 24);
+    adattaTesto(nome, 54 * ts("artistiNome"), 24);
     const ig = $(`#bt-art-ig-${lato}`);
     ig.hidden = !r.instagram;
     ig.querySelector("span").textContent = r.instagram ? `@${r.instagram}` : "";
@@ -258,7 +267,14 @@ function aggiornaTimer() {
   const ms = rimanenteBattleMs(b, conn.ora());
   suonaTimer(conn.ora());
   scrivi($("#bt-timer-etichetta"), `Round ${b.round}`);
-  scrivi($("#bt-timer-cifre"), durata(ms));
+  const cifre = $("#bt-timer-cifre");
+  scrivi(cifre, durata(ms));
+  // le cifre restano dentro il riquadro (146 px di altezza): oltre 120% non crescono più
+  const corpo = Math.min(100 * ts("timer"), 120);
+  if (cifre.dataset.corpo !== String(corpo)) {
+    cifre.dataset.corpo = String(corpo);
+    adattaTesto(cifre, corpo, 40);
+  }
   $("#bt-timer").classList.toggle("urgente", b.fase === "battle" && b.timer.fineAlle !== null && timerUrgente(ms));
 }
 
@@ -431,7 +447,7 @@ function mostraVittoria(dati, adesso) {
   adattaTesto(titolo, 38, 22);
   const nome = $("#bt-vit-nome");
   nome.textContent = dati.nome;
-  adattaTesto(nome, 170, 56);
+  adattaTesto(nome, 170 * ts("vittoria"), 56);
   const ig = $("#bt-vit-ig");
   ig.hidden = !dati.instagram;
   ig.querySelector("span").textContent = dati.instagram ? `@${dati.instagram}` : "";
@@ -510,8 +526,8 @@ function riempiPopup(c) {
   $("#bt-popup-titolo").textContent = c.titolo;
   scriviConLink($("#bt-popup-sotto"), c.sotto);
   $("#bt-popup-sotto").hidden = !c.sotto;
-  adattaTesto($("#bt-popup-titolo"), 36, 24);
-  adattaTesto($("#bt-popup-sotto"), 26, 16);
+  adattaTesto($("#bt-popup-titolo"), 36 * ts("popup"), 24);
+  adattaTesto($("#bt-popup-sotto"), 26 * ts("popup"), 16);
 }
 
 function mostraPopup(id, { fisso = false, scelto = null } = {}) {

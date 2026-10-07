@@ -864,6 +864,7 @@ function disegnaBattle(s) {
   riempi($("#bt-durata"), b.timer.durataSecondi);
   disegnaModalitaRegia(b);
   disegnaGiudiciRegia(b);
+  disegnaTestiRegia(b);
   disegnaTabelloneRegia(s);
   disegnaPopupRegia(s);
 }
@@ -938,6 +939,46 @@ async function salvaModalita() {
   if (esito.ok) avviso("Modalità aggiornate", "ok");
   else if (stato) disegnaListaModalita(stato.battle, true);
 }
+
+// ----- Dimensione dei testi: un cursore per gruppo di testi -----
+const ETICHETTE_TESTI = {
+  barreNomi: "Nomi sulle barre della vita",
+  modalitaNome: "Modalità: nome",
+  modalitaTesto: "Modalità: descrizione",
+  timer: "Timer",
+  artistiNome: "Artisti: nome",
+  artistiIg: "Artisti: Instagram",
+  giudici: "Giudici: nomi e voti",
+  chat: "Barra del voto chat",
+  popup: "Pop-up social",
+  vittoria: "Schermata del vincitore",
+};
+const invioTesti = {};
+function disegnaTestiRegia(b) {
+  const box = $("#bt-testi");
+  if (!box.children.length) {
+    for (const [id, etichetta] of Object.entries(ETICHETTE_TESTI)) {
+      const riga = document.createElement("label");
+      riga.className = "sp-riga";
+      riga.innerHTML = `<span class="bt-testi-nome"></span> <input type="range" min="60" max="200" step="5" data-testo="${id}"> <span class="bt-testi-valore"></span>`;
+      riga.querySelector(".bt-testi-nome").textContent = etichetta;
+      box.append(riga);
+    }
+  }
+  for (const campo of box.querySelectorAll("[data-testo]")) {
+    const valore = b.testi?.[campo.dataset.testo] ?? 100;
+    if (campo !== document.activeElement) campo.value = valore;
+    campo.parentElement.querySelector(".bt-testi-valore").textContent = `${campo.value}%`;
+  }
+}
+$("#bt-testi").addEventListener("input", (e) => {
+  const id = e.target.dataset.testo;
+  if (!id) return;
+  e.target.parentElement.querySelector(".bt-testi-valore").textContent = `${e.target.value}%`;
+  clearTimeout(invioTesti[id]);
+  invioTesti[id] = setTimeout(() => invia("battleTesti", { [id]: Number(e.target.value) }), 120);
+});
+$("#bt-testi-azzera").addEventListener("click", () => invia("battleTesti", { azzera: true }));
 
 // ----- Giudici: sei voti, Rivela e Proclama -----
 function disegnaGiudiciRegia(b) {

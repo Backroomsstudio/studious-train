@@ -17,6 +17,23 @@ const DURATA_MIN = 10;
 const DURATA_MAX = 600;
 const TARGET_MAX = 1000;
 
+// Dimensione dei testi dell'overlay: percentuale per ogni gruppo di testi (100 = la dimensione di base).
+export const TESTI_BATTLE = {
+  barreNomi: "Nomi sulle barre della vita",
+  modalitaNome: "Modalità: nome",
+  modalitaTesto: "Modalità: descrizione",
+  timer: "Timer",
+  artistiNome: "Artisti: nome",
+  artistiIg: "Artisti: Instagram",
+  giudici: "Giudici: nomi e voti",
+  chat: "Barra del voto chat",
+  popup: "Pop-up social",
+  vittoria: "Schermata del vincitore",
+};
+export const TESTO_MIN = 60;
+export const TESTO_MAX = 200;
+const testiBase = () => Object.fromEntries(Object.keys(TESTI_BATTLE).map((id) => [id, 100]));
+
 const rapperVuoto = () => ({ nome: "", instagram: "" });
 const timerVuoto = (durataSecondi) => ({ durataSecondi, fineAlle: null, rimanenteMs: null, scaduto: false });
 
@@ -40,6 +57,7 @@ export function battleIniziale() {
         voce("custom", "", false, false), // slot per le modalità future: si compila dalla regia
       ],
     },
+    testi: testiBase(),
     timer: timerVuoto(90),
     conto: { finoAlle: null },
     chat: { aperta: false, voti: {} },
@@ -175,6 +193,16 @@ function controllaModalitaScelta(m) {
   return { scelta: m.scelta, elenco };
 }
 
+function controllaTesti(t) {
+  if (!oggetto(t)) throw new Error("Testi: forma non valida");
+  const nuovi = testiBase();
+  for (const [id, v] of Object.entries(t)) {
+    if (!(id in TESTI_BATTLE)) throw new Error(`Testo sconosciuto: ${id}`);
+    nuovi[id] = Math.round(numeroTra(v, TESTO_MIN, TESTO_MAX, `Dimensione di «${TESTI_BATTLE[id]}» (%)`));
+  }
+  return nuovi;
+}
+
 // Un controllo per chiave di primo livello: restituisce il valore pulito o lancia.
 const CONTROLLI = {
   fase: (v) => {
@@ -189,6 +217,7 @@ const CONTROLLI = {
     if (v !== null && (typeof v !== "string" || v.length > 40)) throw new Error("Partita non valida");
     return v;
   },
+  testi: controllaTesti,
   sx: controllaRapper,
   dx: controllaRapper,
   modalita: controllaModalitaScelta,
@@ -341,6 +370,16 @@ export function impostaPopup(stato, { elenco, ogniMinuti, durata } = {}) {
   stato.battle.popup = p;
 }
 
+// Dimensione dei testi dalla regia: { id: percento, … } cambia solo quelli dati; { azzera: true } torna al 100%.
+export function impostaTesti(stato, modifiche = {}) {
+  if (!oggetto(modifiche)) throw new Error("Testi: forma non valida");
+  if (modifiche.azzera === true) {
+    stato.battle.testi = testiBase();
+    return;
+  }
+  stato.battle.testi = controllaTesti({ ...stato.battle.testi, ...modifiche });
+}
+
 // Nuova serata: round, chat, voti, risultato e tabellone ripartono da zero; nomi dei giudici, modalità,
 // durata del timer e pop-up restano quelli scelti.
 export function battleNuovaSerata(battle) {
@@ -351,6 +390,7 @@ export function battleNuovaSerata(battle) {
     modalita: battle.modalita,
     timer: timerVuoto(battle.timer.durataSecondi),
     popup: battle.popup,
+    testi: battle.testi,
   };
 }
 
