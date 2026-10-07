@@ -902,3 +902,68 @@ button.primario.attivo {
   color: #fff;
   background: #b3263c;
 }
+
+/* Drum: contatore dei Like, scaletta e il suo elenco */
+.dr-like-grande {
+  font: 800 54px / 1.05 var(--font-dati, inherit);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  background: var(--cromo-orizzontale);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+#dr-like-imposta {
+  width: 150px;
+}
+#dr-scaletta {
+  width: 100%;
+  box-sizing: border-box;
+  font: 14px / 1.35 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  resize: vertical;
+}
+.dr-scaletta-elenco {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  max-height: 280px;
+  overflow: auto;
+  display: grid;
+  gap: 4px;
+}
+.dr-scaletta-elenco li {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.dr-scaletta-elenco li.sbloccata {
+  background: rgba(69, 255, 168, 0.1);
+}
+.dr-scaletta-elenco li.attiva {
+  background: rgba(255, 216, 99, 0.14);
+}
+.dr-t-like {
+  font-weight: 800;
+}
+.dr-t-titolo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dr-t-titolo.vuoto {
+  opacity: 0.55;
+  font-style: italic;
+}
+.dr-t-stato {
+  font-weight: 800;
+}
+.dr-scaletta-elenco li.sbloccata .dr-t-stato {
+  color: #45ffa8;
+}
+.dr-scaletta-elenco li.attiva .dr-t-stato {
+  color: #ffd863;
+}

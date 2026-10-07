@@ -526,9 +526,57 @@
     <section class="scheda sp-regia fm-regia" id="dr-regia" data-formato="drum">
       <h2>Drum Challenge Live <span class="conta">Like di TikTok · scaletta · equalizzatore · sorgente Link <code>/drum.html</code></span></h2>
       <div class="sp-colonne">
-        <div class="sp-colonna" id="dr-col1"></div>
+        <div class="sp-colonna" id="dr-col1">
+          <h3>Like</h3>
+          <div class="dr-like-grande" id="dr-like-grande">0</div>
+          <p class="nota" id="dr-like-stato"></p>
+          <div class="azioni">
+            <input type="number" id="dr-like-imposta" min="0" max="10000000" step="1" placeholder="Imposta i Like" aria-label="Imposta i Like">
+            <button type="button" class="piccolo primario" id="dr-like-imposta-ok">Imposta</button>
+          </div>
+          <div class="azioni">
+            <button type="button" class="piccolo" id="dr-like-100">+100</button>
+            <button type="button" class="piccolo" id="dr-like-1000">+1.000</button>
+            <button type="button" class="piccolo" id="dr-like-ora" title="Il contatore torna a zero e la scaletta riparte dalla prima tappa">Riparti da ora</button>
+          </div>
+          <p class="nota">I Like arrivano da TikTok da soli: qui si correggono a mano (per esempio se la regia si è collegata a live già iniziata).</p>
+
+          <h3>Scaletta</h3>
+          <p class="nota">Una riga per tappa: «Like | Titolo del brano». Il titolo si può lasciare vuoto (sarà «Brano a sorpresa»); i Like si scrivono anche 15.000 o 15k. Al massimo 80 tappe.</p>
+          <textarea id="dr-scaletta" rows="10" spellcheck="false" aria-label="Scaletta: una riga per tappa"></textarea>
+          <div class="azioni">
+            <button type="button" class="piccolo primario" id="dr-scaletta-salva">Salva scaletta</button>
+            <button type="button" class="piccolo" id="dr-scaletta-predefinita" title="Torna alle 37 tappe di partenza (i titoli delle tappe con gli stessi Like restano)">Scaletta predefinita</button>
+          </div>
+          <ul class="dr-scaletta-elenco" id="dr-scaletta-elenco"></ul>
+        </div>
 
         <div class="sp-colonna" id="dr-col2">
+          <h3>Brano in esecuzione</h3>
+          <label class="sp-riga">Titolo <input id="dr-brano-titolo-in" maxlength="60" autocomplete="off"></label>
+          <label class="sp-riga">Artista <input id="dr-brano-artista-in" maxlength="40" autocomplete="off"></label>
+          <div class="azioni">
+            <button type="button" class="piccolo primario" id="dr-brano-ok">Mostra</button>
+            <button type="button" class="piccolo" id="dr-brano-svuota">Togli il brano</button>
+          </div>
+
+          <h3>Dona un… <span class="conta">sempre in onda</span></h3>
+          <label class="sp-riga">Prefisso <input id="dr-pri-prefisso-in" maxlength="16" autocomplete="off"></label>
+          <label class="sp-riga">Slot <input id="dr-pri-slot-in" maxlength="20" autocomplete="off"></label>
+          <label class="sp-riga">Riga sopra <input id="dr-pri-sopra-in" maxlength="40" autocomplete="off"></label>
+          <label class="sp-riga">Icona <select id="dr-pri-icona-in"></select></label>
+          <div class="azioni"><button type="button" class="piccolo primario" id="dr-pri-richiamo" title="Il widget pulsa e richiama l'attenzione (F2)">Richiamo (F2)</button></div>
+
+          <h3>Artista ospite <span class="conta">sulla fascia social</span></h3>
+          <label class="sp-riga">Etichetta <input id="dr-ospite-etichetta" maxlength="24" autocomplete="off"></label>
+          <label class="sp-riga">Contatto <input id="dr-ospite-handle" maxlength="40" placeholder="@nome.artista" autocomplete="off"></label>
+          <label class="sp-riga">Icona <select id="dr-ospite-icona"></select></label>
+
+          <h3>Riempimento dei moduli</h3>
+          <label class="sp-riga">Stile
+            <select id="dr-riempimento"><option value="perline">Perline</option><option value="sabbia">Sabbia</option></select>
+          </label>
+
           <h3>Equalizzatore</h3>
           <p class="nota">La regia ascolta l'audio di FL Studio e manda i livelli alla pagina del Drum: tenete aperta questa pagina durante la diretta.</p>
           <label class="sp-riga">Sorgente

@@ -1,11 +1,13 @@
 // Regia: parti dei quattro layout nuovi (drum, produzione, podcast, reaction). Qui stanno quelle comuni: la sezione
 // accesa per il layout in onda, la scheda «Social del brand» (accesa per i layout con la barra), la velocità della fascia,
-// la dimensione di ogni gruppo di testi e l'anteprima verticale/orizzontale; per il Drum anche l'ascolto dell'audio di FL Studio
-// (sorgente, avvia/ferma, indicatore di livello, sensibilità, stile, respiro e «Prova» dell'equalizzatore). Ogni cursore manda il
-// suo comando con un piccolo ritardo (120 ms: durante il trascinamento parte solo l'ultimo valore) e appena lo si lascia.
+// la dimensione di ogni gruppo di testi e l'anteprima verticale/orizzontale; per il Drum anche i controlli (Like, scaletta, brano,
+// «Dona un…», artista ospite, riempimento) e l'ascolto dell'audio di FL Studio (sorgente, avvia/ferma, indicatore di livello,
+// sensibilità, stile, respiro e «Prova» dell'equalizzatore). Ogni cursore manda il suo comando con un piccolo ritardo (120 ms:
+// durante il trascinamento parte solo l'ultimo valore) e appena lo si lascia.
 // Le funzioni arrivano da regia.js (che le usa per tutte le sezioni): `$`, `el`, `invia`, `avviso`, `riempi`, `mostra`
 // e `conn` (la connessione, per l'audio di FL Studio).
-import { ETICHETTE_TESTI, vociFascia, velocitaFascia } from "./formati-logica.js";
+import { ETICHETTE_TESTI, NOMI_ICONE, NOMI_ICONE_REGALO, vociFascia, velocitaFascia } from "./formati-logica.js";
+import { formattaLike, etichettaLike, testoScaletta, titoloBrano } from "./drum-logica.js";
 import { stimaGiroSecondi } from "./barra.js";
 import { avviaAscolto, elencaIngressi } from "./regia-audio.js";
 
@@ -81,6 +83,130 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn }
       link.setAttribute("href", `/${pagina}.html?anteprima=1&muto=1${orizzontale ? "&formato=orizzontale" : "&guide=1"}`);
       for (const altro of sezione.querySelectorAll("[data-anteprima-formato]")) altro.classList.toggle("attivo", altro === bottone);
     });
+  }
+
+  // ----- Drum: Like, scaletta, brano, «Dona un…», artista ospite, riempimento -----
+  // I campi si riempiono dallo stato solo se non sono in uso (riempi); un comando rifiutato riporta il campo al valore vero.
+  const campoDrum = (id) => $(`#${id}`);
+  const scaletta = campoDrum("dr-scaletta");
+  const elencoScaletta = campoDrum("dr-scaletta-elenco");
+  let firmaElenco = "";
+  const icone = (select, nomi) => select.replaceChildren(...Object.entries(nomi).map(([valore, nome]) => el("option", { value: valore }, nome)));
+  icone(campoDrum("dr-ospite-icona"), NOMI_ICONE);
+  icone(campoDrum("dr-pri-icona-in"), NOMI_ICONE_REGALO);
+
+  // Un comando del Drum; se il server lo rifiuta (l'errore è già a schermo) i campi tornano a quello che c'è davvero.
+  async function comandoDrum(nome, args) {
+    const esito = await invia(nome, args);
+    if (!esito.ok && stato) disegnaDrum(stato);
+    return esito;
+  }
+
+  campoDrum("dr-like-100").addEventListener("click", () => comandoDrum("drumLike", { aggiungi: 100 }));
+  campoDrum("dr-like-1000").addEventListener("click", () => comandoDrum("drumLike", { aggiungi: 1000 }));
+  async function impostaLike() {
+    const campo = campoDrum("dr-like-imposta");
+    const numero = Number(campo.value);
+    if (campo.value.trim() === "" || !Number.isFinite(numero) || numero < 0) return avviso("Scrivete quanti Like mostrare: un numero da 0 in su.", "errore");
+    if ((await comandoDrum("drumLike", { imposta: Math.round(numero) })).ok) campo.value = "";
+  }
+  campoDrum("dr-like-imposta-ok").addEventListener("click", impostaLike);
+  campoDrum("dr-like-imposta").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") impostaLike();
+  });
+  campoDrum("dr-like-ora").addEventListener("click", () => {
+    if (confirm("Ripartire da ora? Il contatore dei Like torna a zero e la scaletta riparte dalla prima tappa.")) comandoDrum("drumLike", { daOra: true });
+  });
+
+  scaletta.addEventListener("input", () => (scaletta.dataset.modificato = "1"));
+  campoDrum("dr-scaletta-salva").addEventListener("click", async () => {
+    const esito = await comandoDrum("drumScaletta", { testo: scaletta.value });
+    if (esito.ok) delete scaletta.dataset.modificato; // da qui il campo torna a seguire lo stato (scritto in modo uniforme)
+    if (esito.ok && stato) disegnaDrum(stato);
+  });
+  campoDrum("dr-scaletta-predefinita").addEventListener("click", async () => {
+    if (!confirm("Rimettere la scaletta predefinita di 37 tappe? I titoli delle tappe con gli stessi Like restano.")) return;
+    const esito = await comandoDrum("drumScaletta", { predefinita: true });
+    if (esito.ok) delete scaletta.dataset.modificato;
+    if (esito.ok && stato) disegnaDrum(stato);
+  });
+
+  // Titolo e artista del brano vanno insieme con «Mostra»: finché non si preme (o il brano non cambia, da qui o da fuori) i due
+  // campi restano come scritti, anche se nel frattempo lo stato cambia (i Like arrivano a raffica).
+  const campiBrano = ["dr-brano-titolo-in", "dr-brano-artista-in"].map(campoDrum);
+  const finitoBrano = () => campiBrano.forEach((c) => delete c.dataset.modificato);
+  const mostraBrano = () => comandoDrum("drumBrano", { titolo: campiBrano[0].value, artista: campiBrano[1].value });
+  campoDrum("dr-brano-ok").addEventListener("click", mostraBrano);
+  for (const campo of campiBrano) {
+    campo.addEventListener("input", () => (campo.dataset.modificato = "1"));
+    campo.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") mostraBrano();
+    });
+  }
+  campoDrum("dr-brano-svuota").addEventListener("click", async () => {
+    if ((await comandoDrum("drumBrano", { svuota: true })).ok) {
+      finitoBrano();
+      if (stato) disegnaDrum(stato);
+    }
+  });
+
+  // Un campo che manda il suo valore appena si esce (o si preme Invio).
+  const alCambio = (id, comando, chiave) => campoDrum(id).addEventListener("change", (e) => comandoDrum(comando, { [chiave]: e.target.value }));
+  alCambio("dr-ospite-etichetta", "drumOspite", "etichetta");
+  alCambio("dr-ospite-handle", "drumOspite", "handle");
+  alCambio("dr-ospite-icona", "drumOspite", "icona");
+  alCambio("dr-pri-prefisso-in", "drumPriorita", "prefisso");
+  alCambio("dr-pri-slot-in", "drumPriorita", "slot");
+  alCambio("dr-pri-sopra-in", "drumPriorita", "sopra");
+  alCambio("dr-pri-icona-in", "drumPriorita", "icona");
+  alCambio("dr-riempimento", "drumRiempimento", "stile");
+  const richiamo = () => comandoDrum("drumPriorita", { richiamo: true });
+  campoDrum("dr-pri-richiamo").addEventListener("click", richiamo);
+
+  // L'elenco delle tappe: ✓ sbloccata, ▶ attiva, e per le sbloccate con un titolo «Suona ora» (lo mette come brano in esecuzione).
+  function disegnaElenco(d) {
+    const firma = JSON.stringify([d.scaletta, d.attiva]);
+    if (firma === firmaElenco) return;
+    firmaElenco = firma;
+    const raggiunte = d.attiva ?? d.scaletta.length;
+    elencoScaletta.replaceChildren(
+      ...d.scaletta.map((tappa, i) => {
+        const sbloccata = i < raggiunte;
+        const stato = sbloccata ? "sbloccata" : i === d.attiva ? "attiva" : "chiusa";
+        const suona = el("button", { type: "button", class: "piccolo", ...(tappa.titolo ? {} : { disabled: "", title: "Scrivete il titolo nella scaletta" }) }, "Suona ora");
+        suona.addEventListener("click", () => comandoDrum("drumBrano", { daIndice: i }));
+        return el(
+          "li",
+          { class: stato },
+          el("span", { class: "dr-t-like" }, etichettaLike(tappa.like)),
+          el("span", { class: `dr-t-titolo${tappa.titolo ? "" : " vuoto"}` }, titoloBrano(tappa.titolo)),
+          el("span", { class: "dr-t-stato", title: { sbloccata: "Sbloccata", attiva: "Prossima: i Like la stanno riempiendo", chiusa: "Ancora chiusa" }[stato] }, { sbloccata: "✓", attiva: "▶", chiusa: "" }[stato]),
+          sbloccata ? suona : el("span"),
+        );
+      }),
+    );
+  }
+
+  let branoVisto = null; // com'era il brano nell'ultimo stato: se cambia da fuori («Suona ora», un'altra regia) la bozza decade
+  function disegnaDrum(s) {
+    const d = s.drum;
+    const firmaBrano = JSON.stringify(d.brano);
+    if (branoVisto !== null && firmaBrano !== branoVisto) finitoBrano();
+    branoVisto = firmaBrano;
+    campoDrum("dr-like-grande").textContent = formattaLike(d.contati);
+    campoDrum("dr-like-stato").textContent = { collegato: "Collegato a TikTok", attesa: "In attesa di TikTok" }[s.tiktok.stato] ?? "TikTok non collegato";
+    if (!scaletta.dataset.modificato) riempi(scaletta, testoScaletta(d.scaletta));
+    disegnaElenco(d);
+    riempi(campoDrum("dr-brano-titolo-in"), d.brano.titolo);
+    riempi(campoDrum("dr-brano-artista-in"), d.brano.artista);
+    riempi(campoDrum("dr-ospite-etichetta"), d.ospite.etichetta);
+    riempi(campoDrum("dr-ospite-handle"), d.ospite.handle);
+    riempi(campoDrum("dr-ospite-icona"), d.ospite.icona);
+    riempi(campoDrum("dr-pri-prefisso-in"), d.priorita.prefisso);
+    riempi(campoDrum("dr-pri-slot-in"), d.priorita.slot);
+    riempi(campoDrum("dr-pri-sopra-in"), d.priorita.sopra);
+    riempi(campoDrum("dr-pri-icona-in"), d.priorita.icona);
+    riempi(campoDrum("dr-riempimento"), d.riempimento);
   }
 
   // ----- Equalizzatore del Drum: ascolto dell'audio di FL Studio -----
@@ -245,6 +371,7 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn }
     // Ridisegna dallo stato: sezione accesa, scheda sociale, velocità e testi (senza toccare il cursore in mano all'operatore).
     disegna(s) {
       stato = s;
+      disegnaDrum(s);
       const eq = s.drum.eq;
       if (sensibilita !== document.activeElement) sensibilita.value = eq.sensibilita;
       $("#dr-eq-sens-valore").textContent = `${sensibilita.value}%`;
@@ -265,6 +392,7 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn }
     },
     // Scorciatoie da tastiera di un layout: una funzione da chiamare, o null se il tasto non è suo.
     scorciatoia(tasto, layout) {
+      if (layout === "drum" && tasto === "F2") return richiamo;
       return null;
     },
   };

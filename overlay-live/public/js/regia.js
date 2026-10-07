@@ -11,6 +11,7 @@ import { percentuali, rimanenteBattleMs } from "./battle-logica.js";
 import { vociBarra, stimaGiroSecondi } from "./barra.js";
 import { vociStudio } from "./studio-logica.js";
 import { avviaRegiaFormati } from "./regia-formati.js";
+import { NOMI_ICONE } from "./formati-logica.js";
 
 const $ = (sel) => document.querySelector(sel);
 const CATEGORIE = ["beat", "voce", "mix"];
@@ -499,21 +500,6 @@ $("#nuova-serata").addEventListener("click", () => {
 $("#aiuto").addEventListener("click", () => $("#d-aiuto").showModal());
 
 // ---------- Layout senza premio ----------
-const NOMI_ICONE = {
-  nero: "Nero.fan (nota)",
-  instagram: "Instagram",
-  tiktok: "TikTok",
-  "instagram+tiktok": "Instagram+TikTok",
-  twitch: "Twitch",
-  kick: "Kick",
-  youtube: "YouTube",
-  spotify: "Spotify",
-  whatsapp: "WhatsApp",
-  dm: "DM (aeroplanino)",
-  sito: "Sito (globo)",
-  microfono: "Studio (microfono)",
-  logo: "Logo BR",
-};
 
 let velocitaInMano = false; // il cursore della velocità si sta trascinando
 

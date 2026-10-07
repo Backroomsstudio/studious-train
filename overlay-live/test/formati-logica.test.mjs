@@ -1,7 +1,7 @@
 // Parti pure delle pagine dei quattro layout nuovi (voci della fascia social, simboli, dimensione dei testi).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { vociFascia, velocitaFascia, ETICHETTE_TESTI, scalaTesto } from "../public/js/formati-logica.js";
+import { vociFascia, velocitaFascia, ETICHETTE_TESTI, scalaTesto, NOMI_ICONE, NOMI_ICONE_REGALO } from "../public/js/formati-logica.js";
 import { ID_SIMBOLI, svgSimboli } from "../public/js/simboli.js";
 import { senzaPremioIniziale } from "../lib/stato.mjs";
 import { ICONE } from "../lib/validazione.mjs";
@@ -80,4 +80,10 @@ test("scalaTesto: percentuale diventa moltiplicatore", () => {
   assert.equal(scalaTesto({}, "timer"), 1);
   assert.equal(scalaTesto(undefined, "timer"), 1);
   assert.equal(scalaTesto({ contatore: 60 }, "contatore"), 0.6);
+});
+
+test("NOMI_ICONE e NOMI_ICONE_REGALO: un nome per ogni icona che il server accetta, nello stesso ordine", () => {
+  assert.deepEqual(Object.keys(NOMI_ICONE), ICONE);
+  assert.deepEqual(Object.keys(NOMI_ICONE_REGALO), ICONE_REGALO);
+  for (const nome of [...Object.values(NOMI_ICONE), ...Object.values(NOMI_ICONE_REGALO)]) assert.ok(typeof nome === "string" && nome.trim().length > 0, `nome vuoto: «${nome}»`);
 });

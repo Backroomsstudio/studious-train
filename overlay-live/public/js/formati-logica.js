@@ -11,6 +11,25 @@ export const ETICHETTE_TESTI = {
   podcast: { targa: "Targa", tematiche: "Pannello Tematiche" },
 };
 
+// I nomi con cui la regia mostra le icone: quelle dei social (le stesse di ICONE in lib/validazione.mjs) e quelle dei regali di
+// «Dona un…» (ICONE_REGALO in lib/drum.mjs). Il browser non può importare la lib: un test li tiene uguali.
+export const NOMI_ICONE = {
+  nero: "Nero.fan (nota)",
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  "instagram+tiktok": "Instagram+TikTok",
+  twitch: "Twitch",
+  kick: "Kick",
+  youtube: "YouTube",
+  spotify: "Spotify",
+  whatsapp: "WhatsApp",
+  dm: "DM (aeroplanino)",
+  sito: "Sito (globo)",
+  microfono: "Studio (microfono)",
+  logo: "Logo BR",
+};
+export const NOMI_ICONE_REGALO = { rosa: "Rosa", corona: "Corona", cuore: "Cuore", regalo: "Regalo", stella: "Stella", diamante: "Diamante", logo: "Logo BR" };
+
 // Dimensione di un gruppo di testi scelta in regia, come moltiplicatore (100% → 1).
 export const scalaTesto = (testi, id) => (testi?.[id] ?? 100) / 100;
 

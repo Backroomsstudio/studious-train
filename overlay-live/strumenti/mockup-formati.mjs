@@ -17,6 +17,9 @@
 //   --audio: l'ascolto dell'audio dalla regia con un ingresso finto di Chromium (un WAV con un colpo ogni 500 ms): «Ingresso audio»
 //   e «Avvia ascolto» fanno alzare le barre e lampeggiare la cornice del Drum, l'indicatore di livello si muove, la sensibilità
 //   conta subito, «Ferma» riporta al respiro, la «Prova» manda lo schema finto di 4 s. (L'«Audio del PC» non si prova qui.)
+//   --regia-drum: i controlli del Drum nella regia: Like (+100, +1.000, imposta, riparti da ora), scaletta (salva, errore con il numero di
+//   riga, «Suona ora»), brano in esecuzione, artista ospite, «Dona un…» con il richiamo (anche con F2) e il riempimento; i campi
+//   in uso non si riscrivono; salva mockup/regia-drum.jpg.
 //   --testi-lunghi: i testi più lunghi permessi (titolo di tappa e di brano da 60 caratteri, artista da 40, prefisso da 16,
 //   slot da 20, ospite con handle da 40) con la dimensione dei testi del Drum al 200%: niente esce dal suo riquadro.
 //   --regia: flusso della pagina di regia (selettore dei layout, sezioni, scheda Social del brand, dimensione dei testi,
@@ -106,6 +109,7 @@ const clessidra = args.includes("--clessidra");
 const sbloccoAnimato = args.includes("--sblocco-animato");
 const equalizzatore = args.includes("--eq");
 const audio = args.includes("--audio");
+const regiaDrum = args.includes("--regia-drum");
 
 function caricaPlaywright() {
   try {
@@ -795,6 +799,172 @@ async function provaAudio() {
   console.log(`ok audio: ingresso finto → barre alte, cornice che lampeggia e indicatore che si muove; sensibilità subito; «Ferma» e respiro; controlli al server; «Prova» (${ingressi.length} ingressi elencati)`);
 }
 
+// I controlli del Drum nella pagina di regia: ogni passo cambia lo stato del server, che si legge con /api/stato.
+async function provaRegiaDrum() {
+  await comando("nuovaSerata");
+  await comando("drumScaletta", { predefinita: true });
+  await comando("layout", { nome: "drum" });
+  await comando("widget", { nome: "drumPriorita", visibile: true });
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const pagina = await browser.newPage({ viewport: { width: 1500, height: 2400 } });
+  const errori = [];
+  pagina.on("pageerror", (e) => errori.push(`regia: ${e.message}`));
+  pagina.on("dialog", (d) => d.accept()); // le conferme («Riparti da ora», «Scaletta predefinita»)
+  await pagina.goto(`${base}/regia.html`);
+  await pagina.evaluate(() => document.fonts?.ready);
+  await new Promise((ok) => setTimeout(ok, 1200));
+  const attesa = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  const eventi = [];
+  const ws = new WebSocket(`${base.replace(/^http/, "ws")}/ws`);
+  ws.onmessage = (m) => {
+    const msg = JSON.parse(m.data);
+    if (msg.tipo === "stato") for (const e of msg.eventi ?? []) eventi.push(e.nome);
+  };
+  await new Promise((ok) => (ws.onopen = ok));
+  const drum = async () => (await statoServer()).drum;
+  const verifica = async (descrizione, condizione) => {
+    try {
+      await attendi(descrizione, (st) => condizione(st.drum, st));
+    } catch (e) {
+      errori.push(`${e.message} (stato: ${JSON.stringify(await drum()).slice(0, 220)}…)`);
+    }
+  };
+  const campo = (id) => pagina.locator(`#${id}`);
+
+  // 1) Like
+  let prima = (await drum()).contati;
+  await campo("dr-like-1000").click();
+  await verifica("«+1.000» fa salire i Like di 1000", (d) => d.contati === prima + 1000);
+  prima = (await drum()).contati;
+  await campo("dr-like-100").click();
+  await verifica("«+100» fa salire i Like di 100", (d) => d.contati === prima + 100);
+  await campo("dr-like-imposta").fill("12000");
+  await campo("dr-like-imposta-ok").click();
+  await verifica("«Imposta» a 12000", (d) => d.contati === 12000);
+  await attesa(300);
+  if ((await campo("dr-like-grande").textContent()).trim() !== "12.000") errori.push(`il contatore grande dice «${await campo("dr-like-grande").textContent()}», non 12.000`);
+  if (!/TikTok non collegato/.test(await campo("dr-like-stato").textContent())) errori.push(`lo stato di TikTok dice «${await campo("dr-like-stato").textContent()}»: senza account doveva dire «TikTok non collegato»`);
+
+  // 2) scaletta: salvarla, un errore, «Suona ora»
+  await campo("dr-scaletta").fill("1000 | Uno\n2000 | Due");
+  await campo("dr-scaletta-salva").click();
+  await verifica("la scaletta di 2 tappe", (d) => d.scaletta.length === 2 && d.scaletta[1].titolo === "Due");
+  await campo("dr-scaletta").fill("mille | Uno\n2000 | Due");
+  await campo("dr-scaletta-salva").click();
+  await attesa(400);
+  const messaggi = await pagina.locator("#avvisi .avviso.errore").allTextContents();
+  if (!messaggi.some((m) => /Riga 1/.test(m))) errori.push(`una scaletta sbagliata doveva mostrare l'errore con il numero di riga (avvisi: ${JSON.stringify(messaggi)})`);
+  if ((await drum()).scaletta.length !== 2) errori.push("una scaletta sbagliata ha cambiato lo stato");
+  if ((await campo("dr-scaletta").inputValue()) !== "mille | Uno\n2000 | Due") errori.push("dopo un errore il testo scritto doveva restare nel campo");
+  await campo("dr-scaletta-salva").click(); // di nuovo l'errore: nessun danno
+  await campo("dr-scaletta").fill("1000 | Uno\n2000 | Due");
+  await campo("dr-scaletta-salva").click();
+  await attesa(500);
+  const righe = await pagina.locator("#dr-scaletta-elenco li").count();
+  if (righe !== 2) errori.push(`l'elenco della scaletta doveva avere 2 righe, ne ha ${righe}`);
+  // salvata la scaletta, il campo non ha più una bozza: segue lo stato anche se cambia da fuori
+  await comando("drumScaletta", { testo: "1000 | Uno\n2000 | Due\n3000 | Tre" });
+  await pagina.waitForFunction(() => document.querySelector("#dr-scaletta").value.split("\n").length === 3, null, { timeout: 3000 }).catch(() => errori.push("dopo il salvataggio il campo della scaletta doveva seguire lo stato (una scaletta cambiata da fuori non si è vista)"));
+  await comando("drumScaletta", { testo: "1000 | Uno\n2000 | Due" });
+  await pagina.waitForFunction(() => document.querySelector("#dr-scaletta").value.split("\n").length === 2, null, { timeout: 3000 }).catch(() => errori.push("il campo della scaletta non è tornato a 2 righe"));
+  await pagina.locator("#dr-scaletta-elenco li").nth(1).getByRole("button", { name: /Suona ora/ }).click();
+  await verifica("«Suona ora» sulla tappa 2 mette «Due» come brano", (d) => d.brano.titolo === "Due");
+  // il campo del titolo segue lo stato (non c'è una bozza): quando lo mostra, la regia ha ricevuto il cambiamento
+  await pagina.waitForFunction(() => document.querySelector("#dr-brano-titolo-in").value === "Due", null, { timeout: 3000 }).catch(() => errori.push("dopo «Suona ora» il campo del titolo doveva mostrare «Due»"));
+
+  // 3) brano scritto a mano e tolto
+  await campo("dr-brano-titolo-in").fill("Prova Titolo");
+  await campo("dr-brano-artista-in").fill("Prova Artista");
+  await campo("dr-brano-ok").click();
+  await verifica("brano scritto a mano", (d) => d.brano.titolo === "Prova Titolo" && d.brano.artista === "Prova Artista");
+  await campo("dr-brano-svuota").click();
+  await verifica("brano tolto", (d) => d.brano.titolo === "" && d.brano.artista === "");
+  await pagina.waitForFunction(() => document.querySelector("#dr-brano-titolo-in").value === "" && document.querySelector("#dr-brano-artista-in").value === "", null, { timeout: 3000 }).catch(() => errori.push("dopo «Togli il brano» i campi del brano dovevano svuotarsi"));
+  // anche se il brano era già vuoto (lo stato non cambia), «Togli il brano» butta la bozza scritta nei campi
+  await campo("dr-brano-titolo-in").fill("una bozza");
+  await campo("dr-brano-svuota").click();
+  await pagina.waitForFunction(() => document.querySelector("#dr-brano-titolo-in").value === "", null, { timeout: 3000 }).catch(() => errori.push("«Togli il brano» doveva buttare anche la bozza scritta nel campo del titolo"));
+
+  // 4) artista ospite, «Dona un…», riempimento
+  await campo("dr-ospite-handle").fill("@lince.music");
+  await campo("dr-ospite-handle").press("Tab");
+  await campo("dr-ospite-icona").selectOption("tiktok");
+  await verifica("ospite @lince.music con l'icona TikTok", (d) => d.ospite.handle === "@lince.music" && d.ospite.icona === "tiktok");
+  await campo("dr-pri-slot-in").fill("Corolla");
+  await campo("dr-pri-slot-in").press("Tab");
+  await campo("dr-pri-icona-in").selectOption("corona");
+  await verifica("«Dona un» con slot «Corolla» e icona corona", (d) => d.priorita.slot === "Corolla" && d.priorita.icona === "corona");
+  await campo("dr-riempimento").selectOption("sabbia");
+  await verifica("riempimento a sabbia", (d) => d.riempimento === "sabbia");
+  await campo("dr-pri-slot-in").fill("   ");
+  await campo("dr-pri-slot-in").press("Tab");
+  await attesa(500);
+  if ((await drum()).priorita.slot !== "Corolla") errori.push("uno slot vuoto non doveva cambiare lo stato");
+  if ((await campo("dr-pri-slot-in").inputValue()) !== "Corolla") errori.push(`dopo un errore il campo dello slot doveva tornare a «Corolla», dice «${await campo("dr-pri-slot-in").inputValue()}»`);
+
+  // 5) richiamo: dal pulsante e con F2
+  eventi.length = 0;
+  await campo("dr-pri-richiamo").click();
+  await attesa(500);
+  if (!eventi.includes("richiamoDrum")) errori.push("il pulsante «Richiamo» non ha mandato l'evento richiamoDrum");
+  eventi.length = 0;
+  await pagina.locator("body").click({ position: { x: 5, y: 5 } });
+  await pagina.keyboard.press("F2");
+  await attesa(500);
+  if (!eventi.includes("richiamoDrum")) errori.push("F2 non ha mandato l'evento richiamoDrum");
+
+  // 6) un campo in uso non si riscrive: i Like cambiano mentre si scrive nel brano e nella scaletta
+  await campo("dr-brano-titolo-in").focus();
+  await campo("dr-brano-titolo-in").fill("sto scrivendo");
+  await campo("dr-scaletta").fill("5000 | Tre");
+  await comando("drumLike", { aggiungi: 1 });
+  await attesa(500);
+  if ((await campo("dr-brano-titolo-in").inputValue()) !== "sto scrivendo") errori.push("il campo del titolo, in uso, è stato riscritto dallo stato");
+  if ((await campo("dr-scaletta").inputValue()) !== "5000 | Tre") errori.push("il campo della scaletta, con una modifica non salvata, è stato riscritto dallo stato");
+  // ... ma se il brano cambia da fuori (un'altra regia, «Suona ora») la bozza decade e il campo segue lo stato
+  await comando("drumBrano", { titolo: "Cambiato da fuori" });
+  await attesa(500);
+  if ((await campo("dr-brano-titolo-in").inputValue()) !== "Cambiato da fuori") errori.push(`un brano cambiato da fuori doveva riempire il campo del titolo, c'è «${await campo("dr-brano-titolo-in").inputValue()}»`);
+
+  // 7) «Riparti da ora» e «Scaletta predefinita» chiedono conferma: con «Annulla» non cambia niente
+  const contatiPrima = (await drum()).contati;
+  pagina.removeAllListeners("dialog");
+  pagina.once("dialog", (d) => d.dismiss());
+  await campo("dr-like-ora").click();
+  pagina.once("dialog", (d) => d.dismiss());
+  await campo("dr-scaletta-predefinita").click();
+  await attesa(500);
+  if ((await drum()).contati !== contatiPrima || (await drum()).scaletta.length !== 2) errori.push("rispondendo «Annulla» alle conferme lo stato è cambiato lo stesso");
+  pagina.on("dialog", (d) => d.accept());
+  await campo("dr-like-ora").click();
+  await verifica("«Riparti da ora» azzera i Like", (d) => d.contati === 0);
+  await campo("dr-scaletta-predefinita").click();
+  await verifica("scaletta predefinita di 37 tappe", (d) => d.scaletta.length === 37);
+  await attesa(400);
+  if ((await campo("dr-scaletta").inputValue()).split("\n").length !== 37) errori.push("dopo «Scaletta predefinita» il campo doveva mostrare le 37 tappe");
+
+  // il mockup della sezione: Like a metà strada, scaletta con i titoli di prova, ospite
+  await comando("drumDemo", { fase: "meta" });
+  await comando("drumRiempimento", { stile: "perline" });
+  await comando("drumOspite", { etichetta: "Artista ospite", handle: "@lince.music", icona: "instagram" });
+  await comando("drumPriorita", { slot: "Rosa", icona: "rosa" });
+  await comando("drumBrano", { titolo: "Seven Nation Army", artista: "" });
+  await attesa(700);
+  const campi = await pagina.evaluate(() => Object.fromEntries(["dr-like-grande", "dr-brano-titolo-in", "dr-ospite-handle", "dr-ospite-icona", "dr-pri-slot-in", "dr-pri-icona-in", "dr-riempimento"].map((id) => [id, document.getElementById(id).value ?? document.getElementById(id).textContent])));
+  const attesi = { "dr-brano-titolo-in": "Seven Nation Army", "dr-ospite-handle": "@lince.music", "dr-ospite-icona": "instagram", "dr-pri-slot-in": "Rosa", "dr-pri-icona-in": "rosa", "dr-riempimento": "perline" };
+  for (const [id, atteso] of Object.entries(attesi)) if (campi[id] !== atteso) errori.push(`il campo ${id} doveva seguire lo stato («${atteso}»), dice «${campi[id]}»`);
+  if (!/11\.400/.test(campi["dr-like-grande"])) errori.push(`il contatore grande doveva dire 11.400, dice «${campi["dr-like-grande"]}»`);
+  await (await pagina.$("#dr-regia")).screenshot({ path: join(CARTELLA, "mockup", "regia-drum.jpg"), type: "jpeg", quality: 85 });
+  ws.close();
+  await browser.close();
+  if (errori.length) {
+    console.error(`Regia Drum: problemi\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log("ok regia-drum: Like, scaletta (con l'errore e «Suona ora»), brano, ospite, «Dona un…», richiamo con F2, riempimento, campi in uso; mockup/regia-drum.jpg");
+}
+
 // Un testo di prova lungo `n` caratteri, con gli spazi di una frase vera (che va a capo) e senza spazio alla fine.
 const lungo = (n) => "Lunghissimo titolo di prova con tante parole per la riga ".repeat(3).slice(0, n).trimEnd().padEnd(n, "x");
 
@@ -889,6 +1059,7 @@ async function main() {
   if (sbloccoAnimato) return provaSbloccoAnimato();
   if (equalizzatore) return provaEq();
   if (audio) return provaAudio();
+  if (regiaDrum) return provaRegiaDrum();
   if (testiLunghi) return provaTestiLunghi();
   if (regia) return provaRegia();
   const tabella = GEOMETRIA[layout]?.[formato];
