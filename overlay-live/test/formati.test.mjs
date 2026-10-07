@@ -137,3 +137,149 @@ test("formati: stato salvato rotto", () => {
   sua.reaction.testi.sotto = 80;
   assert.deepEqual(F.fondiReaction(structuredClone(sua.reaction)), sua.reaction);
 });
+
+const nuovoPodcast = () => ({ podcast: F.podcastIniziale() });
+const ospite = (n) => ({ nome: `Ospite ${n}`, handle: `@ospite${n}`, icona: "tiktok" });
+const voci = (n) => Array.from({ length: n }, (_, i) => `Tema ${i + 1}`);
+
+test("podcast: partenza", () => {
+  const p = F.podcastIniziale();
+  assert.deepEqual(p, {
+    titolo: { testo: "Back Rooms Podcast", sotto: "" },
+    ospiti: [],
+    tematiche: { titolo: "Tematiche di oggi", elenco: [], attiva: 0, lato: "sx" },
+    velocita: 80,
+    testi: testiBase("podcast"),
+  });
+  p.tematiche.elenco.push("x");
+  p.ospiti.push("x");
+  assert.deepEqual([F.podcastIniziale().tematiche.elenco, F.podcastIniziale().ospiti], [[], []], "due partenze non condividono nulla");
+});
+
+test("podcast: ospiti e titolo", () => {
+  const s = nuovoPodcast();
+  F.impostaPodcast(s, { ospiti: [1, 2, 3, 4].map(ospite) });
+  assert.equal(s.podcast.ospiti.length, 4);
+  assert.deepEqual(s.podcast.ospiti[0], { nome: "Ospite 1", handle: "@ospite1", icona: "tiktok" });
+  const prima = structuredClone(s.podcast);
+  assert.throws(() => F.impostaPodcast(s, { ospiti: [1, 2, 3, 4, 5].map(ospite) }), /4/);
+  assert.throws(() => F.impostaPodcast(s, { ospiti: [{ handle: "@x" }] }), /nome/i);
+  assert.throws(() => F.impostaPodcast(s, { ospiti: [{ nome: "x".repeat(25) }] }), /24/);
+  assert.throws(() => F.impostaPodcast(s, { ospiti: [{ nome: "A", handle: "x".repeat(41) }] }), /40/);
+  assert.throws(() => F.impostaPodcast(s, { ospiti: [{ nome: "A", icona: "boh" }] }), /icona/i);
+  assert.throws(() => F.impostaPodcast(s, { ospiti: "rotto" }), /Ospiti/);
+  assert.throws(() => F.impostaPodcast(s, { ospiti: [null] }), /Ospite 1/);
+  assert.throws(() => F.impostaPodcast(s, { titolo: { testo: "" } }), /vuoto/);
+  assert.throws(() => F.impostaPodcast(s, { titolo: { testo: "x".repeat(33) } }), /32/);
+  assert.throws(() => F.impostaPodcast(s, { titolo: { sotto: "x".repeat(49) } }), /48/);
+  assert.throws(() => F.impostaPodcast(s, { titolo: { testo: "Nuovo" }, velocita: 5 }));
+  assert.throws(() => F.impostaPodcast(s, null), /Podcast/);
+  assert.deepEqual(s.podcast, prima, "un errore lascia lo stato com'era");
+  F.impostaPodcast(s, { ospiti: [{ nome: "  Mario  " }] });
+  assert.deepEqual(s.podcast.ospiti, [{ nome: "Mario", handle: "", icona: "instagram" }], "senza icona è instagram");
+  F.impostaPodcast(s, { ospiti: [] });
+  assert.deepEqual(s.podcast.ospiti, []);
+  F.impostaPodcast(s, { titolo: { sotto: "Puntata 12" } });
+  assert.deepEqual(s.podcast.titolo, { testo: "Back Rooms Podcast", sotto: "Puntata 12" });
+  F.impostaPodcast(s, { titolo: { testo: "x".repeat(32), sopra: "non esiste" } });
+  assert.deepEqual(Object.keys(s.podcast.titolo), ["testo", "sotto"], "il titolo ha solo testo e sotto");
+  for (const v of [40, 160, "120"]) F.impostaPodcast(s, { velocita: v });
+  assert.equal(s.podcast.velocita, 120);
+  assert.throws(() => F.impostaPodcast(s, { velocita: 39 }), /40/);
+  assert.throws(() => F.impostaPodcast(s, { velocita: 161 }), /160/);
+});
+
+test("podcast: tematiche", () => {
+  const s = nuovoPodcast();
+  F.impostaPodcast(s, { tematiche: { elenco: voci(8) } });
+  assert.equal(s.podcast.tematiche.elenco.length, 8);
+  const prima = structuredClone(s.podcast);
+  assert.throws(() => F.impostaPodcast(s, { tematiche: { elenco: voci(9) } }), /8/);
+  assert.throws(() => F.impostaPodcast(s, { tematiche: { elenco: ["ok", ""] } }), /vuoto/);
+  assert.throws(() => F.impostaPodcast(s, { tematiche: { elenco: ["x".repeat(49)] } }), /48/);
+  assert.throws(() => F.impostaPodcast(s, { tematiche: { elenco: "rotto" } }), /elenco/i);
+  assert.throws(() => F.impostaPodcast(s, { tematiche: { elenco: [5] } }), /testo/);
+  assert.throws(() => F.impostaPodcast(s, { tematiche: { lato: "alto" } }), /sx o dx/);
+  assert.throws(() => F.impostaPodcast(s, { tematiche: { titolo: "" } }), /vuoto/);
+  assert.throws(() => F.impostaPodcast(s, { tematiche: { titolo: "x".repeat(33) } }), /32/);
+  assert.throws(() => F.impostaPodcast(s, { tematiche: { attiva: 1.5 } }), /intero/);
+  assert.throws(() => F.impostaPodcast(s, { tematiche: { attiva: "2" } }), /intero/);
+  assert.throws(() => F.impostaPodcast(s, { tematiche: "tutte" }), /Tematiche/);
+  assert.throws(() => F.impostaPodcast(s, { tematiche: { lato: "dx", elenco: voci(9) } }));
+  assert.deepEqual(s.podcast, prima, "un errore lascia lo stato com'era");
+  F.impostaPodcast(s, { tematiche: { elenco: voci(3), attiva: 9 } });
+  assert.equal(s.podcast.tematiche.attiva, 2, "l'attiva resta nell'elenco");
+  F.impostaPodcast(s, { tematiche: { elenco: voci(5), attiva: 4 } });
+  assert.equal(s.podcast.tematiche.attiva, 4);
+  F.impostaPodcast(s, { tematiche: { elenco: voci(2) } });
+  assert.equal(s.podcast.tematiche.attiva, 1, "accorciando l'elenco l'attiva lo segue");
+  F.impostaPodcast(s, { tematiche: { attiva: -3 } });
+  assert.equal(s.podcast.tematiche.attiva, 0);
+  F.impostaPodcast(s, { tematiche: { elenco: [], attiva: 5 } });
+  assert.deepEqual([s.podcast.tematiche.elenco, s.podcast.tematiche.attiva], [[], 0], "con l'elenco vuoto l'attiva è 0");
+  F.impostaPodcast(s, { tematiche: { titolo: "  Oggi parliamo di  ", lato: "dx" } });
+  assert.deepEqual(s.podcast.tematiche, { titolo: "Oggi parliamo di", elenco: [], attiva: 0, lato: "dx" }, "cambia solo quello che si dà");
+  F.impostaPodcast(s, { tematiche: { elenco: ["  Uno  ", "x".repeat(48)] } });
+  assert.equal(s.podcast.tematiche.elenco[0], "Uno");
+  assert.equal(s.podcast.tematiche.elenco[1].length, 48);
+});
+
+test("podcast: spostaTematica", () => {
+  const s = nuovoPodcast();
+  assert.throws(() => F.spostaTematica(s, { avanti: true }), /Non ci sono tematiche/);
+  assert.throws(() => F.spostaTematica(s, {}), /Non ci sono tematiche/);
+  F.impostaPodcast(s, { tematiche: { elenco: ["A", "B", "C"] } });
+  const attiva = () => s.podcast.tematiche.attiva;
+  F.spostaTematica(s, { avanti: true });
+  assert.equal(attiva(), 1);
+  F.spostaTematica(s, { avanti: true });
+  assert.equal(attiva(), 2);
+  F.spostaTematica(s, { avanti: true });
+  assert.equal(attiva(), 2, "in fondo si resta in fondo, senza giri");
+  F.spostaTematica(s, { indietro: true });
+  assert.equal(attiva(), 1);
+  F.spostaTematica(s, { indice: 0 });
+  assert.equal(attiva(), 0);
+  F.spostaTematica(s, { indietro: true });
+  assert.equal(attiva(), 0, "in cima si resta in cima");
+  for (const rotto of [3, -1, 1.5, "1", null, 99]) assert.throws(() => F.spostaTematica(s, { indice: rotto }), /inesistente/, String(rotto));
+  assert.throws(() => F.spostaTematica(s, {}), /avanti, indietro o indice/);
+  assert.throws(() => F.spostaTematica(s, { avanti: false }), /avanti, indietro o indice/);
+  assert.throws(() => F.spostaTematica(s, { avanti: true, indietro: true }), /avanti, indietro o indice/);
+  assert.throws(() => F.spostaTematica(s, { avanti: true, indice: 2 }), /avanti, indietro o indice/);
+  assert.throws(() => F.spostaTematica(s, null), /Tematica/);
+  assert.equal(attiva(), 0, "gli errori non spostano nulla");
+  F.spostaTematica(s, { indice: 2 });
+  assert.equal(attiva(), 2);
+});
+
+test("podcast: nuova serata e stato salvato rotto", () => {
+  const s = nuovoPodcast();
+  F.impostaPodcast(s, { titolo: { sotto: "Ep. 5" }, ospiti: [ospite(1)], tematiche: { elenco: ["A", "B", "C"], attiva: 2, lato: "dx" }, velocita: 100 });
+  const prima = structuredClone(s.podcast);
+  const dopo = F.podcastNuovaSerata(s.podcast);
+  assert.deepEqual(s.podcast, prima, "non tocca l'originale");
+  assert.equal(dopo.tematiche.attiva, 0);
+  assert.deepEqual(dopo.tematiche, { ...prima.tematiche, attiva: 0 });
+  assert.deepEqual([dopo.titolo, dopo.ospiti, dopo.velocita, dopo.testi], [prima.titolo, prima.ospiti, prima.velocita, prima.testi]);
+  assert.notEqual(dopo.ospiti, s.podcast.ospiti, "nessun pezzo in comune con l'originale");
+  assert.notEqual(dopo.tematiche.elenco, s.podcast.tematiche.elenco);
+
+  const f = F.fondiPodcast({ tematiche: { elenco: ["A", "B"], attiva: 7, lato: "dx" }, ospiti: "rotto" });
+  assert.deepEqual(f.tematiche, { titolo: "Tematiche di oggi", elenco: ["A", "B"], attiva: 1, lato: "dx" });
+  assert.deepEqual(f.ospiti, []);
+  assert.deepEqual(F.fondiPodcast(undefined), F.podcastIniziale());
+  for (const v of [null, "x", 5, [], true]) assert.deepEqual(F.fondiPodcast(v), F.podcastIniziale());
+  const g = F.fondiPodcast({ tematiche: { lato: "alto", elenco: ["A"], titolo: 5, attiva: "x" } });
+  assert.deepEqual(g.tematiche, { titolo: "Tematiche di oggi", elenco: ["A"], attiva: 0, lato: "sx" }, "ogni campo rotto torna al suo predefinito");
+  assert.deepEqual(F.fondiPodcast({ tematiche: "x" }), F.podcastIniziale());
+  assert.deepEqual(F.fondiPodcast({ tematiche: { elenco: ["A", "B"], attiva: -2 } }).tematiche.attiva, 0);
+  const h = F.fondiPodcast({ titolo: { testo: 5, sotto: "Ep. 1" }, velocita: 9999, ospiti: [ospite(1), { nome: "" }] });
+  assert.deepEqual([h.titolo, h.velocita, h.ospiti], [{ testo: "Back Rooms Podcast", sotto: "Ep. 1" }, 80, []], "gli elenchi si tengono interi o si scartano");
+  assert.deepEqual(F.fondiPodcast({ ospiti: [ospite(1), ospite(2)] }).ospiti, [ospite(1), ospite(2)]);
+  assert.deepEqual(F.fondiPodcast({ testi: { targa: 150 } }).testi, { targa: 150, tematiche: 100 });
+  assert.deepEqual(F.fondiPodcast({ testi: { boh: 1 } }).testi, testiBase("podcast"));
+  assert.deepEqual(F.fondiPodcast({ pippo: 1, titolo: { pippo: 2 }, tematiche: { pippo: 3 } }), F.podcastIniziale(), "i campi sconosciuti non entrano");
+  s.podcast.testi.targa = 130;
+  assert.deepEqual(F.fondiPodcast(JSON.parse(JSON.stringify(s.podcast))), s.podcast, "andata e ritorno dal file JSON");
+});
