@@ -273,3 +273,236 @@ test("impostaScaletta", () => {
   assert.throws(() => D.impostaScaletta(s, { testo: 5 }), /serve un testo/);
   assert.deepEqual(s.drum, prima);
 });
+
+test("brano", () => {
+  const s = conLike(nuovo(), 3500);
+  s.drum.scaletta[0].titolo = "Uno";
+  D.impostaBrano(s, { titolo: "Titolo", artista: "Artista" });
+  assert.deepEqual(s.drum.brano, { titolo: "Titolo", artista: "Artista" });
+  D.impostaBrano(s, { titolo: "  Solo titolo  " });
+  assert.deepEqual(s.drum.brano, { titolo: "Solo titolo", artista: "Artista" }, "cambia solo quello che si dà");
+  assert.throws(() => D.impostaBrano(s, { titolo: "x".repeat(61) }), /60/);
+  assert.throws(() => D.impostaBrano(s, { titolo: "Nuovo", artista: "x".repeat(41) }), /40/);
+  assert.throws(() => D.impostaBrano(s, { titolo: 5 }), /testo/);
+  assert.deepEqual(s.drum.brano, { titolo: "Solo titolo", artista: "Artista" }, "un errore non lascia metà modifica");
+  assert.equal(D.impostaBrano(s, { titolo: "x".repeat(60), artista: "y".repeat(40) }), undefined);
+  D.impostaBrano(s, { daIndice: 0 });
+  assert.deepEqual(s.drum.brano, { titolo: "Uno", artista: "" }, "dalla scaletta: il titolo della tappa, senza artista");
+  assert.throws(() => D.impostaBrano(s, { daIndice: 3 }), /non è ancora sbloccato/);
+  assert.throws(() => D.impostaBrano(s, { daIndice: 99 }), /non è ancora sbloccato/);
+  assert.throws(() => D.impostaBrano(s, { daIndice: -1 }), /non è ancora sbloccato/);
+  assert.throws(() => D.impostaBrano(s, { daIndice: 1 }), /titolo/);
+  assert.throws(() => D.impostaBrano(s, { daIndice: "0" }), /indice/);
+  assert.throws(() => D.impostaBrano(s, { daIndice: 0.5 }), /indice/);
+  assert.deepEqual(s.drum.brano, { titolo: "Uno", artista: "" });
+  D.impostaBrano(s, { daIndice: 0, artista: "Band" });
+  assert.deepEqual(s.drum.brano, { titolo: "Uno", artista: "Band" }, "l'artista scritto a mano resta");
+  D.impostaBrano(s, { svuota: true });
+  assert.deepEqual(s.drum.brano, { titolo: "", artista: "" });
+  assert.throws(() => D.impostaBrano(s, { svuota: "sì" }));
+  assert.throws(() => D.impostaBrano(s, null), /Brano/);
+});
+
+test("ospite, priorità, eq, riempimento, velocità", () => {
+  const s = nuovo();
+  D.impostaOspite(s, { etichetta: "Ospite", handle: "@mario.drums", icona: "tiktok" });
+  assert.deepEqual(s.drum.ospite, { etichetta: "Ospite", handle: "@mario.drums", icona: "tiktok" });
+  D.impostaOspite(s, { handle: "  @solo.handle  " });
+  assert.deepEqual(s.drum.ospite, { etichetta: "Ospite", handle: "@solo.handle", icona: "tiktok" }, "cambia solo quello che si dà");
+  D.impostaOspite(s, { handle: "" });
+  assert.equal(s.drum.ospite.handle, "", "senza contatto lo slot resta vuoto");
+  D.impostaOspite(s, { handle: "@solo.handle" });
+  const ospite = structuredClone(s.drum.ospite);
+  assert.throws(() => D.impostaOspite(s, { icona: "boh" }), /icona/i);
+  assert.throws(() => D.impostaOspite(s, { etichetta: "x".repeat(25) }), /24/);
+  assert.throws(() => D.impostaOspite(s, { handle: "x".repeat(41) }), /40/);
+  assert.throws(() => D.impostaOspite(s, { etichetta: "Nuova", icona: "boh" }));
+  assert.throws(() => D.impostaOspite(s, [1]), /Ospite/);
+  assert.deepEqual(s.drum.ospite, ospite, "un errore non lascia metà modifica");
+
+  assert.deepEqual(D.ICONE_REGALO, ["rosa", "corona", "cuore", "regalo", "stella", "diamante", "logo"]);
+  D.impostaPriorita(s, { prefisso: "Regala una", slot: "Corona", sopra: "Vai in cima", icona: "corona" });
+  assert.deepEqual(s.drum.priorita, { prefisso: "Regala una", slot: "Corona", sopra: "Vai in cima", icona: "corona" });
+  D.impostaPriorita(s, { prefisso: "", sopra: "" });
+  assert.deepEqual([s.drum.priorita.prefisso, s.drum.priorita.sopra, s.drum.priorita.slot], ["", "", "Corona"], "prefisso e riga sopra possono mancare");
+  const priorita = structuredClone(s.drum.priorita);
+  assert.throws(() => D.impostaPriorita(s, { slot: " " }), /vuoto/);
+  assert.throws(() => D.impostaPriorita(s, { icona: "instagram" }), /icona/i);
+  assert.throws(() => D.impostaPriorita(s, { prefisso: "x".repeat(17) }), /16/);
+  assert.throws(() => D.impostaPriorita(s, { slot: "x".repeat(21) }), /20/);
+  assert.throws(() => D.impostaPriorita(s, { sopra: "x".repeat(41) }), /40/);
+  assert.throws(() => D.impostaPriorita(s, { sopra: "ok", slot: "" }));
+  assert.deepEqual(s.drum.priorita, priorita);
+
+  D.impostaEq(s, { sensibilita: 150, stile: "onda", senzaSegnale: false });
+  assert.deepEqual(s.drum.eq, { sensibilita: 150, stile: "onda", senzaSegnale: false });
+  D.impostaEq(s, { sensibilita: "200" });
+  assert.deepEqual(s.drum.eq, { sensibilita: 200, stile: "onda", senzaSegnale: false });
+  D.impostaEq(s, { sensibilita: 50 });
+  D.impostaEq(s, { sensibilita: 300 });
+  const eq = structuredClone(s.drum.eq);
+  for (const rotto of [{ sensibilita: 49 }, { sensibilita: 301 }, { stile: "boh" }, { senzaSegnale: "sì" }, { stile: "barre", sensibilita: 5 }]) {
+    assert.throws(() => D.impostaEq(s, rotto), undefined, JSON.stringify(rotto));
+  }
+  assert.throws(() => D.impostaEq(s, { stile: "boh" }), /barre o onda/);
+  assert.deepEqual(s.drum.eq, eq);
+
+  D.impostaRiempimento(s, "sabbia");
+  assert.equal(s.drum.riempimento, "sabbia");
+  assert.throws(() => D.impostaRiempimento(s, "boh"), /perline o sabbia/);
+  assert.throws(() => D.impostaRiempimento(s, undefined), /perline o sabbia/);
+  assert.equal(s.drum.riempimento, "sabbia");
+
+  D.impostaVelocita(s, 120);
+  assert.equal(s.drum.velocita, 120);
+  D.impostaVelocita(s, 40);
+  D.impostaVelocita(s, 160);
+  assert.throws(() => D.impostaVelocita(s, 39), /40/);
+  assert.throws(() => D.impostaVelocita(s, 161), /160/);
+  assert.throws(() => D.impostaVelocita(s, "veloce"));
+  assert.throws(() => D.impostaVelocita(s, undefined));
+  assert.equal(s.drum.velocita, 160);
+});
+
+test("fondiDrum: stato vecchio o rotto", () => {
+  for (const vuoto of [undefined, null, "x", 5, [], true]) assert.deepEqual(D.fondiDrum(vuoto), D.drumIniziale());
+  const a = D.fondiDrum({ scaletta: "rotta", like: { tiktokTotale: 7000, offset: 0, extra: 0 }, annunciati: 99 });
+  assert.deepEqual(a.scaletta, D.scalettaPredefinita());
+  assert.equal(a.like.tiktokTotale, 7000);
+  assert.equal(a.annunciati, 5, "gli annunci non superano le tappe raggiunte (1k, 2k, 3k, 5k, 7k)");
+  assert.deepEqual(D.fondiDrum({ eq: { sensibilita: 5000, stile: "onda" } }).eq, D.drumIniziale().eq, "un valore rotto scarta il gruppo");
+  const b = D.fondiDrum({ velocita: 120, riempimento: "sabbia" });
+  assert.deepEqual([b.velocita, b.riempimento], [120, "sabbia"]);
+  assert.deepEqual(D.fondiDrum({ velocita: 5000, riempimento: "fango" }), D.drumIniziale());
+  assert.deepEqual(D.fondiDrum({ pippo: 1, __proto__: { x: 1 } }), D.drumIniziale(), "i campi sconosciuti non entrano");
+});
+
+test("fondiDrum: ogni gruppo si controlla da solo", () => {
+  const iniziale = D.drumIniziale();
+  const like = (l) => D.fondiDrum({ like: l }).like;
+  assert.deepEqual(like({ tiktokTotale: null, offset: 300, extra: -20 }), { tiktokTotale: null, offset: 300, extra: -20 });
+  assert.deepEqual(like({ tiktokTotale: 100, offset: 0, extra: 5 }), { tiktokTotale: 100, offset: 0, extra: 5 });
+  for (const rotto of [{ tiktokTotale: "x", offset: 0, extra: 0 }, { tiktokTotale: 100, offset: -5, extra: 0 }, { tiktokTotale: -1, offset: 0, extra: 0 }, { tiktokTotale: 1.5, offset: 0, extra: 0 }, { tiktokTotale: 100, offset: 0 }, { tiktokTotale: 100, offset: 0, extra: Infinity }, null, []]) {
+    assert.deepEqual(like(rotto), iniziale.like, JSON.stringify(rotto));
+  }
+  for (const rotta of [[], [{ like: 2000, titolo: "" }, { like: 1000, titolo: "" }], [{ like: 1000 }], null, 5]) {
+    assert.deepEqual(D.fondiDrum({ scaletta: rotta }).scaletta, D.scalettaPredefinita(), JSON.stringify(rotta));
+  }
+  assert.deepEqual(D.fondiDrum({ scaletta: [{ like: 100, titolo: " X " }] }).scaletta, [{ like: 100, titolo: "X" }]);
+  assert.deepEqual(D.fondiDrum({ ospite: { handle: "@x" } }).ospite, { etichetta: "Artista ospite", handle: "@x", icona: "instagram" }, "i campi che mancano restano quelli di partenza");
+  assert.deepEqual(D.fondiDrum({ ospite: { icona: "boh", handle: "@x" } }).ospite, iniziale.ospite);
+  assert.deepEqual(D.fondiDrum({ priorita: { slot: "" } }).priorita, iniziale.priorita);
+  assert.deepEqual(D.fondiDrum({ priorita: { slot: "Corona", icona: "corona" } }).priorita, { ...iniziale.priorita, slot: "Corona", icona: "corona" });
+  assert.deepEqual(D.fondiDrum({ brano: { titolo: 5 } }).brano, iniziale.brano);
+  assert.deepEqual(D.fondiDrum({ brano: { titolo: "Uno", artista: "Due" } }).brano, { titolo: "Uno", artista: "Due" });
+  assert.deepEqual(D.fondiDrum({ brano: { daIndice: 0, svuota: true, titolo: "Resta" } }).brano, { titolo: "Resta", artista: "" }, "dallo stato salvato contano solo titolo e artista");
+  assert.deepEqual(D.fondiDrum({ testi: { contatore: 150 } }).testi, { ...iniziale.testi, contatore: 150 });
+  assert.deepEqual(D.fondiDrum({ testi: { contatore: 5000 } }).testi, iniziale.testi);
+  assert.deepEqual(D.fondiDrum({ testi: { inventato: 100 } }).testi, iniziale.testi);
+  assert.deepEqual(D.fondiDrum({ like: null, scaletta: null, brano: [], ospite: 5, priorita: "x", eq: null, riempimento: {}, velocita: "veloce", testi: [], annunciati: {} }), iniziale);
+  const conLikeSalvati = (annunciati) => D.fondiDrum({ like: { tiktokTotale: 7000, offset: 0, extra: 0 }, annunciati }).annunciati;
+  assert.equal(conLikeSalvati(3), 3, "un annuncio in ritardo resta com'è");
+  assert.equal(conLikeSalvati(5), 5);
+  for (const rotto of [6, 99, -1, 2.5, "5", null, undefined, NaN]) assert.equal(conLikeSalvati(rotto), 5, `riallineato: ${String(rotto)}`);
+});
+
+test("fondiDrum: dopo un riavvio non si ripete nessuno sblocco", () => {
+  const s = nuovo();
+  conLike(s, 9000, { offset: 1000, extra: 50 });
+  D.impostaScaletta(s, { testo: "1000 | A\n2000 | B\n5000 | C\n9000 | D\n20000 | E" });
+  D.impostaBrano(s, { titolo: "B", artista: "Gruppo" });
+  D.impostaOspite(s, { handle: "@x", icona: "tiktok" });
+  D.impostaPriorita(s, { slot: "Corona", icona: "corona" });
+  D.impostaEq(s, { sensibilita: 180, stile: "onda", senzaSegnale: false });
+  D.impostaRiempimento(s, "sabbia");
+  D.impostaVelocita(s, 120);
+  s.drum.testi.contatore = 140;
+  s.drum.annunciati = D.tappeRaggiunte(s.drum);
+  const copia = D.fondiDrum(structuredClone(s.drum));
+  assert.deepEqual(copia, s.drum);
+  assert.notEqual(copia.scaletta, s.drum.scaletta);
+  assert.deepEqual(D.controllaSblocchi({ drum: copia }), []);
+  assert.deepEqual(D.fondiDrum(JSON.parse(JSON.stringify(s.drum))), s.drum, "anche passando dal file JSON");
+});
+
+test("drumNuovaSerata", () => {
+  const s = conLike(nuovo(), 9000, { extra: 50 });
+  s.drum.annunciati = 6;
+  s.drum.brano = { titolo: "X", artista: "Y" };
+  s.drum.scaletta[0].titolo = "Titolo uno";
+  D.impostaOspite(s, { handle: "@ospite" });
+  D.impostaEq(s, { sensibilita: 150, stile: "onda", senzaSegnale: false });
+  D.impostaRiempimento(s, "sabbia");
+  D.impostaVelocita(s, 100);
+  s.drum.testi.brano = 130;
+  const prima = structuredClone(s.drum);
+  const dopo = D.drumNuovaSerata(s.drum);
+  assert.deepEqual(s.drum, prima, "la funzione non tocca l'originale");
+  assert.equal(D.contati(dopo), 0);
+  assert.equal(dopo.annunciati, 0);
+  assert.deepEqual(dopo.brano, { titolo: "", artista: "" });
+  assert.deepEqual(dopo.like, { tiktokTotale: 9000, offset: 9000, extra: 0 });
+  assert.equal(dopo.scaletta[0].titolo, "Titolo uno");
+  assert.deepEqual(dopo.eq, { sensibilita: 150, stile: "onda", senzaSegnale: false });
+  assert.equal(dopo.ospite.handle, "@ospite");
+  assert.deepEqual([dopo.riempimento, dopo.velocita, dopo.testi.brano], ["sabbia", 100, 130]);
+  assert.deepEqual(dopo.priorita, prima.priorita);
+  assert.notEqual(dopo.scaletta, s.drum.scaletta, "nessun pezzo in comune con l'originale");
+  assert.notEqual(dopo.testi, s.drum.testi);
+  assert.deepEqual(D.controllaSblocchi({ drum: dopo }), [], "nella serata nuova non c'è nulla da annunciare");
+  assert.deepEqual(D.drumNuovaSerata(D.drumIniziale()).like, { tiktokTotale: null, offset: 0, extra: 0 });
+});
+
+test("istantaneaDrum", () => {
+  const s = conLike(nuovo(), 11400);
+  const i = D.istantaneaDrum(s.drum);
+  assert.equal(i.contati, 11400);
+  assert.equal(i.attiva, 7);
+  assert.equal(i.progresso, 0.7);
+  assert.deepEqual(Object.keys(s.drum), Object.keys(D.drumIniziale()), "il Drum originale non ha campi in più");
+  for (const campo of Object.keys(s.drum)) assert.deepEqual(i[campo], s.drum[campo], campo);
+  assert.equal(D.istantaneaDrum(conLike(nuovo(), 500000).drum).attiva, null);
+  assert.equal(D.istantaneaDrum(conLike(nuovo(), 500000).drum).progresso, 1);
+  i.scaletta[0].titolo = "x";
+  i.like.extra = 9;
+  assert.equal(s.drum.scaletta[0].titolo, "");
+  assert.equal(s.drum.like.extra, 0, "è una copia");
+});
+
+test("drumDemo", () => {
+  const s = conLike(nuovo(), 5, { offset: 3, extra: 9 });
+  D.drumDemo(s, "vuoto");
+  assert.equal(D.contati(s.drum), 0);
+  assert.equal(s.drum.annunciati, 0);
+  assert.deepEqual(s.drum.brano, { titolo: "", artista: "" });
+  D.drumDemo(s, "meta");
+  assert.deepEqual(s.drum.like, { tiktokTotale: 11400, offset: 0, extra: 0 });
+  assert.equal(D.contati(s.drum), 11400);
+  assert.equal(D.tappeRaggiunte(s.drum), 7);
+  assert.equal(s.drum.annunciati, 7);
+  assert.equal(D.indiceAttiva(s.drum), 7);
+  assert.equal(D.progresso(s.drum), 0.7);
+  assert.equal(s.drum.brano.titolo, "Seven Nation Army");
+  assert.equal(s.drum.scaletta[6].titolo, "Another One Bites the Dust");
+  assert.equal(s.drum.scaletta[11].titolo, "Master of Puppets");
+  assert.equal(s.drum.scaletta[12].titolo, "", "i titoli di prova sono solo per le prime 12 tappe");
+  assert.deepEqual([s.drum.ospite.handle, s.drum.ospite.icona, s.drum.ospite.etichetta], ["@lince.music", "instagram", "Artista ospite"]);
+  assert.deepEqual(D.controllaSblocchi(s), []);
+  D.drumDemo(s, "sblocco");
+  assert.equal(D.contati(s.drum), 12000);
+  assert.equal(s.drum.annunciati, 8);
+  assert.deepEqual(D.controllaSblocchi(s), []);
+  D.drumDemo(s, "finale");
+  assert.equal(D.indiceAttiva(s.drum), null);
+  assert.equal(s.drum.annunciati, 37);
+  assert.deepEqual(D.controllaSblocchi(s), []);
+  const prima = structuredClone(s.drum);
+  assert.throws(() => D.drumDemo(s, "boh"), /Fase non valida: vuoto, meta, sblocco o finale/);
+  assert.throws(() => D.drumDemo(s, undefined), /Fase non valida/);
+  assert.deepEqual(s.drum, prima, "una fase sbagliata non cambia nulla");
+  const corta = nuovo();
+  D.impostaScaletta(corta, { testo: "100\n200" });
+  D.drumDemo(corta, "finale");
+  assert.equal(corta.drum.annunciati, 2, "con una scaletta più corta gli annunci seguono le tappe che ci sono");
+  assert.equal(corta.drum.scaletta[1].titolo, "Seven Nation Army");
+});

@@ -25,6 +25,11 @@ export function siNo(valore, nome) {
   return valore;
 }
 
+// Velocità della fascia social dei layout nuovi (drum, produzione, reaction, podcast), in pixel al secondo.
+export const VELOCITA_MIN = 40;
+export const VELOCITA_MAX = 160;
+export const velocitaFascia = (valore) => numeroTra(valore, VELOCITA_MIN, VELOCITA_MAX, "Velocità della fascia (px/s)");
+
 export const arrotonda = (x, cifre) => (x === null ? null : Math.round(x * 10 ** cifre) / 10 ** cifre);
 
 export function normalizzaVoto(valore) {

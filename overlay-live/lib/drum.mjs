@@ -1,7 +1,7 @@
 // Regole del Drum Challenge Live: Like di TikTok, scaletta degli sblocchi, progresso e annunci.
 // Solo funzioni pure: i modificatori lavorano su `stato.drum`, le funzioni di lettura prendono il `drum`.
-import { numeroTra, oggetto, siNo } from "./validazione.mjs";
-import { testiBase } from "./testi.mjs";
+import { ICONE, numeroTra, oggetto, siNo, testo, velocitaFascia } from "./validazione.mjs";
+import { controllaTesti, testiBase } from "./testi.mjs";
 
 // Le prime 16 tappe le ha scelte la regia, le altre 21 (fino a 500k) sono la scaletta di partenza, modificabile.
 export const PASSI_FISSI = [1000, 2000, 3000, 5000, 7000, 9000, 10000, 12000, 15000, 17000, 20000, 22000, 25000, 27000, 29000, 30000];
@@ -171,4 +171,187 @@ export function controllaSblocchi(stato) {
   const indice = raggiunte - 1;
   const { like, titolo } = drum.scaletta[indice];
   return [{ nome: "sbloccoDrum", dati: { indice, like, titolo } }];
+}
+
+// ---------- Impostazioni dalla regia ----------
+// Si controlla tutto su una copia e si assegna alla fine: un errore non lascia metà modifica (come impostaStudio).
+
+export const ICONE_REGALO = ["rosa", "corona", "cuore", "regalo", "stella", "diamante", "logo"];
+const STILI_EQ = ["barre", "onda"];
+const RIEMPIMENTI = ["perline", "sabbia"];
+
+const campi = (dati, nome) => {
+  if (!oggetto(dati)) throw new Error(`${nome}: forma non valida`);
+  return dati;
+};
+
+// Brano in esecuzione: scritto a mano oppure preso da una tappa già sbloccata (l'artista allora resta vuoto).
+export function impostaBrano(stato, dati) {
+  const { titolo, artista, daIndice, svuota } = campi(dati, "Brano");
+  const drum = stato.drum;
+  const brano = { ...drum.brano };
+  if (svuota !== undefined && siNo(svuota, "Brano (svuota)")) {
+    brano.titolo = "";
+    brano.artista = "";
+  }
+  if (daIndice !== undefined) {
+    if (!Number.isInteger(daIndice)) throw new Error("Brano: indice non valido");
+    if (daIndice < 0 || daIndice >= tappeRaggiunte(drum)) throw new Error("Quel brano non è ancora sbloccato");
+    if (!drum.scaletta[daIndice].titolo) throw new Error("Quel brano non ha un titolo: scrivilo nella scaletta");
+    brano.titolo = drum.scaletta[daIndice].titolo;
+    brano.artista = "";
+  }
+  if (titolo !== undefined) brano.titolo = testo(titolo, TITOLO_MAX, "Titolo del brano");
+  if (artista !== undefined) brano.artista = testo(artista, 40, "Artista del brano");
+  drum.brano = brano;
+}
+
+// Lo slot dell'artista ospite sulla fascia social (nome e contatto, con l'icona della piattaforma).
+export function impostaOspite(stato, dati) {
+  const { etichetta, handle, icona } = campi(dati, "Ospite");
+  const ospite = { ...stato.drum.ospite };
+  if (etichetta !== undefined) ospite.etichetta = testo(etichetta, 24, "Etichetta dell'ospite");
+  if (handle !== undefined) ospite.handle = testo(handle, 40, "Contatto dell'ospite");
+  if (icona !== undefined) {
+    if (!ICONE.includes(icona)) throw new Error("Icona sconosciuta");
+    ospite.icona = icona;
+  }
+  stato.drum.ospite = ospite;
+}
+
+// Il widget «Dona un…»: prefisso e riga sopra possono mancare, il regalo (slot) no.
+export function impostaPriorita(stato, dati) {
+  const { prefisso, slot, sopra, icona } = campi(dati, "Dona un…");
+  const priorita = { ...stato.drum.priorita };
+  if (prefisso !== undefined) priorita.prefisso = testo(prefisso, 16, "Prefisso di «Dona un…»");
+  if (slot !== undefined) priorita.slot = testo(slot, 20, "Regalo di «Dona un…»", { obbligatorio: true });
+  if (sopra !== undefined) priorita.sopra = testo(sopra, 40, "Riga sopra di «Dona un…»");
+  if (icona !== undefined) {
+    if (!ICONE_REGALO.includes(icona)) throw new Error("Icona sconosciuta");
+    priorita.icona = icona;
+  }
+  stato.drum.priorita = priorita;
+}
+
+// Equalizzatore: quanto reagisce (50–300 %), barre o onda, e il «respiro» quando non arriva audio.
+export function impostaEq(stato, dati) {
+  const { sensibilita, stile, senzaSegnale } = campi(dati, "Equalizzatore");
+  const eq = { ...stato.drum.eq };
+  if (sensibilita !== undefined) eq.sensibilita = numeroTra(sensibilita, 50, 300, "Sensibilità dell'equalizzatore (%)");
+  if (stile !== undefined) {
+    if (!STILI_EQ.includes(stile)) throw new Error("Stile non valido: barre o onda");
+    eq.stile = stile;
+  }
+  if (senzaSegnale !== undefined) eq.senzaSegnale = siNo(senzaSegnale, "Respiro senza segnale");
+  stato.drum.eq = eq;
+}
+
+export function impostaRiempimento(stato, stile) {
+  if (!RIEMPIMENTI.includes(stile)) throw new Error("Riempimento non valido: perline o sabbia");
+  stato.drum.riempimento = stile;
+}
+
+export function impostaVelocita(stato, n) {
+  stato.drum.velocita = velocitaFascia(n);
+}
+
+// ---------- Stato salvato, nuova serata, istantanea e prova ----------
+
+// Like salvati: il totale è null o un intero, `offset` non è negativo, `extra` è un intero. Altrimenti vale la partenza.
+function fondiLike(l) {
+  if (!oggetto(l)) return null;
+  const { tiktokTotale, offset, extra } = l;
+  const totaleBuono = tiktokTotale === null || (Number.isSafeInteger(tiktokTotale) && tiktokTotale >= 0);
+  if (!totaleBuono || !Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(extra)) return null;
+  return { tiktokTotale, offset, extra };
+}
+
+// Un gruppo di campi si controlla con lo stesso modificatore della regia, su una copia della partenza: se qualcosa non
+// va, il gruppo resta quello di partenza.
+function fondiGruppo(drum, chiave, imposta, salvato) {
+  try {
+    const prova = { drum: { ...drum, [chiave]: { ...drum[chiave] } } };
+    imposta(prova, salvato);
+    drum[chiave] = prova.drum[chiave];
+  } catch {
+    // valore non valido: resta il predefinito
+  }
+}
+
+// Stato salvato da una versione senza Drum, o con valori rotti: partenza completa, i valori buoni restano gruppo per
+// gruppo. Gli annunci non superano le tappe raggiunte (nessuno sblocco ripetuto dopo un riavvio). Mai eccezioni.
+export function fondiDrum(salvato) {
+  const drum = drumIniziale();
+  if (!oggetto(salvato)) return drum;
+  drum.like = fondiLike(salvato.like) ?? drum.like;
+  try {
+    drum.scaletta = controllaScaletta(salvato.scaletta);
+  } catch {
+    // scaletta non valida: resta quella di partenza
+  }
+  if (oggetto(salvato.brano)) fondiGruppo(drum, "brano", impostaBrano, { titolo: salvato.brano.titolo, artista: salvato.brano.artista });
+  fondiGruppo(drum, "ospite", impostaOspite, salvato.ospite);
+  fondiGruppo(drum, "priorita", impostaPriorita, salvato.priorita);
+  fondiGruppo(drum, "eq", impostaEq, salvato.eq);
+  if (RIEMPIMENTI.includes(salvato.riempimento)) drum.riempimento = salvato.riempimento;
+  try {
+    drum.velocita = velocitaFascia(salvato.velocita);
+  } catch {
+    // velocità non valida: resta quella di partenza
+  }
+  try {
+    drum.testi = controllaTesti("drum", salvato.testi);
+  } catch {
+    // dimensioni non valide: tutte al 100%
+  }
+  const raggiunte = tappeRaggiunte(drum);
+  const annunciati = salvato.annunciati;
+  drum.annunciati = Number.isInteger(annunciati) && annunciati >= 0 && annunciati <= raggiunte ? annunciati : raggiunte;
+  return drum;
+}
+
+// Nuova serata: i Like ripartono da zero (il totale della live di prima diventa l'offset), annunci e brano si azzerano;
+// scaletta con i titoli, ospite, «Dona un…», equalizzatore, riempimento, velocità e dimensione dei testi restano.
+export function drumNuovaSerata(drum) {
+  return {
+    ...structuredClone(drum),
+    like: { tiktokTotale: drum.like.tiktokTotale, offset: drum.like.tiktokTotale ?? 0, extra: 0 },
+    annunciati: 0,
+    brano: { titolo: "", artista: "" },
+  };
+}
+
+// Quello che ricevono pagine e regia: il Drum con in più i Like contati, la tappa attiva e il suo progresso.
+export function istantaneaDrum(drum) {
+  return { ...structuredClone(drum), contati: contati(drum), attiva: indiceAttiva(drum), progresso: progresso(drum) };
+}
+
+const TITOLI_DEMO = [
+  "Back in Black",
+  "Seven Nation Army",
+  "Smells Like Teen Spirit",
+  "Billie Jean",
+  "Sweet Child O' Mine",
+  "Enter Sandman",
+  "Another One Bites the Dust",
+  "Livin' on a Prayer",
+  "Thunderstruck",
+  "Hysteria",
+  "Paradise City",
+  "Master of Puppets",
+];
+const LIKE_DEMO = { vuoto: 0, meta: 11400, sblocco: 12000, finale: 500000 };
+
+// Dati di prova per mockup e prove a mano: titoli per le prime 12 tappe, l'ospite e i Like della fase scelta.
+// Gli annunci seguono le tappe raggiunte: nessuno sblocco parte da solo.
+export function drumDemo(stato, fase) {
+  if (!Object.hasOwn(LIKE_DEMO, fase)) throw new Error("Fase non valida: vuoto, meta, sblocco o finale");
+  const drum = stato.drum;
+  TITOLI_DEMO.forEach((titolo, i) => {
+    if (drum.scaletta[i]) drum.scaletta[i].titolo = titolo;
+  });
+  drum.ospite = { ...drum.ospite, handle: "@lince.music", icona: "instagram" };
+  drum.like = { tiktokTotale: LIKE_DEMO[fase], offset: 0, extra: 0 };
+  drum.annunciati = tappeRaggiunte(drum);
+  drum.brano = { titolo: fase === "vuoto" ? "" : "Seven Nation Army", artista: "" };
 }
