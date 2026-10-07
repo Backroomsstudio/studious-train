@@ -31,6 +31,11 @@
 //   --regia-doppio: i titoli di Studio Production e Reaction Release nella regia: i chip dei preset, le tre righe che vanno in onda
 //   mentre si scrive (invio ritardato di 150 ms, il campo in uso non si riscrive, un errore mostra l'avviso e rimette il valore
 //   in onda), «Ripristina titolo predefinito» e l'anteprima verticale/orizzontale della reaction.
+//   --regia-podcast: la regia del Back Rooms Podcast: i quattro moduli a comando (Linea di divisione, Pannello Tematiche, Targa, Fascia
+//   social: un clic accende, il secondo spegne), le tematiche (scritte una per riga e salvate, lista cliccabile, Avanti e Indietro, lato
+//   del pannello, errore con una nona voce, bozza che lo stato non riscrive), gli ospiti (aggiungi, togli, al massimo quattro, salvati
+//   all'uscita dal campo), il titolo e la riga dell'episodio che vanno in onda mentre si scrive e le scorciatoie F2, F3 e F4;
+//   salva mockup/regia-podcast.jpg.
 //   --testi-lunghi: i testi più lunghi permessi (titolo di tappa e di brano da 60 caratteri, artista da 40, prefisso da 16,
 //   slot da 20, ospite con handle da 40) con la dimensione dei testi del Drum al 200%: niente esce dal suo riquadro.
 //   --regia: flusso della pagina di regia (selettore dei layout, sezioni, scheda Social del brand, dimensione dei testi,
@@ -146,6 +151,7 @@ const equalizzatore = args.includes("--eq");
 const audio = args.includes("--audio");
 const regiaDrum = args.includes("--regia-drum");
 const regiaDoppio = args.includes("--regia-doppio");
+const regiaPodcast = args.includes("--regia-podcast");
 
 function caricaPlaywright() {
   try {
@@ -1125,6 +1131,222 @@ async function provaRegiaDoppio() {
   console.log("ok regia-doppio: preset, titolo in onda mentre si scrive (150 ms), errori con avviso, campi in uso, ripristino della reaction e anteprima");
 }
 
+// La regia del Back Rooms Podcast: i quattro moduli a comando, le tematiche (elenco, scelta dell'attiva, avanti e indietro, lato),
+// gli ospiti e il titolo con la riga dell'episodio, e le scorciatoie F2, F3 e F4.
+async function provaRegiaPodcast() {
+  const PARTENZA = { titolo: { testo: "Back Rooms Podcast", sotto: "" }, ospiti: [], tematiche: { titolo: "Tematiche di oggi", elenco: [], attiva: 0, lato: "sx" } };
+  const ripulisci = async () => {
+    await comando("layout", { nome: "podcast" });
+    await comando("podcast", PARTENZA);
+    for (const [nome, visibile] of [["poTitolo", true], ["poBarra", true], ["poLinea", false], ["poTematiche", false]]) await comando("widget", { nome, visibile });
+  };
+  await comando("nuovaSerata");
+  await ripulisci();
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const pagina = await browser.newPage({ viewport: { width: 1500, height: 2400 } });
+  const errori = [];
+  pagina.on("pageerror", (e) => errori.push(`regia: ${e.message}`));
+  await pagina.goto(`${base}/regia.html`);
+  await pagina.evaluate(() => document.fonts?.ready);
+  const attesa = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  await attesa(1200);
+  const campo = (id) => pagina.locator(`#${id}`);
+  const modulo = (nome) => pagina.locator(`button[data-modulo="${nome}"]`);
+  const stato = async () => statoServer();
+  const entro = async (descrizione, condizione, ms = 3000) => {
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) {
+      if (condizione(await stato())) return true;
+      await attesa(40);
+    }
+    const st = await stato();
+    errori.push(`${descrizione} non è arrivato in ${ms} ms (podcast: ${JSON.stringify(st.podcast)}, visibili: ${JSON.stringify(Object.fromEntries(["poTitolo", "poBarra", "poLinea", "poTematiche"].map((n) => [n, st.visibili[n]])))})`);
+    return false;
+  };
+  // Gli avvisi di errore restano a schermo 4,5 s: si riconoscono dal testo, non contandoli (uno vecchio può sparire mentre se ne aspetta uno nuovo).
+  const tosti = (testo) => pagina.locator("#avvisi .avviso.errore", { hasText: testo }).count();
+  const aspettaTosto = async (testo, descrizione) => {
+    const t0 = Date.now();
+    while (Date.now() - t0 < 2500) {
+      if ((await tosti(testo)) > 0) return true;
+      await attesa(40);
+    }
+    errori.push(`${descrizione}: doveva comparire un avviso con «${testo}»`);
+    return false;
+  };
+  const voci = () => pagina.locator("#po-tem-lista li").evaluateAll((li) => li.map((x) => ({ testo: x.querySelector(".po-tem-testo")?.textContent, stato: x.querySelector("button")?.dataset.stato })));
+  const vociSono = async (descrizione, attese) => {
+    const t0 = Date.now();
+    let trovate = [];
+    while (Date.now() - t0 < 3000) {
+      trovate = await voci();
+      if (JSON.stringify(trovate) === JSON.stringify(attese)) return;
+      await attesa(40);
+    }
+    errori.push(`${descrizione}: la lista della regia mostra ${JSON.stringify(trovate)}, doveva mostrare ${JSON.stringify(attese)}`);
+  };
+
+  // 1) i quattro moduli a comando: nomi, stato in onda, un clic accende e il secondo spegne
+  await modulo("poLinea").waitFor();
+  const NOMI = { poLinea: "Linea di divisione", poTematiche: "Pannello Tematiche", poTitolo: "Targa", poBarra: "Fascia social" };
+  for (const [nome, etichetta] of Object.entries(NOMI)) {
+    const testo = await modulo(nome).textContent();
+    if (!testo.includes(etichetta)) errori.push(`il pulsante ${nome} doveva dire «${etichetta}» (dice «${testo.trim()}»)`);
+  }
+  const premuti = async () => JSON.stringify(await Promise.all(Object.keys(NOMI).map((n) => modulo(n).getAttribute("aria-pressed"))));
+  const premutiSono = (attesi, descrizione) =>
+    pagina.waitForFunction(([nomi, v]) => JSON.stringify(nomi.map((n) => document.querySelector(`button[data-modulo="${n}"]`).getAttribute("aria-pressed"))) === v, [Object.keys(NOMI), JSON.stringify(attesi)], { timeout: 3000 }).catch(async () => errori.push(`${descrizione}: i pulsanti mostrano ${await premuti()}, dovevano mostrare ${JSON.stringify(attesi)}`));
+  // il pulsante segue lo stato in onda: i clic e F4 calcolano il nuovo valore da quello che la regia ha visto, quindi si aspetta che lo mostri
+  const modPremuto = (nome, valore) => pagina.waitForFunction(([n, v]) => document.querySelector(`button[data-modulo="${n}"]`).getAttribute("aria-pressed") === v, [nome, String(valore)], { timeout: 3000 }).catch(() => errori.push(`il pulsante ${nome} doveva mostrare ${valore ? "in onda" : "fuori onda"}`));
+  await premutiSono(["false", "false", "true", "true"], "all'inizio (linea e tematiche spente, targa e fascia accese)");
+  await modulo("poLinea").click();
+  await entro("la linea in onda", (st) => st.visibili.poLinea === true);
+  await premutiSono(["true", "false", "true", "true"], "con la linea accesa");
+  if (!(await modulo("poLinea").evaluate((b) => b.classList.contains("attivo")))) errori.push("il pulsante della linea in onda doveva essere evidenziato");
+  await modulo("poLinea").click();
+  await entro("la linea spenta al secondo clic", (st) => st.visibili.poLinea === false);
+  await premutiSono(["false", "false", "true", "true"], "con la linea di nuovo spenta");
+  for (const [nome, prima] of [["poTematiche", false], ["poTitolo", true], ["poBarra", true]]) {
+    await modulo(nome).click();
+    await entro(`${nome} cambiato`, (st) => st.visibili[nome] === !prima);
+    await modPremuto(nome, !prima);
+    await modulo(nome).click();
+    await entro(`${nome} com'era`, (st) => st.visibili[nome] === prima);
+    await modPremuto(nome, prima);
+  }
+
+  // 2) tre tematiche scritte una per riga (le righe vuote e gli spazi si saltano) e salvate: l'attiva è la prima; la lista le mostra
+  if (!(await campo("po-tem-vuoto").isVisible())) errori.push("senza tematiche la regia doveva dire che non ce ne sono");
+  await campo("po-tem-titolo").fill("Argomenti di stasera");
+  await campo("po-tem-elenco").fill("Prima\n\nSeconda\n  Terza  \n");
+  await campo("po-tem-salva").click();
+  await entro("le tre tematiche con la prima attiva", (st) => st.podcast.tematiche.elenco.length === 3 && st.podcast.tematiche.attiva === 0 && st.podcast.tematiche.titolo === "Argomenti di stasera");
+  await vociSono("dopo il salvataggio", [{ testo: "Prima", stato: "attiva" }, { testo: "Seconda", stato: "prossima" }, { testo: "Terza", stato: "prossima" }]);
+  if (await campo("po-tem-vuoto").isVisible()) errori.push("con delle tematiche la nota «Nessuna tematica» doveva sparire");
+  if ((await stato()).podcast.tematiche.elenco.join("|") !== "Prima|Seconda|Terza") errori.push(`le righe vuote e gli spazi dovevano saltarsi (c'è ${JSON.stringify((await stato()).podcast.tematiche.elenco)})`);
+
+  // 3) un clic su una voce la rende attiva, avanti e indietro la spostano, le scorciatoie fanno lo stesso
+  await pagina.locator("#po-tem-lista li:nth-child(2) button").click();
+  await entro("la seconda tematica attiva", (st) => st.podcast.tematiche.attiva === 1);
+  await vociSono("con la seconda attiva", [{ testo: "Prima", stato: "fatta" }, { testo: "Seconda", stato: "attiva" }, { testo: "Terza", stato: "prossima" }]);
+  await pagina.keyboard.press("F2");
+  await entro("F2: la terza tematica", (st) => st.podcast.tematiche.attiva === 2);
+  await pagina.keyboard.press("F3");
+  await entro("F3: di nuovo la seconda", (st) => st.podcast.tematiche.attiva === 1);
+  await campo("po-tem-avanti").click();
+  await entro("«Avanti»: la terza", (st) => st.podcast.tematiche.attiva === 2);
+  await campo("po-tem-avanti").click();
+  await attesa(300);
+  if ((await stato()).podcast.tematiche.attiva !== 2) errori.push("«Avanti» all'ultima tematica non doveva andare oltre");
+  await campo("po-tem-indietro").click();
+  await entro("«Indietro»: la seconda", (st) => st.podcast.tematiche.attiva === 1);
+  const prima = (await stato()).visibili.poTematiche;
+  await pagina.keyboard.press("F4");
+  await entro("F4: il pannello Tematiche cambia", (st) => st.visibili.poTematiche === !prima);
+  await modPremuto("poTematiche", !prima);
+  await pagina.keyboard.press("F4");
+  await entro("F4 di nuovo: il pannello com'era", (st) => st.visibili.poTematiche === prima);
+  await modPremuto("poTematiche", prima);
+  // le scorciatoie sono del podcast: con un altro layout in onda non toccano le tematiche
+  await comando("layout", { nome: "drum" });
+  await attesa(300);
+  await pagina.keyboard.press("F3");
+  await attesa(400);
+  if ((await stato()).podcast.tematiche.attiva !== 1) errori.push("con il Drum in onda F3 non doveva spostare le tematiche del podcast");
+  await comando("layout", { nome: "podcast" });
+  await attesa(300);
+
+  // 4) il lato del pannello
+  await campo("po-tem-lato").selectOption("dx");
+  await entro("il pannello a destra", (st) => st.podcast.tematiche.lato === "dx");
+  await campo("po-tem-lato").selectOption("sx");
+  await entro("il pannello a sinistra", (st) => st.podcast.tematiche.lato === "sx");
+  await comando("podcast", { tematiche: { lato: "dx" } }); // un cambio da fuori arriva nella scelta
+  await pagina.waitForFunction(() => document.querySelector("#po-tem-lato").value === "dx", null, { timeout: 3000 }).catch(() => errori.push("il lato cambiato da fuori doveva comparire nella scelta"));
+  await comando("podcast", { tematiche: { lato: "sx" } });
+  await pagina.waitForFunction(() => document.querySelector("#po-tem-lato").value === "sx", null, { timeout: 3000 }).catch(() => errori.push("il lato tornato a sinistra doveva comparire nella scelta"));
+
+  // 5) una nona tematica dà l'avviso e lascia l'elenco com'era (la casella resta com'è scritta); una bozza non si perde se lo stato cambia
+  await campo("po-tem-elenco").fill(Array.from({ length: 9 }, (_, i) => `Voce ${i + 1}`).join("\n"));
+  await campo("po-tem-salva").click();
+  await aspettaTosto("8 voci", "una nona tematica");
+  if ((await stato()).podcast.tematiche.elenco.join("|") !== "Prima|Seconda|Terza") errori.push("con una nona tematica l'elenco in onda doveva restare com'era");
+  if ((await campo("po-tem-elenco").inputValue()).split("\n").length !== 9) errori.push("dopo l'errore la casella doveva restare com'era scritta");
+  await comando("podcastTematica", { avanti: true });
+  await attesa(600);
+  if ((await campo("po-tem-elenco").inputValue()).split("\n").length !== 9) errori.push("la bozza dell'elenco è stata riscritta dallo stato");
+  await campo("po-tem-elenco").fill("Prima\nSeconda\nTerza");
+  await campo("po-tem-salva").click();
+  await entro("l'elenco salvato di nuovo", (st) => st.podcast.tematiche.elenco.join("|") === "Prima|Seconda|Terza");
+  // salvato, i campi tornano a seguire lo stato: un cambio da fuori arriva nel titolo e nell'elenco
+  await comando("podcast", { tematiche: { titolo: "Da fuori", elenco: ["Alfa", "Beta"] } });
+  await pagina.waitForFunction(() => document.querySelector("#po-tem-titolo").value === "Da fuori" && document.querySelector("#po-tem-elenco").value === "Alfa\nBeta", null, { timeout: 3000 }).catch(() => errori.push("dopo il salvataggio il titolo e l'elenco cambiati da fuori dovevano comparire nei campi"));
+  await comando("podcast", { tematiche: { titolo: "Argomenti di stasera", elenco: ["Prima", "Seconda", "Terza"], attiva: 1 } });
+  await entro("l'elenco di prima", (st) => st.podcast.tematiche.elenco.join("|") === "Prima|Seconda|Terza" && st.podcast.tematiche.attiva === 1);
+
+  // 6) gli ospiti: si aggiunge, si salva all'uscita dal campo (le righe senza nome non si mandano), si toglie; al massimo quattro
+  const righeOspiti = () => pagina.locator("#po-ospiti li");
+  await campo("po-ospiti-aggiungi").click();
+  await righeOspiti().first().locator('[name="nome"]').fill("Lince");
+  await righeOspiti().first().locator('[name="handle"]').fill("@lince.music");
+  await righeOspiti().first().locator('[name="handle"]').evaluate((e) => e.blur());
+  await entro("l'ospite Lince", (st) => JSON.stringify(st.podcast.ospiti) === JSON.stringify([{ nome: "Lince", handle: "@lince.music", icona: "instagram" }]));
+  await campo("po-ospiti-aggiungi").click();
+  await righeOspiti().nth(1).locator('[name="handle"]').fill("@solo.handle");
+  await righeOspiti().nth(1).locator('[name="handle"]').evaluate((e) => e.blur());
+  await attesa(500);
+  if ((await tosti(/Ospite/)) > 0) errori.push("una riga di ospite ancora senza nome non doveva dare un avviso");
+  if ((await stato()).podcast.ospiti.length !== 1) errori.push("una riga di ospite ancora senza nome non doveva andare in onda");
+  await righeOspiti().nth(1).locator('[name="nome"]').fill("Freya");
+  await righeOspiti().nth(1).locator('[name="handle"]').fill("@freya");
+  await righeOspiti().nth(1).locator('[name="icona"]').selectOption("tiktok");
+  await entro("l'ospite Freya con l'icona TikTok", (st) => st.podcast.ospiti.length === 2 && st.podcast.ospiti[1].nome === "Freya" && st.podcast.ospiti[1].icona === "tiktok");
+  await righeOspiti().first().locator("button[data-togli]").click();
+  await entro("solo Freya dopo aver tolto Lince", (st) => st.podcast.ospiti.length === 1 && st.podcast.ospiti[0].nome === "Freya");
+  for (const nome of ["Uno", "Due", "Tre"]) {
+    await campo("po-ospiti-aggiungi").click();
+    await righeOspiti().last().locator('[name="nome"]').fill(nome);
+    await righeOspiti().last().locator('[name="nome"]').evaluate((e) => e.blur());
+    await entro(`l'ospite ${nome}`, (st) => st.podcast.ospiti.some((o) => o.nome === nome));
+  }
+  await pagina.waitForFunction(() => document.querySelector("#po-ospiti-aggiungi").disabled, null, { timeout: 3000 }).catch(() => errori.push("con quattro ospiti «Aggiungi ospite» doveva essere spento"));
+  // un cambio da fuori arriva nelle righe (e «Aggiungi ospite» si riaccende)
+  await comando("podcast", { ospiti: [{ nome: "Esterno", handle: "@esterno", icona: "youtube" }] });
+  await pagina.waitForFunction(() => {
+    const righe = [...document.querySelectorAll("#po-ospiti li")];
+    return righe.length === 1 && righe[0].querySelector('[name="nome"]').value === "Esterno" && righe[0].querySelector('[name="icona"]').value === "youtube" && !document.querySelector("#po-ospiti-aggiungi").disabled;
+  }, null, { timeout: 3000 }).catch(() => errori.push("gli ospiti cambiati da fuori dovevano comparire nelle righe"));
+
+  // 7) il titolo e la riga dell'episodio vanno in onda mentre si scrive (150 ms dopo l'ultimo tasto); un testo troppo lungo dà l'avviso
+  await campo("po-testo").fill("");
+  await attesa(300);
+  await campo("po-testo").pressSequentially("Puntata 7", { delay: 30 });
+  const ultimoTasto = Date.now();
+  if ((await campo("po-testo").inputValue()) !== "Puntata 7") errori.push(`durante la digitazione il campo del titolo è stato riscritto: «${await campo("po-testo").inputValue()}»`);
+  let arrivato = false;
+  while (Date.now() - ultimoTasto < 600 && !arrivato) {
+    arrivato = (await stato()).podcast.titolo.testo === "Puntata 7";
+    if (!arrivato) await attesa(40);
+  }
+  if (!arrivato) errori.push(`«Puntata 7» doveva essere in onda entro 600 ms dall'ultimo tasto (c'è «${(await stato()).podcast.titolo.testo}»)`);
+  await campo("po-sotto").fill("Con ospiti");
+  await entro("la riga dell'episodio", (st) => st.podcast.titolo.sotto === "Con ospiti");
+  await campo("po-testo").fill("x".repeat(33));
+  await aspettaTosto("32 caratteri", "un titolo di 33 caratteri");
+  if ((await stato()).podcast.titolo.testo !== "Puntata 7") errori.push("un titolo di 33 caratteri non doveva cambiare quello in onda");
+  await pagina.waitForFunction(() => document.querySelector("#po-testo").value === "Puntata 7", null, { timeout: 3000 }).catch(() => errori.push("dopo l'errore il campo del titolo doveva tornare a «Puntata 7»"));
+
+  await pagina.screenshot({ path: join(CARTELLA, "mockup", "regia-podcast.jpg"), type: "jpeg", quality: 88 });
+  await ripulisci();
+  await browser.close();
+  if (errori.length) {
+    console.error(`Regia podcast: problemi\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log("ok regia-podcast: moduli a comando, tematiche (elenco, scelta, avanti e indietro, lato, errori), ospiti, titolo in onda mentre si scrive e scorciatoie F2/F3/F4, mockup in mockup/regia-podcast.jpg");
+}
+
 // Un testo di prova lungo `n` caratteri, con gli spazi di una frase vera (che va a capo) e senza spazio alla fine.
 const lungo = (n) => "Lunghissimo titolo di prova con tante parole per la riga ".repeat(3).slice(0, n).trimEnd().padEnd(n, "x");
 
@@ -1717,6 +1939,7 @@ async function main() {
   if (audio) return provaAudio();
   if (regiaDrum) return provaRegiaDrum();
   if (regiaDoppio) return provaRegiaDoppio();
+  if (regiaPodcast) return provaRegiaPodcast();
   if (testiLunghi) return layout === "drum" ? provaTestiLunghi() : layout === "podcast" ? provaTestiLunghiPodcast() : provaTestiLunghiTitolo();
   if (regia) return provaRegia();
   const tabella = GEOMETRIA[layout]?.[formato];

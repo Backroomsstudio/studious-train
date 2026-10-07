@@ -673,9 +673,43 @@
     <section class="scheda sp-regia fm-regia" id="po-regia" data-formato="podcast">
       <h2>Back Rooms Podcast <span class="conta">targa · tematiche · linea di divisione · 9:16 e 16:9 · sorgente Link <code>/podcast.html</code></span></h2>
       <div class="sp-colonne">
-        <div class="sp-colonna" id="po-col1"></div>
+        <div class="sp-colonna" id="po-col1">
+          <h3>Moduli a comando <span class="conta">un clic accende, il secondo spegne</span></h3>
+          <div class="po-moduli">
+            <button type="button" class="po-modulo" data-modulo="poLinea" aria-pressed="false"><span class="po-modulo-nome">Linea di divisione</span><span class="po-modulo-stato">Fuori onda</span></button>
+            <button type="button" class="po-modulo" data-modulo="poTematiche" aria-pressed="false" title="Scorciatoia F4"><span class="po-modulo-nome">Pannello Tematiche</span><span class="po-modulo-stato">Fuori onda</span></button>
+            <button type="button" class="po-modulo" data-modulo="poTitolo" aria-pressed="false"><span class="po-modulo-nome">Targa</span><span class="po-modulo-stato">Fuori onda</span></button>
+            <button type="button" class="po-modulo" data-modulo="poBarra" aria-pressed="false"><span class="po-modulo-nome">Fascia social</span><span class="po-modulo-stato">Fuori onda</span></button>
+          </div>
+
+          <h3>Tematiche in onda <span class="conta">F2 avanti · F3 indietro · F4 mostra o nascondi il pannello</span></h3>
+          <ol class="po-tem-lista" id="po-tem-lista"></ol>
+          <p class="nota" id="po-tem-vuoto">Nessuna tematica: scrivetele nella casella accanto, una per riga, e premete «Salva tematiche».</p>
+          <div class="azioni">
+            <button type="button" class="piccolo" id="po-tem-indietro" title="Scorciatoia F3">← Indietro</button>
+            <button type="button" class="piccolo primario" id="po-tem-avanti" title="Scorciatoia F2">Avanti →</button>
+            <label class="sp-riga">Pannello a <select id="po-tem-lato"><option value="sx">Sinistra</option><option value="dx">Destra</option></select></label>
+          </div>
+          <p class="nota">In verticale il pannello sta sempre al centro: il lato conta solo nel formato orizzontale.</p>
+
+          <h3>Titolo <span class="conta">va in onda mentre scrivete</span></h3>
+          <label class="sp-riga">Titolo della targa <input id="po-testo" autocomplete="off"></label>
+          <label class="sp-riga">Riga dell'episodio <input id="po-sotto" autocomplete="off"></label>
+          <p class="nota">Al massimo 32 e 48 caratteri (oltre, compare un avviso e resta in onda il testo di prima); la riga dell'episodio si può lasciare vuota. Il titolo non può restare vuoto: mentre lo riscrivete resta in onda quello di prima.</p>
+        </div>
 
         <div class="sp-colonna" id="po-col2">
+          <h3>Elenco delle tematiche <span class="conta">una per riga · al massimo 8, da 48 caratteri</span></h3>
+          <label class="sp-riga">Titolo del pannello <input id="po-tem-titolo" autocomplete="off"></label>
+          <textarea id="po-tem-elenco" rows="8" spellcheck="false" aria-label="Tematiche, una per riga"></textarea>
+          <div class="azioni"><button type="button" class="piccolo primario" id="po-tem-salva">Salva tematiche</button></div>
+          <p class="nota">Le righe vuote si saltano. Salvando, la tematica attiva resta la stessa (o l'ultima, se l'elenco si accorcia); finché non salvate, il testo scritto qui non viene toccato.</p>
+
+          <h3>Ospiti <span class="conta">in fascia come «Ospite · Nome · @contatto» · al massimo 4</span></h3>
+          <ul class="po-ospiti" id="po-ospiti"></ul>
+          <div class="azioni"><button type="button" class="piccolo" id="po-ospiti-aggiungi">+ Aggiungi ospite</button></div>
+          <p class="nota">Si salva uscendo dal campo; una riga senza nome non va in onda.</p>
+
           <h3>Fascia social</h3>
           <div class="fm-velocita" data-formato="podcast"></div>
 

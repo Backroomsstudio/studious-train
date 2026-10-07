@@ -967,3 +967,121 @@ button.primario.attivo {
 .dr-scaletta-elenco li.attiva .dr-t-stato {
   color: #ffd863;
 }
+
+/* Back Rooms Podcast: moduli a comando, lista delle tematiche in onda, elenco da scrivere, ospiti */
+.po-moduli {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.po-modulo {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  min-height: 76px;
+  padding: 12px 14px;
+  text-align: left;
+  border-radius: 14px;
+}
+.po-modulo-nome {
+  font: 800 17px/1.1 var(--font-dati);
+  letter-spacing: 0.08em;
+}
+.po-modulo-stato {
+  font: 700 13px/1 var(--font-dati);
+  letter-spacing: 0.16em;
+  color: var(--testo-tenue);
+}
+.po-modulo.attivo {
+  border-color: rgba(69, 255, 168, 0.7);
+  background: rgba(69, 255, 168, 0.14);
+  box-shadow: 0 0 18px rgba(69, 255, 168, 0.22), inset 0 0 0 1px rgba(69, 255, 168, 0.4);
+}
+.po-modulo.attivo .po-modulo-stato {
+  color: #45ffa8;
+}
+.po-tem-lista {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.po-tem-voce {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) 24px;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+  font: 600 16px/1.2 var(--font-dati);
+}
+.po-tem-voce[data-stato="fatta"] {
+  opacity: 0.55;
+}
+.po-tem-voce[data-stato="attiva"] {
+  border-color: rgba(255, 216, 99, 0.75);
+  background: rgba(255, 216, 99, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(255, 216, 99, 0.35);
+}
+.po-tem-num {
+  font-weight: 800;
+  color: var(--testo-tenue);
+}
+.po-tem-testo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.po-tem-segno {
+  font-weight: 800;
+  text-align: center;
+}
+.po-tem-voce[data-stato="fatta"] .po-tem-segno {
+  color: #36dcff;
+}
+.po-tem-voce[data-stato="attiva"] .po-tem-segno {
+  color: #ffd863;
+}
+#po-tem-elenco {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.45);
+  color: inherit;
+  font: 500 15px/1.35 "Barlow", system-ui, sans-serif;
+  resize: vertical;
+}
+.po-ospiti {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.po-ospiti li {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 0.8fr) minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.po-ospiti input,
+.po-ospiti select {
+  padding: 7px 8px;
+  font-size: 14px;
+}
+.po-ospiti button:disabled,
+#po-ospiti-aggiungi:disabled {
+  opacity: 0.35;
+  cursor: default;
+}

@@ -1,16 +1,18 @@
 // Regia: parti dei quattro layout nuovi (drum, produzione, podcast, reaction). Qui stanno quelle comuni: la sezione
 // accesa per il layout in onda, la scheda «Social del brand» (accesa per i layout con la barra), la velocità della fascia,
-// la dimensione di ogni gruppo di testi e l'anteprima verticale/orizzontale; per Studio Production e Reaction Release il titolo
-// (preset e tre righe che vanno in onda mentre si scrive); per il Drum anche i controlli (Like, scaletta, brano,
-// «Dona un…», artista ospite, riempimento) e l'ascolto dell'audio di FL Studio (sorgente, avvia/ferma, indicatore di livello,
-// sensibilità, stile, respiro e «Prova» dell'equalizzatore). Ogni cursore manda il suo comando con un piccolo ritardo (120 ms:
-// durante il trascinamento parte solo l'ultimo valore) e appena lo si lascia.
+// la dimensione di ogni gruppo di testi e l'anteprima verticale/orizzontale; per Studio Production, Reaction Release e Back Rooms
+// Podcast il titolo (per la produzione anche i preset; le righe vanno in onda mentre si scrive); per il Drum anche i controlli
+// (Like, scaletta, brano, «Dona un…», artista ospite, riempimento) e l'ascolto dell'audio di FL Studio (sorgente, avvia/ferma,
+// indicatore di livello, sensibilità, stile, respiro e «Prova» dell'equalizzatore); per il Podcast moduli, tematiche, ospiti e
+// scorciatoie stanno in regia-podcast.js. Ogni cursore manda il suo comando con un piccolo ritardo (120 ms: durante il
+// trascinamento parte solo l'ultimo valore) e appena lo si lascia.
 // Le funzioni arrivano da regia.js (che le usa per tutte le sezioni): `$`, `el`, `invia`, `avviso`, `riempi`, `mostra`
 // e `conn` (la connessione, per l'audio di FL Studio).
 import { ETICHETTE_TESTI, NOMI_ICONE, NOMI_ICONE_REGALO, TITOLO_REACTION_PREDEFINITO, vociFascia, velocitaFascia } from "./formati-logica.js";
 import { formattaLike, etichettaLike, testoScaletta, titoloBrano } from "./drum-logica.js";
 import { stimaGiroSecondi } from "./barra.js";
 import { avviaAscolto, elencaIngressi } from "./regia-audio.js";
+import { avviaRegiaPodcast } from "./regia-podcast.js";
 
 const SEZIONI = { drum: "#dr-regia", produzione: "#pr-regia", podcast: "#po-regia", reaction: "#re-regia" };
 // «Social del brand» è la lista che alimenta tutte le barre che scorrono.
@@ -87,9 +89,10 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn }
     });
   }
 
-  // ----- Titolo di Studio Production e Reaction Release: si scrive e va in onda -----
-  const PREFISSO_TITOLO = { produzione: "pr", reaction: "re" };
-  const campiTitolo = (formato) => Object.fromEntries(["sopra", "testo", "sotto"].map((riga) => [riga, $(`#${PREFISSO_TITOLO[formato]}-${riga}`)]));
+  // ----- Titolo di Studio Production, Reaction Release e Back Rooms Podcast: si scrive e va in onda -----
+  const PREFISSO_TITOLO = { produzione: "pr", reaction: "re", podcast: "po" };
+  const RIGHE_TITOLO = { produzione: ["sopra", "testo", "sotto"], reaction: ["sopra", "testo", "sotto"], podcast: ["testo", "sotto"] };
+  const campiTitolo = (formato) => Object.fromEntries(RIGHE_TITOLO[formato].map((riga) => [riga, $(`#${PREFISSO_TITOLO[formato]}-${riga}`)]));
 
   // Una riga del titolo, 150 ms dopo l'ultimo tasto. Il titolo vuoto non si manda (mentre lo si riscrive resta quello in onda);
   // se il server rifiuta il testo (l'avviso è già a schermo) il campo torna al valore in onda.
@@ -116,6 +119,9 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn }
     }
     for (const chip of document.querySelectorAll("button[data-preset]")) chip.classList.toggle("attivo", chip.dataset.preset === s.produzione.titolo.preset);
   }
+
+  // ----- Back Rooms Podcast: moduli a comando, tematiche, ospiti e scorciatoie -----
+  const podcast = avviaRegiaPodcast({ $, el, invia, riempi });
 
   // ----- Drum: Like, scaletta, brano, «Dona un…», artista ospite, riempimento -----
   // I campi si riempiono dallo stato solo se non sono in uso (riempi); un comando rifiutato riporta il campo al valore vero.
@@ -405,6 +411,7 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn }
       stato = s;
       disegnaDrum(s);
       disegnaTitoli(s);
+      podcast.disegna(s);
       const eq = s.drum.eq;
       if (sensibilita !== document.activeElement) sensibilita.value = eq.sensibilita;
       $("#dr-eq-sens-valore").textContent = `${sensibilita.value}%`;
@@ -426,6 +433,7 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn }
     // Scorciatoie da tastiera di un layout: una funzione da chiamare, o null se il tasto non è suo.
     scorciatoia(tasto, layout) {
       if (layout === "drum" && tasto === "F2") return richiamo;
+      if (layout === "podcast") return podcast.scorciatoia(tasto);
       return null;
     },
   };
