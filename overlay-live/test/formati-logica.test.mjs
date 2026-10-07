@@ -1,13 +1,13 @@
 // Parti pure delle pagine dei quattro layout nuovi (voci della fascia social, simboli, dimensione dei testi).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { vociFascia, velocitaFascia, ETICHETTE_TESTI, scalaTesto, NOMI_ICONE, NOMI_ICONE_REGALO, STILE_PRESET, stileTitolo } from "../public/js/formati-logica.js";
+import { vociFascia, velocitaFascia, ETICHETTE_TESTI, scalaTesto, NOMI_ICONE, NOMI_ICONE_REGALO, STILE_PRESET, stileTitolo, TITOLO_REACTION_PREDEFINITO } from "../public/js/formati-logica.js";
 import { ID_SIMBOLI, svgSimboli } from "../public/js/simboli.js";
 import { senzaPremioIniziale } from "../lib/stato.mjs";
 import { ICONE } from "../lib/validazione.mjs";
 import { ICONE_REGALO } from "../lib/drum.mjs";
 import { FORMATI_TESTI } from "../lib/testi.mjs";
-import { PRESET_TITOLI } from "../lib/formati.mjs";
+import { PRESET_TITOLI, reactionIniziale } from "../lib/formati.mjs";
 
 const stato = ({ social = senzaPremioIniziale(), ospite = { etichetta: "Artista ospite", handle: "@lince.music", icona: "tiktok" }, ospiti = [] } = {}) => ({
   senzaPremio: social,
@@ -102,4 +102,9 @@ test("STILE_PRESET e stileTitolo: accento e icona della targa", () => {
   assert.deepEqual(stileTitolo("produzione", undefined), STILE_PRESET.cooking);
   assert.deepEqual(stileTitolo("produzione", { preset: "toString" }), STILE_PRESET.cooking, "nomi della catena dei prototipi non sono preset");
   assert.deepEqual(stileTitolo("reaction", { preset: "mix" }), { accento: "magenta", icona: null }, "la reaction è sempre magenta, senza icona");
+});
+
+test("TITOLO_REACTION_PREDEFINITO: lo stesso titolo con cui parte la reaction", () => {
+  assert.deepEqual(TITOLO_REACTION_PREDEFINITO, reactionIniziale().titolo);
+  assert.equal(TITOLO_REACTION_PREDEFINITO.testo, "REACTION RELEASE DELLA SETTIMANA");
 });

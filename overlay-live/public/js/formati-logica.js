@@ -42,6 +42,10 @@ export function stileTitolo(formato, titolo) {
   return Object.hasOwn(STILE_PRESET, titolo?.preset) ? STILE_PRESET[titolo.preset] : STILE_PRESET.cooking;
 }
 
+// Il titolo con cui parte la Reaction Release (come reactionIniziale in lib/formati.mjs: un test li tiene uguali): «Ripristina»
+// della regia lo rimanda.
+export const TITOLO_REACTION_PREDEFINITO = { sopra: "Ogni giovedì · ore 01:00", testo: "REACTION RELEASE DELLA SETTIMANA", sotto: "" };
+
 // Dimensione di un gruppo di testi scelta in regia, come moltiplicatore (100% → 1).
 export const scalaTesto = (testi, id) => (testi?.[id] ?? 100) / 100;
 

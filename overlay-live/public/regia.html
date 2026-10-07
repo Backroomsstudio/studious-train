@@ -632,7 +632,19 @@
     <section class="scheda sp-regia fm-regia" id="pr-regia" data-formato="produzione">
       <h2>Studio Production <span class="conta">webcam · DAW · fascia social · sorgente Link <code>/produzione.html</code></span></h2>
       <div class="sp-colonne">
-        <div class="sp-colonna" id="pr-col1"></div>
+        <div class="sp-colonna" id="pr-col1">
+          <h3>Titolo <span class="conta">va in onda mentre scrivete</span></h3>
+          <p class="nota">Un preset riempie le tre righe e sceglie il colore della targa (oro, magenta o ciano); poi potete cambiare tutto.</p>
+          <div class="azioni" id="pr-preset">
+            <button type="button" class="piccolo" data-preset="cooking">Cooking Beats</button>
+            <button type="button" class="piccolo" data-preset="sessione">Sessione Beat</button>
+            <button type="button" class="piccolo" data-preset="mix">Mix &amp; Master</button>
+          </div>
+          <label class="sp-riga">Riga sopra <input id="pr-sopra" autocomplete="off"></label>
+          <label class="sp-riga">Titolo <input id="pr-testo" autocomplete="off"></label>
+          <label class="sp-riga">Riga sotto <input id="pr-sotto" autocomplete="off"></label>
+          <p class="nota">Al massimo 32, 28 e 48 caratteri (oltre, compare un avviso e resta in onda il testo di prima). Il titolo non può restare vuoto: mentre lo riscrivete resta in onda quello di prima.</p>
+        </div>
 
         <div class="sp-colonna" id="pr-col2">
           <h3>Fascia social</h3>
@@ -696,7 +708,14 @@
     <section class="scheda sp-regia fm-regia" id="re-regia" data-formato="reaction">
       <h2>Reaction Release <span class="conta">webcam e schermo · fascia animata · 9:16 e 16:9 · sorgente Link <code>/reaction.html</code></span></h2>
       <div class="sp-colonne">
-        <div class="sp-colonna" id="re-col1"></div>
+        <div class="sp-colonna" id="re-col1">
+          <h3>Titolo <span class="conta">va in onda mentre scrivete</span></h3>
+          <label class="sp-riga">Riga sopra <input id="re-sopra" autocomplete="off"></label>
+          <label class="sp-riga">Titolo <input id="re-testo" autocomplete="off"></label>
+          <label class="sp-riga">Riga sotto <input id="re-sotto" autocomplete="off"></label>
+          <p class="nota">Al massimo 40, 60 e 60 caratteri (oltre, compare un avviso e resta in onda il testo di prima); le righe sopra e sotto si possono lasciare vuote. Il titolo non può restare vuoto: mentre lo riscrivete resta in onda quello di prima.</p>
+          <div class="azioni"><button type="button" class="piccolo" id="re-ripristina" title="Rimanda «REACTION RELEASE DELLA SETTIMANA» con la riga sopra di partenza">Ripristina titolo predefinito</button></div>
+        </div>
 
         <div class="sp-colonna" id="re-col2">
           <h3>Fascia social</h3>

@@ -1,12 +1,13 @@
 // Regia: parti dei quattro layout nuovi (drum, produzione, podcast, reaction). Qui stanno quelle comuni: la sezione
 // accesa per il layout in onda, la scheda «Social del brand» (accesa per i layout con la barra), la velocità della fascia,
-// la dimensione di ogni gruppo di testi e l'anteprima verticale/orizzontale; per il Drum anche i controlli (Like, scaletta, brano,
+// la dimensione di ogni gruppo di testi e l'anteprima verticale/orizzontale; per Studio Production e Reaction Release il titolo
+// (preset e tre righe che vanno in onda mentre si scrive); per il Drum anche i controlli (Like, scaletta, brano,
 // «Dona un…», artista ospite, riempimento) e l'ascolto dell'audio di FL Studio (sorgente, avvia/ferma, indicatore di livello,
 // sensibilità, stile, respiro e «Prova» dell'equalizzatore). Ogni cursore manda il suo comando con un piccolo ritardo (120 ms:
 // durante il trascinamento parte solo l'ultimo valore) e appena lo si lascia.
 // Le funzioni arrivano da regia.js (che le usa per tutte le sezioni): `$`, `el`, `invia`, `avviso`, `riempi`, `mostra`
 // e `conn` (la connessione, per l'audio di FL Studio).
-import { ETICHETTE_TESTI, NOMI_ICONE, NOMI_ICONE_REGALO, vociFascia, velocitaFascia } from "./formati-logica.js";
+import { ETICHETTE_TESTI, NOMI_ICONE, NOMI_ICONE_REGALO, TITOLO_REACTION_PREDEFINITO, vociFascia, velocitaFascia } from "./formati-logica.js";
 import { formattaLike, etichettaLike, testoScaletta, titoloBrano } from "./drum-logica.js";
 import { stimaGiroSecondi } from "./barra.js";
 import { avviaAscolto, elencaIngressi } from "./regia-audio.js";
@@ -15,6 +16,7 @@ const SEZIONI = { drum: "#dr-regia", produzione: "#pr-regia", podcast: "#po-regi
 // «Social del brand» è la lista che alimenta tutte le barre che scorrono.
 const LAYOUT_CON_SOCIAL = ["senzaPremio", "studio", "drum", "produzione", "podcast", "reaction"];
 const INVIO_MS = 120;
+const TITOLO_MS = 150; // il titolo va in onda 150 ms dopo l'ultimo tasto
 const CHIAVE_SORGENTE = "drum-audio-sorgente";
 const CHIAVE_INGRESSO = "drum-audio-ingresso";
 const PROVA_MS = 4000; // la «Prova» dell'equalizzatore dura 4 s, a 30 Hz
@@ -83,6 +85,36 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn }
       link.setAttribute("href", `/${pagina}.html?anteprima=1&muto=1${orizzontale ? "&formato=orizzontale" : "&guide=1"}`);
       for (const altro of sezione.querySelectorAll("[data-anteprima-formato]")) altro.classList.toggle("attivo", altro === bottone);
     });
+  }
+
+  // ----- Titolo di Studio Production e Reaction Release: si scrive e va in onda -----
+  const PREFISSO_TITOLO = { produzione: "pr", reaction: "re" };
+  const campiTitolo = (formato) => Object.fromEntries(["sopra", "testo", "sotto"].map((riga) => [riga, $(`#${PREFISSO_TITOLO[formato]}-${riga}`)]));
+
+  // Una riga del titolo, 150 ms dopo l'ultimo tasto. Il titolo vuoto non si manda (mentre lo si riscrive resta quello in onda);
+  // se il server rifiuta il testo (l'avviso è già a schermo) il campo torna al valore in onda.
+  async function mandaRigaTitolo(formato, riga, campo) {
+    if (riga === "testo" && !campo.value.trim()) return;
+    const esito = await invia(formato, { titolo: { [riga]: campo.value } });
+    if (!esito.ok && stato) campo.value = stato[formato].titolo[riga] ?? "";
+  }
+  for (const formato of Object.keys(PREFISSO_TITOLO)) {
+    for (const [riga, campo] of Object.entries(campiTitolo(formato))) {
+      campo.addEventListener("input", () => {
+        clearTimeout(invii[`titolo|${formato}|${riga}`]);
+        invii[`titolo|${formato}|${riga}`] = setTimeout(() => mandaRigaTitolo(formato, riga, campo), TITOLO_MS);
+      });
+    }
+  }
+  for (const chip of document.querySelectorAll("button[data-preset]")) chip.addEventListener("click", () => invia("produzione", { preset: chip.dataset.preset }));
+  $("#re-ripristina").addEventListener("click", () => invia("reaction", { titolo: TITOLO_REACTION_PREDEFINITO }));
+
+  // I campi del titolo seguono lo stato, tranne quello in uso; il preset in onda è evidenziato.
+  function disegnaTitoli(s) {
+    for (const formato of Object.keys(PREFISSO_TITOLO)) {
+      for (const [riga, campo] of Object.entries(campiTitolo(formato))) riempi(campo, s[formato].titolo[riga]);
+    }
+    for (const chip of document.querySelectorAll("button[data-preset]")) chip.classList.toggle("attivo", chip.dataset.preset === s.produzione.titolo.preset);
   }
 
   // ----- Drum: Like, scaletta, brano, «Dona un…», artista ospite, riempimento -----
@@ -372,6 +404,7 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn }
     disegna(s) {
       stato = s;
       disegnaDrum(s);
+      disegnaTitoli(s);
       const eq = s.drum.eq;
       if (sensibilita !== document.activeElement) sensibilita.value = eq.sensibilita;
       $("#dr-eq-sens-valore").textContent = `${sensibilita.value}%`;

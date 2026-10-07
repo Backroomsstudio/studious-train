@@ -22,6 +22,9 @@
 //   in uso non si riscrivono; salva mockup/regia-drum.jpg.
 //   --testi-lunghi --layout produzione|reaction [--formato orizzontale]: le tre righe del titolo al massimo dei caratteri (produzione 32/28/48,
 //   reaction 40/60/60) con i testi al 200%: ogni riga resta nella sua scatola e dentro la targa, senza coprire le altre.
+//   --regia-doppio: i titoli di Studio Production e Reaction Release nella regia: i chip dei preset, le tre righe che vanno in onda
+//   mentre si scrive (invio ritardato di 150 ms, il campo in uso non si riscrive, un errore mostra l'avviso e rimette il valore
+//   in onda), «Ripristina titolo predefinito» e l'anteprima verticale/orizzontale della reaction.
 //   --testi-lunghi: i testi più lunghi permessi (titolo di tappa e di brano da 60 caratteri, artista da 40, prefisso da 16,
 //   slot da 20, ospite con handle da 40) con la dimensione dei testi del Drum al 200%: niente esce dal suo riquadro.
 //   --regia: flusso della pagina di regia (selettore dei layout, sezioni, scheda Social del brand, dimensione dei testi,
@@ -120,6 +123,7 @@ const sbloccoAnimato = args.includes("--sblocco-animato");
 const equalizzatore = args.includes("--eq");
 const audio = args.includes("--audio");
 const regiaDrum = args.includes("--regia-drum");
+const regiaDoppio = args.includes("--regia-doppio");
 
 function caricaPlaywright() {
   try {
@@ -979,6 +983,125 @@ async function provaRegiaDrum() {
   console.log("ok regia-drum: Like, scaletta (con l'errore e «Suona ora»), brano, ospite, «Dona un…», richiamo con F2, riempimento, campi in uso; mockup/regia-drum.jpg");
 }
 
+// I titoli di Studio Production e Reaction Release nella pagina di regia.
+async function provaRegiaDoppio() {
+  await comando("nuovaSerata");
+  await comando("produzione", { preset: "cooking" });
+  await comando("reaction", { titolo: { sopra: "Ogni giovedì · ore 01:00", testo: "REACTION RELEASE DELLA SETTIMANA", sotto: "" } });
+  await comando("layout", { nome: "produzione" });
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const pagina = await browser.newPage({ viewport: { width: 1500, height: 2400 } });
+  const errori = [];
+  pagina.on("pageerror", (e) => errori.push(`regia: ${e.message}`));
+  await pagina.goto(`${base}/regia.html`);
+  await pagina.evaluate(() => document.fonts?.ready);
+  const attesa = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  await attesa(1200);
+  const campo = (id) => pagina.locator(`#${id}`);
+  const stato = async () => statoServer();
+  const entro = async (descrizione, condizione, ms = 600) => {
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) {
+      if (condizione(await stato())) return true;
+      await attesa(40);
+    }
+    errori.push(`${descrizione} non è arrivato in ${ms} ms (stato: ${JSON.stringify((await stato()).produzione.titolo)} / ${JSON.stringify((await stato()).reaction.titolo)})`);
+    return false;
+  };
+  const campoVale = (id, valore) => pagina.waitForFunction(([i, v]) => document.getElementById(i).value === v, [id, valore], { timeout: 3000 }).catch(() => errori.push(`il campo #${id} doveva mostrare «${valore}»`));
+  const avvisi = () => pagina.locator("#avvisi .avviso.errore").count();
+
+  // 1) i chip dei preset: mandano il preset, il campo segue lo stato, il preset in onda è evidenziato
+  await campo("pr-testo").waitFor();
+  await pagina.locator('button[data-preset="mix"]').click();
+  await entro("il preset «mix»", (st) => st.produzione.titolo.preset === "mix" && st.produzione.titolo.testo === "Mix & Master", 3000);
+  await campoVale("pr-testo", "Mix & Master");
+  await campoVale("pr-sotto", "Mix e master in diretta");
+  const attivi = await pagina.locator("button[data-preset].attivo").evaluateAll((b) => b.map((x) => x.dataset.preset));
+  if (JSON.stringify(attivi) !== '["mix"]') errori.push(`il chip in onda doveva essere solo «mix», sono ${JSON.stringify(attivi)}`);
+  await pagina.locator('button[data-preset="cooking"]').click();
+  await entro("il preset «cooking»", (st) => st.produzione.titolo.preset === "cooking", 3000);
+  await pagina.waitForFunction(() => document.querySelector("button[data-preset].attivo")?.dataset.preset === "cooking", null, { timeout: 3000 }).catch(() => errori.push("il chip evidenziato doveva diventare «cooking»"));
+
+  // 2) si scrive e va in onda: carattere per carattere, il campo non si riscrive, entro 600 ms dall'ultimo tasto lo stato è aggiornato
+  await campo("pr-testo").fill("");
+  await attesa(400);
+  await campo("pr-testo").pressSequentially("Beat live 3", { delay: 30 });
+  const ultimoTasto = Date.now();
+  if ((await campo("pr-testo").inputValue()) !== "Beat live 3") errori.push(`durante la digitazione il campo è stato riscritto: c'è «${await campo("pr-testo").inputValue()}», doveva restare «Beat live 3»`);
+  let arrivato = false;
+  while (Date.now() - ultimoTasto < 600 && !arrivato) {
+    arrivato = (await stato()).produzione.titolo.testo === "Beat live 3";
+    if (!arrivato) await attesa(40);
+  }
+  if (!arrivato) errori.push(`«Beat live 3» doveva essere in onda entro 600 ms dall'ultimo tasto (c'è «${(await stato()).produzione.titolo.testo}»)`);
+  await attesa(500);
+  if ((await campo("pr-testo").inputValue()) !== "Beat live 3") errori.push("dopo l'invio il campo è cambiato");
+
+  // 3) il titolo vuoto (mentre lo si riscrive) non si manda e non dà errori; un testo troppo lungo dà l'avviso e torna il valore in onda
+  const avvisiPrima = await avvisi();
+  await campo("pr-testo").fill("");
+  await attesa(500);
+  if ((await stato()).produzione.titolo.testo !== "Beat live 3") errori.push("un titolo vuoto non doveva cambiare quello in onda");
+  if ((await avvisi()) !== avvisiPrima) errori.push("un titolo vuoto, mentre lo si riscrive, non doveva dare un avviso");
+  await campo("pr-testo").fill("x".repeat(29));
+  await attesa(500);
+  if ((await avvisi()) <= avvisiPrima) errori.push("un testo di 29 caratteri doveva mostrare un avviso");
+  if ((await stato()).produzione.titolo.testo !== "Beat live 3") errori.push("un testo di 29 caratteri non doveva cambiare quello in onda");
+  await campoVale("pr-testo", "Beat live 3");
+
+  // 4) un cambio da fuori arriva nei campi che non si stanno usando, ma non in quello in uso
+  await comando("produzione", { titolo: { sotto: "Da fuori" } });
+  await campoVale("pr-sotto", "Da fuori");
+  await campo("pr-sopra").focus();
+  await campo("pr-sopra").pressSequentially("ab", { delay: 30 });
+  await comando("produzione", { titolo: { sopra: "Cambiato da fuori" } });
+  await attesa(500);
+  if ((await campo("pr-sopra").inputValue()) !== "Backrooms Studio · Liveab" && !(await campo("pr-sopra").inputValue()).endsWith("ab")) errori.push(`il campo in uso (#pr-sopra) è stato riscritto dallo stato: «${await campo("pr-sopra").inputValue()}»`);
+  await campo("pr-sopra").fill("Backrooms Studio · Live");
+  await attesa(400);
+
+  // 5) reaction: lo stesso, e «Ripristina titolo predefinito»
+  await comando("layout", { nome: "reaction" });
+  await campo("re-testo").waitFor();
+  await campo("re-testo").fill("");
+  await attesa(300);
+  await campo("re-testo").pressSequentially("Ep. 12 · Lince", { delay: 30 });
+  const finito = Date.now();
+  let ok = false;
+  while (Date.now() - finito < 600 && !ok) {
+    ok = (await stato()).reaction.titolo.testo === "Ep. 12 · Lince";
+    if (!ok) await attesa(40);
+  }
+  if (!ok) errori.push(`«Ep. 12 · Lince» doveva essere in onda entro 600 ms (c'è «${(await stato()).reaction.titolo.testo}»)`);
+  await campo("re-sotto").fill("Con ospite");
+  await entro("la riga sotto della reaction", (st) => st.reaction.titolo.sotto === "Con ospite");
+  await campo("re-ripristina").click();
+  await entro("il titolo predefinito della reaction", (st) => st.reaction.titolo.testo === "REACTION RELEASE DELLA SETTIMANA" && st.reaction.titolo.sopra === "Ogni giovedì · ore 01:00" && st.reaction.titolo.sotto === "", 3000);
+  await campoVale("re-testo", "REACTION RELEASE DELLA SETTIMANA");
+  await campo("re-testo").fill("y".repeat(61));
+  await attesa(500);
+  if ((await stato()).reaction.titolo.testo !== "REACTION RELEASE DELLA SETTIMANA") errori.push("un titolo di 61 caratteri non doveva cambiare quello in onda");
+  await campoVale("re-testo", "REACTION RELEASE DELLA SETTIMANA");
+
+  // 6) l'anteprima della reaction: verticale e orizzontale
+  const iframe = pagina.locator("#re-regia .sp-anteprima iframe");
+  await pagina.locator('#re-regia [data-anteprima-formato="orizzontale"]').click();
+  const src = await iframe.getAttribute("src");
+  if (!/formato=orizzontale/.test(src) || (await iframe.getAttribute("width")) !== "1920") errori.push(`l'anteprima orizzontale della reaction non è collegata (src ${src})`);
+  await pagina.locator('#re-regia [data-anteprima-formato="verticale"]').click();
+  if (/formato=orizzontale/.test(await iframe.getAttribute("src"))) errori.push("l'anteprima della reaction non è tornata in verticale");
+
+  await comando("produzione", { preset: "cooking" });
+  await browser.close();
+  if (errori.length) {
+    console.error(`Regia doppio: problemi\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log("ok regia-doppio: preset, titolo in onda mentre si scrive (150 ms), errori con avviso, campi in uso, ripristino della reaction e anteprima");
+}
+
 // Un testo di prova lungo `n` caratteri, con gli spazi di una frase vera (che va a capo) e senza spazio alla fine.
 const lungo = (n) => "Lunghissimo titolo di prova con tante parole per la riga ".repeat(3).slice(0, n).trimEnd().padEnd(n, "x");
 
@@ -1243,6 +1366,7 @@ async function main() {
   if (equalizzatore) return provaEq();
   if (audio) return provaAudio();
   if (regiaDrum) return provaRegiaDrum();
+  if (regiaDoppio) return provaRegiaDoppio();
   if (testiLunghi) return layout === "drum" ? provaTestiLunghi() : provaTestiLunghiTitolo();
   if (regia) return provaRegia();
   const tabella = GEOMETRIA[layout]?.[formato];
