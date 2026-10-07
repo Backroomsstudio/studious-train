@@ -20,6 +20,8 @@
 //   --regia-drum: i controlli del Drum nella regia: Like (+100, +1.000, imposta, riparti da ora), scaletta (salva, errore con il numero di
 //   riga, «Suona ora»), brano in esecuzione, artista ospite, «Dona un…» con il richiamo (anche con F2) e il riempimento; i campi
 //   in uso non si riscrivono; salva mockup/regia-drum.jpg.
+//   --testi-lunghi --layout produzione|reaction [--formato orizzontale]: le tre righe del titolo al massimo dei caratteri (produzione 32/28/48,
+//   reaction 40/60/60) con i testi al 200%: ogni riga resta nella sua scatola e dentro la targa, senza coprire le altre.
 //   --testi-lunghi: i testi più lunghi permessi (titolo di tappa e di brano da 60 caratteri, artista da 40, prefisso da 16,
 //   slot da 20, ospite con handle da 40) con la dimensione dei testi del Drum al 200%: niente esce dal suo riquadro.
 //   --regia: flusso della pagina di regia (selettore dei layout, sezioni, scheda Social del brand, dimensione dei testi,
@@ -53,11 +55,19 @@ export const GEOMETRIA = {
     },
   },
   produzione: {
-    verticale: { fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
+    verticale: { titolo: p(116, 282, 848, 160, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
   },
   reaction: {
-    verticale: { fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
-    orizzontale: { fascia: p(0, 920, 1920, 92), "finto:A": p(24, 192, 576, 702), "finto:B": p(648, 192, 1248, 702) },
+    verticale: { titolo: p(116, 282, 848, 160, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
+    orizzontale: {
+      titolo: p(360, 28, 1200, 140),
+      finestraA: p(24, 192, 576, 702),
+      finestraB: p(648, 192, 1248, 702),
+      divisore: p(600, 192, 48, 702),
+      fascia: p(0, 920, 1920, 92),
+      "finto:A": p(24, 192, 576, 702),
+      "finto:B": p(648, 192, 1248, 702),
+    },
   },
   podcast: {
     verticale: { fascia: p(0, 1108, 1080, 92), "finto:camera": p(0, 0, 1080, 1920) },
@@ -139,7 +149,9 @@ async function preparaStato(fase = stato) {
     await comando("formatoTesti", { formato: "drum", azzera: true });
     await comando("drumDemo", { fase });
   }
+  if (layout === "produzione" || layout === "reaction") await comando("formatoTesti", { formato: layout, azzera: true });
   if (layout === "produzione") await comando("produzione", { preset: "cooking" });
+  if (layout === "reaction") await comando("reaction", { titolo: { sopra: "Ogni giovedì · ore 01:00", testo: "REACTION RELEASE DELLA SETTIMANA", sotto: "" } });
   if (layout === "podcast") {
     await comando("podcast", { titolo: { testo: "Back Rooms Podcast", sotto: "Puntata 12" }, ospiti: [OSPITE], tematiche: { elenco: TEMATICHE, attiva: 1 } });
     for (const nome of ["poLinea", "poTematiche"]) await comando("widget", { nome, visibile: stato === "completo" });
@@ -277,8 +289,10 @@ async function provaRegia() {
   await attendi("drum.testi tornati a 100", (st) => Object.values(st.drum.testi).every((v) => v === 100));
   await pagina.locator("#pr-regia .fm-velocita input[type=range]").fill("120");
   await attendi("produzione.velocita 120", (st) => st.produzione.velocita === 120);
-  const nota = await pagina.locator("#pr-regia .fm-velocita").innerText();
-  if (!/120 px\/s · un giro ≈ \d+ s/.test(nota)) errori.push(`velocità di produzione: «${nota.replace(/\n/g, " ")}»`);
+  // il testo della regia si aggiorna quando arriva lo stato nuovo, un attimo dopo che il server lo ha: si aspetta (al massimo 3 s)
+  await pagina
+    .waitForFunction(() => /120 px\/s · un giro ≈ \d+ s/.test(document.querySelector("#pr-regia .fm-velocita").innerText), null, { timeout: 3000 })
+    .catch(async () => errori.push(`velocità di produzione: «${(await pagina.locator("#pr-regia .fm-velocita").innerText()).replace(/\n/g, " ")}»`));
   const interruttore = pagina.locator('#po-regia input[data-widget="poLinea"]');
   await interruttore.check();
   await attendi("visibili.poLinea acceso", (st) => st.visibili.poLinea === true);
@@ -1054,13 +1068,182 @@ async function provaTestiLunghi() {
   console.log(`ok testi lunghi: tutto dentro i riquadri con i testi al 200% (${corpi.join(", ")}), mockup in mockup/drum-testi-lunghi.jpg`);
 }
 
+// Il titolo di Studio Production e di Reaction Release: cosa dice la targa all'avvio (dallo stato di prova).
+const TITOLO_ATTESO = {
+  produzione: { sopra: "Backrooms Studio · Live", testo: "Cooking Beats", sotto: "Un beat da zero, in diretta", accento: "oro", icona: "#ic-cappello" },
+  reaction: { sopra: "Ogni giovedì · ore 01:00", testo: "REACTION RELEASE DELLA SETTIMANA", sotto: null, accento: "magenta", icona: null },
+};
+
+const leggiTitolo = (pagina) =>
+  pagina.evaluate(() => {
+    const el = (sel) => document.querySelector(sel);
+    const sotto = el("#fm-titolo-sotto");
+    const icona = el("#fm-titolo-icona");
+    return {
+      sopra: el("#fm-titolo-sopra")?.textContent,
+      testo: el("#fm-titolo-testo")?.textContent,
+      sotto: sotto && !sotto.hidden && getComputedStyle(sotto).display !== "none" ? sotto.textContent : null,
+      accento: el("#fm-titolo")?.dataset.accento,
+      icona: icona && !icona.hidden && getComputedStyle(icona).display !== "none" ? icona.querySelector("use")?.getAttribute("href") : null,
+    };
+  });
+
+async function controllaTitolo(pagina, errori) {
+  const trovato = await leggiTitolo(pagina);
+  const atteso = TITOLO_ATTESO[layout];
+  for (const campo of Object.keys(atteso)) if (trovato[campo] !== atteso[campo]) errori.push(`titolo: ${campo} è «${trovato[campo]}», atteso «${atteso[campo]}»`);
+}
+
+// Dal vivo: il titolo cambiato dalla regia compare in meno di 700 ms con un effetto flip breve; il cambio dopo vince.
+async function controllaTitoloVivo(browser, dimensioni, url, errori) {
+  const pagina = await browser.newPage({ viewport: dimensioni });
+  pagina.on("pageerror", (e) => errori.push(`pagina (dal vivo): ${e.message}`));
+  await pagina.goto(url.replace("&statico=1", ""));
+  await pagina.evaluate(() => document.fonts?.ready);
+  await pagina.waitForTimeout(2800); // l'entrata della pagina dura 2,4 s
+  if (!(await pagina.$("#fm-titolo-testo"))) {
+    errori.push("titolo: nella pagina dal vivo manca #fm-titolo-testo");
+    return pagina.close();
+  }
+  await pagina.evaluate(() => {
+    window.__flip = 0;
+    const el = document.querySelector("#fm-titolo-testo");
+    new MutationObserver(() => {
+      if (el.classList.contains("flip")) window.__flip++;
+    }).observe(el, { attributes: true, attributeFilter: ["class"] });
+  });
+  const entro = async (descrizione, condizione, ms = 700) => {
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) {
+      if (condizione(await leggiTitolo(pagina))) return;
+      await pagina.waitForTimeout(40);
+    }
+    errori.push(`titolo: ${descrizione} non è comparso entro ${ms} ms (c'è ${JSON.stringify(await leggiTitolo(pagina))})`);
+  };
+  const cambia = layout === "produzione" ? (titolo) => comando("produzione", { titolo }) : (titolo) => comando("reaction", { titolo });
+  if (layout === "produzione") {
+    await comando("produzione", { preset: "mix" });
+    await entro("il preset «Mix & Master» con l'accento ciano", (t) => t.testo === "Mix & Master" && t.accento === "ciano" && t.icona === "#ic-manopole");
+    await comando("produzione", { preset: "sessione" });
+    await entro("il preset «Sessione Beat» con l'accento magenta", (t) => t.testo === "Sessione Beat" && t.accento === "magenta" && t.icona === "#ic-cuffie");
+    await comando("produzione", { preset: "cooking" });
+    await entro("il preset «Cooking Beats» con l'accento oro", (t) => t.testo === "Cooking Beats" && t.accento === "oro");
+  }
+  await cambia({ testo: "Primo" });
+  await pagina.waitForTimeout(80);
+  await cambia({ testo: "Secondo" }); // due cambi di fila: vince l'ultimo
+  await entro("il titolo «Secondo»", (t) => t.testo === "Secondo");
+  await pagina.waitForTimeout(600);
+  const dopo = await leggiTitolo(pagina);
+  if (dopo.testo !== "Secondo") errori.push(`titolo: dopo due cambi di fila doveva restare «Secondo», c'è «${dopo.testo}»`);
+  const flip = await pagina.evaluate(() => ({ volte: window.__flip, durata: parseFloat(getComputedStyle(document.querySelector("#fm-titolo-testo")).animationDuration) * (getComputedStyle(document.querySelector("#fm-titolo-testo")).animationDuration.endsWith("ms") ? 0.001 : 1) }));
+  if (flip.volte < 2) errori.push(`titolo: l'effetto flip doveva partire a ogni cambio (partito ${flip.volte} volte)`);
+  if (!(flip.durata > 0 && flip.durata <= 0.4)) errori.push(`titolo: l'effetto flip doveva durare al massimo 400 ms (dura ${flip.durata} s)`);
+  await cambia({ testo: TITOLO_ATTESO[layout].testo });
+  await entro("il titolo di partenza", (t) => t.testo === TITOLO_ATTESO[layout].testo);
+
+  // la dimensione dei testi scelta in regia vale subito (senza cambiare le parole) e si toglie con «Ripristina»
+  const corpo = () => pagina.evaluate(() => parseFloat(getComputedStyle(document.querySelector("#fm-titolo-testo")).fontSize));
+  await cambia({ testo: "Prova" }); // un titolo corto: il corpo sta al massimo e il 60% si nota
+  await entro("il titolo «Prova»", (t) => t.testo === "Prova");
+  await pagina.waitForTimeout(300);
+  const intero = await corpo();
+  await comando("formatoTesti", { formato: layout, valori: { titolo: 60 } });
+  await pagina.waitForTimeout(300);
+  const piccolo = await corpo();
+  if (!(piccolo < intero * 0.8)) errori.push(`titolo: con il testo al 60% il corpo doveva scendere (100%: ${intero} px, 60%: ${piccolo} px)`);
+  await comando("formatoTesti", { formato: layout, azzera: true });
+  await pagina.waitForTimeout(300);
+  if (Math.abs((await corpo()) - intero) > 1) errori.push("titolo: «Ripristina tutti al 100%» doveva riportare il corpo com'era");
+  await cambia({ testo: TITOLO_ATTESO[layout].testo });
+  await entro("il titolo di partenza", (t) => t.testo === TITOLO_ATTESO[layout].testo);
+
+  // spento da «In onda» la targa esce, riacceso torna
+  const widget = layout === "produzione" ? "prTitolo" : "reTitolo";
+  const fuori = () => pagina.evaluate(() => document.querySelector("#fm-titolo").classList.contains("fuori"));
+  await comando("widget", { nome: widget, visibile: false });
+  await pagina.waitForTimeout(300);
+  if (!(await fuori())) errori.push("titolo: spento da «In onda» la targa doveva uscire");
+  await comando("widget", { nome: widget, visibile: true });
+  await pagina.waitForTimeout(300);
+  if (await fuori()) errori.push("titolo: riacceso da «In onda» la targa doveva tornare");
+  await pagina.close();
+}
+
+// Le tre righe della targa del titolo al massimo dei caratteri e con la dimensione dei testi al 200% (Review Focus 4).
+async function provaTestiLunghiTitolo() {
+  const righe = layout === "produzione" ? { sopra: 32, testo: 28, sotto: 48 } : { sopra: 40, testo: 60, sotto: 60 };
+  await preparaStato();
+  await comando(layout, { titolo: Object.fromEntries(Object.entries(righe).map(([riga, n]) => [riga, lungo(n)])) });
+  await comando("formatoTesti", { formato: layout, valori: { sopra: 200, titolo: 200, sotto: 200 } });
+  const orizzontale = formato === "orizzontale";
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const pagina = await browser.newPage({ viewport: orizzontale ? { width: 1920, height: 1080 } : { width: 1080, height: 1920 } });
+  const errori = [];
+  pagina.on("pageerror", (e) => errori.push(`pagina: ${e.message}`));
+  await pagina.goto(`${base}/${layout}.html?anteprima=1&statico=1${orizzontale ? "&formato=orizzontale" : ""}`);
+  await pagina.evaluate(() => document.fonts?.ready);
+  await pagina.waitForTimeout(800);
+  if (!(await pagina.$("#fm-titolo")) || !(await pagina.$("#fm-titolo-testo"))) {
+    console.error("Testi lunghi: elemento assente: titolo");
+    await browser.close();
+    process.exit(1);
+  }
+  const misure = await pagina.evaluate(() => {
+    const estensione = (e) => {
+      const r = document.createRange();
+      r.selectNodeContents(e);
+      const b = r.getBoundingClientRect();
+      return { x: b.x, y: b.y + b.height * 0.12, w: b.width, h: b.height * 0.76 }; // l'inchiostro: senza l'aria sopra e sotto le lettere
+    };
+    const targa = document.querySelector("#fm-titolo").getBoundingClientRect();
+    const linee = ["#fm-titolo-sopra", "#fm-titolo-testo", "#fm-titolo-sotto"].map((sel) => {
+      const e = document.querySelector(sel);
+      const corpo = parseFloat(getComputedStyle(e).fontSize);
+      const scatola = e.getBoundingClientRect();
+      return { sel, nascosto: e.hidden, corpo, scatola: { su: scatola.top, giu: scatola.bottom }, largo: e.scrollWidth > e.clientWidth, alto: e.scrollHeight > e.clientHeight + corpo * 0.3, ...estensione(e) };
+    });
+    return { targa: { x: targa.x, y: targa.y, w: targa.width, h: targa.height }, linee };
+  });
+  const atteso = GEOMETRIA[layout][formato].titolo.r;
+  const t = misure.targa;
+  if (atteso.some((v, i) => Math.abs(v - [t.x, t.y, t.w, t.h][i]) > TOLLERANZA)) errori.push(`titolo: con i testi lunghi la targa è [${[t.x, t.y, t.w, t.h].map(Math.round).join(", ")}], attesa [${atteso.join(", ")}]`);
+  const visibili = misure.linee.filter((l) => !l.nascosto);
+  for (const l of visibili) {
+    if (l.largo) errori.push(`${l.sel} (${Math.round(l.corpo)} px): il testo esce dalla riga in larghezza`);
+    if (l.alto) errori.push(`${l.sel} (${Math.round(l.corpo)} px): il testo esce dalla riga in altezza`);
+    if (l.x < t.x - 1 || l.x + l.w > t.x + t.w + 1 || l.y < t.y - 1 || l.y + l.h > t.y + t.h + 1) errori.push(`${l.sel}: esce dalla targa (testo x ${Math.round(l.x)}…${Math.round(l.x + l.w)}, y ${Math.round(l.y)}…${Math.round(l.y + l.h)})`);
+    if (l.y < l.scatola.su - 2 || l.y + l.h > l.scatola.giu + 2) errori.push(`${l.sel} (${Math.round(l.corpo)} px): il testo sporge dalla sua scatola (testo y ${Math.round(l.y)}…${Math.round(l.y + l.h)}, scatola y ${Math.round(l.scatola.su)}…${Math.round(l.scatola.giu)})`);
+  }
+  for (let i = 0; i < visibili.length; i++) {
+    for (let j = i + 1; j < visibili.length; j++) {
+      const a = visibili[i];
+      const b = visibili[j];
+      const dy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+      const dx = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+      if (dx > 4 && dy > 0.3 * Math.min(a.h, b.h)) errori.push(`${a.sel} e ${b.sel} si sovrappongono`);
+    }
+  }
+  const nome = `${layout}${orizzontale ? "-orizzontale" : ""}-testi-lunghi.jpg`;
+  await pagina.screenshot({ path: join(CARTELLA, "mockup", nome), type: "jpeg", quality: 88 });
+  await comando("formatoTesti", { formato: layout, azzera: true });
+  await preparaStato();
+  await browser.close();
+  if (errori.length) {
+    console.error(`Testi lunghi (${layout}${orizzontale ? ", orizzontale" : ""}): problemi\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log(`ok testi lunghi ${layout}${orizzontale ? "/orizzontale" : ""}: le tre righe restano dentro la targa con i testi al 200% (corpi ${visibili.map((l) => `${l.sel.slice(11)} ${Math.round(l.corpo)} px`).join(", ")}), mockup in mockup/${nome}`);
+}
+
 async function main() {
   if (clessidra) return provaClessidra();
   if (sbloccoAnimato) return provaSbloccoAnimato();
   if (equalizzatore) return provaEq();
   if (audio) return provaAudio();
   if (regiaDrum) return provaRegiaDrum();
-  if (testiLunghi) return provaTestiLunghi();
+  if (testiLunghi) return layout === "drum" ? provaTestiLunghi() : provaTestiLunghiTitolo();
   if (regia) return provaRegia();
   const tabella = GEOMETRIA[layout]?.[formato];
   const pezziAttesi = PRESENTI[layout]?.[formato]?.[stato];
@@ -1121,8 +1304,10 @@ async function main() {
   const file = join(CARTELLA, "mockup", `${nome}.jpg`);
   await pagina.screenshot({ path: file, type: "jpeg", quality: 88 });
   if (layout === "drum") await controllaDrum(pagina, errori);
+  if (layout === "produzione" || layout === "reaction") await controllaTitolo(pagina, errori);
   await pagina.close();
   await controllaFasciaViva(browser, dimensioni, url, errori);
+  if (layout === "produzione" || layout === "reaction") await controllaTitoloVivo(browser, dimensioni, url, errori);
   await browser.close();
   if (errori.length) {
     console.error(`Problemi in ${layout}/${formato}/${stato}:\n - ${errori.join("\n - ")}`);

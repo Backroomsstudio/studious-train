@@ -30,6 +30,18 @@ export const NOMI_ICONE = {
 };
 export const NOMI_ICONE_REGALO = { rosa: "Rosa", corona: "Corona", cuore: "Cuore", regalo: "Regalo", stella: "Stella", diamante: "Diamante", logo: "Logo BR" };
 
+// Accento e icona della targa del titolo per ogni preset di Studio Production (come PRESET_TITOLI in lib/formati.mjs: un test li
+// tiene uguali). La reaction non ha preset: la sua targa è sempre magenta e senza icona.
+export const STILE_PRESET = {
+  cooking: { accento: "oro", icona: "cappello" },
+  sessione: { accento: "magenta", icona: "cuffie" },
+  mix: { accento: "ciano", icona: "manopole" },
+};
+export function stileTitolo(formato, titolo) {
+  if (formato !== "produzione") return { accento: "magenta", icona: null };
+  return Object.hasOwn(STILE_PRESET, titolo?.preset) ? STILE_PRESET[titolo.preset] : STILE_PRESET.cooking;
+}
+
 // Dimensione di un gruppo di testi scelta in regia, come moltiplicatore (100% → 1).
 export const scalaTesto = (testi, id) => (testi?.[id] ?? 100) / 100;
 

@@ -1,0 +1,122 @@
+/* Layout STUDIO PRODUCTION e REACTION RELEASE (una pagina e un foglio di stile per due layout: doppio.js).
+   Usa base.css, overlay.css, senza-premio.css e formati.css (finti schermi, targa, fascia social).
+
+   POSIZIONI in pixel della tela:
+   Verticale 1080×1920 (produzione e reaction): webcam A sotto la pagina (y 0–1212), fascia 1212–1304, schermo B 1304–1920
+   - titolo (targa)        x 116 → 964,   y 282 → 442
+   Reaction orizzontale 1920×1080 (sfondo di marca opaco: le due finestre sono fori nella pagina):
+   - titolo (targa)        x 360 → 1560,  y 28 → 168
+   - finestra A (host)     x 24 → 600,    y 192 → 894
+   - divisore              x 600 → 648,   y 192 → 894
+   - finestra B (schermo)  x 648 → 1896,  y 192 → 894
+   - fascia social         x 0 → 1920,    y 920 → 1012
+   Per spostare un pezzo basta cambiare i numeri qui sotto (e i fori nel clip-path dello sfondo, che sono gli stessi rettangoli).
+   Con ?guide=1 si vedono le zone (solo verticale). */
+.fm.produzione .fm-targa,
+.fm.reaction .fm-targa {
+  left: 116px;
+  top: 282px;
+  width: 848px;
+  height: 160px;
+}
+.fm.reaction.orizzontale .fm-targa {
+  --d: 88px;
+  --h-sopra: 22px;
+  --h-testo: 70px;
+  --h-sotto: 24px;
+  left: 360px;
+  top: 28px;
+  width: 1200px;
+  height: 140px;
+}
+
+/* ---------- Solo reaction in orizzontale ---------- */
+.dp-solo-orizzontale {
+  display: none;
+}
+.fm.reaction.orizzontale .dp-solo-orizzontale {
+  display: block;
+}
+
+/* Sfondo di marca opaco: gradiente viola scuro con griglia sottile e vignetta. Le finestre A e B sono fori (clip-path con
+   regola «evenodd»): la camera e lo schermo condiviso, sotto la pagina, si vedono da lì. */
+.dp-sfondo {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 95% at 50% 45%, transparent 52%, rgba(0, 0, 0, 0.6) 100%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 48px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 48px),
+    radial-gradient(70% 55% at 50% 12%, rgba(160, 102, 255, 0.42), transparent 72%),
+    linear-gradient(180deg, #24123f 0%, #130b28 55%, #090516 100%);
+  clip-path: path(evenodd, "M0 0H1920V1080H0Z M24 192H600V894H24Z M648 192H1896V894H648Z");
+}
+
+/* Finestra: cornice cromata con quattro staffe attorno a un'area che resta trasparente. */
+.dp-finestra {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 16px;
+  pointer-events: none;
+  box-shadow: 0 0 36px rgba(160, 102, 255, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+.dp-finestra::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 4px;
+  background: var(--bordo-cromo);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.dp-finestra .fm-staffa {
+  width: 56px;
+  height: 56px;
+}
+.dp-finestra .fm-staffa.nw { left: -8px; top: -8px; }
+.dp-finestra .fm-staffa.ne { right: -8px; top: -8px; }
+.dp-finestra .fm-staffa.sw { left: -8px; bottom: -8px; }
+.dp-finestra .fm-staffa.se { right: -8px; bottom: -8px; }
+
+/* Divisore: linea neon verticale con una moneta BR al centro. */
+.dp-divisore {
+  position: absolute;
+  left: 600px;
+  top: 192px;
+  width: 48px;
+  height: 702px;
+  pointer-events: none;
+}
+.dp-divisore::before {
+  content: "";
+  position: absolute;
+  left: calc(50% - 2px);
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #36dcff, #a066ff 40%, #ff4fd8 70%, #36dcff);
+  box-shadow: 0 0 14px rgba(160, 102, 255, 0.9), 0 0 32px rgba(54, 220, 255, 0.5);
+}
+.dp-divisore::after {
+  content: "";
+  position: absolute;
+  left: calc(50% - 3px);
+  top: 0;
+  width: 6px;
+  height: 120px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+  animation: dp-luce 3.6s linear infinite;
+}
+@keyframes dp-luce {
+  0% { transform: translateY(-140px); }
+  100% { transform: translateY(720px); }
+}
+.dp-divisore .fm-moneta {
+  --d: 48px;
+  left: 0;
+  top: calc(50% - 24px);
+  z-index: 2;
+}

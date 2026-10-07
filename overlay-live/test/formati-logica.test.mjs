@@ -1,12 +1,13 @@
 // Parti pure delle pagine dei quattro layout nuovi (voci della fascia social, simboli, dimensione dei testi).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { vociFascia, velocitaFascia, ETICHETTE_TESTI, scalaTesto, NOMI_ICONE, NOMI_ICONE_REGALO } from "../public/js/formati-logica.js";
+import { vociFascia, velocitaFascia, ETICHETTE_TESTI, scalaTesto, NOMI_ICONE, NOMI_ICONE_REGALO, STILE_PRESET, stileTitolo } from "../public/js/formati-logica.js";
 import { ID_SIMBOLI, svgSimboli } from "../public/js/simboli.js";
 import { senzaPremioIniziale } from "../lib/stato.mjs";
 import { ICONE } from "../lib/validazione.mjs";
 import { ICONE_REGALO } from "../lib/drum.mjs";
 import { FORMATI_TESTI } from "../lib/testi.mjs";
+import { PRESET_TITOLI } from "../lib/formati.mjs";
 
 const stato = ({ social = senzaPremioIniziale(), ospite = { etichetta: "Artista ospite", handle: "@lince.music", icona: "tiktok" }, ospiti = [] } = {}) => ({
   senzaPremio: social,
@@ -86,4 +87,19 @@ test("NOMI_ICONE e NOMI_ICONE_REGALO: un nome per ogni icona che il server accet
   assert.deepEqual(Object.keys(NOMI_ICONE), ICONE);
   assert.deepEqual(Object.keys(NOMI_ICONE_REGALO), ICONE_REGALO);
   for (const nome of [...Object.values(NOMI_ICONE), ...Object.values(NOMI_ICONE_REGALO)]) assert.ok(typeof nome === "string" && nome.trim().length > 0, `nome vuoto: «${nome}»`);
+});
+
+test("STILE_PRESET e stileTitolo: accento e icona della targa", () => {
+  assert.deepEqual(Object.keys(STILE_PRESET), Object.keys(PRESET_TITOLI));
+  for (const [nome, stile] of Object.entries(STILE_PRESET)) {
+    assert.equal(stile.accento, PRESET_TITOLI[nome].accento, `accento di ${nome}`);
+    assert.equal(stile.icona, PRESET_TITOLI[nome].icona, `icona di ${nome}`);
+    assert.ok(ID_SIMBOLI.includes(`ic-${stile.icona}`), `ic-${stile.icona} c'è`);
+  }
+  assert.deepEqual(stileTitolo("produzione", { preset: "mix" }), { accento: "ciano", icona: "manopole" });
+  assert.deepEqual(stileTitolo("produzione", { preset: "sessione" }), { accento: "magenta", icona: "cuffie" });
+  assert.deepEqual(stileTitolo("produzione", { preset: "boh" }), STILE_PRESET.cooking, "un preset sconosciuto: quello di partenza");
+  assert.deepEqual(stileTitolo("produzione", undefined), STILE_PRESET.cooking);
+  assert.deepEqual(stileTitolo("produzione", { preset: "toString" }), STILE_PRESET.cooking, "nomi della catena dei prototipi non sono preset");
+  assert.deepEqual(stileTitolo("reaction", { preset: "mix" }), { accento: "magenta", icona: null }, "la reaction è sempre magenta, senza icona");
 });

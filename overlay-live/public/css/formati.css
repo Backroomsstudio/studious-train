@@ -273,3 +273,168 @@ body.fm.anteprima {
 .fm-cornice.colpo .fm-staffa {
   filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.95)) brightness(1.6);
 }
+
+/* ---------- Targa del titolo: placca 3D cromata con monete BR ai lati, punto REC e un colore d'accento ----------
+   Righe: sopra (piccola, nel colore d'accento), testo (grande, cromo luccicante), sotto (piccola). Ogni riga ha la sua scatola di
+   altezza fissa: la pagina riduce il corpo del testo finché entra (adattaTesto) e una riga vuota non occupa niente.
+   L'accento (data-accento) è oro, magenta o ciano; il cambio di testo in tempo reale entra con un breve flip (classe .flip). */
+.fm-targa {
+  --acc: #ffd863;
+  --acc-luce: rgba(255, 216, 99, 0.55);
+  --d: 96px; /* diametro delle monete */
+  --h-sopra: 24px;
+  --h-testo: 84px;
+  --h-sotto: 28px;
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 18px;
+  border-radius: 30px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.07) 36%, rgba(0, 0, 0, 0.24) 100%),
+    radial-gradient(120% 140% at 50% 0%, rgba(160, 102, 255, 0.3), transparent 62%), rgba(13, 8, 28, 0.82);
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.58), 0 0 38px var(--acc-luce), inset 0 2px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.6), inset 0 0 0 8px rgba(8, 5, 18, 0.6);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fm-targa[data-accento="oro"] {
+  --acc: #ffd863;
+  --acc-luce: rgba(255, 216, 99, 0.55);
+}
+.fm-targa[data-accento="magenta"] {
+  --acc: #ff4fd8;
+  --acc-luce: rgba(255, 79, 216, 0.55);
+}
+.fm-targa[data-accento="ciano"] {
+  --acc: #36dcff;
+  --acc-luce: rgba(54, 220, 255, 0.55);
+}
+/* bordo cromato da 5 px e filo nel colore d'accento dentro */
+.fm-targa::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 5px;
+  background: var(--bordo-cromo);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.fm-targa::after {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border-radius: 22px;
+  border: 2px solid var(--acc);
+  opacity: 0.55;
+  box-shadow: 0 0 14px var(--acc-luce), inset 0 0 14px var(--acc-luce);
+  pointer-events: none;
+}
+.fm-targa .fm-moneta {
+  position: relative;
+  flex: none;
+  z-index: 2;
+}
+.fm-targa-testi {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* la colonna non cresce con il testo */
+  gap: 2px;
+}
+.fm-targa-sopra {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--h-sopra);
+}
+.fm-rec {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ff2d4b;
+  box-shadow: 0 0 8px #ff2d4b, 0 0 20px rgba(255, 45, 75, 0.75);
+  animation: fm-rec 1.4s ease-in-out infinite;
+}
+@keyframes fm-rec {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.8); }
+}
+.fm-targa-sopra > span,
+.fm-targa-sotto {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-shadow: 0 0 12px var(--acc-luce), 0 2px 0 rgba(0, 0, 0, 0.7);
+}
+.fm-targa-sopra > span {
+  height: var(--h-sopra);
+  font: 800 calc(22px * var(--ts-sopra, 1)) / var(--h-sopra) var(--font-dati);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--acc);
+}
+.fm-targa-sotto {
+  height: var(--h-sotto);
+  font: 700 calc(24px * var(--ts-sotto, 1)) / var(--h-sotto) var(--font-dati);
+  letter-spacing: 0.04em;
+  color: #e6d8ff;
+}
+.fm-targa-riga {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--h-testo);
+}
+.fm-targa-icona {
+  flex: none;
+  width: 54px;
+  height: 54px;
+  fill: none;
+  stroke: var(--acc);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px var(--acc-luce));
+}
+.fm-targa-testo {
+  flex: 1;
+  min-width: 0;
+  height: var(--h-testo);
+  display: grid;
+  align-content: center;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font: 900 calc(88px * var(--ts-titolo, 1)) / 1 var(--font-gotico);
+  /* cromo luccicante: sfumatura d'argento con una luce che passa */
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, transparent 62%) 150% 0 / 260% 100% no-repeat,
+    linear-gradient(180deg, #ffffff 0%, #e8ebf1 30%, #8f96a3 52%, #f3f5f9 54%, #c5cad4 80%, #ffffff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.65)) drop-shadow(0 0 14px var(--acc-luce));
+  animation: fm-luccica 6s ease-in-out infinite;
+}
+@keyframes fm-luccica {
+  0%, 55% { background-position: 150% 0, 0 0; }
+  100% { background-position: -150% 0, 0 0; }
+}
+/* il testo che cambia entra con un flip breve (la pagina cambia le parole a metà) */
+.fm-targa .flip {
+  animation: fm-flip 0.38s ease-in-out;
+}
+@keyframes fm-flip {
+  0% { transform: perspective(700px) rotateX(0deg); opacity: 1; }
+  45% { transform: perspective(700px) rotateX(88deg); opacity: 0.15; }
+  55% { transform: perspective(700px) rotateX(-88deg); opacity: 0.15; }
+  100% { transform: perspective(700px) rotateX(0deg); opacity: 1; }
+}
