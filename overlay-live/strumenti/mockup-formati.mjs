@@ -6,6 +6,8 @@
 // Mette il server nel layout con i dati di prova dello stato, apre la pagina (1080×1920, o 1920×1080 per l'orizzontale),
 // controlla che ogni pezzo stia dove dice la tabella della spec (±1 px, e dentro x 116…964 / y 230…1200 per i pezzi che lo
 // dichiarano) e salva mockup/<layout>[-orizzontale][-<stato>].jpg. Esce con codice 1 e l'elenco dei problemi.
+//   --clessidra: il riempimento dei moduli del Drum, con perline e con sabbia: il bordo alto dei grani sta dove dice il
+//   progresso (meta: 70%), il modulo attivo è vuoto senza Like, i moduli sbloccati sono pieni e quelli chiusi vuoti.
 //   --testi-lunghi: i testi più lunghi permessi (titolo di tappa e di brano da 60 caratteri, artista da 40, prefisso da 16,
 //   slot da 20, ospite con handle da 40) con la dimensione dei testi del Drum al 200%: niente esce dal suo riquadro.
 //   --regia: flusso della pagina di regia (selettore dei layout, sezioni, scheda Social del brand, dimensione dei testi,
@@ -89,6 +91,7 @@ const stato = opzione("stato", STATO_PREDEFINITO[layout]);
 const guida = args.includes("--guida");
 const regia = args.includes("--regia");
 const testiLunghi = args.includes("--testi-lunghi");
+const clessidra = args.includes("--clessidra");
 
 function caricaPlaywright() {
   try {
@@ -108,7 +111,7 @@ const OSPITE = { nome: "Lince", handle: "@lince.music", icona: "instagram" };
 const TEMATICHE = ["Come nasce un beat", "Il primo disco", "Social e musica", "Cosa ascoltiamo", "Domande dal pubblico"];
 
 // Dati di prova dello stato scelto, come li mostrerebbe la regia.
-async function preparaStato() {
+async function preparaStato(fase = stato) {
   await comando("layout", { nome: layout });
   await comando("widget", { nome: BARRA[layout], visibile: true });
   if (layout === "drum") {
@@ -116,7 +119,7 @@ async function preparaStato() {
     await comando("drumScaletta", { predefinita: true });
     await comando("drumPriorita", { prefisso: "Dona un", slot: "Rosa", sopra: "Salta la coda · scegli tu il brano", icona: "rosa" });
     await comando("formatoTesti", { formato: "drum", azzera: true });
-    await comando("drumDemo", { fase: stato });
+    await comando("drumDemo", { fase });
   }
   if (layout === "produzione") await comando("produzione", { preset: "cooking" });
   if (layout === "podcast") {
@@ -243,6 +246,7 @@ async function provaRegia() {
   await riga.locator('[name="testo"]').fill("@prova.prova");
   await riga.locator('[name="testo"]').press("Tab");
   await attendi("una voce social in più", (st) => st.senzaPremio.voci.length === prima + 1);
+  await pagina.waitForTimeout(300); // la lista si ridisegna con lo stato appena arrivato: il click non deve cadere in mezzo
   await pagina.locator("#sp-voci li").last().locator("[data-togli]").click();
   await attendi("la voce social tolta", (st) => st.senzaPremio.voci.length === prima);
 
@@ -291,6 +295,59 @@ async function provaRegia() {
     process.exit(1);
   }
   console.log(`ok regia: sezioni, scheda Social del brand, testi, velocità e spunte «In onda», mockup in ${file}`);
+}
+
+// Il bordo alto dei grani disegnati in un canvas (la prima riga con pixel visibili), o null se è vuoto.
+const bordoGrani = (pagina, sel) =>
+  pagina.evaluate((selettoreCanvas) => {
+    const c = document.querySelector(selettoreCanvas);
+    const { data, width, height } = c.getContext("2d").getImageData(0, 0, c.width, c.height);
+    for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) if (data[(y * width + x) * 4 + 3] > 40) return y;
+    return null;
+  }, sel);
+
+// Il riempimento dei moduli (clessidra) con i due stili, nei tre stati che lo mostrano.
+async function provaClessidra() {
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const pagina = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
+  const errori = [];
+  pagina.on("pageerror", (e) => errori.push(`pagina: ${e.message}`));
+  const dove = (mod) => `#dr-colonna .dr-modulo[data-stato="${mod}"] canvas.dr-fondo`;
+  const verifica = async (descrizione, sel, atteso) => {
+    const bordo = await bordoGrani(pagina, sel);
+    if (atteso === null) {
+      if (bordo !== null) errori.push(`${descrizione}: doveva essere vuoto, ha grani da y ${bordo}`);
+    } else if (bordo === null || Math.abs(bordo - atteso) > 14) {
+      errori.push(`${descrizione}: bordo alto dei grani a ${bordo === null ? "nessuno (vuoto)" : `y ${bordo}`}, atteso ${atteso.toFixed(1)} ± 14`);
+    }
+  };
+  for (const stile of ["perline", "sabbia"]) {
+    await comando("layout", { nome: "drum" });
+    await comando("drumRiempimento", { stile });
+    for (const fase of ["meta", "vuoto", "finale"]) {
+      await preparaStato(fase);
+      await pagina.goto(`${base}/drum.html?anteprima=1&statico=1`);
+      await pagina.evaluate(() => document.fonts?.ready);
+      await pagina.waitForTimeout(600);
+      const nome = `${stile}/${fase}`;
+      if (fase === "meta") {
+        await verifica(`${nome}: modulo attivo (70%)`, dove("attiva"), 148 * (1 - 0.7));
+        await verifica(`${nome}: modulo sbloccato`, dove("sbloccata"), 0);
+        await verifica(`${nome}: modulo chiuso`, `#dr-colonna .dr-modulo[data-stato="chiusa"] canvas.dr-fondo`, null);
+        await pagina.screenshot({ path: join(CARTELLA, "mockup", `drum-meta${stile === "sabbia" ? "-sabbia" : ""}.jpg`), type: "jpeg", quality: 88 });
+      }
+      if (fase === "vuoto") await verifica(`${nome}: modulo attivo senza Like`, dove("attiva"), null);
+      if (fase === "finale") for (let i = 0; i < 4; i++) await verifica(`${nome}: modulo ${i}`, `#dr-colonna .dr-modulo:nth-child(${i + 1}) canvas.dr-fondo`, 0);
+    }
+  }
+  await comando("drumRiempimento", { stile: "perline" });
+  await browser.close();
+  if (errori.length) {
+    console.error(`Clessidra: problemi\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log("ok clessidra: perline e sabbia riempiono i moduli come dice il progresso (mockup/drum-meta.jpg e drum-meta-sabbia.jpg)");
 }
 
 // Un testo di prova lungo `n` caratteri, con gli spazi di una frase vera (che va a capo) e senza spazio alla fine.
@@ -383,6 +440,7 @@ async function provaTestiLunghi() {
 }
 
 async function main() {
+  if (clessidra) return provaClessidra();
   if (testiLunghi) return provaTestiLunghi();
   if (regia) return provaRegia();
   const tabella = GEOMETRIA[layout]?.[formato];

@@ -9,6 +9,7 @@ import { avviaPagina, applicaTesti, adattaTesto, nodo, simbolo, logo, rilancia, 
 import { creaFascia } from "./fascia.js";
 import { vociFascia, velocitaFascia } from "./formati-logica.js";
 import { formattaLike, etichettaLike, finestraScaletta, titoloBrano } from "./drum-logica.js";
+import { creaClessidra } from "./drum-clessidra.js";
 
 const { palco } = avviaPagina();
 const BANNER_FISSO = STATICO && parametri.has("sblocco"); // solo per i mockup
@@ -99,23 +100,36 @@ function creaModulo(i) {
   riga.append(manca, perc);
   el.append(fondo, like, icona, titolo, riga);
   $("#dr-colonna").append(el);
-  return { el, fondo, icona, like, titolo, riga, manca, perc };
+  const clessidra = creaClessidra(fondo, { statico: STATICO });
+  return { el, fondo, clessidra, tappa: null, icona, like, titolo, riga, manca, perc };
 }
 const moduli = [0, 1, 2, 3].map(creaModulo);
+let likePrima = null; // i Like dell'ultimo disegno della colonna: se salgono, nel modulo attivo cade un filo di grani
 
 function disegnaColonna(d) {
   const raggiunte = d.attiva ?? d.scaletta.length;
   const { voci } = finestraScaletta(d.scaletta, raggiunte, moduli.length);
-  if (!cambiata("colonna", voci, d.contati, d.progresso, d.testi.traguardi)) return;
-  moduli.forEach((m, i) => riempiModulo(m, voci[i], d));
+  if (!cambiata("colonna", voci, d.contati, d.progresso, d.testi.traguardi, d.riempimento)) return;
+  const cresce = likePrima !== null && d.contati > likePrima;
+  likePrima = d.contati;
+  moduli.forEach((m, i) => riempiModulo(m, voci[i], d, cresce));
 }
 
-function riempiModulo(m, voce, d) {
+function riempiModulo(m, voce, d, cresce) {
   m.el.hidden = !voce;
   if (!voce) return;
   const sbloccata = voce.stato === "sbloccata";
   m.el.dataset.indice = voce.indice;
   m.el.dataset.stato = voce.stato;
+  // Il riempimento: piena se sbloccata, vuota se chiusa, in proporzione ai Like se attiva. Un posto che passa a un'altra
+  // tappa (la finestra scorre) o il primo disegno non partono dal vecchio livello: niente animazione.
+  m.clessidra.cambiaStile(d.riempimento);
+  m.clessidra.imposta({
+    livello: sbloccata ? 1 : voce.stato === "attiva" ? d.progresso : 0,
+    attiva: voce.stato === "attiva" && cresce,
+    subito: primoDisegno || m.tappa !== voce.indice,
+  });
+  m.tappa = voce.indice;
   m.like.textContent = etichettaLike(voce.like);
   m.icona.querySelector("use").setAttribute("href", sbloccata ? "#ic-spunta" : "#ic-lucchetto");
   m.titolo.textContent = sbloccata ? titoloBrano(voce.titolo) : "Brano segreto";
