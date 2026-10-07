@@ -3,6 +3,8 @@
 import { randomUUID } from "node:crypto";
 import { ICONE, oggetto, testo, numeroTra, siNo, arrotonda, normalizzaVoto, pulisciInstagram, controllaComparse } from "./validazione.mjs";
 import { battleIniziale, istantaneaBattle } from "./battle.mjs";
+import { drumIniziale, istantaneaDrum } from "./drum.mjs";
+import { produzioneIniziale, reactionIniziale, podcastIniziale } from "./formati.mjs";
 
 // Questi cinque restano esportati da qui: li usano server, regia e test.
 export { ICONE, arrotonda, normalizzaVoto, pulisciInstagram };
@@ -74,6 +76,10 @@ export function statoIniziale(config) {
     senzaPremio: senzaPremioIniziale(),
     studio: studioIniziale(),
     battle: battleIniziale(),
+    drum: drumIniziale(),
+    produzione: produzioneIniziale(),
+    reaction: reactionIniziale(),
+    podcast: podcastIniziale(),
     // Tracce ascoltate nella serata (per «Oggi abbiamo ascoltato N tracce»).
     ascoltate: [],
   };
@@ -526,6 +532,10 @@ export function istantanea(stato, config, ora) {
     senzaPremio: stato.senzaPremio,
     studio: stato.studio,
     battle: istantaneaBattle(stato.battle),
+    drum: istantaneaDrum(stato.drum),
+    produzione: stato.produzione,
+    reaction: stato.reaction,
+    podcast: stato.podcast,
     ascoltate: ascoltateNellaLive(stato, ora),
   };
 }

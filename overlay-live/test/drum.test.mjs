@@ -179,6 +179,27 @@ test("registraLike: live nuova", () => {
   assert.equal(u.drum.like.tiktokTotale, 150);
 });
 
+test("riconnessione a TikTok: nessuno sblocco ripetuto", () => {
+  // la stessa live ripresa dopo uno stacco: il totale si rilegge dal primo evento e le tappe già annunciate restano tali
+  const ripresa = conLike(nuovo(), 7000);
+  ripresa.drum.annunciati = 5;
+  D.nuovaConnessioneLike(ripresa);
+  D.registraLike(ripresa, { totale: 7050 });
+  assert.deepEqual(D.controllaSblocchi(ripresa), []);
+  assert.equal(ripresa.drum.annunciati, 5);
+  D.registraLike(ripresa, { totale: 9100 });
+  assert.deepEqual(D.controllaSblocchi(ripresa), [sblocco(5, 9000)], "i Like arrivati durante lo stacco sbloccano la tappa più alta");
+  // una live nuova: il totale riparte da zero e gli annunci si riallineano in silenzio
+  const nuova = conLike(nuovo(), 7000);
+  nuova.drum.annunciati = 5;
+  D.nuovaConnessioneLike(nuova);
+  D.registraLike(nuova, { totale: 200 });
+  assert.deepEqual(D.controllaSblocchi(nuova), []);
+  assert.deepEqual([nuova.drum.like.tiktokTotale, nuova.drum.annunciati], [200, 0]);
+  D.registraLike(nuova, { totale: 1500 });
+  assert.deepEqual(D.controllaSblocchi(nuova), [sblocco(0, 1000)], "e le tappe si sbloccano di nuovo dalla prima");
+});
+
 test("impostaLike", () => {
   const s = conLike(nuovo(), 5000);
   D.impostaLike(s, { imposta: 12000 });

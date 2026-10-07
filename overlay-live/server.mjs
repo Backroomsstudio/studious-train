@@ -10,6 +10,10 @@ import { fileURLToPath } from "node:url";
 import { WebSocketServer } from "ws";
 import * as S from "./lib/stato.mjs";
 import * as B from "./lib/battle.mjs";
+import * as D from "./lib/drum.mjs";
+import * as F from "./lib/formati.mjs";
+import { impostaTesti } from "./lib/testi.mjs";
+import { corpo, numeroTra, siNo } from "./lib/validazione.mjs";
 import { avviaTikTok, leggiVoto } from "./lib/chat.mjs";
 import { firmaValida, versoCoda, avviaNero } from "./lib/nero.mjs";
 
@@ -81,6 +85,11 @@ function caricaStato() {
     salvato.senzaPremio = S.fondiSenzaPremio(salvato.senzaPremio);
     salvato.studio = S.fondiStudio(salvato.studio);
     salvato.battle = B.fondiBattle(salvato.battle);
+    // Drum, produzione, reaction e podcast (aggiunti dopo): impostazioni complete anche da uno stato vecchio o rotto.
+    salvato.drum = D.fondiDrum(salvato.drum);
+    salvato.produzione = F.fondiProduzione(salvato.produzione);
+    salvato.reaction = F.fondiReaction(salvato.reaction);
+    salvato.podcast = F.fondiPodcast(salvato.podcast);
     if (!S.LAYOUT.includes(salvato.layout)) salvato.layout = iniziale.layout;
     salvato.ascoltate = Array.isArray(salvato.ascoltate) ? salvato.ascoltate.filter((a) => a && typeof a === "object") : [];
     // Stato di una versione precedente (tre voti per categoria): la traccia in corso riparte da zero.
@@ -173,13 +182,46 @@ function collegaNero() {
   );
 }
 
+// --- Like di TikTok (Drum Challenge) -----------------------------------------------------
+// Un evento Like può far raggiungere una tappa: si annuncia a tutte le pagine (un solo sblocco per salto, anche se i
+// Like hanno superato più tappe).
+const MAX_LIKE_TOTALI = 10_000_000_000;
+
+function annunciaSblocchi() {
+  for (const e of D.controllaSblocchi(stato)) emetti(e.nome, e.dati);
+}
+
+function contaLike(dati) {
+  D.registraLike(stato, dati);
+  annunciaSblocchi();
+}
+
+// Dopo ogni (ri)collegamento il totale si rilegge dal primo evento Like con un totale, non prima: finché non arriva il
+// contatore resta dov'era (niente scatti a zero, né sblocchi ripetuti) e una live nuova riparte dal suo totale.
+let primaLetturaDaTikTok = false;
+
+function registraLikeTikTok(dati) {
+  if (primaLetturaDaTikTok && typeof dati?.totale === "number") {
+    primaLetturaDaTikTok = false;
+    D.nuovaConnessioneLike(stato);
+  }
+  contaLike(dati);
+  cambiato();
+}
+
 let fermaTikTok = () => {};
 function collegaTikTok() {
   fermaTikTok();
-  fermaTikTok = avviaTikTok(stato.tiktokUtente, registraCommento, (s) => {
-    statoTikTok = s;
-    cambiato();
-  });
+  fermaTikTok = avviaTikTok(
+    stato.tiktokUtente,
+    registraCommento,
+    (s) => {
+      statoTikTok = s;
+      cambiato();
+    },
+    undefined,
+    { suLike: registraLikeTikTok, suNuovaConnessione: () => (primaLetturaDaTikTok = true) },
+  );
 }
 
 // --- Comandi (regia via WebSocket, Stream Deck e altri tool via POST /api/<comando>) -----
@@ -207,6 +249,14 @@ function esito(fn) {
   if (risultato?.spareggio) emetti("spareggio", risultato.spareggio);
   return risultato;
 }
+
+// Velocità della fascia social: ogni formato nuovo la tiene nella sua sezione.
+const IMPOSTA_VELOCITA = {
+  drum: (v) => D.impostaVelocita(stato, v),
+  produzione: (v) => F.impostaProduzione(stato, { velocita: v }),
+  reaction: (v) => F.impostaReaction(stato, { velocita: v }),
+  podcast: (v) => F.impostaPodcast(stato, { velocita: v }),
+};
 
 const comandi = {
   traccia({ titolo, artista, tier = null }) {
@@ -434,10 +484,73 @@ const comandi = {
   battleDemo({ fase, secondi }) {
     B.battleDemo(stato, fase, Date.now(), secondi === undefined ? {} : { secondi: Number(secondi) });
   },
+  // --- Drum Challenge Live (i Like di TikTok sbloccano una scaletta di brani; equalizzatore dall'audio di FL Studio) ---
+  // { imposta | aggiungi | daOra }: correzioni a mano dei Like. Un salto di più tappe annuncia solo la più alta.
+  drumLike(args) {
+    D.impostaLike(stato, args);
+    annunciaSblocchi();
+  },
+  drumScaletta(args) {
+    D.impostaScaletta(stato, args);
+  },
+  drumBrano(args) {
+    D.impostaBrano(stato, args);
+  },
+  drumOspite(args) {
+    D.impostaOspite(stato, args);
+  },
+  // Testi di «Dona un…»; con { richiamo: true } il widget richiama l'attenzione (solo se è acceso in In onda).
+  drumPriorita(args) {
+    const { richiamo, ...campi } = corpo(args, "Dona un…");
+    if (richiamo !== undefined) siNo(richiamo, "Richiamo");
+    if (richiamo === true && !stato.visibili.drumPriorita) throw new Error("Il widget è spento: accendetelo in In onda");
+    D.impostaPriorita(stato, campi);
+    if (richiamo === true) emetti("richiamoDrum", {});
+  },
+  drumEq(args) {
+    D.impostaEq(stato, args);
+  },
+  drumRiempimento({ stile }) {
+    D.impostaRiempimento(stato, stile);
+  },
+  drumDemo({ fase }) {
+    D.drumDemo(stato, fase);
+  },
+  // Simula un evento Like di TikTok (come messaggioChat per i commenti): per provare il Drum senza una live.
+  likeEvento({ totale, conteggio }) {
+    if (totale === undefined && conteggio === undefined) throw new Error("Like: serve totale o conteggio");
+    contaLike({
+      ...(totale !== undefined && { totale: numeroTra(totale, 0, MAX_LIKE_TOTALI, "Like (totale)") }),
+      ...(conteggio !== undefined && { conteggio: numeroTra(conteggio, 1, 100_000, "Like (conteggio)") }),
+    });
+  },
+  // --- Studio Production, Reaction Release e Back Rooms Podcast ---
+  produzione(args) {
+    F.impostaProduzione(stato, args);
+  },
+  reaction(args) {
+    F.impostaReaction(stato, args);
+  },
+  podcast(args) {
+    F.impostaPodcast(stato, args);
+  },
+  // { avanti | indietro | indice }: sposta la tematica attiva (Stream Deck, scorciatoie).
+  podcastTematica(args) {
+    F.spostaTematica(stato, args);
+  },
+  // Dimensione dei testi dei layout nuovi: { formato: "drum", valori: { contatore: 140 } } in percento (60–200), oppure { formato, azzera: true }.
+  formatoTesti({ formato, valori, azzera }) {
+    impostaTesti(stato, formato, azzera === true ? { azzera: true } : valori);
+  },
+  // Velocità della fascia social (40–160 px/s) di drum, produzione, reaction o podcast.
+  formatoVelocita({ formato, velocita }) {
+    if (typeof formato !== "string" || !Object.hasOwn(IMPOSTA_VELOCITA, formato)) throw new Error(`Formato sconosciuto: ${String(formato).slice(0, 30)}`);
+    IMPOSTA_VELOCITA[formato](velocita);
+  },
   demo() {
     const ora = Date.now();
-    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle } = stato;
-    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle };
+    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
+    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast };
     const finti = [
       ["Specchi Neri", "Nove", 8.4],
       ["Fuori Orario", "Kappa 23", 7.9],
@@ -460,10 +573,27 @@ const comandi = {
     ];
     S.countdown(stato, { azione: "avvia", minuti: config.durataCountdownMinuti }, ora);
   },
-  // La traccia che suona su Nero in quel momento torna sul tabellone al giro successivo.
+  // La traccia che suona su Nero in quel momento torna sul tabellone al giro successivo. Drum e podcast ripartono
+  // (Like da zero, prima tematica); produzione e reaction restano come sono.
   nuovaSerata() {
-    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, layout, senzaPremio, studio, battle } = stato;
-    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, layout, senzaPremio, studio, battle: B.battleNuovaSerata(battle) };
+    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
+    stato = {
+      ...S.statoIniziale(config),
+      premio,
+      invito,
+      suoni,
+      giudici,
+      tiktokUtente,
+      neroAutomatico,
+      layout,
+      senzaPremio,
+      studio,
+      battle: B.battleNuovaSerata(battle),
+      drum: D.drumNuovaSerata(drum),
+      produzione,
+      reaction,
+      podcast: F.podcastNuovaSerata(podcast),
+    };
   },
 };
 
