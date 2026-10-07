@@ -6,6 +6,12 @@ export const ICONE = ["nero", "instagram", "tiktok", "instagram+tiktok", "twitch
 
 export const oggetto = (x) => Boolean(x) && typeof x === "object" && !Array.isArray(x);
 
+// Il corpo di un comando dalla regia deve essere un oggetto: altrimenti un errore chiaro, non un TypeError.
+export function corpo(dati, nome) {
+  if (!oggetto(dati)) throw new Error(`${nome}: forma non valida`);
+  return dati;
+}
+
 export function testo(valore, max, nome, { obbligatorio = false } = {}) {
   if (typeof valore !== "string") throw new Error(`${nome}: serve un testo`);
   const pulito = valore.trim();

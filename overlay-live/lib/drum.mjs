@@ -1,6 +1,6 @@
 // Regole del Drum Challenge Live: Like di TikTok, scaletta degli sblocchi, progresso e annunci.
 // Solo funzioni pure: i modificatori lavorano su `stato.drum`, le funzioni di lettura prendono il `drum`.
-import { ICONE, numeroTra, oggetto, siNo, testo, velocitaFascia } from "./validazione.mjs";
+import { ICONE, corpo, numeroTra, oggetto, siNo, testo, velocitaFascia } from "./validazione.mjs";
 import { controllaTesti, testiBase } from "./testi.mjs";
 
 // Le prime 16 tappe le ha scelte la regia, le altre 21 (fino a 500k) sono la scaletta di partenza, modificabile.
@@ -180,14 +180,9 @@ export const ICONE_REGALO = ["rosa", "corona", "cuore", "regalo", "stella", "dia
 const STILI_EQ = ["barre", "onda"];
 const RIEMPIMENTI = ["perline", "sabbia"];
 
-const campi = (dati, nome) => {
-  if (!oggetto(dati)) throw new Error(`${nome}: forma non valida`);
-  return dati;
-};
-
 // Brano in esecuzione: scritto a mano oppure preso da una tappa già sbloccata (l'artista allora resta vuoto).
 export function impostaBrano(stato, dati) {
-  const { titolo, artista, daIndice, svuota } = campi(dati, "Brano");
+  const { titolo, artista, daIndice, svuota } = corpo(dati, "Brano");
   const drum = stato.drum;
   const brano = { ...drum.brano };
   if (svuota !== undefined && siNo(svuota, "Brano (svuota)")) {
@@ -208,7 +203,7 @@ export function impostaBrano(stato, dati) {
 
 // Lo slot dell'artista ospite sulla fascia social (nome e contatto, con l'icona della piattaforma).
 export function impostaOspite(stato, dati) {
-  const { etichetta, handle, icona } = campi(dati, "Ospite");
+  const { etichetta, handle, icona } = corpo(dati, "Ospite");
   const ospite = { ...stato.drum.ospite };
   if (etichetta !== undefined) ospite.etichetta = testo(etichetta, 24, "Etichetta dell'ospite");
   if (handle !== undefined) ospite.handle = testo(handle, 40, "Contatto dell'ospite");
@@ -221,7 +216,7 @@ export function impostaOspite(stato, dati) {
 
 // Il widget «Dona un…»: prefisso e riga sopra possono mancare, il regalo (slot) no.
 export function impostaPriorita(stato, dati) {
-  const { prefisso, slot, sopra, icona } = campi(dati, "Dona un…");
+  const { prefisso, slot, sopra, icona } = corpo(dati, "Dona un…");
   const priorita = { ...stato.drum.priorita };
   if (prefisso !== undefined) priorita.prefisso = testo(prefisso, 16, "Prefisso di «Dona un…»");
   if (slot !== undefined) priorita.slot = testo(slot, 20, "Regalo di «Dona un…»", { obbligatorio: true });
@@ -235,7 +230,7 @@ export function impostaPriorita(stato, dati) {
 
 // Equalizzatore: quanto reagisce (50–300 %), barre o onda, e il «respiro» quando non arriva audio.
 export function impostaEq(stato, dati) {
-  const { sensibilita, stile, senzaSegnale } = campi(dati, "Equalizzatore");
+  const { sensibilita, stile, senzaSegnale } = corpo(dati, "Equalizzatore");
   const eq = { ...stato.drum.eq };
   if (sensibilita !== undefined) eq.sensibilita = numeroTra(sensibilita, 50, 300, "Sensibilità dell'equalizzatore (%)");
   if (stile !== undefined) {
@@ -345,7 +340,7 @@ const LIKE_DEMO = { vuoto: 0, meta: 11400, sblocco: 12000, finale: 500000 };
 // Dati di prova per mockup e prove a mano: titoli per le prime 12 tappe, l'ospite e i Like della fase scelta.
 // Gli annunci seguono le tappe raggiunte: nessuno sblocco parte da solo.
 export function drumDemo(stato, fase) {
-  if (!Object.hasOwn(LIKE_DEMO, fase)) throw new Error("Fase non valida: vuoto, meta, sblocco o finale");
+  if (typeof fase !== "string" || !Object.hasOwn(LIKE_DEMO, fase)) throw new Error("Fase non valida: vuoto, meta, sblocco o finale");
   const drum = stato.drum;
   TITOLI_DEMO.forEach((titolo, i) => {
     if (drum.scaletta[i]) drum.scaletta[i].titolo = titolo;

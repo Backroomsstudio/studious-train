@@ -499,6 +499,8 @@ test("drumDemo", () => {
   const prima = structuredClone(s.drum);
   assert.throws(() => D.drumDemo(s, "boh"), /Fase non valida: vuoto, meta, sblocco o finale/);
   assert.throws(() => D.drumDemo(s, undefined), /Fase non valida/);
+  assert.throws(() => D.drumDemo(s, ["meta"]), /Fase non valida/);
+  assert.throws(() => D.drumDemo(s, "toString"), /Fase non valida/);
   assert.deepEqual(s.drum, prima, "una fase sbagliata non cambia nulla");
   const corta = nuovo();
   D.impostaScaletta(corta, { testo: "100\n200" });
