@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as S from "../lib/stato.mjs";
 import * as B from "../lib/battle.mjs";
-import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suoniBattle, suoniTimerBattle, msTimerBattle, suonaIn } from "../public/js/eventi-sonori.js";
+import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suoniBattle, suoniTimerBattle, msTimerBattle, suoniDrum, suonaIn } from "../public/js/eventi-sonori.js";
 import { NOMI_SUONI, suona } from "../public/js/suoni.js";
 import { FINE_RIVELAZIONE_MS, RITARDO_VITTORIA_MS, RULLO_VITTORIA_MS } from "../public/js/battle-logica.js";
 
@@ -248,4 +248,40 @@ test("battle: i pulsanti Prova della regia fanno suonare l'effetto scelto", () =
   assert.deepEqual(suoniBattle(foto(stato), foto(stato), prova({ nome: "gong" })), [{ nome: "gong" }]);
   assert.deepEqual(suoniBattle(foto(stato), foto(stato), prova({ nome: "conto", dati: { n: 1 } })), [{ nome: "conto", dati: { n: 1 } }]);
   assert.deepEqual(suoniBattle(null, foto(stato), prova({ nome: "gong" })), [], "mai al primo disegno");
+});
+
+// ---------- Drum ----------
+const sbloccoEv = (indice) => ({ nome: "sbloccoDrum", dati: { indice, like: 1000 * (indice + 1), titolo: "Brano" } });
+
+test("drum: lo sblocco di una tappa suona una volta sola, mai al primo disegno", () => {
+  const stato = S.statoIniziale(config);
+  assert.deepEqual(suoniDrum(null, foto(stato), [sbloccoEv(0)]), [], "mai al primo disegno");
+  assert.deepEqual(suoniDrum(foto(stato), foto(stato), [sbloccoEv(0)]), [{ nome: "sblocco" }]);
+  assert.deepEqual(suoniDrum(foto(stato), foto(stato), [sbloccoEv(2), sbloccoEv(3)]), [{ nome: "sblocco" }], "due sblocchi nello stesso aggiornamento: un solo suono");
+  assert.deepEqual(suoniDrum(foto(stato), foto(stato), []), []);
+  assert.deepEqual(suoniDrum(foto(stato), foto(stato), [{ nome: "richiamoDrum", dati: {} }, { nome: "classifica", dati: {} }]), [], "gli altri eventi non suonano");
+  assert.ok(NOMI_SUONI.includes("sblocco"));
+  assert.doesNotThrow(() => suona("sblocco"), "senza audio del browser non fa niente");
+});
+
+test("drum: i pulsanti Prova della regia fanno suonare l'effetto scelto", () => {
+  const stato = S.statoIniziale(config);
+  assert.deepEqual(suoniDrum(foto(stato), foto(stato), [{ nome: "suono", dati: { nome: "sblocco" } }]), [{ nome: "sblocco" }]);
+  assert.deepEqual(suoniDrum(null, foto(stato), [{ nome: "suono", dati: { nome: "sblocco" } }]), [], "mai al primo disegno");
+  assert.deepEqual(suoniDrum(foto(stato), foto(stato), [{ nome: "suono", dati: { nome: "sblocco" } }, sbloccoEv(1)]), [{ nome: "sblocco" }, { nome: "sblocco" }], "la prova e lo sblocco vero sono due richieste");
+});
+
+test("drum: con la colonna dei traguardi spenta lo sblocco non suona (non si vede), la prova sì", () => {
+  const stato = S.statoIniziale(config);
+  const spenta = foto(stato);
+  spenta.visibili.drumTraguardi = false;
+  assert.deepEqual(suoniDrum(foto(stato), spenta, [sbloccoEv(4)]), []);
+  assert.deepEqual(suoniDrum(foto(stato), spenta, [{ nome: "suono", dati: { nome: "sblocco" } }]), [{ nome: "sblocco" }]);
+});
+
+test("drum: suona solo la pagina del layout in onda", () => {
+  assert.equal(suonaIn({ layout: "battle", suoni: { dove: "overlay" } }, "drum", "overlay"), false);
+  assert.equal(suonaIn({ layout: "drum", suoni: { dove: "overlay" } }, "drum", "overlay"), true);
+  assert.equal(suonaIn({ layout: "drum", suoni: { dove: "regia" } }, "drum", "overlay"), false, "scelta «in regia»: la pagina tace");
+  assert.equal(suonaIn({ layout: "drum", suoni: { dove: "regia" } }, "drum", "regia"), true);
 });

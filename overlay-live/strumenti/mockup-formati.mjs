@@ -8,6 +8,9 @@
 // dichiarano) e salva mockup/<layout>[-orizzontale][-<stato>].jpg. Esce con codice 1 e l'elenco dei problemi.
 //   --clessidra: il riempimento dei moduli del Drum, con perline e con sabbia: il bordo alto dei grani sta dove dice il
 //   progresso (meta: 70%), il modulo attivo è vuoto senza Like, i moduli sbloccati sono pieni e quelli chiusi vuoti.
+//   --sblocco-animato: la sequenza di sblocco del Drum dal vivo (pagina non statica, senza suoni): urto subito, banner dopo 1 s,
+//   colonna che scorre a 1,8 s, banner via a 4,2 s; una ricarica non la rifà; con la colonna spenta a metà sparisce tutto
+//   e riaccesa mostra la finestra aggiornata; due sblocchi di fila: dopo il primo parte solo l'ultimo.
 //   --testi-lunghi: i testi più lunghi permessi (titolo di tappa e di brano da 60 caratteri, artista da 40, prefisso da 16,
 //   slot da 20, ospite con handle da 40) con la dimensione dei testi del Drum al 200%: niente esce dal suo riquadro.
 //   --regia: flusso della pagina di regia (selettore dei layout, sezioni, scheda Social del brand, dimensione dei testi,
@@ -92,6 +95,7 @@ const guida = args.includes("--guida");
 const regia = args.includes("--regia");
 const testiLunghi = args.includes("--testi-lunghi");
 const clessidra = args.includes("--clessidra");
+const sbloccoAnimato = args.includes("--sblocco-animato");
 
 function caricaPlaywright() {
   try {
@@ -350,6 +354,144 @@ async function provaClessidra() {
   console.log("ok clessidra: perline e sabbia riempiono i moduli come dice il progresso (mockup/drum-meta.jpg e drum-meta-sabbia.jpg)");
 }
 
+// La sequenza di sblocco dal vivo: quando compare cosa (tempi dall'arrivo dell'evento, con un po' di margine), e i casi limite.
+async function provaSbloccoAnimato() {
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const pagina = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
+  const errori = [];
+  pagina.on("pageerror", (e) => errori.push(`pagina: ${e.message}`));
+  const attesa = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  const fino = (t0, ms) => attesa(Math.max(0, t0 + ms - Date.now()));
+  const foto = () =>
+    pagina.evaluate(() => {
+      const moduli = [...document.querySelectorAll("#dr-colonna .dr-modulo")];
+      const banner = document.querySelector("#dr-sblocco");
+      const r = banner.getBoundingClientRect();
+      return {
+        colonna: moduli.map((m) => Number(m.dataset.indice)),
+        stati: moduli.map((m) => m.dataset.stato),
+        urto: moduli.filter((m) => m.classList.contains("sblocco")).map((m) => Number(m.dataset.indice)),
+        banner: { visibile: !banner.hidden && !banner.classList.contains("fuori"), titolo: banner.querySelector("#dr-sblocco-titolo").textContent, rect: [r.x, r.y, r.width, r.height] },
+        colonnaFuori: document.querySelector("#dr-colonna").classList.contains("fuori"),
+        colonnaScorre: document.querySelector("#dr-colonna").classList.contains("scorre"),
+        effetti: document.querySelectorAll("#dr-effetti > *").length,
+        percentuale: document.querySelector('#dr-colonna .dr-modulo[data-stato="attiva"] .dr-modulo-perc')?.textContent ?? null,
+        contatore: document.querySelector("#dr-like-numero")?.textContent,
+      };
+    });
+  const uguali = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const richiedi = (quando, f, condizione, descrizione) => {
+    if (!condizione(f)) errori.push(`${quando}: ${descrizione} (colonna ${JSON.stringify(f.colonna)}, urto ${JSON.stringify(f.urto)}, banner ${f.banner.visibile ? `«${f.banner.titolo}»` : "nascosto"}, effetti ${f.effetti})`);
+  };
+  const riparti = async () => {
+    await preparaStato("meta"); // 11.400 Like, titoli di prova, nessuno sblocco in sospeso
+    await comando("widget", { nome: "drumTraguardi", visibile: true });
+    await attesa(700);
+  };
+
+  await preparaStato("meta");
+  await comando("widget", { nome: "drumTraguardi", visibile: true });
+  await pagina.goto(`${base}/drum.html?anteprima=1&muto=1`);
+  await pagina.evaluate(() => document.fonts?.ready);
+  await attesa(2800); // l'entrata della pagina dura 2,4 s
+  let f = await foto();
+  richiedi("prima dello sblocco", f, (x) => uguali(x.colonna, [6, 7, 8, 9]) && !x.urto.length && !x.banner.visibile && !x.effetti, "la pagina doveva partire ferma con la finestra [6,7,8,9]");
+
+  // 1) lo sblocco della tappa 7 (12K)
+  await comando("drumLike", { imposta: 12000 });
+  let t0 = Date.now();
+  await fino(t0, 400);
+  f = await foto();
+  richiedi("a 0,4 s", f, (x) => uguali(x.urto, [7]) && x.stati[x.colonna.indexOf(7)] === "sbloccata" && uguali(x.colonna, [6, 7, 8, 9]), "il modulo 7 doveva avere la classe «sblocco» ed essere sbloccato, con la colonna ancora [6,7,8,9]");
+  richiedi("a 0,4 s", f, (x) => x.effetti > 0, "doveva esserci l'onda d'urto con le perline");
+  richiedi("a 0,4 s", f, (x) => !x.banner.visibile, "il banner compare dopo 1 s");
+  await fino(t0, 1700);
+  f = await foto();
+  richiedi("a 1,7 s", f, (x) => x.banner.visibile && x.banner.titolo === "Livin' on a Prayer", "il banner doveva essere visibile con «Livin' on a Prayer»");
+  // mentre la colonna scorre arrivano altri Like: la sequenza non viene toccata (cinque moduli, quello nuovo in fondo) e a fine corsa si vedono
+  await fino(t0, 2000);
+  await comando("drumLike", { imposta: 12100 });
+  await fino(t0, 2350);
+  f = await foto();
+  richiedi("a 2,35 s, mentre scorre", f, (x) => uguali(x.colonna, [6, 7, 8, 9, 10]) && x.colonnaScorre, "la colonna doveva avere cinque moduli [6,7,8,9,10] e la classe «scorre»");
+  const ATTESO_BANNER = GEOMETRIA.drum.verticale.sblocco.r;
+  if (f.banner.visibile && ATTESO_BANNER.some((v, i) => Math.abs(v - f.banner.rect[i]) > TOLLERANZA)) errori.push(`banner: è [${f.banner.rect.map(Math.round).join(", ")}], atteso [${ATTESO_BANNER.join(", ")}]`);
+  await fino(t0, 3300);
+  f = await foto();
+  richiedi("a 3,3 s", f, (x) => uguali(x.colonna, [7, 8, 9, 10]) && uguali(x.stati, ["sbloccata", "attiva", "chiusa", "chiusa"]), "la colonna doveva essere scorsa a [7,8,9,10] (sbloccata, attiva, chiusa, chiusa)");
+  richiedi("a 3,3 s", f, (x) => !x.urto.length && !x.effetti && !x.colonnaScorre, "nessun modulo con la classe «sblocco», nessun effetto rimasto, la colonna non scorre più");
+  richiedi("a 3,3 s", f, (x) => x.percentuale === "3%" && x.contatore === "12.100", "i Like arrivati durante lo scorrimento dovevano vedersi: 12.100 e il 3% della tappa attiva");
+  richiedi("a 3,3 s", f, (x) => x.banner.visibile, "il banner resta fino a 4,2 s");
+  await fino(t0, 5200);
+  f = await foto();
+  richiedi("a 5,2 s", f, (x) => !x.banner.visibile && uguali(x.colonna, [7, 8, 9, 10]), "il banner doveva essere sparito");
+
+  // 2) una ricarica a sblocco già annunciato non lo rifà
+  await pagina.reload();
+  await pagina.evaluate(() => document.fonts?.ready);
+  t0 = Date.now();
+  for (let ms = 100; ms <= 2200; ms += 100) {
+    await fino(t0, ms);
+    f = await foto();
+    if (f.urto.length || f.banner.visibile || f.effetti) {
+      errori.push(`dopo la ricarica (a ${ms} ms): la sequenza è ripartita (urto ${JSON.stringify(f.urto)}, banner ${f.banner.visibile}, effetti ${f.effetti})`);
+      break;
+    }
+  }
+  richiedi("dopo la ricarica", f, (x) => uguali(x.colonna, [7, 8, 9, 10]), "la colonna doveva mostrare la finestra [7,8,9,10]");
+
+  // 3) colonna spenta a metà sequenza: sparisce tutto; riaccesa, la finestra è quella aggiornata e senza avanzi
+  await riparti();
+  await comando("drumLike", { imposta: 12000 });
+  t0 = Date.now();
+  await fino(t0, 600);
+  await comando("widget", { nome: "drumTraguardi", visibile: false });
+  await attesa(400);
+  f = await foto();
+  richiedi("colonna spenta", f, (x) => x.colonnaFuori && !x.urto.length && !x.banner.visibile && !x.effetti, "colonna e banner dovevano sparire, senza moduli «sblocco» né effetti");
+  await comando("widget", { nome: "drumTraguardi", visibile: true });
+  await fino(t0, 2000);
+  f = await foto();
+  richiedi("colonna riaccesa", f, (x) => !x.colonnaFuori && uguali(x.colonna, [7, 8, 9, 10]) && !x.urto.length && !x.banner.visibile && !x.effetti, "la colonna doveva mostrare [7,8,9,10] senza moduli «sblocco» né banner a metà");
+  await fino(t0, 4600);
+  f = await foto();
+  richiedi("dopo l'interruzione", f, (x) => !x.banner.visibile && !x.urto.length, "la sequenza interrotta non doveva lasciare timer che mostrano il banner");
+
+  // 4) due sblocchi mentre il primo corre: dopo il primo parte solo l'ultimo (la tappa 9)
+  await riparti();
+  await comando("drumLike", { imposta: 12000 });
+  t0 = Date.now();
+  await fino(t0, 400);
+  await comando("drumLike", { imposta: 15000 });
+  await fino(t0, 700);
+  await comando("drumLike", { imposta: 17000 });
+  await fino(t0, 1700);
+  f = await foto();
+  richiedi("coda, a 1,7 s", f, (x) => x.banner.visibile && x.banner.titolo === "Livin' on a Prayer", "il primo sblocco doveva proseguire con il suo banner");
+  await fino(t0, 3400);
+  f = await foto();
+  richiedi("coda, a 3,4 s", f, (x) => uguali(x.urto, [9]) && uguali(x.colonna, [8, 9, 10, 11]), "doveva essere partito solo l'ultimo sblocco (tappa 9), con la finestra [8,9,10,11]");
+  richiedi("coda, a 3,4 s", f, (x) => !x.banner.visibile, "il banner del primo sblocco doveva essere già sparito");
+  await fino(t0, 4800);
+  f = await foto();
+  richiedi("coda, a 4,8 s", f, (x) => x.banner.visibile && x.banner.titolo === "Hysteria", "il banner doveva dire «Hysteria»");
+  await fino(t0, 6600);
+  f = await foto();
+  richiedi("coda, a 6,6 s", f, (x) => uguali(x.colonna, [9, 10, 11, 12]) && !x.urto.length && !x.effetti, "la colonna doveva essere scorsa a [9,10,11,12]");
+  await fino(t0, 8600);
+  f = await foto();
+  richiedi("coda, a 8,6 s", f, (x) => !x.banner.visibile && uguali(x.colonna, [9, 10, 11, 12]), "il banner doveva essere sparito");
+
+  await comando("drumDemo", { fase: "meta" });
+  await browser.close();
+  if (errori.length) {
+    console.error(`Sblocco animato: problemi\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log("ok sblocco animato: urto, banner a 1 s, colonna che scorre a 1,8 s, banner via a 4,2 s; ricarica, colonna spenta a metà e due sblocchi di fila");
+}
+
 // Un testo di prova lungo `n` caratteri, con gli spazi di una frase vera (che va a capo) e senza spazio alla fine.
 const lungo = (n) => "Lunghissimo titolo di prova con tante parole per la riga ".repeat(3).slice(0, n).trimEnd().padEnd(n, "x");
 
@@ -441,6 +583,7 @@ async function provaTestiLunghi() {
 
 async function main() {
   if (clessidra) return provaClessidra();
+  if (sbloccoAnimato) return provaSbloccoAnimato();
   if (testiLunghi) return provaTestiLunghi();
   if (regia) return provaRegia();
   const tabella = GEOMETRIA[layout]?.[formato];

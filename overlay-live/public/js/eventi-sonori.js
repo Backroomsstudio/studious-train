@@ -174,3 +174,15 @@ export function suoniBattle(prima, dopo, eventi = []) {
   if (vittoria) suoni.push({ nome: "vincitore", dati: { rullo: RULLO_VITTORIA_MS / 1000 }, ritardo: vittoria.ritardoMs });
   return suoni;
 }
+
+// ---------- Drum ----------
+
+// Lo sblocco di una tappa suona una volta sola, anche se in un aggiornamento ne arrivano di più (i Like a raffica), e solo se
+// la colonna dei traguardi è in onda: spenta, lo sblocco non si vede e non si sente. I pulsanti «Prova» della regia suonano sempre.
+export function suoniDrum(prima, dopo, eventi = []) {
+  if (!prima) return [];
+  const suoni = [];
+  for (const e of eventi) if (e.nome === "suono") suoni.push(prova(e));
+  if (dopo.visibili?.drumTraguardi !== false && eventi.some((e) => e.nome === "sbloccoDrum")) suoni.push({ nome: "sblocco" });
+  return suoni;
+}

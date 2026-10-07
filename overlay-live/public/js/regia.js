@@ -6,7 +6,7 @@
 // Ogni azione è un comando al server; la pagina si ridisegna dallo stato che torna indietro.
 import { collega, formatta, durata } from "./connessione.js";
 import { suona, volume, audioPronto } from "./suoni.js";
-import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suoniSenzaPremio, suoniBattle, suoniTimerBattle, msTimerBattle, suonaIn, RITARDO_CLASSIFICA_MS } from "./eventi-sonori.js";
+import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suoniSenzaPremio, suoniBattle, suoniTimerBattle, msTimerBattle, suoniDrum, suonaIn, RITARDO_CLASSIFICA_MS } from "./eventi-sonori.js";
 import { percentuali, rimanenteBattleMs } from "./battle-logica.js";
 import { vociBarra, stimaGiroSecondi } from "./barra.js";
 import { vociStudio } from "./studio-logica.js";
@@ -121,7 +121,8 @@ function riproduci(suoni, ritardoBase = 0) {
 
 function suoniRegia(prima, dopo, eventi) {
   if (dopo.layout === "studio") return; // live session in studio: l'artista registra, nessun suono
-  if (["produzione", "podcast", "reaction", "drum"].includes(dopo.layout)) return; // muti (il Drum suonerà lo sblocco più avanti)
+  if (["produzione", "podcast", "reaction"].includes(dopo.layout)) return; // muti
+  if (dopo.layout === "drum") return riproduci(suoniDrum(prima, dopo, eventi));
   if (dopo.layout === "battle") return riproduci(suoniBattle(prima, dopo, eventi));
   if (!inGara()) {
     const ora = performance.now();
@@ -296,13 +297,13 @@ function disegnaSerata(s) {
     produzione: "Studio Production: nessun effetto sonoro, per non disturbare chi lavora.",
     podcast: "il Back Rooms Podcast: nessun effetto sonoro, per non coprire chi parla.",
     reaction: "la Reaction Release: nessun effetto sonoro, per non coprire il video.",
-    drum: "il Drum Challenge Live: per ora nessun effetto sonoro.",
   };
+  const PAGINA_SUONI = { senzaPremio: "/senza-premio.html, il layout in onda", battle: "/battle.html, il battle in onda", drum: "/drum.html, il Drum in onda" };
   $("#suoni-nota").textContent =
     MUTI[s.layout]
       ? `In onda c'è ${MUTI[s.layout]}`
       : s.suoni.dove === "overlay"
-      ? `Suonano dalla sorgente Link di LIVE Studio (${s.layout === "senzaPremio" ? "/senza-premio.html, il layout in onda" : s.layout === "battle" ? "/battle.html, il battle in onda" : "/overlay.html, la gara in onda"}). Se in diretta non si sentono, scegliete «in questa pagina» e in LIVE Studio aggiungete l'audio del PC.`
+      ? `Suonano dalla sorgente Link di LIVE Studio (${PAGINA_SUONI[s.layout] ?? "/overlay.html, la gara in onda"}). Se in diretta non si sentono, scegliete «in questa pagina» e in LIVE Studio aggiungete l'audio del PC.`
       : s.suoni.dove === "regia"
         ? audioPronto()
           ? "Suonano da questa pagina: tenetela aperta e catturate l'audio del PC in LIVE Studio."

@@ -300,6 +300,13 @@ const effetti = {
     tono(t, { f: 2400, f2: 90, glide: 0.25, tipo: "sawtooth", dur: 0.32, vol: 0.22, riv: 0.2 });
     colpo(t + 0.03, 0.5);
   },
+  // Drum: una tappa sbloccata (~1,4 s). Colpo grave sull'urto, arpeggio a campana che sale, accordo di ottoni breve e scintillio.
+  sblocco(t) {
+    colpo(t, 0.85);
+    [72, 76, 79, 84, 88].forEach((n, i) => campana(t + 0.12 + i * 0.09, n, { dur: 0.8, vol: 0.2, pan: -0.4 + i * 0.2 }));
+    ottoni(t + 0.1, [48, 55, 60, 64], { dur: 0.7, vol: 0.12, apri: 4200 });
+    scintille(t + 0.3, 12, 0.9, 0.06);
+  },
 };
 
 export const NOMI_SUONI = Object.keys(effetti);

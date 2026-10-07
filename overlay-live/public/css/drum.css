@@ -413,6 +413,81 @@
   text-shadow: 0 3px 0 rgba(0, 40, 24, 0.85), 0 0 22px rgba(69, 255, 168, 0.75);
 }
 
+.dr-sblocco.entra {
+  animation: dr-banner-entra 0.5s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+.dr-sblocco.esce {
+  animation: dr-banner-esce 0.38s ease-in forwards;
+}
+@keyframes dr-banner-entra {
+  0% { opacity: 0; transform: translateX(-60px) scale(0.92); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes dr-banner-esce {
+  0% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateX(-40px) scale(0.96); }
+}
+
+/* ---------- Sequenza di sblocco: urto del modulo, lampo verde, onda d'urto, perline che schizzano, colonna che scorre ---------- */
+.dr-modulo.sblocco {
+  z-index: 2; /* sopra i vicini mentre si ingrandisce */
+  animation: dr-urto 0.7s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+@keyframes dr-urto {
+  0% { transform: scale(1); }
+  12% { transform: scale(1.06) translateX(-5px); }
+  24% { transform: scale(1.06) translateX(5px); }
+  36% { transform: scale(1.05) translateX(-3px); }
+  48% { transform: scale(1.04) translateX(3px); }
+  62% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+.dr-lampo {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(90% 120% at 50% 50%, rgba(69, 255, 168, 0.95), rgba(69, 255, 168, 0.35) 55%, transparent 80%);
+  mix-blend-mode: screen;
+  animation: dr-lampo 0.6s ease-out forwards;
+}
+@keyframes dr-lampo {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  100% { opacity: 0; }
+}
+/* durante lo scorrimento il modulo che esce sparisce sotto il bordo alto della colonna (e quello che entra sotto il basso) */
+.dr-colonna.scorre {
+  clip-path: inset(-20px -80px -20px -80px);
+}
+/* il riquadro degli effetti sta sopra la colonna e non sporge dalla cornice (x 116 → 964, y 262 → 1100) */
+.dr-effetti {
+  position: absolute;
+  left: 116px;
+  top: 262px;
+  width: 848px;
+  height: 838px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+}
+.dr-onda {
+  position: absolute;
+  box-sizing: border-box;
+  border: 5px solid var(--dr-verde);
+  border-radius: 28px;
+  box-shadow: 0 0 24px rgba(69, 255, 168, 0.9), inset 0 0 24px rgba(69, 255, 168, 0.6);
+}
+.dr-schizzo {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, var(--c) 45%, #1b0f33 125%);
+  box-shadow: 0 0 10px var(--c);
+}
+
 /* Finta camera: la scritta sta a sinistra, fuori dalla colonna dei traguardi */
 .fm.drum .fm-finto[data-finto="camera"] {
   place-items: center start;

@@ -1,22 +1,29 @@
 // Layout «Drum Challenge Live» (9:16): la camera del batterista a tutto schermo sotto la pagina, la grafica intorno e sopra.
 // I Like di TikTok riempiono la colonna dei traguardi (4 moduli: l'ultimo sbloccato, l'attivo, i prossimi); ogni tappa
-// raggiunta sblocca un brano. In più: contatore dei Like, brano in esecuzione, «Dona un [slot]» sempre in vista,
-// cornice ed equalizzatore, fascia social con lo slot dell'artista ospite. Disegna lo stato che arriva dal server.
-// Parametri URL: ?anteprima=1 (sfondo nero e finta camera), ?guide=1 (zone dei telefoni), ?statico=1 (senza animazioni,
-// per i mockup), ?sblocco=1 (con ?statico=1: il banner di sblocco fermo, per i mockup).
+// raggiunta sblocca un brano, con la sua sequenza (drum-sblocco.js) e il suo suono. In più: contatore dei Like, brano in
+// esecuzione, «Dona un [slot]» sempre in vista, cornice ed equalizzatore, fascia social con lo slot dell'artista ospite.
+// Disegna lo stato che arriva dal server.
+// Parametri URL: ?anteprima=1 (sfondo nero e finta camera), ?guide=1 (zone dei telefoni), ?statico=1 (senza animazioni né
+// suoni, per i mockup), ?muto=1 (nessun suono da questa pagina), ?sblocco=1 (con ?statico=1: il banner di sblocco fermo,
+// per i mockup).
 import { collega } from "./connessione.js";
+import { suona, volume } from "./suoni.js";
+import { suoniDrum, suonaIn } from "./eventi-sonori.js";
 import { avviaPagina, applicaTesti, adattaTesto, nodo, simbolo, logo, rilancia, ts, $, STATICO, parametri } from "./pagina.js";
 import { creaFascia } from "./fascia.js";
 import { vociFascia, velocitaFascia } from "./formati-logica.js";
-import { formattaLike, etichettaLike, finestraScaletta, titoloBrano } from "./drum-logica.js";
+import { formattaLike, etichettaLike, finestraScaletta, livelloVoce, titoloBrano } from "./drum-logica.js";
 import { creaClessidra } from "./drum-clessidra.js";
+import { creaSblocco } from "./drum-sblocco.js";
 
 const { palco } = avviaPagina();
 const BANNER_FISSO = STATICO && parametri.has("sblocco"); // solo per i mockup
+const MUTO = parametri.has("muto") || STATICO;
 const PULSAZIONE_MS = 20_000;
 const CONTEGGIO_MS = 600;
+const USCITA_BANNER_MS = 380;
 // Quale interruttore «In onda» della regia accende ogni parte (il brano si nasconde da sé senza titolo).
-const WIDGET = { "#dr-cornice": "drumCornice", "#dr-eq": "drumCornice", "#dr-brano": "drumBrano", "#dr-priorita": "drumPriorita", "#dr-contatore": "drumTraguardi", "#dr-colonna": "drumTraguardi" };
+const WIDGET = { "#dr-cornice": "drumCornice", "#dr-eq": "drumCornice", "#dr-brano": "drumBrano", "#dr-priorita": "drumPriorita", "#dr-contatore": "drumTraguardi", "#dr-colonna": "drumTraguardi", "#dr-sblocco": "drumTraguardi" };
 
 let stato = null;
 let primoDisegno = true;
@@ -33,8 +40,10 @@ const fascia = creaFascia({
 
 collega({
   suStato(s, eventi) {
+    const prima = stato;
     stato = s;
     disegna(s, eventi);
+    suoni(prima, s, eventi);
     primoDisegno = false;
   },
 });
@@ -45,6 +54,13 @@ function disegna(s, eventi) {
   for (const [sel, widget] of Object.entries(WIDGET)) $(sel).classList.toggle("fuori", !s.visibili[widget]);
   fascia.radice.classList.toggle("fuori", !s.visibili.drumBarra);
   fascia.aggiorna(s);
+  // Lo sblocco parte dall'evento (mai al primo disegno, mai nei mockup, mai a colonna spenta); se in un aggiornamento ne
+  // arrivano più d'uno conta l'ultimo. Spegnere la colonna a metà sequenza la interrompe.
+  if (!s.visibili.drumTraguardi) sblocco.annulla();
+  else if (!primoDisegno && !STATICO) {
+    const ultimo = [...eventi].reverse().find((e) => e.nome === "sbloccoDrum");
+    if (ultimo) sblocco.avvia(ultimo.dati);
+  }
   disegnaContatore(d);
   disegnaColonna(d);
   disegnaBrano(d);
@@ -52,6 +68,15 @@ function disegna(s, eventi) {
   disegnaBanner(d);
   // Il richiamo della regia: «Dona un…» pulsa subito (mai al primo disegno).
   if (!primoDisegno && eventi.some((e) => e.nome === "richiamoDrum")) rilancia($("#dr-priorita"), "pulsa");
+}
+
+// Gli effetti suonano da qui solo se la regia ha scelto «overlay» e in onda c'è il Drum.
+function suoni(prima, s, eventi) {
+  if (MUTO || !prima || !suonaIn(s, "drum", "overlay")) return;
+  const lista = suoniDrum(prima, s, eventi);
+  if (!lista.length) return;
+  volume(s.suoni.volume);
+  for (const x of lista) suona(x.nome, x.dati, x.ritardo ?? 0);
 }
 
 // Disegna una parte solo se i suoi dati sono cambiati.
@@ -107,15 +132,24 @@ const moduli = [0, 1, 2, 3].map(creaModulo);
 let likePrima = null; // i Like dell'ultimo disegno della colonna: se salgono, nel modulo attivo cade un filo di grani
 
 function disegnaColonna(d) {
+  if (sblocco.occupata()) return; // la colonna sta scorrendo: la sequenza la rifà da sé alla fine
   const raggiunte = d.attiva ?? d.scaletta.length;
-  const { voci } = finestraScaletta(d.scaletta, raggiunte, moduli.length);
-  if (!cambiata("colonna", voci, d.contati, d.progresso, d.testi.traguardi, d.riempimento)) return;
+  const inUrto = sblocco.voci();
+  const voci = inUrto ?? finestraScaletta(d.scaletta, raggiunte, moduli.length).voci;
+  // Durante l'urto la colonna sta ferma (nessun modulo mostra i Like): i Like che salgono non la rifanno.
+  if (!cambiata("colonna", voci, inUrto ? null : [d.contati, d.progresso], d.testi.traguardi, d.riempimento)) return;
   const cresce = likePrima !== null && d.contati > likePrima;
   likePrima = d.contati;
   moduli.forEach((m, i) => riempiModulo(m, voci[i], d, cresce));
 }
 
-function riempiModulo(m, voce, d, cresce) {
+// Rifà la colonna dallo stato di ora, anche se non è cambiato niente (fine dello scorrimento, sequenza interrotta).
+function rifaiColonna() {
+  delete firme.colonna;
+  if (stato) disegnaColonna(stato.drum);
+}
+
+function riempiModulo(m, voce, d, cresce = false) {
   m.el.hidden = !voce;
   if (!voce) return;
   const sbloccata = voce.stato === "sbloccata";
@@ -125,7 +159,7 @@ function riempiModulo(m, voce, d, cresce) {
   // tappa (la finestra scorre) o il primo disegno non partono dal vecchio livello: niente animazione.
   m.clessidra.cambiaStile(d.riempimento);
   m.clessidra.imposta({
-    livello: sbloccata ? 1 : voce.stato === "attiva" ? d.progresso : 0,
+    livello: livelloVoce(voce, d),
     attiva: voce.stato === "attiva" && cresce,
     subito: primoDisegno || m.tappa !== voce.indice,
   });
@@ -185,18 +219,58 @@ setInterval(() => {
 }, PULSAZIONE_MS);
 
 // ---------- Banner di sblocco ----------
-// La sequenza vera (urto, banner, colonna che scorre) arriva con il suo compito; qui solo lo stato fermo dei mockup.
+const bannerEl = $("#dr-sblocco");
+let uscitaBanner = 0;
+
+// «Brano sbloccato» e il titolo, grande e verde neon; entra con uno scatto (non nei mockup).
+function mostraBanner(tappa) {
+  clearTimeout(uscitaBanner);
+  const scala = ts(stato.drum.testi, "sblocco");
+  const titolo = $("#dr-sblocco-titolo");
+  titolo.textContent = titoloBrano(tappa.titolo);
+  bannerEl.classList.remove("esce");
+  bannerEl.hidden = false; // visibile prima di misurare i testi
+  adattaTesto($(".dr-sblocco-etichetta"), 28 * scala, 16);
+  adattaTesto(titolo, 72 * scala, 34);
+  if (!STATICO) rilancia(bannerEl, "entra");
+}
+
+function nascondiBanner({ subito = false } = {}) {
+  clearTimeout(uscitaBanner);
+  if (bannerEl.hidden) return;
+  if (subito || STATICO) {
+    bannerEl.hidden = true;
+    bannerEl.classList.remove("entra", "esce");
+    return;
+  }
+  bannerEl.classList.remove("entra");
+  rilancia(bannerEl, "esce");
+  uscitaBanner = setTimeout(() => {
+    bannerEl.hidden = true;
+    bannerEl.classList.remove("esce");
+  }, USCITA_BANNER_MS);
+}
+
+// Solo per i mockup (?statico=1&sblocco=1): lo stato finale della sequenza, con il titolo dell'ultima tappa sbloccata.
 function disegnaBanner(d) {
   if (!BANNER_FISSO || !cambiata("banner", d.attiva, d.scaletta, d.testi.sblocco)) return;
   const raggiunte = d.attiva ?? d.scaletta.length;
   const tappa = d.scaletta[raggiunte - 1];
-  $("#dr-sblocco").hidden = !tappa;
-  if (!tappa) return;
-  const titolo = $("#dr-sblocco-titolo");
-  titolo.textContent = titoloBrano(tappa.titolo);
-  adattaTesto($(".dr-sblocco-etichetta"), 28 * ts(d.testi, "sblocco"), 16);
-  adattaTesto(titolo, 72 * ts(d.testi, "sblocco"), 26);
+  if (tappa) mostraBanner(tappa);
+  else bannerEl.hidden = true;
 }
+
+// ---------- Sequenza di sblocco ----------
+const sblocco = creaSblocco({
+  moduli,
+  nuovoModulo: () => creaModulo(moduli.length),
+  riempi: riempiModulo,
+  rifai: rifaiColonna,
+  leggi: () => stato.drum,
+  colonna: $("#dr-colonna"),
+  effetti: $("#dr-effetti"),
+  banner: { mostra: mostraBanner, nascondi: nascondiBanner },
+});
 
 // Con i font caricati le larghezze cambiano: si riadattano i testi e si rimisura il nastro.
 function rimisura() {

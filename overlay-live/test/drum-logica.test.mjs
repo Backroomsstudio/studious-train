@@ -1,7 +1,7 @@
 // Parti pure della pagina del Drum: formato dei Like, finestra della colonna, testo della scaletta.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { formattaLike, etichettaLike, finestraScaletta, testoScaletta, titoloBrano, SBLOCCO } from "../public/js/drum-logica.js";
+import { formattaLike, etichettaLike, finestraScaletta, testoScaletta, titoloBrano, colonnaSblocco, titoloSlot, livelloVoce, SBLOCCO } from "../public/js/drum-logica.js";
 import { posizioniGrani, STILI } from "../public/js/drum-clessidra.js";
 import { scalettaPredefinita, leggiScaletta } from "../lib/drum.mjs";
 
@@ -129,4 +129,76 @@ test("clessidra: la sabbia ha grani piccoli e tanti, i colori seguono la tavoloz
   assert.deepEqual([STILI.perline.raggio, STILI.sabbia.raggio, STILI.perline.lucido, STILI.sabbia.lucido], [7, 2.5, true, false]);
   assert.equal(STILI.perline.colori.length, 5);
   assert.equal(STILI.sabbia.colori.length, 4);
+});
+
+// ---------- Sequenza di sblocco ----------
+const dati = (voci) => voci.map((v) => [v.indice, v.stato]);
+
+test("colonnaSblocco: la finestra di prima con la tappa già sbloccata, poi quella che scorre di un posto", () => {
+  const scaletta = scalettaPredefinita();
+  const c = colonnaSblocco(scaletta, 7);
+  assert.deepEqual(dati(c.prima), [[6, "sbloccata"], [7, "sbloccata"], [8, "chiusa"], [9, "chiusa"]], "il modulo che si sblocca è già verde, i seguenti ancora chiusi");
+  assert.deepEqual(c.prima[1], { indice: 7, like: 12000, titolo: "", stato: "sbloccata" });
+  assert.deepEqual(dati(c.scorre), [[6, "sbloccata"], [7, "sbloccata"], [8, "attiva"], [9, "chiusa"]], "mentre scorre, la tappa dopo si accende");
+  assert.deepEqual(c.entra, { indice: 10, like: 20000, titolo: "", stato: "chiusa" }, "entra in fondo la tappa che finora non si vedeva");
+  assert.deepEqual(dati(c.dopo), [[7, "sbloccata"], [8, "attiva"], [9, "chiusa"], [10, "chiusa"]], "a fine scorrimento: l'ultima sbloccata in testa, l'attiva dopo");
+  assert.deepEqual(c.dopo, finestraScaletta(scaletta, 8).voci, "è la finestra normale con le tappe raggiunte aggiornate");
+});
+
+test("colonnaSblocco: la prima tappa e le ultime, dove la finestra non scorre", () => {
+  const scaletta = scalettaPredefinita();
+  let c = colonnaSblocco(scaletta, 0);
+  assert.deepEqual(dati(c.prima), [[0, "sbloccata"], [1, "chiusa"], [2, "chiusa"], [3, "chiusa"]]);
+  assert.equal(c.entra, null, "dalla prima alla seconda tappa la finestra è la stessa");
+  assert.deepEqual(dati(c.dopo), [[0, "sbloccata"], [1, "attiva"], [2, "chiusa"], [3, "chiusa"]]);
+  c = colonnaSblocco(scaletta, 1);
+  assert.deepEqual(c.entra?.indice, 4, "dalla seconda alla terza la finestra scorre");
+  c = colonnaSblocco(scaletta, 35);
+  assert.deepEqual(dati(c.scorre), [[33, "sbloccata"], [34, "sbloccata"], [35, "sbloccata"], [36, "attiva"]]);
+  assert.equal(c.entra, null, "in fondo alla scaletta non c'è altro da far entrare");
+  c = colonnaSblocco(scaletta, 36);
+  assert.deepEqual(dati(c.prima), [[33, "sbloccata"], [34, "sbloccata"], [35, "sbloccata"], [36, "sbloccata"]], "l'ultima tappa: tutta la colonna verde");
+  assert.deepEqual([c.scorre, c.dopo, c.entra], [c.prima, c.prima, null]);
+});
+
+test("colonnaSblocco: scalette corte, indici sbagliati e altri numeri di moduli", () => {
+  const corta = scalettaPredefinita().slice(0, 2);
+  const c = colonnaSblocco(corta, 0);
+  assert.deepEqual([dati(c.prima), c.entra, dati(c.dopo)], [[[0, "sbloccata"], [1, "chiusa"]], null, [[0, "sbloccata"], [1, "attiva"]]]);
+  for (const indice of [-1, 37, 1.5, NaN, "7", undefined, null]) assert.equal(colonnaSblocco(scalettaPredefinita(), indice), null, `indice ${String(indice)}`);
+  assert.equal(colonnaSblocco([], 0), null);
+  assert.deepEqual(colonnaSblocco(scalettaPredefinita(), 7, 3).prima.map((v) => v.indice), [6, 7, 8], "con tre moduli la finestra è di tre");
+  assert.equal(colonnaSblocco(scalettaPredefinita(), 7, 3).entra?.indice, 9);
+});
+
+test("titoloSlot: le lettere girano e si fermano da sinistra, il resto non si muove", () => {
+  const zero = () => 0;
+  assert.equal(titoloSlot("Livin' on a Prayer", 1), "Livin' on a Prayer");
+  assert.equal(titoloSlot("Livin' on a Prayer", 0, zero), "Aaaaa' aa a Aaaaaa", "senza lettere ferme: maiuscole e minuscole al loro posto, spazi e apostrofi fermi");
+  assert.equal(titoloSlot("Livin' on a Prayer", 0.5, zero), "Livin' on a Aaaaaa", "metà delle 14 lettere sono già ferme: Livin' on");
+  assert.equal(titoloSlot("Livin' on a Prayer", 0.99, zero).slice(0, 17), "Livin' on a Praye");
+  assert.equal(titoloSlot("Brano a sorpresa", 2), "Brano a sorpresa", "oltre 1 si ferma al titolo");
+  assert.equal(titoloSlot("Brano", -3, zero), "Aaaaa", "sotto 0 vale 0");
+  assert.equal(titoloSlot("Brano", NaN, zero), "Aaaaa", "un valore che non è un numero vale 0");
+  assert.equal(titoloSlot("", 0.5), "");
+  assert.equal(titoloSlot("1999 · Prince", 0, zero), "1999 · Aaaaaa", "cifre e simboli non girano");
+  for (let i = 0; i < 20; i++) {
+    const testo = titoloSlot("Come Together – Beatles", 0.3);
+    assert.equal(testo.length, "Come Together – Beatles".length);
+    assert.match(testo, /^[A-Za-z ]+ – [A-Za-z]+$/u);
+  }
+  const accentato = titoloSlot("Perché", 0, zero);
+  assert.equal(accentato, "Aaaaaa", "una lettera accentata gira come le altre");
+});
+
+test("livelloVoce: piena se sbloccata, vuota se chiusa, in proporzione ai Like se è quella attiva", () => {
+  const voce = (indice, stato) => ({ indice, like: 1000, titolo: "", stato });
+  const d = { attiva: 7, progresso: 0.7 };
+  assert.equal(livelloVoce(voce(6, "sbloccata"), d), 1);
+  assert.equal(livelloVoce(voce(8, "chiusa"), d), 0);
+  assert.equal(livelloVoce(voce(7, "attiva"), d), 0.7);
+  // durante uno sblocco la colonna può mostrare «attiva» una tappa che i Like hanno già superato (o non ancora raggiunto)
+  assert.equal(livelloVoce(voce(5, "attiva"), d), 1, "già superata dai Like: piena");
+  assert.equal(livelloVoce(voce(9, "attiva"), d), 0, "ancora lontana: vuota");
+  assert.equal(livelloVoce(voce(36, "attiva"), { attiva: null, progresso: 1 }), 1, "tutte le tappe raggiunte: piena");
 });

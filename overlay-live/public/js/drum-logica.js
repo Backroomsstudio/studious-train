@@ -34,3 +34,44 @@ export const titoloBrano = (titolo) => titolo || "Brano a sorpresa";
 // La sequenza di sblocco (ms dall'inizio): urto e lampo, titolo che si rivela, banner (dopo 1 s, per 3,2 s), la colonna
 // che scorre di un posto (a 1,8 s, per 0,7 s). Tutto finito a 2,6 s; il banner resta fino a 4,2 s.
 export const SBLOCCO = { urtoMs: 0, titoloMs: 150, bannerDopoMs: 1000, bannerDurataMs: 3200, scorriDopoMs: 1800, scorriDurataMs: 700, totaleMs: 2600 };
+
+// La colonna mentre si sblocca la tappa `indice` (le tappe raggiunte erano `indice`, ora sono `indice + 1`):
+//   prima   la finestra di prima con la tappa `indice` già sbloccata (verde, piena), per l'urto e il banner;
+//   scorre  la stessa finestra con la tappa dopo accesa (attiva), un attimo prima che la colonna scorra;
+//   entra   la voce che compare in fondo quando la finestra scorre di un posto (altrimenti null);
+//   dopo    la finestra a fine scorrimento, con le tappe raggiunte aggiornate (quella normale).
+// null se `indice` non è una tappa della scaletta.
+export function colonnaSblocco(scaletta, indice, quante = 4) {
+  if (!Number.isInteger(indice) || indice < 0 || indice >= scaletta.length) return null;
+  const prima = finestraScaletta(scaletta, indice, quante).voci.map((v) => (v.indice === indice ? { ...v, stato: "sbloccata" } : v));
+  const scorre = prima.map((v) => (v.indice === indice + 1 ? { ...v, stato: "attiva" } : v));
+  const { inizio, voci: dopo } = finestraScaletta(scaletta, indice + 1, quante);
+  const entra = inizio > prima[0].indice ? { ...dopo[dopo.length - 1], stato: "chiusa" } : null;
+  return { prima, scorre, entra, dopo };
+}
+
+// Il titolo mentre si rivela con l'effetto «slot»: le prime `k · lettere` lettere (k da 0 a 1) sono quelle vere, le altre girano
+// (una lettera a caso, maiuscola o minuscola come l'originale); spazi, cifre e segni restano com'è. `casuale` dà numeri in [0, 1).
+const LETTERE_SLOT = "abcdefghijklmnopqrstuvwxyz";
+const èLettera = (c) => /\p{L}/u.test(c);
+export function titoloSlot(testo, k, casuale = Math.random) {
+  const caratteri = [...testo];
+  const ferme = Math.floor(Math.max(0, Number.isFinite(k) ? k : 0) * caratteri.filter(èLettera).length); // oltre 1 sono tutte ferme
+  let viste = 0;
+  return caratteri
+    .map((c) => {
+      if (!èLettera(c) || viste++ < ferme) return c;
+      const girata = LETTERE_SLOT[Math.floor(casuale() * LETTERE_SLOT.length)];
+      return c === c.toLowerCase() ? girata : girata.toUpperCase();
+    })
+    .join("");
+}
+
+// Quanto è piena la clessidra di una voce: le sbloccate sono piene, le chiuse vuote, l'attiva in proporzione ai Like. Durante
+// uno sblocco la colonna può mostrare «attiva» una tappa che i Like hanno già superato (piena) o non ancora raggiunto (vuota).
+export function livelloVoce(voce, d) {
+  if (voce.stato === "sbloccata") return 1;
+  if (voce.stato === "chiusa") return 0;
+  if (d.attiva === voce.indice) return d.progresso;
+  return d.attiva === null || d.attiva > voce.indice ? 1 : 0;
+}
