@@ -75,3 +75,31 @@ export function livelloVoce(voce, d) {
   if (d.attiva === voce.indice) return d.progresso;
   return d.attiva === null || d.attiva > voce.indice ? 1 : 0;
 }
+
+// ---------- Equalizzatore ----------
+
+// Le 12 bande dalla regia (0…100) diventano `n` valori 0…1, interpolati in linea retta tra una banda e l'altra: il primo valore
+// è la prima banda e l'ultimo l'ultima. Senza bande, silenzio; i numeri fuori scala si limitano.
+export function interpolaBande(bande, n) {
+  const ultimo = bande.length - 1;
+  if (ultimo < 0) return Array(n).fill(0);
+  return Array.from({ length: n }, (_, i) => {
+    const posizione = n > 1 ? (i / (n - 1)) * ultimo : 0;
+    const da = Math.floor(posizione);
+    const a = Math.min(ultimo, da + 1);
+    const valore = bande[da] + (bande[a] - bande[da]) * (posizione - da);
+    return Math.min(1, Math.max(0, valore / 100));
+  });
+}
+
+// Una barra rincorre il suo bersaglio: sale in fretta (costante di tempo 0,04 s) e scende piano (0,22 s). `dt` in secondi.
+export function passoBarra(attuale, bersaglio, dt) {
+  const costante = bersaglio > attuale ? 0.04 : 0.22;
+  return attuale + (bersaglio - attuale) * (1 - Math.exp(-dt / costante));
+}
+
+// Il cappuccio bianco sopra la barra: sta sopra di lei quando sale e cade di 0,6 al secondo.
+export const cappuccio = (attuale, valore, dt) => Math.max(valore, attuale - 0.6 * dt);
+
+// Il «respiro» di una barra senza segnale: un'onda lenta e bassa tra 0,06 e 0,14, con una fase diversa per ogni barra.
+export const respiro = (t, i, n) => 0.1 + 0.04 * Math.sin(t * 1.2 + (i / n) * Math.PI * 3);

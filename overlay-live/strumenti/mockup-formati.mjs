@@ -11,6 +11,9 @@
 //   --sblocco-animato: la sequenza di sblocco del Drum dal vivo (pagina non statica, senza suoni): urto subito, banner dopo 1 s,
 //   colonna che scorre a 1,8 s, banner via a 4,2 s; una ricarica non la rifà; con la colonna spenta a metà sparisce tutto
 //   e riaccesa mostra la finestra aggiornata; due sblocchi di fila: dopo il primo parte solo l'ultimo.
+//   --eq: l'equalizzatore del Drum dal vivo, con i livelli audio mandati da un client WebSocket dello strumento (come fa la regia
+//   con l'audio di FL Studio): barre alte e cornice che lampeggia al colpo; senza dati, dopo 2,5 s, il «respiro» basso; con
+//   «senzaSegnale» spento torna vuoto; lo stile «onda» disegna un'altra cosa (specchiata); nei mockup (?statico=1) c'è un fotogramma fisso.
 //   --testi-lunghi: i testi più lunghi permessi (titolo di tappa e di brano da 60 caratteri, artista da 40, prefisso da 16,
 //   slot da 20, ospite con handle da 40) con la dimensione dei testi del Drum al 200%: niente esce dal suo riquadro.
 //   --regia: flusso della pagina di regia (selettore dei layout, sezioni, scheda Social del brand, dimensione dei testi,
@@ -96,6 +99,7 @@ const regia = args.includes("--regia");
 const testiLunghi = args.includes("--testi-lunghi");
 const clessidra = args.includes("--clessidra");
 const sbloccoAnimato = args.includes("--sblocco-animato");
+const equalizzatore = args.includes("--eq");
 
 function caricaPlaywright() {
   try {
@@ -492,6 +496,147 @@ async function provaSbloccoAnimato() {
   console.log("ok sblocco animato: urto, banner a 1 s, colonna che scorre a 1,8 s, banner via a 4,2 s; ricarica, colonna spenta a metà e due sblocchi di fila");
 }
 
+// L'equalizzatore dal vivo: i livelli audio arrivano da un client WebSocket dello strumento, come dalla regia.
+async function provaEq() {
+  await preparaStato("meta");
+  await comando("drumEq", { stile: "barre", senzaSegnale: true });
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const pagina = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
+  const errori = [];
+  pagina.on("pageerror", (e) => errori.push(`pagina: ${e.message}`));
+  const attesa = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  const BANDE = [90, 80, 70, 60, 50, 40, 30, 20, 10, 5, 0, 0];
+  const ws = new WebSocket(`${base.replace(/^http/, "ws")}/ws`);
+  await new Promise((ok, no) => {
+    ws.onopen = ok;
+    ws.onerror = () => no(new Error("WebSocket dello strumento non aperto"));
+  });
+  const manda = async (ms, c = 80) => {
+    const fine = Date.now() + ms;
+    while (Date.now() < fine) {
+      ws.send(JSON.stringify({ tipo: "audio", b: BANDE, c }));
+      await attesa(33); // 30 Hz
+    }
+  };
+  // Cosa c'è nel canvas: pixel visibili, riga più alta con qualcosa, barre lungo la riga in basso, metà alta e metà bassa, quanto
+  // della riga di mezzo è riempito (l'onda è piena, le barre no), impronta.
+  const canvas = () =>
+    pagina.evaluate(() => {
+      const c = document.querySelector("#dr-eq");
+      const { data, width, height } = c.getContext("2d").getImageData(0, 0, c.width, c.height);
+      let pieni = 0;
+      let alto = null;
+      let sopra = 0;
+      let sotto = 0;
+      let impronta = 0;
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4;
+          impronta = (Math.imul(impronta, 31) + data[i] + data[i + 1] + data[i + 2] + data[i + 3]) >>> 0;
+          if (data[i + 3] > 40) {
+            pieni++;
+            if (alto === null) alto = y;
+            if (y < height / 2) sopra++;
+            else sotto++;
+          }
+        }
+      }
+      let barre = 0;
+      for (let x = 1, dentro = false; x < width; x++) {
+        const visibile = data[((height - 3) * width + x) * 4 + 3] > 200; // il corpo pieno della barra, non il suo alone
+        if (visibile && !dentro) barre++;
+        dentro = visibile;
+      }
+      let mezzo = 0;
+      for (let x = 14; x < width - 14; x++) if (data[((Math.floor(height / 2)) * width + x) * 4 + 3] > 40) mezzo++;
+      return { pieni, alto, sopra, sotto, barre, impronta, mezzo: mezzo / (width - 28), altezza: height };
+    });
+  const colpi = () => pagina.evaluate(() => window.__colpi);
+  const vuoto = (c) => c.pieni === 0;
+
+  await pagina.goto(`${base}/drum.html?anteprima=1&muto=1`);
+  await pagina.evaluate(() => {
+    window.__colpi = 0;
+    const cornice = document.querySelector(".fm-cornice");
+    new MutationObserver(() => {
+      if (cornice.classList.contains("colpo")) window.__colpi++;
+    }).observe(cornice, { attributes: true, attributeFilter: ["class"] });
+  });
+  await pagina.evaluate(() => document.fonts?.ready);
+  await attesa(600);
+  let c = await canvas();
+  if (vuoto(c) || c.alto < 60) errori.push(`senza dati: il «respiro» doveva essere basso e visibile (pixel ${c.pieni}, riga più alta ${c.alto})`);
+
+  // 1) il segnale: barre alte e cornice che lampeggia
+  await manda(1000);
+  c = await canvas();
+  if (vuoto(c) || c.alto > 30) errori.push(`con il segnale: le barre dovevano essere alte (pixel ${c.pieni}, riga più alta ${c.alto})`);
+  if (c.barre < 30 || c.barre > 40) errori.push(`con il segnale: ${c.barre} barre lungo la riga in basso, attese tra 30 e 40`);
+  if ((await colpi()) < 1) errori.push("la cornice non ha mai avuto la classe «colpo»");
+  const impronteBarre = c.impronta;
+  await attesa(500);
+  if (await pagina.evaluate(() => document.querySelector(".fm-cornice").classList.contains("colpo"))) errori.push("la classe «colpo» doveva durare 250 ms, è ancora lì dopo mezzo secondo senza colpi");
+
+  // 2) l'invio si interrompe: dopo 2,5 s torna il respiro, basso
+  await attesa(2500);
+  c = await canvas();
+  if (vuoto(c) || c.alto < 60) errori.push(`dopo 2,5 s senza dati: il «respiro» doveva essere basso e visibile (pixel ${c.pieni}, riga più alta ${c.alto})`);
+
+  // 3) senza «respiro» torna vuoto
+  await comando("drumEq", { senzaSegnale: false });
+  await attesa(1500);
+  c = await canvas();
+  if (!vuoto(c)) errori.push(`senzaSegnale spento: il canvas doveva tornare vuoto (${c.pieni} pixel)`);
+  await manda(600);
+  c = await canvas();
+  if (vuoto(c)) errori.push("senzaSegnale spento: con il segnale le barre dovevano tornare");
+  await attesa(2800);
+  c = await canvas();
+  if (!vuoto(c)) errori.push(`senzaSegnale spento: finito il segnale il canvas doveva svuotarsi (${c.pieni} pixel)`);
+
+  // 4) lo stile «onda»: un altro disegno, specchiato
+  await comando("drumEq", { senzaSegnale: true, stile: "barre" });
+  await attesa(300);
+  await manda(1200);
+  const barre = await canvas();
+  await comando("drumEq", { stile: "onda" });
+  await attesa(300);
+  await manda(1200);
+  const onda = await canvas();
+  if (vuoto(onda) || onda.alto > 30) errori.push(`onda: doveva essere alta (pixel ${onda.pieni}, riga più alta ${onda.alto})`);
+  if (onda.impronta === barre.impronta || onda.impronta === impronteBarre) errori.push("onda: il disegno doveva cambiare rispetto alle barre");
+  if (Math.abs(onda.sopra - onda.sotto) > 0.15 * (onda.sopra + onda.sotto)) errori.push(`onda: doveva essere specchiata (pixel sopra ${onda.sopra}, sotto ${onda.sotto})`);
+  if (onda.mezzo < 0.9) errori.push(`onda: doveva essere piena (la riga di mezzo è riempita per il ${Math.round(onda.mezzo * 100)}%, attesa almeno il 90%)`);
+  await comando("drumEq", { stile: "barre", senzaSegnale: true });
+
+  // 5) nei mockup (statico) c'è un fotogramma fisso, senza animazione
+  const fissa = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
+  fissa.on("pageerror", (e) => errori.push(`pagina statica: ${e.message}`));
+  await fissa.goto(`${base}/drum.html?anteprima=1&statico=1`);
+  await fissa.evaluate(() => document.fonts?.ready);
+  await attesa(500);
+  const misura = () => fissa.evaluate(() => {
+    const c = document.querySelector("#dr-eq");
+    const { data } = c.getContext("2d").getImageData(0, 0, c.width, c.height);
+    let n = 0;
+    for (let i = 3; i < data.length; i += 4) if (data[i] > 40) n++;
+    return n;
+  });
+  const prima = await misura();
+  await attesa(700);
+  if (prima === 0) errori.push("mockup: l'equalizzatore doveva avere un fotogramma fisso");
+  else if ((await misura()) !== prima) errori.push("mockup: il fotogramma doveva restare fermo");
+
+  ws.close();
+  await browser.close();
+  if (errori.length) {
+    console.error(`Equalizzatore: problemi\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log("ok eq: barre alte e cornice che lampeggia con il segnale, «respiro» senza dati, vuoto senza «respiro», onda specchiata, mockup fermo");
+}
+
 // Un testo di prova lungo `n` caratteri, con gli spazi di una frase vera (che va a capo) e senza spazio alla fine.
 const lungo = (n) => "Lunghissimo titolo di prova con tante parole per la riga ".repeat(3).slice(0, n).trimEnd().padEnd(n, "x");
 
@@ -584,6 +729,7 @@ async function provaTestiLunghi() {
 async function main() {
   if (clessidra) return provaClessidra();
   if (sbloccoAnimato) return provaSbloccoAnimato();
+  if (equalizzatore) return provaEq();
   if (testiLunghi) return provaTestiLunghi();
   if (regia) return provaRegia();
   const tabella = GEOMETRIA[layout]?.[formato];

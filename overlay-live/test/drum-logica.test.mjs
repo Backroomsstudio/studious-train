@@ -1,7 +1,7 @@
 // Parti pure della pagina del Drum: formato dei Like, finestra della colonna, testo della scaletta.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { formattaLike, etichettaLike, finestraScaletta, testoScaletta, titoloBrano, colonnaSblocco, titoloSlot, livelloVoce, SBLOCCO } from "../public/js/drum-logica.js";
+import { formattaLike, etichettaLike, finestraScaletta, testoScaletta, titoloBrano, colonnaSblocco, titoloSlot, livelloVoce, interpolaBande, passoBarra, cappuccio, respiro, SBLOCCO } from "../public/js/drum-logica.js";
 import { posizioniGrani, STILI } from "../public/js/drum-clessidra.js";
 import { scalettaPredefinita, leggiScaletta } from "../lib/drum.mjs";
 
@@ -201,4 +201,49 @@ test("livelloVoce: piena se sbloccata, vuota se chiusa, in proporzione ai Like s
   assert.equal(livelloVoce(voce(5, "attiva"), d), 1, "già superata dai Like: piena");
   assert.equal(livelloVoce(voce(9, "attiva"), d), 0, "ancora lontana: vuota");
   assert.equal(livelloVoce(voce(36, "attiva"), { attiva: null, progresso: 1 }), 1, "tutte le tappe raggiunte: piena");
+});
+
+// ---------- Equalizzatore ----------
+test("eq: matematica", () => {
+  // interpolaBande: n valori 0…1 tra le 12 bande (0…100), estremi inclusi
+  assert.deepEqual(interpolaBande(Array(12).fill(50), 40), Array(40).fill(0.5), "bande uguali: barre uguali");
+  const zigzag = [0, 100, 0, 100, 0, 100, 0, 100, 0, 100, 0, 100];
+  const barre = interpolaBande(zigzag, 40);
+  assert.equal(barre.length, 40);
+  assert.ok(barre.every((x) => x >= 0 && x <= 1), "sempre tra 0 e 1");
+  assert.deepEqual([barre[0], barre[39]], [0, 1], "gli estremi sono la prima e l'ultima banda");
+  assert.deepEqual(interpolaBande([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 100], 12), [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1], "con tante barre quante le bande, sono le bande");
+  const rampa = interpolaBande([0, 100], 5);
+  assert.deepEqual(rampa, [0, 0.25, 0.5, 0.75, 1], "tra due bande la salita è lineare");
+  assert.deepEqual(interpolaBande([40, 80], 1), [0.4], "una barra sola: la prima banda");
+  assert.deepEqual(interpolaBande([], 3), [0, 0, 0], "senza bande: silenzio");
+  assert.deepEqual(interpolaBande([250, -30], 2), [1, 0], "fuori scala: si limita a 0…1");
+
+  // passoBarra: sale in fretta, scende piano
+  assert.ok(passoBarra(0, 1, 0.1) > 0.9, `salita ${passoBarra(0, 1, 0.1)}`);
+  assert.ok(passoBarra(1, 0, 0.1) > 0.5, `discesa ${passoBarra(1, 0, 0.1)}`);
+  assert.ok(passoBarra(0, 1, 0.1) > 1 - passoBarra(1, 0, 0.1), "la salita è più rapida della discesa");
+  assert.equal(passoBarra(0.4, 0.4, 0.1), 0.4, "già al bersaglio: ferma");
+  assert.equal(passoBarra(0.2, 0.9, 0), 0.2, "senza tempo trascorso: ferma");
+  assert.ok(Math.abs(passoBarra(0, 1, 0.04) - (1 - Math.exp(-1))) < 1e-9, "costante di tempo in salita 0,04 s");
+  assert.ok(Math.abs(passoBarra(1, 0, 0.22) - Math.exp(-1)) < 1e-9, "costante di tempo in discesa 0,22 s");
+
+  // cappuccio: segue la barra in alto e cade di 0,6 al secondo
+  assert.ok(Math.abs(cappuccio(0.8, 0.2, 0.1) - 0.74) < 1e-9);
+  assert.equal(cappuccio(0.8, 0.9, 0.1), 0.9);
+  assert.equal(cappuccio(0.01, 0, 1), 0, "mai sotto zero");
+
+  // respiro: lento e basso, tra 0,06 e 0,14, sfasato da una barra all'altra
+  let minimo = Infinity;
+  let massimo = -Infinity;
+  for (let t = 0; t <= 20; t += 0.37) {
+    for (let i = 0; i < 40; i++) {
+      const r = respiro(t, i, 40);
+      minimo = Math.min(minimo, r);
+      massimo = Math.max(massimo, r);
+    }
+  }
+  assert.ok(minimo >= 0.06 - 1e-9 && massimo <= 0.14 + 1e-9, `respiro tra ${minimo} e ${massimo}`);
+  assert.ok(massimo - minimo > 0.06, "il respiro si muove davvero");
+  assert.notEqual(respiro(1, 0, 40), respiro(1, 20, 40), "ogni barra ha la sua fase");
 });

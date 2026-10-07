@@ -1,7 +1,8 @@
 // Layout «Drum Challenge Live» (9:16): la camera del batterista a tutto schermo sotto la pagina, la grafica intorno e sopra.
 // I Like di TikTok riempiono la colonna dei traguardi (4 moduli: l'ultimo sbloccato, l'attivo, i prossimi); ogni tappa
 // raggiunta sblocca un brano, con la sua sequenza (drum-sblocco.js) e il suo suono. In più: contatore dei Like, brano in
-// esecuzione, «Dona un [slot]» sempre in vista, cornice ed equalizzatore, fascia social con lo slot dell'artista ospite.
+// esecuzione, «Dona un [slot]» sempre in vista, fascia social con lo slot dell'artista ospite, cornice ed equalizzatore
+// (i livelli audio di FL Studio arrivano dalla regia: barre o onda, e a ogni colpo la cornice lampeggia).
 // Disegna lo stato che arriva dal server.
 // Parametri URL: ?anteprima=1 (sfondo nero e finta camera), ?guide=1 (zone dei telefoni), ?statico=1 (senza animazioni né
 // suoni, per i mockup), ?muto=1 (nessun suono da questa pagina), ?sblocco=1 (con ?statico=1: il banner di sblocco fermo,
@@ -15,6 +16,7 @@ import { vociFascia, velocitaFascia } from "./formati-logica.js";
 import { formattaLike, etichettaLike, finestraScaletta, livelloVoce, titoloBrano } from "./drum-logica.js";
 import { creaClessidra } from "./drum-clessidra.js";
 import { creaSblocco } from "./drum-sblocco.js";
+import { creaEqualizzatore } from "./drum-eq.js";
 
 const { palco } = avviaPagina();
 const BANNER_FISSO = STATICO && parametri.has("sblocco"); // solo per i mockup
@@ -22,6 +24,7 @@ const MUTO = parametri.has("muto") || STATICO;
 const PULSAZIONE_MS = 20_000;
 const CONTEGGIO_MS = 600;
 const USCITA_BANNER_MS = 380;
+const COLPO_MS = 250; // quanto dura il lampo della cornice a ogni colpo
 // Quale interruttore «In onda» della regia accende ogni parte (il brano si nasconde da sé senza titolo).
 const WIDGET = { "#dr-cornice": "drumCornice", "#dr-eq": "drumCornice", "#dr-brano": "drumBrano", "#dr-priorita": "drumPriorita", "#dr-contatore": "drumTraguardi", "#dr-colonna": "drumTraguardi", "#dr-sblocco": "drumTraguardi" };
 
@@ -38,6 +41,17 @@ const fascia = creaFascia({
   statico: STATICO,
 });
 
+// ---------- Cornice ed equalizzatore ----------
+const cornice = $("#dr-cornice");
+let fineColpo = 0;
+// A ogni colpo di batteria il filo e le staffe lampeggiano per 250 ms (di nuovo, se il colpo dopo arriva prima).
+function lampoCornice() {
+  rilancia(cornice, "colpo");
+  clearTimeout(fineColpo);
+  fineColpo = setTimeout(() => cornice.classList.remove("colpo"), COLPO_MS);
+}
+const equalizzatore = creaEqualizzatore($("#dr-eq"), { statico: STATICO, suColpo: lampoCornice });
+
 collega({
   suStato(s, eventi) {
     const prima = stato;
@@ -46,6 +60,8 @@ collega({
     suoni(prima, s, eventi);
     primoDisegno = false;
   },
+  // I livelli dell'audio di FL Studio, dalla regia: 12 bande 0…100 e il colpo.
+  suAudio: (msg) => equalizzatore.dati(msg.b, msg.c),
 });
 
 function disegna(s, eventi) {
@@ -54,6 +70,7 @@ function disegna(s, eventi) {
   for (const [sel, widget] of Object.entries(WIDGET)) $(sel).classList.toggle("fuori", !s.visibili[widget]);
   fascia.radice.classList.toggle("fuori", !s.visibili.drumBarra);
   fascia.aggiorna(s);
+  equalizzatore.imposta(d.eq);
   // Lo sblocco parte dall'evento (mai al primo disegno, mai nei mockup, mai a colonna spenta); se in un aggiornamento ne
   // arrivano più d'uno conta l'ultimo. Spegnere la colonna a metà sequenza la interrompe.
   if (!s.visibili.drumTraguardi) sblocco.annulla();
