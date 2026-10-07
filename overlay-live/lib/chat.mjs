@@ -20,9 +20,21 @@ export function commentoTikTok(dati) {
   return utente ? { piattaforma: "tiktok", utente, testo: dati.content ?? dati.comment ?? "" } : null;
 }
 
+// Evento «like» di TikTok: `totalLikeCount` è il totale dei Like della live, `likeCount` quelli di questo messaggio.
+// Interi, senza coercione di testi; null se non c'è né un totale valido né un conteggio positivo.
+export function likeTikTok(dati) {
+  const intero = (x) => (typeof x === "number" && Number.isFinite(x) ? Math.floor(x) : null);
+  const totale = intero(dati?.totalLikeCount);
+  const conteggio = intero(dati?.likeCount);
+  const risultato = { totale: totale !== null && totale >= 0 ? totale : null, conteggio: conteggio !== null && conteggio > 0 ? conteggio : 0 };
+  return risultato.totale === null && risultato.conteggio === 0 ? null : risultato;
+}
+
 // Resta in attesa della live e si ricollega da solo se cade.
 // suStato riceve { stato: "spento" | "attesa" | "collegato", messaggio } per la regia.
-export function avviaTikTok(nomeUtente, suCommento, suStato = () => {}, log = console.log) {
+// Facoltativi: suLike({ totale, conteggio }) a ogni evento «like» e suNuovaConnessione() a ogni tentativo di collegamento
+// (prima di connect): chi conta i Like riparte da una lettura nuova.
+export function avviaTikTok(nomeUtente, suCommento, suStato = () => {}, log = console.log, { suLike, suNuovaConnessione } = {}) {
   const nome = String(nomeUtente ?? "").trim().replace(/^@/, "");
   if (!nome) {
     suStato({ stato: "spento", messaggio: "Nessun account TikTok impostato" });
@@ -57,10 +69,24 @@ export function avviaTikTok(nomeUtente, suCommento, suStato = () => {}, log = co
     if (fermato) return;
     const c = new TikTokLiveConnection(nome, { processInitialData: false });
     connessione = c;
+    try {
+      suNuovaConnessione?.();
+    } catch (e) {
+      log(`TikTok: ${e.message}`);
+    }
     c.on(ControlEvent.ERROR, (e) => log(`TikTok: ${e?.info ?? ""} ${e?.exception?.message ?? e?.message ?? ""}`.trim()));
     c.on(WebcastEvent.CHAT, (dati) => {
       const commento = commentoTikTok(dati);
       if (commento) suCommento(commento);
+    });
+    c.on(WebcastEvent.LIKE, (dati) => {
+      const like = likeTikTok(dati);
+      if (!like) return;
+      try {
+        suLike?.(like);
+      } catch (e) {
+        log(`TikTok: Like non registrati (${e.message})`);
+      }
     });
     c.on(WebcastEvent.STREAM_END, () => connessione === c && riprova(30, `La live di @${nome} è finita`));
     c.on(ControlEvent.DISCONNECTED, () => connessione === c && riprova(10, "Connessione persa, mi ricollego…"));

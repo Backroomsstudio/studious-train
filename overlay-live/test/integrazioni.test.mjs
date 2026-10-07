@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { leggiVoto, commentoTikTok } from "../lib/chat.mjs";
+import { leggiVoto, commentoTikTok, likeTikTok } from "../lib/chat.mjs";
 import { firmaValida, versoCoda, tracciaInOnda, avviaNero } from "../lib/nero.mjs";
 
 test("riconosce i voti scritti nei commenti", () => {
@@ -93,4 +93,12 @@ test("Nero.fan: trova la sessione live dal profilo e legge la coda", async () =>
   assert.equal(traccia.titolo, "Notti a Vicenza");
   assert.deepEqual(chiesti, ["https://api.nero.fan/users/backrooms/profile", "https://api.nero.fan/queue/s1/slim"]);
   assert.deepEqual(stati, ["collegato"]);
+});
+
+test("like: legge totale e conteggio dell'evento", () => {
+  assert.deepEqual(likeTikTok({ likeCount: 15, totalLikeCount: 12480 }), { totale: 12480, conteggio: 15 });
+  assert.deepEqual(likeTikTok({ likeCount: 3 }), { totale: null, conteggio: 3 });
+  assert.deepEqual(likeTikTok({ totalLikeCount: 500 }), { totale: 500, conteggio: 0 });
+  assert.deepEqual(likeTikTok({ likeCount: 2.9, totalLikeCount: 10.7 }), { totale: 10, conteggio: 2 });
+  for (const dati of [{}, null, undefined, { likeCount: -2, totalLikeCount: NaN }, { totalLikeCount: "7" }]) assert.equal(likeTikTok(dati), null, JSON.stringify(dati));
 });
