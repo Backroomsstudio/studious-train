@@ -225,3 +225,51 @@ body.fm.anteprima {
 .fm-fascia .fm-moneta.dx {
   left: calc(var(--fm-larghezza) - 188px);
 }
+
+/* ---------- Cornice a staffe: quattro staffe d'angolo e un filo neon in alto (lampeggiano a comando) ---------- */
+.fm-cornice {
+  position: absolute;
+  pointer-events: none;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fm-staffa {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  box-sizing: border-box;
+  border: 5px solid transparent;
+  border-image: linear-gradient(135deg, #ffffff 0%, #8d929a 38%, #36dcff 100%) 1;
+  filter: drop-shadow(0 0 8px rgba(54, 220, 255, 0.75));
+  transition: filter 0.12s ease;
+}
+.fm-staffa.nw { left: 0; top: 0; border-width: 5px 0 0 5px; }
+.fm-staffa.ne { right: 0; top: 0; border-width: 5px 5px 0 0; }
+.fm-staffa.sw { left: 0; bottom: 0; border-width: 0 0 5px 5px; }
+.fm-staffa.se { right: 0; bottom: 0; border-width: 0 5px 5px 0; }
+.fm-filo {
+  position: absolute;
+  left: 76px;
+  right: 76px;
+  top: 0;
+  height: 3px;
+  overflow: hidden;
+  background: linear-gradient(90deg, #36dcff 0%, #a066ff 30%, #ffffff 50%, #a066ff 70%, #ff4fd8 100%);
+  box-shadow: 0 0 14px rgba(160, 102, 255, 0.8);
+  transition: box-shadow 0.12s ease, filter 0.12s ease;
+}
+.fm-filo .sp-luce {
+  animation-name: fm-scorri-luce-cornice;
+  animation-delay: 1.2s;
+}
+@keyframes fm-scorri-luce-cornice {
+  0%, 62% { transform: translateX(-320px); }
+  100% { transform: translateX(900px); }
+}
+/* lampo a ogni colpo di batteria */
+.fm-cornice.colpo .fm-filo {
+  filter: brightness(2.2);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.95), 0 0 56px rgba(160, 102, 255, 0.9);
+}
+.fm-cornice.colpo .fm-staffa {
+  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.95)) brightness(1.6);
+}

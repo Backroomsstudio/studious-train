@@ -6,6 +6,8 @@
 // Mette il server nel layout con i dati di prova dello stato, apre la pagina (1080×1920, o 1920×1080 per l'orizzontale),
 // controlla che ogni pezzo stia dove dice la tabella della spec (±1 px, e dentro x 116…964 / y 230…1200 per i pezzi che lo
 // dichiarano) e salva mockup/<layout>[-orizzontale][-<stato>].jpg. Esce con codice 1 e l'elenco dei problemi.
+//   --testi-lunghi: i testi più lunghi permessi (titolo di tappa e di brano da 60 caratteri, artista da 40, prefisso da 16,
+//   slot da 20, ospite con handle da 40) con la dimensione dei testi del Drum al 200%: niente esce dal suo riquadro.
 //   --regia: flusso della pagina di regia (selettore dei layout, sezioni, scheda Social del brand, dimensione dei testi,
 //   velocità della fascia, spunte «In onda») su 1500×2400, con mockup/regia-formati.jpg.
 // Usate un server di prova su una porta libera (OVERLAY_CONFIG e OVERLAY_DATI temporanei): lo strumento ne cambia lo stato.
@@ -22,7 +24,17 @@ const p = (x, y, w, h, dentro = false) => ({ r: [x, y, w, h], dentro });
 // Una voce per pezzo: la chiave è il suo data-parte, oppure «finto:<nome>» per i finti schermi [data-finto].
 export const GEOMETRIA = {
   drum: {
-    verticale: { fascia: p(0, 1108, 1080, 92), "finto:camera": p(0, 0, 1080, 1920) },
+    verticale: {
+      brano: p(116, 282, 524, 80, true),
+      priorita: p(116, 380, 524, 106, true),
+      contatore: p(676, 282, 288, 68, true),
+      colonna: p(676, 366, 288, 640, true),
+      eq: p(116, 1016, 848, 84, true),
+      cornice: p(116, 262, 848, 838, true),
+      sblocco: p(116, 520, 524, 170, true),
+      fascia: p(0, 1108, 1080, 92),
+      "finto:camera": p(0, 0, 1080, 1920),
+    },
   },
   produzione: {
     verticale: { fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
@@ -38,10 +50,19 @@ export const GEOMETRIA = {
 };
 
 const tutti = (layout, formato) => Object.keys(GEOMETRIA[layout][formato]);
+const senza = (layout, formato, ...esclusi) => tutti(layout, formato).filter((chiave) => !esclusi.includes(chiave));
 const stati = (layout, formato, elenco) => Object.fromEntries(elenco.map((stato) => [stato, tutti(layout, formato)]));
 // Per ogni layout, formato e stato: i pezzi che devono esserci (e non essere nascosti).
 export const PRESENTI = {
-  drum: { verticale: stati("drum", "verticale", ["vuoto", "meta", "sblocco", "finale"]) },
+  // vuoto: niente brano in esecuzione e niente banner; meta e finale: niente banner; sblocco: la sequenza finita, con il banner
+  drum: {
+    verticale: {
+      vuoto: senza("drum", "verticale", "brano", "sblocco"),
+      meta: senza("drum", "verticale", "sblocco"),
+      sblocco: tutti("drum", "verticale"),
+      finale: senza("drum", "verticale", "sblocco"),
+    },
+  },
   produzione: { verticale: stati("produzione", "verticale", ["base"]) },
   reaction: { verticale: stati("reaction", "verticale", ["base"]), orizzontale: stati("reaction", "orizzontale", ["base"]) },
   podcast: { verticale: stati("podcast", "verticale", ["completo", "base"]), orizzontale: stati("podcast", "orizzontale", ["completo", "base"]) },
@@ -67,6 +88,7 @@ const formato = opzione("formato", "verticale");
 const stato = opzione("stato", STATO_PREDEFINITO[layout]);
 const guida = args.includes("--guida");
 const regia = args.includes("--regia");
+const testiLunghi = args.includes("--testi-lunghi");
 
 function caricaPlaywright() {
   try {
@@ -89,12 +111,59 @@ const TEMATICHE = ["Come nasce un beat", "Il primo disco", "Social e musica", "C
 async function preparaStato() {
   await comando("layout", { nome: layout });
   await comando("widget", { nome: BARRA[layout], visibile: true });
-  if (layout === "drum") await comando("drumDemo", { fase: stato });
+  if (layout === "drum") {
+    // partenza pulita: scaletta di base, «Dona un…» di partenza, nessun brano, testi al 100% (poi i dati di prova)
+    await comando("drumScaletta", { predefinita: true });
+    await comando("drumPriorita", { prefisso: "Dona un", slot: "Rosa", sopra: "Salta la coda · scegli tu il brano", icona: "rosa" });
+    await comando("formatoTesti", { formato: "drum", azzera: true });
+    await comando("drumDemo", { fase: stato });
+  }
   if (layout === "produzione") await comando("produzione", { preset: "cooking" });
   if (layout === "podcast") {
     await comando("podcast", { titolo: { testo: "Back Rooms Podcast", sotto: "Puntata 12" }, ospiti: [OSPITE], tematiche: { elenco: TEMATICHE, attiva: 1 } });
     for (const nome of ["poLinea", "poTematiche"]) await comando("widget", { nome, visibile: stato === "completo" });
   }
+}
+
+// I quattro moduli della colonna per stato: [indice, stato, bersaglio], e quello che devono scrivere.
+const MODULI_DRUM = {
+  vuoto: [[0, "attiva", "1K"], [1, "chiusa", "2K"], [2, "chiusa", "3K"], [3, "chiusa", "5K"]],
+  meta: [[6, "sbloccata", "10K"], [7, "attiva", "12K"], [8, "chiusa", "15K"], [9, "chiusa", "17K"]],
+  sblocco: [[7, "sbloccata", "12K"], [8, "attiva", "15K"], [9, "chiusa", "17K"], [10, "chiusa", "20K"]],
+  finale: [[33, "sbloccata", "350K"], [34, "sbloccata", "400K"], [35, "sbloccata", "450K"], [36, "sbloccata", "500K"]],
+};
+const CONTATORE_DRUM = { vuoto: "0", meta: "11.400", sblocco: "12.000", finale: "500.000" };
+
+async function controllaDrum(pagina, errori) {
+  const trovati = await pagina.evaluate(() =>
+    [...document.querySelectorAll("#dr-colonna .dr-modulo")].map((m) => ({
+      indice: Number(m.dataset.indice),
+      stato: m.dataset.stato,
+      like: m.querySelector(".dr-modulo-like")?.textContent,
+      titolo: m.querySelector(".dr-modulo-titolo")?.textContent,
+      manca: m.querySelector(".dr-modulo-manca")?.textContent ?? "",
+      perc: m.querySelector(".dr-modulo-perc")?.textContent ?? "",
+    })),
+  );
+  const attesi = MODULI_DRUM[stato];
+  const letti = trovati.map((m) => [m.indice, m.stato, m.like]);
+  if (JSON.stringify(letti) !== JSON.stringify(attesi)) errori.push(`moduli: trovati ${JSON.stringify(letti)}, attesi ${JSON.stringify(attesi)}`);
+  const contatore = await pagina.evaluate(() => document.querySelector("#dr-like-numero")?.textContent);
+  if (contatore !== CONTATORE_DRUM[stato]) errori.push(`contatore: «${contatore}» invece di «${CONTATORE_DRUM[stato]}»`);
+  if (stato === "meta" && trovati.length === 4) {
+    if (trovati[0].titolo !== "Another One Bites the Dust") errori.push(`modulo sbloccato: «${trovati[0].titolo}»`);
+    if (trovati[1].titolo !== "Brano segreto") errori.push(`modulo attivo: «${trovati[1].titolo}»`);
+    if (!trovati[1].manca.includes("600")) errori.push(`modulo attivo: «${trovati[1].manca}» non dice che mancano 600`);
+    if (trovati[1].perc !== "70%") errori.push(`modulo attivo: percentuale «${trovati[1].perc}»`);
+    const brano = await pagina.evaluate(() => document.querySelector("#dr-brano-titolo")?.textContent);
+    if (brano !== "Seven Nation Army") errori.push(`brano in esecuzione: «${brano}»`);
+  }
+  if (stato === "sblocco") {
+    const titolo = await pagina.evaluate(() => document.querySelector("#dr-sblocco-titolo")?.textContent);
+    if (titolo !== "Livin' on a Prayer") errori.push(`banner di sblocco: «${titolo}»`);
+  }
+  const priorita = await pagina.evaluate(() => [document.querySelector("#dr-pri-prefisso")?.textContent, document.querySelector("#dr-pri-slot")?.textContent]);
+  if (priorita.join("|") !== "Dona un|Rosa") errori.push(`«Dona un…»: ${priorita.join(" ")}`);
 }
 
 const selettore = (chiave) => (chiave.startsWith("finto:") ? `[data-finto="${chiave.slice(6)}"]` : `[data-parte="${chiave}"]`);
@@ -224,7 +293,97 @@ async function provaRegia() {
   console.log(`ok regia: sezioni, scheda Social del brand, testi, velocità e spunte «In onda», mockup in ${file}`);
 }
 
+// Un testo di prova lungo `n` caratteri, con gli spazi di una frase vera (che va a capo) e senza spazio alla fine.
+const lungo = (n) => "Lunghissimo titolo di prova con tante parole per la riga ".repeat(3).slice(0, n).trimEnd().padEnd(n, "x");
+
+// I testi più lunghi nei riquadri fissi del Drum, con la dimensione dei testi al massimo (Review Focus 4).
+async function provaTestiLunghi() {
+  await comando("nuovaSerata");
+  await comando("layout", { nome: "drum" });
+  const likes = [1000, 2000, 3000, 5000, 7000, 9000, 10000, 12000, 15000, 17000, 20000, 22000];
+  const righe = likes.map((like, i) => (i === 6 ? `${like} | ${lungo(60)}` : i === 5 ? `${like} | Titolo breve` : `${like} |`));
+  await comando("drumScaletta", { testo: righe.join("\n") });
+  await comando("drumLike", { imposta: 11400 });
+  await comando("drumBrano", { titolo: lungo(60), artista: lungo(40) });
+  await comando("drumPriorita", { prefisso: "Regala una super", slot: "Corolla di cristallo" });
+  await comando("drumOspite", { handle: `@${"a".repeat(39)}` });
+  await comando("formatoTesti", { formato: "drum", valori: { contatore: 200, traguardi: 200, brano: 200, priorita: 200, sblocco: 200 } });
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const pagina = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
+  const errori = [];
+  pagina.on("pageerror", (e) => errori.push(`pagina: ${e.message}`));
+  await pagina.goto(`${base}/drum.html?anteprima=1&statico=1&sblocco=1`);
+  await pagina.evaluate(() => document.fonts?.ready);
+  await pagina.waitForTimeout(800);
+  const misure = await pagina.evaluate(() => {
+    const larghezza = (sel) => [...document.querySelectorAll(sel)].map((e) => ({ sel, testo: e.textContent.slice(0, 20), tagliato: e.scrollWidth > e.clientWidth, alto: e.scrollHeight > e.clientHeight + parseFloat(getComputedStyle(e).fontSize) * 0.35, corpo: parseFloat(getComputedStyle(e).fontSize) }));
+    return [".dr-modulo-titolo", "#dr-brano-titolo", "#dr-brano-artista", "#dr-pri-prefisso", "#dr-pri-slot", "#dr-pri-sopra", "#dr-like-numero", "#dr-sblocco-titolo", ".dr-modulo-like"].flatMap(larghezza);
+  });
+  for (const m of misure) {
+    if (m.tagliato) errori.push(`${m.sel} («${m.testo}…», ${Math.round(m.corpo)} px): il testo esce dal riquadro in larghezza`);
+    if (m.alto) errori.push(`${m.sel} («${m.testo}…», ${Math.round(m.corpo)} px): il testo esce dal riquadro in altezza`);
+  }
+  const tabella = GEOMETRIA.drum.verticale;
+  for (const chiave of ["colonna", "brano", "priorita", "contatore", "sblocco"]) {
+    const r = await pagina.evaluate((sel) => {
+      const b = document.querySelector(sel).getBoundingClientRect();
+      return [b.x, b.y, b.width, b.height];
+    }, selettore(chiave));
+    const attesi = tabella[chiave].r;
+    if (attesi.some((v, i) => Math.abs(v - r[i]) > TOLLERANZA)) errori.push(`${chiave}: con i testi lunghi è [${r.map(Math.round).join(", ")}], atteso [${attesi.join(", ")}]`);
+  }
+  // Ogni testo (il suo contenuto, anche se sporge dall'elemento) resta dentro il suo widget e non copre gli altri testi.
+  const posizioni = await pagina.evaluate(() => {
+    // L'inchiostro del testo: il rettangolo del contenuto senza l'aria sopra e sotto le lettere (12% per lato).
+    const estensione = (e) => {
+      const r = document.createRange();
+      r.selectNodeContents(e);
+      const b = r.getBoundingClientRect();
+      return { x: b.x, y: b.y + b.height * 0.12, w: b.width, h: b.height * 0.76 };
+    };
+    const widget = [
+      ...[...document.querySelectorAll(".dr-modulo:not([hidden])")].map((m) => ({ nome: `modulo ${m.dataset.indice}`, el: m, testi: [".dr-modulo-like", ".dr-modulo-titolo", ".dr-modulo-manca", ".dr-modulo-perc"] })),
+      { nome: "brano", el: document.querySelector("#dr-brano"), testi: ["#dr-brano-titolo", "#dr-brano-artista"] },
+      { nome: "priorità", el: document.querySelector("#dr-priorita"), testi: ["#dr-pri-sopra", "#dr-pri-prefisso", "#dr-pri-slot"] },
+      { nome: "contatore", el: document.querySelector("#dr-contatore"), testi: ["#dr-like-numero"] },
+      { nome: "banner", el: document.querySelector("#dr-sblocco"), testi: [".dr-sblocco-etichetta", "#dr-sblocco-titolo"] },
+    ];
+    return widget.map((w) => {
+      const r = w.el.getBoundingClientRect();
+      const teste = w.testi.map((sel) => w.el.querySelector(sel)).filter((e) => e && !e.hidden && e.textContent.trim());
+      return { nome: w.nome, riquadro: { x: r.x, y: r.y, w: r.width, h: r.height }, testi: teste.map((e) => ({ id: e.id || e.className, ...estensione(e) })) };
+    });
+  });
+  for (const w of posizioni) {
+    for (const t of w.testi) {
+      const fuori = t.x < w.riquadro.x - 1 || t.y < w.riquadro.y - 1 || t.x + t.w > w.riquadro.x + w.riquadro.w + 1 || t.y + t.h > w.riquadro.y + w.riquadro.h + 1;
+      if (fuori) errori.push(`${w.nome}: «${t.id}» esce dal riquadro (testo x ${Math.round(t.x)}…${Math.round(t.x + t.w)}, y ${Math.round(t.y)}…${Math.round(t.y + t.h)}; riquadro x ${Math.round(w.riquadro.x)}…${Math.round(w.riquadro.x + w.riquadro.w)}, y ${Math.round(w.riquadro.y)}…${Math.round(w.riquadro.y + w.riquadro.h)})`);
+    }
+    for (let i = 0; i < w.testi.length; i++) {
+      for (let j = i + 1; j < w.testi.length; j++) {
+        const a = w.testi[i];
+        const b = w.testi[j];
+        const dx = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+        const dy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+        if (dx > 4 && dy > 0.3 * Math.min(a.h, b.h)) errori.push(`${w.nome}: «${a.id}» e «${b.id}» si sovrappongono`);
+      }
+    }
+  }
+  const corpi = misure.filter((m) => m.sel === ".dr-modulo-titolo" || m.sel === "#dr-brano-titolo").map((m) => `${m.sel} ${Math.round(m.corpo)} px`);
+  await pagina.screenshot({ path: join(CARTELLA, "mockup", "drum-testi-lunghi.jpg"), type: "jpeg", quality: 88 });
+  await comando("formatoTesti", { formato: "drum", azzera: true });
+  await comando("drumBrano", { svuota: true });
+  await browser.close();
+  if (errori.length) {
+    console.error(`Testi lunghi: problemi\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log(`ok testi lunghi: tutto dentro i riquadri con i testi al 200% (${corpi.join(", ")}), mockup in mockup/drum-testi-lunghi.jpg`);
+}
+
 async function main() {
+  if (testiLunghi) return provaTestiLunghi();
   if (regia) return provaRegia();
   const tabella = GEOMETRIA[layout]?.[formato];
   const pezziAttesi = PRESENTI[layout]?.[formato]?.[stato];
@@ -241,7 +400,7 @@ async function main() {
   const pagina = await browser.newPage({ viewport: dimensioni });
   const errori = [];
   pagina.on("pageerror", (e) => errori.push(`pagina: ${e.message}`));
-  const parametri = ["anteprima=1", "statico=1", ...(guida ? ["guide=1"] : []), ...(orizzontale ? ["formato=orizzontale"] : [])];
+  const parametri = ["anteprima=1", "statico=1", ...(guida ? ["guide=1"] : []), ...(orizzontale ? ["formato=orizzontale"] : []), ...(layout === "drum" && stato === "sblocco" ? ["sblocco=1"] : [])];
   const url = `${base}/${layout}.html?${parametri.join("&")}`;
   await pagina.goto(url);
   await pagina.evaluate(() => document.fonts?.ready);
@@ -272,9 +431,19 @@ async function main() {
     }
   }
 
+  // I pezzi che in questo stato non devono esserci (es. il brano senza titolo, il banner senza sblocco) sono nascosti.
+  for (const chiave of Object.keys(tabella).filter((k) => !pezziAttesi.includes(k))) {
+    const visibile = await pagina.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      return Boolean(el) && !el.hidden && getComputedStyle(el).display !== "none";
+    }, selettore(chiave));
+    if (visibile) errori.push(`${chiave}: in questo stato dovrebbe essere nascosto`);
+  }
+
   const nome = `${layout}${orizzontale ? "-orizzontale" : ""}${stato === STATO_PREDEFINITO[layout] && layout !== "drum" ? "" : `-${stato}`}${guida ? "-guide" : ""}`;
   const file = join(CARTELLA, "mockup", `${nome}.jpg`);
   await pagina.screenshot({ path: file, type: "jpeg", quality: 88 });
+  if (layout === "drum") await controllaDrum(pagina, errori);
   await pagina.close();
   await controllaFasciaViva(browser, dimensioni, url, errori);
   await browser.close();
