@@ -13,7 +13,7 @@ export const TESTO_MIN = 60;
 export const TESTO_MAX = 200;
 
 function gruppi(formato) {
-  if (!Object.hasOwn(FORMATI_TESTI, formato)) throw new Error(`Formato sconosciuto: ${formato}`);
+  if (typeof formato !== "string" || !Object.hasOwn(FORMATI_TESTI, formato)) throw new Error(`Formato sconosciuto: ${formato}`);
   return FORMATI_TESTI[formato];
 }
 

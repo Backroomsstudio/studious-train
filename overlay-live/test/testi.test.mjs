@@ -18,6 +18,8 @@ test("testi: i valori si controllano", () => {
   assert.throws(() => controllaTesti("drum", { contatore: 201 }), /200/);
   assert.throws(() => controllaTesti("drum", { inventato: 100 }), /sconosciuto/i);
   assert.throws(() => controllaTesti("boh", {}), /formato/i);
+  assert.throws(() => controllaTesti(["drum"], {}), /Formato sconosciuto/, "il formato dev'essere un testo, non un elenco");
+  assert.throws(() => controllaTesti("toString", {}), /Formato sconosciuto/);
   assert.throws(() => controllaTesti("drum", null), /forma/i);
 });
 
