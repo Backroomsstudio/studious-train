@@ -231,6 +231,10 @@ dl.problemi dd strong { color: var(--testo); }
       <li><a href="#senza-premio">Live senza premio (giornaliere)</a></li>
       <li><a href="#studio">Live session in studio</a></li>
       <li><a href="#battle">Battle (scontri)</a></li>
+      <li><a href="#drum">Drum Challenge Live</a></li>
+      <li><a href="#produzione">Studio Production</a></li>
+      <li><a href="#podcast">Back Rooms Podcast</a></li>
+      <li><a href="#reaction">Reaction Release</a></li>
       <li><a href="#nero"><span class="facoltativo">Coda automatica Nero.fan</span></a></li>
       <li><a href="#rete"><span class="facoltativo">Regia da tablet o portatile</span></a></li>
       <li><a href="#problemi">Se qualcosa non va</a></li>
@@ -285,6 +289,26 @@ dl.problemi dd strong { color: var(--testo); }
           <h3>Battle (scontri tra due rapper)</h3>
           <div class="copia"><code>http://127.0.0.1:4747/battle.html</code><button type="button">Copia</button></div>
           <p style="margin-top:8px">Nella regia, in alto: <strong>In onda → Battle</strong>. Vedi <a href="#battle">Battle</a>.</p>
+        </div>
+        <div class="scheda">
+          <h3>Drum Challenge Live (sfida alla batteria)</h3>
+          <div class="copia"><code>http://127.0.0.1:4747/drum.html</code><button type="button">Copia</button></div>
+          <p style="margin-top:8px">Nella regia, in alto: <strong>In onda → Drum Challenge Live</strong>. I Like sbloccano i brani. Vedi <a href="#drum">Drum Challenge Live</a>.</p>
+        </div>
+        <div class="scheda">
+          <h3>Studio Production (webcam e DAW)</h3>
+          <div class="copia"><code>http://127.0.0.1:4747/produzione.html</code><button type="button">Copia</button></div>
+          <p style="margin-top:8px">Nella regia, in alto: <strong>In onda → Studio Production</strong>. Nessun suono. Vedi <a href="#produzione">Studio Production</a>.</p>
+        </div>
+        <div class="scheda">
+          <h3>Back Rooms Podcast (anche orizzontale)</h3>
+          <div class="copia"><code>http://127.0.0.1:4747/podcast.html</code><button type="button">Copia</button></div>
+          <p style="margin-top:8px">Orizzontale: <code class="in">podcast.html?formato=orizzontale</code>. Nella regia, in alto: <strong>In onda → Back Rooms Podcast</strong>; <kbd>F2</kbd> e <kbd>F3</kbd> cambiano tematica, <kbd>F4</kbd> mostra o nasconde il pannello. Vedi <a href="#podcast">Back Rooms Podcast</a>.</p>
+        </div>
+        <div class="scheda">
+          <h3>Reaction Release (anche orizzontale)</h3>
+          <div class="copia"><code>http://127.0.0.1:4747/reaction.html</code><button type="button">Copia</button></div>
+          <p style="margin-top:8px">Orizzontale: <code class="in">reaction.html?formato=orizzontale</code>. Nella regia, in alto: <strong>In onda → Reaction Release</strong>. Vedi <a href="#reaction">Reaction Release</a>.</p>
         </div>
       </div>
       <p style="margin-top:14px">Giudici: <strong>Daniele</strong> Beat, <strong>Plugghe</strong> Voce, <strong>Freya</strong> Mix. La chat vale come un quarto giudice (25%). Account TikTok: <strong>@backrooms.studios</strong>.</p>
@@ -564,7 +588,7 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
       <h3>Cosa si cambia dalla regia</h3>
       <ul class="punti">
         <li><strong>Banner</strong>: le quattro righe («Mandaci», «La tua musica!», «Link in bio», il link) e il richiamo automatico.</li>
-        <li><strong>Barra che scorre</strong>: una riga per voce, nell'ordine in cui passano. Spunta = in onda (massimo 8), icona, etichetta (es. <em>Seguici</em>) e testo (es. <em>@backrooms.studios</em>). Le frecce cambiano l'ordine, <strong>✕</strong> toglie, <strong>+ Aggiungi voce</strong> aggiunge (per esempio YouTube o Spotify quando li aprirete). Si salva da solo quando esci dal campo. Sotto: la velocità (80 di partenza; sopra 120 si legge peggio) e gli interruttori.</li>
+        <li><strong>Barra che scorre</strong> (nella scheda <strong>Social del brand</strong>, in alto nella regia: è la stessa lista per tutti i layout con la barra): una riga per voce, nell'ordine in cui passano. Spunta = in onda (massimo 8), icona, etichetta (es. <em>Seguici</em>) e testo (es. <em>@backrooms.studios</em>). Le frecce cambiano l'ordine, <strong>✕</strong> toglie, <strong>+ Aggiungi voce</strong> aggiunge (per esempio YouTube o Spotify quando li aprirete). Si salva da solo quando esci dal campo. Sotto: la velocità (80 di partenza; sopra 120 si legge peggio) e gli interruttori.</li>
         <li><strong>Scheda «Ora in ascolto»</strong>: quanti secondi resta per ogni tipo di invio. Di partenza gratis 8, Skip 10, Super Skip 12, Throne 15: chi paga si vede di più (Skip con bordo cromato, Super Skip magenta, Throne tutto d'oro con la corona). È quello che gli spettatori vedono comprando un invio veloce. Con <strong>Prova scheda</strong> vedete come appare ognuno.</li>
         <li><strong>Suono quando parte una traccia</strong>: delicato (consigliato), pieno come nella gara, oppure nessuno.</li>
         <li><strong>Spot studio</strong>: le tre righe dello spot.</li>
@@ -616,7 +640,7 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
       </ul>
 
       <h3>Barra dei social</h3>
-      <p>È la stessa barra delle live senza premio, con gli stessi social: si cambiano lì, in <strong>Barra che scorre</strong>. Qui scegliete solo la velocità e se far passare anche «In studio ora: nome · @instagram». In <strong>In onda</strong> si nascondono targa, barra e comparse una per una.</p>
+      <p>È la stessa barra delle live senza premio, con gli stessi social: si cambiano nella scheda <strong>Social del brand</strong>, in alto nella regia. Qui scegliete solo la velocità e se far passare anche «In studio ora: nome · @instagram». In <strong>In onda</strong> si nascondono targa, barra e comparse una per una.</p>
 
       <div class="riquadro da-provare">
         <span class="tag">Da controllare la prima volta</span>
@@ -672,6 +696,207 @@ Webhook Nero.fan in ascolto su http://127.0.0.1:4748/webhook/nero</pre>
       <div class="riquadro da-provare">
         <span class="tag">Da controllare la prima volta</span>
         <p>Guardate la live da un telefono. I giudici e la barra della chat stanno nella zona dei commenti di TikTok: se la chat è molto attiva, i commenti coprono la parte sinistra dei box. Provate un round intero con i dati di prova prima di andare in onda.</p>
+      </div>
+    </section>
+
+    <!-- DRUM CHALLENGE LIVE -->
+    <section id="drum">
+      <h2><small>Sfida alla batteria</small>Drum Challenge Live</h2>
+      <p class="intro">Per le live in cui suonate la batteria e la chat vi aiuta con i Like. A destra c'è una colonna di <strong>traguardi</strong>: ogni volta che i Like della live arrivano a una tappa si sblocca un brano da suonare, con un'animazione e un suono. In alto a sinistra c'è il brano che state suonando e, sotto, il riquadro «Dona un…», che invita a fare un regalo per saltare la coda. In basso un <strong>equalizzatore</strong> si muove con l'audio di FL Studio e la cornice lampeggia a ogni colpo di batteria.</p>
+
+      <div class="affiancati">
+        <figure class="figura">
+          <img src="mockup/drum-meta.jpg" alt="Drum Challenge Live a 11.400 Like: il brano Seven Nation Army in esecuzione, il riquadro Dona un Rosa, il contatore dei Like, la colonna con il traguardo 10K sbloccato e il 12K che si riempie, l'equalizzatore e la barra dei social" width="1080" height="1920" loading="lazy">
+          <figcaption>A 11.400 Like: il 10K è sbloccato e il 12K si sta riempiendo. Al posto della scritta grigia «Camera · batterista» c'è la vostra camera.</figcaption>
+        </figure>
+        <div>
+          <h3>Una volta sola: la scena in LIVE Studio</h3>
+          <ol class="passi">
+            <li><p>Mettete la camera del batterista <strong>sotto</strong>, a tutto schermo.</p></li>
+            <li><p><strong>Aggiungi fonte</strong> → <strong>Link</strong> e incolla:</p>
+              <div class="copia"><code>http://127.0.0.1:4747/drum.html</code><button type="button">Copia</button></div>
+              <p>Larghezza <strong>1080</strong>, altezza <strong>1920</strong>, stesa su tutta la tela e <strong>in cima</strong> alle sorgenti.</p>
+            </li>
+            <li><p>Per controllare le posizioni: <code class="in">http://127.0.0.1:4747/drum.html?anteprima=1&amp;guide=1</code>. Niente deve finire nelle zone colorate: in alto l'app di TikTok, in basso la chat.</p></li>
+          </ol>
+        </div>
+      </div>
+
+      <h3>Prima di ogni live</h3>
+      <ol class="passi">
+        <li><p>Nella regia, in alto, in <strong>In onda</strong> scegliete <strong>Drum Challenge Live</strong>: compare la sezione del Drum.</p></li>
+        <li><p><strong>Scaletta</strong>: una riga per tappa, «Like | Titolo del brano» (i Like si scrivono anche <em>15.000</em> o <em>15k</em>). Di partenza ci sono 37 tappe, da 1.000 a 500.000 Like, senza titoli: finché una tappa è chiusa la colonna scrive «Brano segreto», sbloccata senza titolo diventa «Brano a sorpresa». Premete <strong>Salva scaletta</strong>; se qualcosa non va, il messaggio dice il numero della riga e non cambia niente.</p></li>
+        <li><p><strong>Like</strong>: collegate la chat (sezione <em>Serata</em> → <strong>Collega chat</strong>): i Like arrivano da soli e sotto il contatore grande compare «Collegato a TikTok». Se avviate la regia a live già iniziata, scrivete il numero giusto in <strong>Imposta i Like</strong>; <strong>Riparti da ora</strong> li azzera e riporta la scaletta alla prima tappa.</p></li>
+        <li><p><strong>Dona un…</strong>, <strong>Artista ospite</strong> (compare nella barra dei social) e <strong>Riempimento dei moduli</strong> (perline o sabbia) si cambiano a piacere. In <strong>Dimensione dei testi</strong> ogni gruppo di testi si ingrandisce o rimpicciolisce.</p></li>
+        <li><p><strong>Equalizzatore</strong>: leggete il paragrafo qui sotto prima della prima diretta.</p></li>
+      </ol>
+
+      <h3>Durante la live</h3>
+      <ul class="punti">
+        <li><strong>Sblocco</strong>: quando i Like raggiungono una tappa il modulo prende un colpo, compare «Brano sbloccato» con il titolo, la colonna scorre e parte un suono. Se i Like saltano più tappe in una volta, si annuncia solo l'ultima. Per provarlo senza live scrivete in <strong>Imposta i Like</strong> un numero appena sotto una tappa (per esempio <em>11900</em>) e premete <strong>+100</strong>.</li>
+        <li><strong>Brano in esecuzione</strong>: quando attaccate un brano sbloccato premete <strong>Suona ora</strong> accanto alla sua tappa nell'elenco della scaletta (oppure scrivete titolo e artista e premete <strong>Mostra</strong>). <strong>Togli il brano</strong> fa sparire il riquadro.</li>
+        <li><strong>Richiamo</strong> (<kbd>F2</kbd>): il riquadro «Dona un…» pulsa per attirare l'attenzione; lo fa anche da solo ogni 20 secondi.</li>
+        <li>Se i Like sono sbagliati (live partita prima della regia, conteggio di TikTok che salta) correggete con <strong>Imposta</strong>, <strong>+100</strong> o <strong>+1.000</strong>. Cambiare i Like o la scaletta non fa ripartire gli sblocchi delle tappe già superate.</li>
+      </ul>
+
+      <h3>L'equalizzatore: far arrivare l'audio di FL Studio</h3>
+      <p>La pagina del Drum non sente niente da sola: è la <strong>regia</strong> che ascolta l'audio e manda i livelli alla pagina. Quindi la regia deve restare aperta per tutta la diretta, sul PC con FL Studio, da <code class="in">http://localhost:4747/regia</code> con <strong>Chrome o Edge</strong>: il browser permette l'ascolto solo da <em>localhost</em> (dal tablet, con l'indirizzo che contiene l'IP del PC, non funziona).</p>
+      <ol class="passi">
+        <li><p>Nella sezione <strong>Equalizzatore</strong> scegliete la <strong>Sorgente</strong>: <strong>Ingresso audio</strong> (un cavo audio virtuale, «Mix stereo» o l'ingresso di ritorno della scheda audio che porta il suono di FL Studio: lo scegliete in <em>Ingresso</em>) oppure <strong>Audio del PC</strong> (il browser condivide l'audio del computer: scegliete «Intero schermo» e spuntate «Condividi audio di sistema»).</p></li>
+        <li><p>Premete <strong>Avvia ascolto</strong> e fate partire un brano in FL Studio: la barra del livello si muove, le barre in pagina si alzano e la cornice lampeggia a ogni colpo. Senza audio le barre «respirano» piano (si spegne con <em>Mostra anche senza segnale</em>).</p></li>
+        <li><p><strong>Sensibilità</strong> (50–300%) e <strong>Stile</strong> (barre o onda specchiata) si regolano al volo. <strong>Prova (4 s)</strong> manda uno schema finto di 4 secondi, per vedere l'equalizzatore senza audio.</p></li>
+      </ol>
+      <div class="riquadro attenzione">
+        <span class="tag">Se la barra del livello non si muove</span>
+        <p>Se FL Studio usa un driver <strong>ASIO in modalità esclusiva</strong>, nessun altro programma riceve il suo audio, nemmeno il browser. Passate FL Studio a un driver condiviso (<em>WASAPI</em> o <em>FL Studio ASIO</em>) oppure mandate l'audio a un cavo audio virtuale e sceglietelo come Ingresso audio.</p>
+      </div>
+      <figure class="figura">
+        <img src="mockup/regia-drum.jpg" alt="La sezione Drum Challenge Live della regia: Like, scaletta, brano in esecuzione, Dona un, artista ospite, riempimento, equalizzatore" width="1460" height="1910" loading="lazy">
+        <figcaption>La sezione del Drum nella regia, con dati di prova.</figcaption>
+      </figure>
+      <div class="riquadro da-provare">
+        <span class="tag">Da controllare la prima volta</span>
+        <p>L'«Audio del PC» e i driver ASIO non si sono potuti provare mentre il layout veniva costruito (le prove usano un ingresso audio finto): provateli una volta con FL Studio vero, con <strong>Prova (4 s)</strong> e con un brano. Anche i Like sono stati provati solo simulati: guardate una live vera con la chat collegata. Guardate poi la live da un telefono: i pulsanti di TikTok e la chat non devono coprire l'equalizzatore.</p>
+      </div>
+    </section>
+
+    <!-- STUDIO PRODUCTION -->
+    <section id="produzione">
+      <h2><small>Lavoro in studio</small>Studio Production</h2>
+      <p class="intro">Per le live in cui fate un beat o un mix: la <strong>webcam</strong> in alto, lo schermo di <strong>FL Studio</strong> in basso e in mezzo la barra dei social. Nella parte alta della webcam c'è una targa 3D con il titolo della live: scegliete un preset (<em>Cooking Beats</em>, <em>Sessione Beat</em>, <em>Mix &amp; Master</em>) e cambiate le righe mentre scrivete. Nessun effetto sonoro.</p>
+
+      <div class="affiancati">
+        <figure class="figura">
+          <img src="mockup/produzione.jpg" alt="Studio Production: la targa Cooking Beats in oro con il cappello da cuoco, finta webcam in alto, barra dei social, finto schermo di FL Studio in basso" width="1080" height="1920" loading="lazy">
+          <figcaption>Con il preset «Cooking Beats». Al posto dei riquadri scuri ci sono la vostra webcam e lo schermo del PC.</figcaption>
+        </figure>
+        <div>
+          <h3>Una volta sola: la scena in LIVE Studio</h3>
+          <ol class="passi">
+            <li><p>Fate una scena con le due camere una sotto l'altra: <strong>webcam</strong> da 0 a 1212 px e <strong>schermo di FL Studio</strong> da 1304 a 1920 px (in mezzo c'è la barra dei social). La targa sta tra 282 e 442 px: inquadrate la persona un po' più in basso.</p></li>
+            <li><p><strong>Aggiungi fonte</strong> → <strong>Link</strong> e incolla:</p>
+              <div class="copia"><code>http://127.0.0.1:4747/produzione.html</code><button type="button">Copia</button></div>
+              <p>Larghezza <strong>1080</strong>, altezza <strong>1920</strong>, stesa su tutta la tela e <strong>in cima</strong> alle sorgenti, sopra le due camere.</p>
+            </li>
+            <li><p>Per controllare le posizioni: <code class="in">http://127.0.0.1:4747/produzione.html?anteprima=1&amp;guide=1</code>.</p></li>
+          </ol>
+        </div>
+      </div>
+
+      <h3>A ogni live</h3>
+      <ol class="passi">
+        <li><p>Nella regia, in alto, in <strong>In onda</strong> scegliete <strong>Studio Production</strong>.</p></li>
+        <li><p>Nella sezione <strong>Studio Production</strong> premete un preset: riempie le tre righe della targa e ne sceglie il colore (<em>Cooking Beats</em> oro, <em>Sessione Beat</em> magenta, <em>Mix &amp; Master</em> ciano). Il preset in onda è quello evidenziato.</p></li>
+        <li><p>Cambiate le righe a piacere: <strong>Riga sopra</strong> (fino a 32 caratteri), <strong>Titolo</strong> (28) e <strong>Riga sotto</strong> (48). Vanno in onda <strong>mentre scrivete</strong>, un attimo dopo l'ultimo tasto, con un breve effetto «flip». Il titolo non può restare vuoto: mentre lo riscrivete resta in onda quello di prima; un testo troppo lungo dà un avviso e il campo torna al testo in onda.</p></li>
+        <li><p>In <strong>In onda</strong> si nascondono la targa e la barra dei social; in <strong>Dimensione dei testi</strong> si ingrandiscono o rimpiccioliscono le tre righe.</p></li>
+      </ol>
+      <div class="riquadro da-provare">
+        <span class="tag">Da controllare la prima volta</span>
+        <p>Guardate la live da un telefono: la targa sta in alto, appena sotto il nome della live di TikTok. Se la testa di chi parla finisce dietro la targa, abbassate l'inquadratura o spostate la targa: i numeri sono in cima a <code class="in">public/css/doppio.css</code>.</p>
+      </div>
+    </section>
+
+    <!-- BACK ROOMS PODCAST -->
+    <section id="podcast">
+      <h2><small>Podcast</small>Back Rooms Podcast</h2>
+      <p class="intro">Per il podcast sul divano: la camera a tutto schermo con sopra una <strong>targa</strong> («Back Rooms Podcast» e il numero della puntata), una <strong>linea di divisione</strong> tra le due persone («intervista doppia») e un pannello con le <strong>tematiche</strong> della puntata, che si accendono e si spengono a comando. In fondo c'è la barra dei social, con gli <strong>ospiti</strong>. Funziona in verticale (TikTok) e in orizzontale. Nessun effetto sonoro.</p>
+
+      <div class="affiancati">
+        <figure class="figura">
+          <img src="mockup/podcast.jpg" alt="Back Rooms Podcast verticale: la targa con Puntata 12, il pannello Tematiche con la seconda tematica in onda, la linea di divisione al centro e la barra dei social" width="1080" height="1920" loading="lazy">
+          <figcaption>Con linea e pannello Tematiche accesi: «Il primo disco» è la tematica in onda. Al posto della scritta grigia «Camera · divano» c'è la vostra camera.</figcaption>
+        </figure>
+        <div>
+          <h3>Una volta sola: la scena in LIVE Studio</h3>
+          <ol class="passi">
+            <li><p>Mettete la camera del divano <strong>sotto</strong>, a tutto schermo.</p></li>
+            <li><p><strong>Aggiungi fonte</strong> → <strong>Link</strong> e incolla, per la diretta verticale:</p>
+              <div class="copia"><code>http://127.0.0.1:4747/podcast.html</code><button type="button">Copia</button></div>
+              <p>Larghezza <strong>1080</strong>, altezza <strong>1920</strong>. Per una diretta <strong>orizzontale</strong> usate invece questo, <strong>1920 × 1080</strong>:</p>
+              <div class="copia"><code>http://127.0.0.1:4747/podcast.html?formato=orizzontale</code><button type="button">Copia</button></div>
+              <p>In tutti e due i casi stesa su tutta la tela e <strong>in cima</strong> alle sorgenti.</p>
+            </li>
+            <li><p>Per controllare le posizioni (solo verticale): <code class="in">http://127.0.0.1:4747/podcast.html?anteprima=1&amp;guide=1</code>.</p></li>
+          </ol>
+        </div>
+      </div>
+      <figure class="figura">
+        <img src="mockup/podcast-orizzontale.jpg" alt="Back Rooms Podcast orizzontale: la targa e il pannello Tematiche a sinistra, la linea di divisione al centro, la barra dei social con l'ospite Lince in basso" width="1920" height="1080" loading="lazy">
+        <figcaption>La versione orizzontale (16:9). Il pannello Tematiche sta a sinistra oppure a destra, come scegliete in regia.</figcaption>
+      </figure>
+
+      <h3>A ogni puntata</h3>
+      <ol class="passi">
+        <li><p>Nella regia, in alto, in <strong>In onda</strong> scegliete <strong>Back Rooms Podcast</strong>.</p></li>
+        <li><p><strong>Titolo</strong>: «Back Rooms Podcast» (fino a 32 caratteri) e la riga dell'episodio (fino a 48, per esempio «Puntata 12»). Vanno in onda mentre scrivete.</p></li>
+        <li><p><strong>Ospiti</strong>: <strong>+ Aggiungi ospite</strong>, poi nome, contatto e icona. Compaiono nella barra dei social come «Ospite · Nome · @contatto». Si salvano appena uscite dal campo; una riga senza nome non va in onda; <strong>✕</strong> toglie l'ospite. Al massimo 4.</p></li>
+        <li><p><strong>Tematiche</strong>: in <strong>Elenco delle tematiche</strong> scrivete il titolo del pannello e le tematiche, una per riga (al massimo 8, da 48 caratteri), e premete <strong>Salva tematiche</strong>. Finché non salvate, quello che avete scritto resta com'è.</p></li>
+      </ol>
+
+      <h3>Durante la puntata: i quattro moduli</h3>
+      <p>In cima alla sezione ci sono quattro grandi pulsanti On/Off, verdi quando sono in onda: un clic accende, il secondo spegne. All'inizio sono accesi solo la targa e la fascia social.</p>
+      <ul class="punti">
+        <li><strong>Linea di divisione</strong>: si disegna dal centro verso l'alto e il basso in meno di un secondo. È l'effetto «intervista doppia»: accendetela quando volete separare le due persone.</li>
+        <li><strong>Pannello Tematiche</strong>: entra con una dissolvenza che scorre. La tematica in onda ha il bordo oro e la freccia, quelle già fatte sono attenuate con la spunta.</li>
+        <li><strong>Targa</strong> e <strong>Fascia social</strong>: si nascondono e si rimostrano.</li>
+      </ul>
+      <p>Per cambiare tematica: <kbd>F2</kbd> passa alla successiva, <kbd>F3</kbd> torna indietro, <kbd>F4</kbd> mostra o nasconde il pannello (valgono solo con il Podcast in onda). Oppure, nella lista <strong>Tematiche in onda</strong>, un clic su una voce la mette in onda (anche tornando indietro); ci sono anche i pulsanti <strong>Indietro</strong> e <strong>Avanti</strong>. Il bordo oro scorre da una voce all'altra. In orizzontale <strong>Pannello a</strong> sceglie se sta a sinistra o a destra; in verticale sta sempre al centro. Dallo Stream Deck: <code class="in">POST /api/podcastTematica</code> con <code class="in">{ "avanti": true }</code> o <code class="in">{ "indietro": true }</code>.</p>
+      <figure class="figura">
+        <img src="mockup/regia-podcast.jpg" alt="La sezione Back Rooms Podcast della regia: i quattro moduli a comando, la lista delle tematiche, il titolo, l'elenco delle tematiche e gli ospiti" width="1460" height="1025" loading="lazy">
+        <figcaption>La sezione del Podcast nella regia, con una puntata d'esempio.</figcaption>
+      </figure>
+      <p><em>Nuova serata</em> (nella sezione <em>Serata</em>) riporta la tematica in onda alla prima; elenco, ospiti e titolo restano.</p>
+      <div class="riquadro da-provare">
+        <span class="tag">Da controllare la prima volta</span>
+        <p>Guardate la live da un telefono. In verticale il pannello Tematiche sta al centro e copre una parte della camera (la linea passa dietro il vetro): se vi disturba, tenetelo acceso solo quando serve, con <kbd>F4</kbd>. Il vetro non sfoca la camera: è scuro e semitrasparente.</p>
+      </div>
+    </section>
+
+    <!-- REACTION RELEASE -->
+    <section id="reaction">
+      <h2><small>Reaction</small>Reaction Release</h2>
+      <p class="intro">Per le reaction: la <strong>webcam</strong> di chi commenta e lo <strong>schermo condiviso</strong> con il video, con la targa «REACTION RELEASE DELLA SETTIMANA» e la barra dei social. In verticale stanno uno sopra l'altro, come in Studio Production. In <strong>orizzontale</strong> stanno affiancati dentro due finestre con la cornice cromata, su uno sfondo di marca. Nessun effetto sonoro.</p>
+
+      <div class="affiancati">
+        <figure class="figura">
+          <img src="mockup/reaction.jpg" alt="Reaction Release verticale: la targa REACTION RELEASE DELLA SETTIMANA con Ogni giovedì ore 01:00, finta webcam in alto, barra dei social, finto schermo condiviso in basso" width="1080" height="1920" loading="lazy">
+          <figcaption>Il layout verticale. Al posto dei riquadri scuri ci sono la webcam e lo schermo condiviso.</figcaption>
+        </figure>
+        <div>
+          <h3>Una volta sola: la scena verticale in LIVE Studio</h3>
+          <ol class="passi">
+            <li><p>Le due camere una sotto l'altra: <strong>webcam</strong> da 0 a 1212 px e <strong>schermo condiviso</strong> da 1304 a 1920 px (in mezzo la barra dei social).</p></li>
+            <li><p><strong>Aggiungi fonte</strong> → <strong>Link</strong> e incolla:</p>
+              <div class="copia"><code>http://127.0.0.1:4747/reaction.html</code><button type="button">Copia</button></div>
+              <p>Larghezza <strong>1080</strong>, altezza <strong>1920</strong>, stesa su tutta la tela e <strong>in cima</strong> alle sorgenti.</p>
+            </li>
+            <li><p>Per controllare le posizioni: <code class="in">http://127.0.0.1:4747/reaction.html?anteprima=1&amp;guide=1</code>.</p></li>
+          </ol>
+        </div>
+      </div>
+
+      <h3>La scena orizzontale</h3>
+      <figure class="figura">
+        <img src="mockup/reaction-orizzontale.jpg" alt="Reaction Release orizzontale: la targa in alto, la finestra della webcam a sinistra e quella dello schermo condiviso a destra con un divisore e una moneta BR in mezzo, la barra dei social in basso" width="1920" height="1080" loading="lazy">
+        <figcaption>La versione orizzontale (16:9): le due finestre sono fori nella pagina, dietro ci sono le camere.</figcaption>
+      </figure>
+      <ol class="passi">
+        <li><p>Mettete le due camere <strong>sotto</strong>, ognuna nel suo foro: la <strong>webcam</strong> (verticale, 576 × 702 px) a sinistra, da x 24 a 600 e da y 192 a 894; lo <strong>schermo condiviso</strong> (1248 × 702 px) a destra, da x 648 a 1896, stessa altezza.</p></li>
+        <li><p><strong>Aggiungi fonte</strong> → <strong>Link</strong> e incolla:</p>
+          <div class="copia"><code>http://127.0.0.1:4747/reaction.html?formato=orizzontale</code><button type="button">Copia</button></div>
+          <p>Larghezza <strong>1920</strong>, altezza <strong>1080</strong>, stesa su tutta la tela e <strong>in cima</strong>. Fuori dalle due finestre la pagina è <strong>opaca</strong> (sfondo viola di marca): le camere si vedono solo dai due fori.</p>
+        </li>
+      </ol>
+
+      <h3>A ogni live</h3>
+      <ol class="passi">
+        <li><p>Nella regia, in alto, in <strong>In onda</strong> scegliete <strong>Reaction Release</strong>. Con il selettore <em>Verticale / Orizzontale</em> sopra l'anteprima vedete le due versioni.</p></li>
+        <li><p>Il titolo di partenza è «REACTION RELEASE DELLA SETTIMANA» con sopra «Ogni giovedì · ore 01:00». Cambiate le tre righe a piacere: <strong>Riga sopra</strong> (fino a 40 caratteri), <strong>Titolo</strong> (60) e <strong>Riga sotto</strong> (60, può restare vuota). Vanno in onda <strong>mentre scrivete</strong>. <strong>Ripristina titolo predefinito</strong> rimette quello di partenza.</p></li>
+        <li><p>In <strong>In onda</strong> si nascondono la targa e la barra dei social; in <strong>Dimensione dei testi</strong> si ingrandiscono o rimpiccioliscono le tre righe.</p></li>
+      </ol>
+      <div class="riquadro da-provare">
+        <span class="tag">Da controllare la prima volta</span>
+        <p>Provate la scena orizzontale con le camere vere: se la webcam o lo schermo non riempiono bene il loro foro, adattate l'inquadratura nella sorgente (i fori sono rettangoli fissi). Se volete cambiarli, i numeri sono in <code class="in">public/css/doppio.css</code> (vanno cambiati in due punti, lo dice il commento).</p>
       </div>
     </section>
 

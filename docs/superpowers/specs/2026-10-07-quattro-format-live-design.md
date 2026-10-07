@@ -1,6 +1,6 @@
 # Quattro nuovi format della regia Backrooms — Drum Challenge, Studio Production, Podcast, Reaction Release
 
-Data: 2026-10-07 · Stato: design approvato in chat, spec da rivedere
+Data: 2026-10-07 · Stato: design e spec approvati in chat; implementata, da provare sul PC della diretta (vedi i limiti noti nel README)
 
 ## 1. Obiettivo
 

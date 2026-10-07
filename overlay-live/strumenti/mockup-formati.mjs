@@ -1337,7 +1337,19 @@ async function provaRegiaPodcast() {
   if ((await stato()).podcast.titolo.testo !== "Puntata 7") errori.push("un titolo di 33 caratteri non doveva cambiare quello in onda");
   await pagina.waitForFunction(() => document.querySelector("#po-testo").value === "Puntata 7", null, { timeout: 3000 }).catch(() => errori.push("dopo l'errore il campo del titolo doveva tornare a «Puntata 7»"));
 
-  await pagina.screenshot({ path: join(CARTELLA, "mockup", "regia-podcast.jpg"), type: "jpeg", quality: 88 });
+  // uno stato di esempio per l'immagine: titolo e episodio, un ospite, cinque tematiche con la seconda in onda e tutti i moduli accesi
+  await campo("po-testo").evaluate((e) => e.blur());
+  await comando("podcast", { titolo: { testo: "Back Rooms Podcast", sotto: "Puntata 12" }, ospiti: [{ nome: "Lince", handle: "@lince.music", icona: "instagram" }], tematiche: { titolo: "Tematiche di oggi", elenco: ["Come nasce un beat", "Il primo disco", "Social e musica", "Cosa ascoltiamo", "Domande dal pubblico"], attiva: 1 } });
+  for (const nome of ["poLinea", "poTematiche"]) await comando("widget", { nome, visibile: true });
+  await pagina
+    .waitForFunction(
+      () => document.querySelector("#po-testo").value === "Back Rooms Podcast" && document.querySelector("#po-sotto").value === "Puntata 12" && document.querySelector("#po-tem-lista").children.length === 5 && document.querySelector("#po-ospiti li [name='nome']")?.value === "Lince" && document.querySelectorAll("button[data-modulo][aria-pressed='true']").length === 4,
+      null,
+      { timeout: 3000 },
+    )
+    .catch(() => errori.push("lo stato di esempio doveva comparire nella regia"));
+  await attesa(300);
+  await pagina.locator("#po-regia").screenshot({ path: join(CARTELLA, "mockup", "regia-podcast.jpg"), type: "jpeg", quality: 85 });
   await ripulisci();
   await browser.close();
   if (errori.length) {
