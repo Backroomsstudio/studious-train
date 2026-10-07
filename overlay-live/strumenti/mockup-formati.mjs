@@ -6,6 +6,8 @@
 // Mette il server nel layout con i dati di prova dello stato, apre la pagina (1080×1920, o 1920×1080 per l'orizzontale),
 // controlla che ogni pezzo stia dove dice la tabella della spec (±1 px, e dentro x 116…964 / y 230…1200 per i pezzi che lo
 // dichiarano) e salva mockup/<layout>[-orizzontale][-<stato>].jpg. Esce con codice 1 e l'elenco dei problemi.
+//   --regia: flusso della pagina di regia (selettore dei layout, sezioni, scheda Social del brand, dimensione dei testi,
+//   velocità della fascia, spunte «In onda») su 1500×2400, con mockup/regia-formati.jpg.
 // Usate un server di prova su una porta libera (OVERLAY_CONFIG e OVERLAY_DATI temporanei): lo strumento ne cambia lo stato.
 import { createRequire } from "node:module";
 import { execSync } from "node:child_process";
@@ -64,6 +66,7 @@ const layout = opzione("layout", "drum");
 const formato = opzione("formato", "verticale");
 const stato = opzione("stato", STATO_PREDEFINITO[layout]);
 const guida = args.includes("--guida");
+const regia = args.includes("--regia");
 
 function caricaPlaywright() {
   try {
@@ -119,7 +122,110 @@ async function controllaFasciaViva(browser, dimensioni, url, errori) {
   if (dopo.destra < dimensioni.width) errori.push(`fascia: il nastro finisce a x ${Math.round(dopo.destra)}, prima del bordo destro (${dimensioni.width})`);
 }
 
+const statoServer = async () => (await fetch(`${base}/api/stato`)).json();
+
+// Aspetta (al massimo 3 s) che il server abbia lo stato voluto: la regia manda i comandi con un piccolo ritardo.
+async function attendi(descrizione, condizione) {
+  for (let i = 0; i < 30; i++) {
+    if (condizione(await statoServer())) return;
+    await new Promise((ok) => setTimeout(ok, 100));
+  }
+  throw new Error(`atteso: ${descrizione}`);
+}
+
+// La pagina di regia: con ogni layout in onda si accende solo la sua sezione, la scheda «Social del brand» è accesa solo
+// per i layout con la barra, e i controlli comuni (testi, velocità, «In onda») arrivano al server.
+async function provaRegia() {
+  await comando("nuovaSerata");
+  const SEZIONI = { gara: null, senzaPremio: "#sp-regia", studio: "#st-regia", battle: "#bt-regia", drum: "#dr-regia", produzione: "#pr-regia", podcast: "#po-regia", reaction: "#re-regia" };
+  const CON_SOCIAL = ["senzaPremio", "studio", "drum", "produzione", "podcast", "reaction"];
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const pagina = await browser.newPage({ viewport: { width: 1500, height: 2400 } });
+  const errori = [];
+  pagina.setDefaultTimeout(5000);
+  pagina.on("pageerror", (e) => errori.push(`pagina: ${e.message}`));
+  await pagina.goto(`${base}/regia`);
+  await pagina.waitForSelector("#layout");
+
+  const opzioni = await pagina.$$eval("#layout option", (o) => o.map((x) => x.value));
+  if (opzioni.join() !== Object.keys(SEZIONI).join()) errori.push(`selettore dei layout: ${opzioni.join(", ")}`);
+  for (const [nome, sezione] of Object.entries(SEZIONI)) {
+    await pagina.selectOption("#layout", nome);
+    await attendi(`layout ${nome}`, (st) => st.layout === nome);
+    await pagina.waitForTimeout(200);
+    const accese = await pagina.evaluate((mappa) => Object.fromEntries(Object.entries(mappa).map(([l, sel]) => [l, sel ? document.querySelector(sel)?.classList.contains("attivo") ?? null : false])), SEZIONI);
+    for (const [l, acceso] of Object.entries(accese)) {
+      if (acceso === null) errori.push(`${l}: la sezione ${SEZIONI[l]} non esiste`);
+      else if (acceso !== (l === nome && Boolean(sezione))) errori.push(`con ${nome} in onda la sezione di ${l} è ${acceso ? "accesa" : "spenta"}`);
+    }
+    const sociale = await pagina.evaluate(() => document.querySelector("#social-regia")?.classList.contains("attivo") ?? null);
+    if (sociale !== CON_SOCIAL.includes(nome)) errori.push(`con ${nome} in onda «Social del brand» è ${sociale ? "accesa" : "spenta"}`);
+  }
+  const righe = await pagina.locator("#social-regia #sp-voci li").count();
+  if (righe < 5) errori.push(`«Social del brand»: ${righe} voci invece di almeno 5`);
+  if (await pagina.locator("#sp-regia #sp-voci").count()) errori.push("la lista dei social è ancora nella sezione «Senza premio»");
+
+  // la lista dei social, spostata nella sua scheda, modifica ancora la barra
+  const prima = (await statoServer()).senzaPremio.voci.length;
+  await pagina.click("#sp-aggiungi");
+  const riga = pagina.locator("#sp-voci li").last();
+  await riga.locator('[name="etichetta"]').fill("Prova");
+  await riga.locator('[name="testo"]').fill("@prova.prova");
+  await riga.locator('[name="testo"]').press("Tab");
+  await attendi("una voce social in più", (st) => st.senzaPremio.voci.length === prima + 1);
+  await pagina.locator("#sp-voci li").last().locator("[data-togli]").click();
+  await attendi("la voce social tolta", (st) => st.senzaPremio.voci.length === prima);
+
+  // dimensione dei testi, velocità e spunte «In onda» di ogni sezione
+  await pagina.selectOption("#layout", "drum");
+  const testo = pagina.locator('#dr-regia input[data-testo="contatore"]');
+  await testo.fill("140");
+  await attendi("drum.testi.contatore 140", (st) => st.drum.testi.contatore === 140);
+  await pagina.click('#dr-regia [data-testi-azzera="drum"]');
+  await attendi("drum.testi tornati a 100", (st) => Object.values(st.drum.testi).every((v) => v === 100));
+  await pagina.locator("#pr-regia .fm-velocita input[type=range]").fill("120");
+  await attendi("produzione.velocita 120", (st) => st.produzione.velocita === 120);
+  const nota = await pagina.locator("#pr-regia .fm-velocita").innerText();
+  if (!/120 px\/s · un giro ≈ \d+ s/.test(nota)) errori.push(`velocità di produzione: «${nota.replace(/\n/g, " ")}»`);
+  const interruttore = pagina.locator('#po-regia input[data-widget="poLinea"]');
+  await interruttore.check();
+  await attendi("visibili.poLinea acceso", (st) => st.visibili.poLinea === true);
+  await interruttore.uncheck();
+  await attendi("visibili.poLinea spento", (st) => st.visibili.poLinea === false);
+  for (const [sigla, widget] of [["dr", ["drumCornice", "drumTraguardi", "drumBrano", "drumPriorita", "drumBarra"]], ["pr", ["prTitolo", "prBarra"]], ["po", ["poTitolo", "poLinea", "poTematiche", "poBarra"]], ["re", ["reTitolo", "reBarra"]]]) {
+    const trovati = await pagina.$$eval(`#${sigla}-regia [data-widget]`, (c) => c.map((x) => x.dataset.widget));
+    if (trovati.join() !== widget.join()) errori.push(`#${sigla}-regia: spunte «In onda» ${trovati.join(", ")} invece di ${widget.join(", ")}`);
+  }
+
+  // l'anteprima di podcast e reaction passa da verticale a orizzontale
+  for (const [sezione, pagineNome] of [["#po-regia", "podcast"], ["#re-regia", "reaction"]]) {
+    await pagina.click(`${sezione} [data-anteprima-formato="orizzontale"]`);
+    const orizzontale = await pagina.evaluate((sel) => {
+      const f = document.querySelector(`${sel} .sp-anteprima iframe`);
+      return { src: f.getAttribute("src"), larghezza: f.width, altezza: f.height, attivo: document.querySelector(`${sel} [data-anteprima-formato="orizzontale"]`).classList.contains("attivo") };
+    }, sezione);
+    if (!orizzontale.src.includes(`${pagineNome}.html`) || !orizzontale.src.includes("formato=orizzontale") || orizzontale.larghezza !== "1920" || orizzontale.altezza !== "1080" || !orizzontale.attivo) {
+      errori.push(`${sezione}: anteprima orizzontale ${JSON.stringify(orizzontale)}`);
+    }
+    await pagina.click(`${sezione} [data-anteprima-formato="verticale"]`);
+    const verticale = await pagina.evaluate((sel) => document.querySelector(`${sel} .sp-anteprima iframe`).getAttribute("src"), sezione);
+    if (verticale.includes("formato=orizzontale")) errori.push(`${sezione}: l'anteprima non torna in verticale`);
+  }
+
+  await pagina.waitForTimeout(500);
+  const file = join(CARTELLA, "mockup", "regia-formati.jpg");
+  await (await pagina.$("#po-regia")).screenshot({ path: file, type: "jpeg", quality: 85 });
+  await browser.close();
+  if (errori.length) {
+    console.error(`Regia: problemi\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log(`ok regia: sezioni, scheda Social del brand, testi, velocità e spunte «In onda», mockup in ${file}`);
+}
+
 async function main() {
+  if (regia) return provaRegia();
   const tabella = GEOMETRIA[layout]?.[formato];
   const pezziAttesi = PRESENTI[layout]?.[formato]?.[stato];
   if (!tabella || !pezziAttesi) {

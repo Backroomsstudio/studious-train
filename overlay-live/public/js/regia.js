@@ -1,7 +1,8 @@
 // Regia: voti dei giudici, voto della chat TikTok, conferma, coda Nero.fan, classifica, countdown e spareggio;
 // in più il layout senza premio delle live giornaliere (banner, barra che scorre, scheda «Ora in ascolto», spot)
 // la live session in studio (nome e Instagram dell'artista, comparse dello studio, nessun suono)
-// e il battle (scontro tra due rapper: nomi, modalità, timer, voti dei giudici, tabellone, pop-up).
+// il battle (scontro tra due rapper: nomi, modalità, timer, voti dei giudici, tabellone, pop-up)
+// e i layout Drum Challenge, Studio Production, Back Rooms Podcast e Reaction Release (regia-formati.js).
 // Ogni azione è un comando al server; la pagina si ridisegna dallo stato che torna indietro.
 import { collega, formatta, durata } from "./connessione.js";
 import { suona, volume, audioPronto } from "./suoni.js";
@@ -9,6 +10,7 @@ import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suoniSenzaP
 import { percentuali, rimanenteBattleMs } from "./battle-logica.js";
 import { vociBarra, stimaGiroSecondi } from "./barra.js";
 import { vociStudio } from "./studio-logica.js";
+import { avviaRegiaFormati } from "./regia-formati.js";
 
 const $ = (sel) => document.querySelector(sel);
 const CATEGORIE = ["beat", "voce", "mix"];
@@ -99,6 +101,9 @@ const scegli = (sel, fn) =>
     fn(e.target.value);
   });
 
+// Drum, produzione, podcast e reaction: sezioni, scheda «Social del brand», testi, velocità e anteprime (regia-formati.js).
+const formati = avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn });
+
 const haVoti = (t) => CATEGORIE.some((c) => t.punteggi[c] !== null) || t.punteggi.chatVoti > 0;
 
 // ---------- Suoni ----------
@@ -116,6 +121,7 @@ function riproduci(suoni, ritardoBase = 0) {
 
 function suoniRegia(prima, dopo, eventi) {
   if (dopo.layout === "studio") return; // live session in studio: l'artista registra, nessun suono
+  if (["produzione", "podcast", "reaction", "drum"].includes(dopo.layout)) return; // muti (il Drum suonerà lo sblocco più avanti)
   if (dopo.layout === "battle") return riproduci(suoniBattle(prima, dopo, eventi));
   if (!inGara()) {
     const ora = performance.now();
@@ -141,6 +147,7 @@ function disegna(s) {
   disegnaSenzaPremio(s);
   disegnaStudio(s);
   disegnaBattle(s);
+  formati.disegna(s);
 }
 
 function disegnaTraccia(s) {
@@ -284,9 +291,16 @@ function disegnaSerata(s) {
   riempi($("#invito"), s.invito);
   mostra($("#suoni-dove"), s.suoni.dove);
   riempi($("#suoni-volume"), s.suoni.volume); // un cursore: non si sposta mentre lo si trascina
+  const MUTI = {
+    studio: "la live session in studio: nessun effetto sonoro, per non disturbare chi registra.",
+    produzione: "Studio Production: nessun effetto sonoro, per non disturbare chi lavora.",
+    podcast: "il Back Rooms Podcast: nessun effetto sonoro, per non coprire chi parla.",
+    reaction: "la Reaction Release: nessun effetto sonoro, per non coprire il video.",
+    drum: "il Drum Challenge Live: per ora nessun effetto sonoro.",
+  };
   $("#suoni-nota").textContent =
-    s.layout === "studio"
-      ? "In onda c'è la live session in studio: nessun effetto sonoro, per non disturbare chi registra."
+    MUTI[s.layout]
+      ? `In onda c'è ${MUTI[s.layout]}`
       : s.suoni.dove === "overlay"
       ? `Suonano dalla sorgente Link di LIVE Studio (${s.layout === "senzaPremio" ? "/senza-premio.html, il layout in onda" : s.layout === "battle" ? "/battle.html, il battle in onda" : "/overlay.html, la gara in onda"}). Se in diretta non si sentono, scegliete «in questa pagina» e in LIVE Studio aggiungete l'audio del PC.`
       : s.suoni.dove === "regia"
@@ -1208,6 +1222,12 @@ $("#bt-popup-durata").addEventListener("change", async (e) => {
 
 // Scorciatoie: funzionano anche col cursore dentro un campo. Con il battle in onda fanno altro (vedi «Scorciatoie»).
 addEventListener("keydown", (e) => {
+  // I layout nuovi hanno le loro scorciatoie (F2, F3, F4 per tematiche e richiami): prima quelle.
+  const sua = stato && !e.repeat ? formati.scorciatoia(e.key, stato.layout) : null;
+  if (sua) {
+    e.preventDefault();
+    return sua();
+  }
   const inBattle = stato?.layout === "battle";
   const azioni = inBattle ? { F2: battleAvvia, F4: battleRivela, F8: battleProssimo, F9: battlePausa } : { F2: alternaChat, F4: conferma, F8: prossima, F9: alternaPausa };
   const azione = e.key === "Enter" && e.ctrlKey ? (inBattle ? battleRivela : conferma) : azioni[e.key];

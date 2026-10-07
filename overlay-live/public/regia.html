@@ -18,12 +18,16 @@
     <span class="conn" id="conn">offline</span>
     <span class="conn" id="tiktok-stato" title="Chat TikTok">TikTok</span>
     <span class="conn" id="nero-stato" title="Traccia in riproduzione su Nero.fan">Nero</span>
-    <label class="layout-scelta" title="Suona solo la pagina del layout in onda. Senza premio e live session: la traccia di Nero passa subito, senza aspettare i voti. Live session in studio: nessun suono. Battle: la chat vota «1» o «2».">In onda
+    <label class="layout-scelta" title="Suona solo la pagina del layout in onda. Senza premio e live session: la traccia di Nero passa subito, senza aspettare i voti. Live session in studio, Studio Production, Back Rooms Podcast e Reaction Release: nessun suono. Battle: la chat vota «1» o «2». Drum Challenge: i Like di TikTok sbloccano i brani.">In onda
       <select id="layout">
         <option value="gara">Gara con premio</option>
         <option value="senzaPremio">Senza premio</option>
         <option value="studio">Live session in studio</option>
         <option value="battle">Battle</option>
+        <option value="drum">Drum Challenge Live</option>
+        <option value="produzione">Studio Production</option>
+        <option value="podcast">Back Rooms Podcast</option>
+        <option value="reaction">Reaction Release</option>
       </select>
     </label>
     <nav>
@@ -31,6 +35,12 @@
       <a href="/senza-premio.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok e senza suoni">Anteprima senza premio ↗</a>
       <a href="/studio.html?anteprima=1&amp;guide=1" target="_blank" rel="noopener" title="Con le zone dei tre schermi e quelle coperte dall'app TikTok">Anteprima studio ↗</a>
       <a href="/battle.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok e senza suoni">Anteprima battle ↗</a>
+      <a href="/drum.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok e senza suoni">Anteprima drum ↗</a>
+      <a href="/produzione.html?anteprima=1&amp;guide=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok">Anteprima produzione ↗</a>
+      <a href="/podcast.html?anteprima=1&amp;guide=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok">Anteprima podcast ↗</a>
+      <a href="/podcast.html?anteprima=1&amp;formato=orizzontale" target="_blank" rel="noopener" title="Formato 16:9, 1920×1080">Podcast 16:9 ↗</a>
+      <a href="/reaction.html?anteprima=1&amp;guide=1" target="_blank" rel="noopener" title="Con le zone coperte dall'app TikTok">Anteprima reaction ↗</a>
+      <a href="/reaction.html?anteprima=1&amp;formato=orizzontale" target="_blank" rel="noopener" title="Formato 16:9, 1920×1080">Reaction 16:9 ↗</a>
       <button type="button" id="aiuto">Scorciatoie</button>
     </nav>
   </header>
@@ -212,6 +222,20 @@
       </div>
     </section>
 
+    <!-- SOCIAL DEL BRAND: una lista sola per tutte le fasce che scorrono -->
+    <section class="scheda sp-regia" id="social-regia">
+      <h2>Social del brand <span class="conta">una lista sola, in tutte le barre che scorrono: senza premio, studio, drum, produzione, podcast e reaction</span></h2>
+      <div class="sp-colonne una">
+        <div class="sp-colonna">
+          <p class="nota">Una riga per voce, nell'ordine in cui passano. Spunta = in onda (massimo 8). Le modifiche vanno in onda appena esci dal campo. Nel Drum e nel Podcast l'artista ospite e gli ospiti passano subito dopo la prima voce.</p>
+          <ol class="sp-voci" id="sp-voci"></ol>
+          <div class="azioni">
+            <button id="sp-aggiungi" class="piccolo">+ Aggiungi voce</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- LAYOUT SENZA PREMIO: live giornaliere di ascolto -->
     <section class="scheda sp-regia" id="sp-regia">
       <h2>Senza premio <span class="conta">live giornaliere · sorgente Link <code>/senza-premio.html</code></span></h2>
@@ -277,10 +301,8 @@
 
         <div class="sp-colonna">
           <h3>Barra che scorre</h3>
-          <p class="nota">Una riga per voce, nell'ordine in cui passano. Spunta = in onda (massimo 8). Le modifiche vanno in onda appena esci dal campo.</p>
-          <ol class="sp-voci" id="sp-voci"></ol>
+          <p class="nota">I social (una riga per voce, nell'ordine in cui passano) si cambiano nella scheda «Social del brand», qui sopra: sono gli stessi in tutti i layout con la barra.</p>
           <div class="azioni">
-            <button id="sp-aggiungi" class="piccolo">+ Aggiungi voce</button>
             <button id="sp-ripristina" class="piccolo pericolo" title="Testi, social e impostazioni di partenza">Ripristina predefiniti</button>
           </div>
           <label class="sp-riga">Velocità <input type="range" id="sp-velocita" min="40" max="160" step="10"> <span id="sp-velocita-testo"></span></label>
@@ -496,6 +518,134 @@
         <div class="sp-colonna sp-anteprima-colonna">
           <div class="sp-anteprima"><iframe src="/battle.html?anteprima=1&amp;muto=1" title="Anteprima del battle" width="1080" height="1920" loading="lazy"></iframe></div>
           <a href="/battle.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener">Apri grande, con le zone ↗</a>
+        </div>
+      </div>
+    </section>
+    <!-- DRUM CHALLENGE LIVE: Like di TikTok · scaletta · equalizzatore -->
+    <section class="scheda sp-regia fm-regia" id="dr-regia" data-formato="drum">
+      <h2>Drum Challenge Live <span class="conta">Like di TikTok · scaletta · equalizzatore · sorgente Link <code>/drum.html</code></span></h2>
+      <div class="sp-colonne">
+        <div class="sp-colonna" id="dr-col1"></div>
+
+        <div class="sp-colonna" id="dr-col2">
+          <h3>Fascia social</h3>
+          <div class="fm-velocita" data-formato="drum"></div>
+
+          <h3>Dimensione dei testi</h3>
+          <p class="nota">Ogni gruppo di testi si ingrandisce o rimpicciolisce (60–200%, 100% = base). Si vede subito nell'anteprima; i testi che non entrano nel loro riquadro si restringono da soli.</p>
+          <div class="bt-testi fm-testi" data-formato="drum"></div>
+          <div class="azioni"><button type="button" class="piccolo" data-testi-azzera="drum">Ripristina tutti al 100%</button></div>
+
+          <h3>In onda</h3>
+          <div class="interruttori">
+            <label class="interruttore"><input type="checkbox" data-widget="drumCornice"> Cornice ed equalizzatore</label>
+            <label class="interruttore"><input type="checkbox" data-widget="drumTraguardi"> Colonna traguardi e Like</label>
+            <label class="interruttore"><input type="checkbox" data-widget="drumBrano"> Brano in esecuzione</label>
+            <label class="interruttore"><input type="checkbox" data-widget="drumPriorita"> Dona un…</label>
+            <label class="interruttore"><input type="checkbox" data-widget="drumBarra"> Fascia social</label>
+          </div>
+        </div>
+
+        <div class="sp-colonna sp-anteprima-colonna">
+          <div class="sp-anteprima"><iframe src="/drum.html?anteprima=1&amp;muto=1" title="Anteprima: Drum Challenge Live" width="1080" height="1920" loading="lazy"></iframe></div>
+          <a href="/drum.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" data-anteprima-link="drum">Apri grande, con le zone ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- STUDIO PRODUCTION: webcam · DAW · fascia social -->
+    <section class="scheda sp-regia fm-regia" id="pr-regia" data-formato="produzione">
+      <h2>Studio Production <span class="conta">webcam · DAW · fascia social · sorgente Link <code>/produzione.html</code></span></h2>
+      <div class="sp-colonne">
+        <div class="sp-colonna" id="pr-col1"></div>
+
+        <div class="sp-colonna" id="pr-col2">
+          <h3>Fascia social</h3>
+          <div class="fm-velocita" data-formato="produzione"></div>
+
+          <h3>Dimensione dei testi</h3>
+          <p class="nota">Ogni gruppo di testi si ingrandisce o rimpicciolisce (60–200%, 100% = base). Si vede subito nell'anteprima; i testi che non entrano nel loro riquadro si restringono da soli.</p>
+          <div class="bt-testi fm-testi" data-formato="produzione"></div>
+          <div class="azioni"><button type="button" class="piccolo" data-testi-azzera="produzione">Ripristina tutti al 100%</button></div>
+
+          <h3>In onda</h3>
+          <div class="interruttori">
+            <label class="interruttore"><input type="checkbox" data-widget="prTitolo"> Titolo</label>
+            <label class="interruttore"><input type="checkbox" data-widget="prBarra"> Fascia social</label>
+          </div>
+        </div>
+
+        <div class="sp-colonna sp-anteprima-colonna">
+          <div class="sp-anteprima"><iframe src="/produzione.html?anteprima=1&amp;muto=1" title="Anteprima: Studio Production" width="1080" height="1920" loading="lazy"></iframe></div>
+          <a href="/produzione.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" data-anteprima-link="produzione">Apri grande, con le zone ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- BACK ROOMS PODCAST: targa · tematiche · linea di divisione · 9:16 e 16:9 -->
+    <section class="scheda sp-regia fm-regia" id="po-regia" data-formato="podcast">
+      <h2>Back Rooms Podcast <span class="conta">targa · tematiche · linea di divisione · 9:16 e 16:9 · sorgente Link <code>/podcast.html</code></span></h2>
+      <div class="sp-colonne">
+        <div class="sp-colonna" id="po-col1"></div>
+
+        <div class="sp-colonna" id="po-col2">
+          <h3>Fascia social</h3>
+          <div class="fm-velocita" data-formato="podcast"></div>
+
+          <h3>Dimensione dei testi</h3>
+          <p class="nota">Ogni gruppo di testi si ingrandisce o rimpicciolisce (60–200%, 100% = base). Si vede subito nell'anteprima; i testi che non entrano nel loro riquadro si restringono da soli.</p>
+          <div class="bt-testi fm-testi" data-formato="podcast"></div>
+          <div class="azioni"><button type="button" class="piccolo" data-testi-azzera="podcast">Ripristina tutti al 100%</button></div>
+
+          <h3>In onda</h3>
+          <div class="interruttori">
+            <label class="interruttore"><input type="checkbox" data-widget="poTitolo"> Targa</label>
+            <label class="interruttore"><input type="checkbox" data-widget="poLinea"> Linea di divisione</label>
+            <label class="interruttore"><input type="checkbox" data-widget="poTematiche"> Pannello Tematiche</label>
+            <label class="interruttore"><input type="checkbox" data-widget="poBarra"> Fascia social</label>
+          </div>
+        </div>
+
+        <div class="sp-colonna sp-anteprima-colonna">
+          <div class="azioni">
+            <button type="button" class="piccolo attivo" data-anteprima-formato="verticale">Verticale</button>
+            <button type="button" class="piccolo" data-anteprima-formato="orizzontale">Orizzontale</button>
+          </div>
+          <div class="sp-anteprima"><iframe src="/podcast.html?anteprima=1&amp;muto=1" title="Anteprima: Back Rooms Podcast" width="1080" height="1920" loading="lazy"></iframe></div>
+          <a href="/podcast.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" data-anteprima-link="podcast">Apri grande, con le zone ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- REACTION RELEASE: webcam e schermo · fascia animata · 9:16 e 16:9 -->
+    <section class="scheda sp-regia fm-regia" id="re-regia" data-formato="reaction">
+      <h2>Reaction Release <span class="conta">webcam e schermo · fascia animata · 9:16 e 16:9 · sorgente Link <code>/reaction.html</code></span></h2>
+      <div class="sp-colonne">
+        <div class="sp-colonna" id="re-col1"></div>
+
+        <div class="sp-colonna" id="re-col2">
+          <h3>Fascia social</h3>
+          <div class="fm-velocita" data-formato="reaction"></div>
+
+          <h3>Dimensione dei testi</h3>
+          <p class="nota">Ogni gruppo di testi si ingrandisce o rimpicciolisce (60–200%, 100% = base). Si vede subito nell'anteprima; i testi che non entrano nel loro riquadro si restringono da soli.</p>
+          <div class="bt-testi fm-testi" data-formato="reaction"></div>
+          <div class="azioni"><button type="button" class="piccolo" data-testi-azzera="reaction">Ripristina tutti al 100%</button></div>
+
+          <h3>In onda</h3>
+          <div class="interruttori">
+            <label class="interruttore"><input type="checkbox" data-widget="reTitolo"> Titolo</label>
+            <label class="interruttore"><input type="checkbox" data-widget="reBarra"> Fascia social</label>
+          </div>
+        </div>
+
+        <div class="sp-colonna sp-anteprima-colonna">
+          <div class="azioni">
+            <button type="button" class="piccolo attivo" data-anteprima-formato="verticale">Verticale</button>
+            <button type="button" class="piccolo" data-anteprima-formato="orizzontale">Orizzontale</button>
+          </div>
+          <div class="sp-anteprima"><iframe src="/reaction.html?anteprima=1&amp;muto=1" title="Anteprima: Reaction Release" width="1080" height="1920" loading="lazy"></iframe></div>
+          <a href="/reaction.html?anteprima=1&amp;guide=1&amp;muto=1" target="_blank" rel="noopener" data-anteprima-link="reaction">Apri grande, con le zone ↗</a>
         </div>
       </div>
     </section>
