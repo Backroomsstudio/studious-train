@@ -879,3 +879,26 @@ button.piccolo.attivo {
   grid-column: 1 / -1;
   font-variant-numeric: tabular-nums;
 }
+
+/* Equalizzatore del Drum: indicatore del livello dell'audio ascoltato */
+.eq-livello {
+  position: relative;
+  flex: 1;
+  min-width: 120px;
+  height: 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.eq-livello i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #36dcff, #a066ff 60%, #ff4fd8);
+  transition: width 0.08s linear;
+}
+button.primario.attivo {
+  color: #fff;
+  background: #b3263c;
+}

@@ -14,6 +14,9 @@
 //   --eq: l'equalizzatore del Drum dal vivo, con i livelli audio mandati da un client WebSocket dello strumento (come fa la regia
 //   con l'audio di FL Studio): barre alte e cornice che lampeggia al colpo; senza dati, dopo 2,5 s, il «respiro» basso; con
 //   «senzaSegnale» spento torna vuoto; lo stile «onda» disegna un'altra cosa (specchiata); nei mockup (?statico=1) c'è un fotogramma fisso.
+//   --audio: l'ascolto dell'audio dalla regia con un ingresso finto di Chromium (un WAV con un colpo ogni 500 ms): «Ingresso audio»
+//   e «Avvia ascolto» fanno alzare le barre e lampeggiare la cornice del Drum, l'indicatore di livello si muove, la sensibilità
+//   conta subito, «Ferma» riporta al respiro, la «Prova» manda lo schema finto di 4 s. (L'«Audio del PC» non si prova qui.)
 //   --testi-lunghi: i testi più lunghi permessi (titolo di tappa e di brano da 60 caratteri, artista da 40, prefisso da 16,
 //   slot da 20, ospite con handle da 40) con la dimensione dei testi del Drum al 200%: niente esce dal suo riquadro.
 //   --regia: flusso della pagina di regia (selettore dei layout, sezioni, scheda Social del brand, dimensione dei testi,
@@ -21,6 +24,8 @@
 // Usate un server di prova su una porta libera (OVERLAY_CONFIG e OVERLAY_DATI temporanei): lo strumento ne cambia lo stato.
 import { createRequire } from "node:module";
 import { execSync } from "node:child_process";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -100,6 +105,7 @@ const testiLunghi = args.includes("--testi-lunghi");
 const clessidra = args.includes("--clessidra");
 const sbloccoAnimato = args.includes("--sblocco-animato");
 const equalizzatore = args.includes("--eq");
+const audio = args.includes("--audio");
 
 function caricaPlaywright() {
   try {
@@ -496,6 +502,40 @@ async function provaSbloccoAnimato() {
   console.log("ok sblocco animato: urto, banner a 1 s, colonna che scorre a 1,8 s, banner via a 4,2 s; ricarica, colonna spenta a metà e due sblocchi di fila");
 }
 
+// Cosa c'è nel canvas dell'equalizzatore: pixel visibili, riga più alta con qualcosa, barre lungo la riga in basso, metà alta e metà bassa,
+// quanto della riga di mezzo è riempito (l'onda è piena, le barre no), impronta.
+const misuraEq = (pagina) =>
+  pagina.evaluate(() => {
+    const c = document.querySelector("#dr-eq");
+    const { data, width, height } = c.getContext("2d").getImageData(0, 0, c.width, c.height);
+    let pieni = 0;
+    let alto = null;
+    let sopra = 0;
+    let sotto = 0;
+    let impronta = 0;
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = (y * width + x) * 4;
+        impronta = (Math.imul(impronta, 31) + data[i] + data[i + 1] + data[i + 2] + data[i + 3]) >>> 0;
+        if (data[i + 3] > 40) {
+          pieni++;
+          if (alto === null) alto = y;
+          if (y < height / 2) sopra++;
+          else sotto++;
+        }
+      }
+    }
+    let barre = 0;
+    for (let x = 1, dentro = false; x < width; x++) {
+      const visibile = data[((height - 3) * width + x) * 4 + 3] > 200; // il corpo pieno della barra, non il suo alone
+      if (visibile && !dentro) barre++;
+      dentro = visibile;
+    }
+    let mezzo = 0;
+    for (let x = 14; x < width - 14; x++) if (data[((Math.floor(height / 2)) * width + x) * 4 + 3] > 40) mezzo++;
+    return { pieni, alto, sopra, sotto, barre, impronta, mezzo: mezzo / (width - 28), altezza: height };
+  });
+
 // L'equalizzatore dal vivo: i livelli audio arrivano da un client WebSocket dello strumento, come dalla regia.
 async function provaEq() {
   await preparaStato("meta");
@@ -519,39 +559,7 @@ async function provaEq() {
       await attesa(33); // 30 Hz
     }
   };
-  // Cosa c'è nel canvas: pixel visibili, riga più alta con qualcosa, barre lungo la riga in basso, metà alta e metà bassa, quanto
-  // della riga di mezzo è riempito (l'onda è piena, le barre no), impronta.
-  const canvas = () =>
-    pagina.evaluate(() => {
-      const c = document.querySelector("#dr-eq");
-      const { data, width, height } = c.getContext("2d").getImageData(0, 0, c.width, c.height);
-      let pieni = 0;
-      let alto = null;
-      let sopra = 0;
-      let sotto = 0;
-      let impronta = 0;
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const i = (y * width + x) * 4;
-          impronta = (Math.imul(impronta, 31) + data[i] + data[i + 1] + data[i + 2] + data[i + 3]) >>> 0;
-          if (data[i + 3] > 40) {
-            pieni++;
-            if (alto === null) alto = y;
-            if (y < height / 2) sopra++;
-            else sotto++;
-          }
-        }
-      }
-      let barre = 0;
-      for (let x = 1, dentro = false; x < width; x++) {
-        const visibile = data[((height - 3) * width + x) * 4 + 3] > 200; // il corpo pieno della barra, non il suo alone
-        if (visibile && !dentro) barre++;
-        dentro = visibile;
-      }
-      let mezzo = 0;
-      for (let x = 14; x < width - 14; x++) if (data[((Math.floor(height / 2)) * width + x) * 4 + 3] > 40) mezzo++;
-      return { pieni, alto, sopra, sotto, barre, impronta, mezzo: mezzo / (width - 28), altezza: height };
-    });
+  const canvas = () => misuraEq(pagina);
   const colpi = () => pagina.evaluate(() => window.__colpi);
   const vuoto = (c) => c.pieni === 0;
 
@@ -635,6 +643,156 @@ async function provaEq() {
     process.exit(1);
   }
   console.log("ok eq: barre alte e cornice che lampeggia con il segnale, «respiro» senza dati, vuoto senza «respiro», onda specchiata, mockup fermo");
+}
+
+// Un WAV PCM 16 bit mono a 48 kHz di 6 s: ogni 500 ms un colpo (40 ms di rumore e un tonfo a 80 Hz che si spegne in fretta).
+function creaWavColpi() {
+  const frequenza = 48000;
+  const campioni = frequenza * 6;
+  const dati = Buffer.alloc(campioni * 2);
+  let seme = 12345;
+  const rumore = () => {
+    seme = (Math.imul(seme, 1664525) + 1013904223) >>> 0;
+    return seme / 2147483648 - 1;
+  };
+  for (let i = 0; i < campioni; i++) {
+    const t = (i / frequenza) % 0.5;
+    const tonfo = Math.sin(2 * Math.PI * 80 * t) * Math.exp(-t * 14) * 0.7;
+    const fruscio = t < 0.04 ? rumore() * (1 - t / 0.04) * 0.5 : 0;
+    dati.writeInt16LE(Math.round(Math.max(-1, Math.min(1, tonfo + fruscio)) * 32767), i * 2);
+  }
+  const testa = Buffer.alloc(44);
+  testa.write("RIFF", 0);
+  testa.writeUInt32LE(36 + dati.length, 4);
+  testa.write("WAVEfmt ", 8);
+  testa.writeUInt32LE(16, 16);
+  testa.writeUInt16LE(1, 20); // PCM
+  testa.writeUInt16LE(1, 22); // mono
+  testa.writeUInt32LE(frequenza, 24);
+  testa.writeUInt32LE(frequenza * 2, 28);
+  testa.writeUInt16LE(2, 32);
+  testa.writeUInt16LE(16, 34);
+  testa.write("data", 36);
+  testa.writeUInt32LE(dati.length, 40);
+  return Buffer.concat([testa, dati]);
+}
+
+// L'ascolto dell'audio dalla regia: Chromium con un ingresso finto che suona il WAV dei colpi.
+async function provaAudio() {
+  const cartella = mkdtempSync(join(tmpdir(), "drum-audio-"));
+  const wav = join(cartella, "colpi.wav");
+  writeFileSync(wav, creaWavColpi());
+  await preparaStato("meta");
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch({
+    ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}),
+    args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream", `--use-file-for-fake-audio-capture=${wav}`],
+  });
+  const contesto = await browser.newContext({ viewport: { width: 1500, height: 2400 }, permissions: ["microphone"] });
+  const errori = [];
+  const attesa = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  const drum = await contesto.newPage();
+  const regiaPagina = await contesto.newPage();
+  drum.on("pageerror", (e) => errori.push(`drum: ${e.message}`));
+  regiaPagina.on("pageerror", (e) => errori.push(`regia: ${e.message}`));
+  await drum.goto(`${base}/drum.html?anteprima=1&muto=1`);
+  await drum.evaluate(() => {
+    window.__colpi = 0;
+    const cornice = document.querySelector(".fm-cornice");
+    new MutationObserver(() => {
+      if (cornice.classList.contains("colpo")) window.__colpi++;
+    }).observe(cornice, { attributes: true, attributeFilter: ["class"] });
+  });
+  await regiaPagina.goto(`${base}/regia.html`);
+  await attesa(1500);
+  const colpi = () => drum.evaluate(() => window.__colpi);
+  const livello = async () => Number(await regiaPagina.getAttribute("#dr-audio-livello", "aria-valuenow"));
+  const testoBottone = () => regiaPagina.textContent("#dr-audio-avvia");
+  // Guarda per `ms` millisecondi: la riga più alta delle barre, i livelli dell'indicatore, quanti colpi.
+  const osserva = async (ms) => {
+    const prima = await colpi();
+    const t0 = Date.now();
+    let alto = Infinity;
+    const livelli = [];
+    while (Date.now() - t0 < ms) {
+      const m = await misuraEq(drum);
+      if (m.alto !== null) alto = Math.min(alto, m.alto);
+      livelli.push(await livello());
+      await attesa(80);
+    }
+    return { alto, livelli, colpi: (await colpi()) - prima };
+  };
+
+  // 1) «Ingresso audio» e «Avvia ascolto»
+  await regiaPagina.selectOption("#dr-audio-sorgente", "ingresso");
+  await regiaPagina.click("#dr-audio-avvia");
+  let v = await osserva(3000);
+  if (v.alto > 50) errori.push(`con l'ascolto acceso la pagina non ha mai mostrato barre alte (riga più alta ${v.alto})`);
+  if (v.colpi < 3) errori.push(`la cornice doveva lampeggiare almeno 3 volte in 3 s, ha lampeggiato ${v.colpi} volte`);
+  if (new Set(v.livelli).size < 3 || Math.max(...v.livelli) - Math.min(...v.livelli) < 20) errori.push(`l'indicatore di livello doveva muoversi: ${[...new Set(v.livelli)].slice(0, 12).join(", ")}`);
+  if (!/Ferma/.test(await testoBottone())) errori.push(`il bottone doveva dire «Ferma ascolto», dice «${await testoBottone()}»`);
+
+  // 2) la sensibilità conta subito: a metà il livello più alto scende
+  const forte = Math.max(...(await osserva(1500)).livelli);
+  await regiaPagina.locator("#dr-eq-sens").fill("50");
+  await attesa(400);
+  const debole = Math.max(...(await osserva(1500)).livelli);
+  if (!(debole < forte)) errori.push(`con la sensibilità al 50% il livello più alto doveva scendere (100%: ${forte}, 50%: ${debole})`);
+  await regiaPagina.locator("#dr-eq-sens").fill("100");
+  await attesa(300);
+
+  // 3) «Ferma»: i messaggi smettono, dopo 2,5 s torna il respiro
+  await regiaPagina.click("#dr-audio-avvia");
+  if (!/Avvia/.test(await testoBottone())) errori.push(`dopo «Ferma» il bottone doveva dire «Avvia ascolto», dice «${await testoBottone()}»`);
+  await attesa(2500);
+  const fermi = await colpi();
+  const respiro = await misuraEq(drum);
+  await attesa(1000);
+  if ((await colpi()) !== fermi) errori.push("dopo «Ferma» la cornice lampeggiava ancora");
+  if (respiro.pieni === 0 || respiro.alto < 60) errori.push(`dopo «Ferma» la pagina doveva tornare al respiro basso (riga più alta ${respiro.alto}, pixel ${respiro.pieni})`);
+  if ((await livello()) !== 0) errori.push("dopo «Ferma» l'indicatore doveva tornare a zero");
+
+  // 4) lo stile, il respiro e la sensibilità vanno al server
+  await regiaPagina.selectOption("#dr-eq-stile", "onda");
+  await regiaPagina.locator("#dr-eq-idle").uncheck();
+  await regiaPagina.locator("#dr-eq-sens").fill("150");
+  await attesa(500);
+  const eq = (await statoServer()).drum.eq;
+  if (eq.stile !== "onda" || eq.senzaSegnale !== false || eq.sensibilita !== 150) errori.push(`i controlli dell'equalizzatore non sono arrivati al server: ${JSON.stringify(eq)}`);
+  await comando("drumEq", { stile: "barre", senzaSegnale: true, sensibilita: 100 });
+  await attesa(500);
+
+  // 5) «Prova»: lo schema finto di 4 s
+  const provaPrima = await colpi();
+  await regiaPagina.click("#dr-eq-prova");
+  v = await osserva(1500);
+  if (v.alto > 50 || (await colpi()) - provaPrima < 1) errori.push(`la «Prova» doveva alzare le barre e far lampeggiare la cornice (riga più alta ${v.alto})`);
+  await attesa(7000);
+  const dopoProva = await misuraEq(drum);
+  if (dopoProva.alto < 60) errori.push(`finita la «Prova» la pagina doveva tornare al respiro basso (riga più alta ${dopoProva.alto})`);
+
+  // 6) l'ingresso scelto si ricorda dopo una ricarica
+  const ingressi = await regiaPagina.locator("#dr-audio-ingresso option").evaluateAll((o) => o.map((x) => x.value).filter(Boolean));
+  if (ingressi.length) {
+    const scelto = ingressi[ingressi.length - 1];
+    await regiaPagina.selectOption("#dr-audio-ingresso", scelto);
+    const nome = await regiaPagina.locator("#dr-audio-ingresso option:checked").textContent();
+    // una pagina nuova, non una ricarica (il browser ripristinerebbe da solo il valore dei campi); gli identificatori dei dispositivi
+    // possono cambiare da una pagina all'altra (nelle finestre senza profilo succede): conta il nome
+    const nuova = await contesto.newPage();
+    nuova.on("pageerror", (e) => errori.push(`regia (nuova): ${e.message}`));
+    await nuova.goto(`${base}/regia.html`);
+    await attesa(1500);
+    const ricordato = await nuova.locator("#dr-audio-ingresso option:checked").textContent();
+    if (ricordato !== nome) errori.push(`l'ingresso scelto («${nome}») non è stato ricordato in una pagina nuova (c'è «${ricordato}»)`);
+  }
+
+  await browser.close();
+  if (errori.length) {
+    console.error(`Audio: problemi\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log(`ok audio: ingresso finto → barre alte, cornice che lampeggia e indicatore che si muove; sensibilità subito; «Ferma» e respiro; controlli al server; «Prova» (${ingressi.length} ingressi elencati)`);
 }
 
 // Un testo di prova lungo `n` caratteri, con gli spazi di una frase vera (che va a capo) e senza spazio alla fine.
@@ -730,6 +888,7 @@ async function main() {
   if (clessidra) return provaClessidra();
   if (sbloccoAnimato) return provaSbloccoAnimato();
   if (equalizzatore) return provaEq();
+  if (audio) return provaAudio();
   if (testiLunghi) return provaTestiLunghi();
   if (regia) return provaRegia();
   const tabella = GEOMETRIA[layout]?.[formato];

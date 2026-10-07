@@ -529,6 +529,32 @@
         <div class="sp-colonna" id="dr-col1"></div>
 
         <div class="sp-colonna" id="dr-col2">
+          <h3>Equalizzatore</h3>
+          <p class="nota">La regia ascolta l'audio di FL Studio e manda i livelli alla pagina del Drum: tenete aperta questa pagina durante la diretta.</p>
+          <label class="sp-riga">Sorgente
+            <select id="dr-audio-sorgente">
+              <option value="ingresso">Ingresso audio (cavo virtuale, scheda, mix)</option>
+              <option value="sistema">Audio del PC (condivisione schermo)</option>
+            </select>
+          </label>
+          <label class="sp-riga" id="dr-audio-ingresso-riga">Ingresso
+            <select id="dr-audio-ingresso"><option value="">Predefinito</option></select>
+          </label>
+          <div class="azioni">
+            <button type="button" class="primario" id="dr-audio-avvia">Avvia ascolto</button>
+            <div class="eq-livello" id="dr-audio-livello" role="meter" aria-label="Livello dell'audio" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+          </div>
+          <p class="nota" id="dr-audio-stato"></p>
+          <label class="sp-riga">Sensibilità <input type="range" id="dr-eq-sens" min="50" max="300" step="5" aria-label="Sensibilità dell'equalizzatore"> <span id="dr-eq-sens-valore"></span></label>
+          <label class="sp-riga">Stile
+            <select id="dr-eq-stile"><option value="barre">Barre</option><option value="onda">Onda specchiata</option></select>
+          </label>
+          <label class="interruttore"><input type="checkbox" id="dr-eq-idle"> Mostra anche senza segnale (respira piano)</label>
+          <div class="azioni"><button type="button" class="piccolo" id="dr-eq-prova" title="Manda alla pagina uno schema finto di 4 secondi">Prova (4 s)</button></div>
+          <p class="nota">Se LIVE Studio sente FL Studio con «audio del desktop», lo sente anche «Audio del PC»: scegliete «Intero schermo» e spuntate «Condividi audio di sistema».</p>
+          <p class="nota">Se FL Studio usa un driver ASIO in modalità esclusiva, nessun altro programma riceve il suo audio: usate un driver condiviso (WASAPI, FL Studio ASIO) oppure un cavo audio virtuale come «Ingresso audio».</p>
+          <p class="nota">L'ascolto funziona dalla regia aperta su <code>localhost</code> (o https) con Chrome o Edge.</p>
+
           <h3>Fascia social</h3>
           <div class="fm-velocita" data-formato="drum"></div>
 
