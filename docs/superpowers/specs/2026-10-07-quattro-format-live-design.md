@@ -216,7 +216,7 @@ Doppio schermo in colonna: webcam del producer sopra, schermo della DAW (FL Stud
 | Pezzo | Posizione | Note |
 |---|---|---|
 | Webcam (A) | y 0–1212 | sorgente sotto la pagina; visibile da y ~270 |
-| Titolo | x 116–964, y 282–442 | targa 3D cromata 848×160 con monete BR |
+| Titolo | x 116–964, y 282–486 | targa 3D cromata 848×204 con monete BR (tre righe con i corpi 28 / 88 / 32 px) |
 | Fascia centrale | y 1212–1304 | 92 px, ticker dei social, filo neon sopra e sotto |
 | Schermo DAW (B) | y 1304–1920 | 1080×616 (un 16:9 è 608) |
 
@@ -234,14 +234,14 @@ Doppio schermo in colonna: webcam del producer sopra, schermo della DAW (FL Stud
 Doppio schermo: **A** webcam host/reaction, **B** screen-share di Spotify/YouTube.
 
 **Verticale 1080×1920**: identico alla produzione (A sopra y 0–1212, fascia 1212–1304, B sotto 1304–1920, titolo
-x 116–964, y 282–442).
+x 116–964, y 282–486).
 
 **Orizzontale 1920×1080** (sfondo di marca **opaco**: gradiente viola scuro con griglia e vignetta; le finestre sono
 fori nella pagina):
 
 | Pezzo | Posizione | Note |
 |---|---|---|
-| Titolo | x 360–1560, y 28–168 | targa cromata 1200×140 |
+| Titolo | x 360–1560, y 28–188 | targa cromata 1200×160 (corpi 26 / 58 / 28 px) |
 | Finestra A (host) | x 24–600, y 192–894 | 576×702, cornice cromata con staffe |
 | Divisore | x 600–648 | linea neon verticale con moneta BR al centro |
 | Finestra B (schermo) | x 648–1896, y 192–894 | 1248×702 (16:9) |
@@ -259,8 +259,8 @@ Camera del divano/host a tutto schermo sotto la pagina; tre moduli accendibili e
 
 | Pezzo | Posizione | Note |
 |---|---|---|
-| Targa | x 116–964, y 282–372 | «Back Rooms Podcast» + riga episodio |
-| Pannello Tematiche | x 116–964, y 400–880 | intestazione + fino a 8 righe da 48 px, a comparsa |
+| Targa | x 116–964, y 282–410 | «Back Rooms Podcast» + riga episodio (corpi 48 / 32 px) |
+| Pannello Tematiche | x 116–964, y 424–904 | intestazione + fino a 8 righe da 48 px, a comparsa |
 | Linea di divisione | x 538–542, y 240–1100 | neon cromato, filo che si disegna dal centro |
 | Fascia social | y 1108–1200 | social dello studio + ospiti |
 
@@ -268,8 +268,8 @@ Camera del divano/host a tutto schermo sotto la pagina; tre moduli accendibili e
 
 | Pezzo | Posizione | Note |
 |---|---|---|
-| Targa | x 48–560, y 36–126 | |
-| Pannello Tematiche | x 48–560 (o 1360–1872 con `lato: dx`), y 150–720 | |
+| Targa | x 48–560, y 36–164 | |
+| Pannello Tematiche | x 48–560 (o 1360–1872 con `lato: dx`), y 176–746 | |
 | Linea di divisione | x 958–962, y 0–968 | arriva alla fascia |
 | Fascia social | x 0–1920, y 968–1060 | |
 

@@ -37,12 +37,36 @@ export function rilancia(el, classe) {
   el.classList.add(classe);
 }
 
-// Riduce il corpo del testo finché non entra nel riquadro (larghezza e altezza).
+const lavagna = document.createElement("canvas").getContext("2d");
+
+// Quanto deve essere alta una scatola, per questo testo e questo corpo, perché l'inchiostro vero delle lettere (discendenti e
+// accenti compresi) non venga tagliato da `overflow: hidden`: la riga sta al centro, e la linea di base dei font non è al centro
+// della loro altezza (A sopra, D sotto). Sopra la linea di base le lettere salgono di inchiostroSu, sotto scendono di inchiostroGiu.
+function altezzaPerInchiostro(el, cs, corpo) {
+  const testo = cs.textTransform === "uppercase" ? el.textContent.toUpperCase() : el.textContent;
+  lavagna.font = `${cs.fontStyle} ${cs.fontWeight} ${corpo}px ${cs.fontFamily}`;
+  const m = lavagna.measureText(testo);
+  const scarto = m.fontBoundingBoxAscent - m.fontBoundingBoxDescent;
+  return Math.max(2 * m.actualBoundingBoxAscent - scarto, 2 * m.actualBoundingBoxDescent + scarto);
+}
+
+// Il testo entra nel suo riquadro: in larghezza; in altezza, con più righe se stanno tutte nella scatola e con una riga se anche
+// l'inchiostro delle lettere ci sta (la riga ha un'altezza fissa e le lettere che sporgono verrebbero tagliate).
+function entra(el) {
+  if (el.scrollWidth > el.clientWidth) return false;
+  const cs = getComputedStyle(el);
+  if (cs.overflowY === "visible") return true;
+  const corpo = parseFloat(cs.fontSize);
+  const riga = cs.lineHeight === "normal" ? corpo * 1.2 : parseFloat(cs.lineHeight);
+  if (el.scrollHeight > riga * 1.5) return el.scrollHeight <= el.clientHeight;
+  return altezzaPerInchiostro(el, cs, corpo) <= el.clientHeight + 1.5; // il canvas arrotonda l'inchiostro al pixel
+}
+
+// Riduce il corpo del testo finché non entra nel riquadro (larghezza e altezza, lettere comprese).
 export function adattaTesto(el, massimo, minimo) {
   let corpo = massimo;
   el.style.fontSize = `${corpo}px`;
-  // l'altezza ha una tolleranza: le lettere sporgono di un paio di pixel dalla riga anche quando il testo entra
-  while ((el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight + corpo * 0.3) && corpo > minimo) {
+  while (!entra(el) && corpo > minimo) {
     corpo -= 2;
     el.style.fontSize = `${corpo}px`;
   }

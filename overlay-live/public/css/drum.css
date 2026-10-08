@@ -23,7 +23,7 @@
   top: 282px;
   width: 524px;
   height: 80px;
-  padding: 6px 16px 6px 14px;
+  padding: 0 16px 0 14px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -58,16 +58,18 @@
   flex: 1;
   min-width: 0;
 }
+/* Le righe di testo hanno una scatola alta quanto serve all'inchiostro delle lettere (discendenti e accenti compresi): circa 1,22 volte
+   il corpo di base per i testi in Barlow Condensed, 1,12 per il gotico. Più bassa taglierebbe le lettere sotto la riga. */
 .dr-brano-riga {
   display: flex;
   align-items: baseline;
   gap: 12px;
-  height: 24px;
-  line-height: 24px;
+  height: 30px;
+  line-height: 30px;
 }
 .dr-brano-etichetta {
   flex: none;
-  font: 800 calc(22px * var(--ts-brano, 1)) / 24px var(--font-dati);
+  font: 800 calc(22px * var(--ts-brano, 1)) / 30px var(--font-dati);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--viola-chiaro);
@@ -75,18 +77,18 @@
 .dr-brano-artista {
   flex: 1;
   min-width: 0;
-  height: 24px;
+  height: 30px;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
-  font: 700 calc(24px * var(--ts-brano, 1)) / 24px var(--font-dati);
+  font: 700 calc(24px * var(--ts-brano, 1)) / 30px var(--font-dati);
   color: #e6d8ff;
 }
 .dr-brano-titolo {
-  height: 44px;
+  height: 49px;
   white-space: nowrap;
   overflow: hidden;
-  font: 800 calc(40px * var(--ts-brano, 1)) / 44px var(--font-dati);
+  font: 800 calc(40px * var(--ts-brano, 1)) / 49px var(--font-dati);
   color: var(--dr-oro);
   text-shadow: 0 3px 0 rgba(60, 30, 0, 0.8), 0 0 14px rgba(255, 200, 60, 0.55);
 }
@@ -138,24 +140,24 @@
   gap: 2px;
 }
 .dr-pri-sopra {
-  height: 28px;
+  height: 30px;
   white-space: nowrap;
   overflow: hidden;
-  font: 800 calc(24px * var(--ts-priorita, 1)) / 28px var(--font-dati);
+  font: 800 calc(24px * var(--ts-priorita, 1)) / 30px var(--font-dati);
   color: #e6d8ff;
 }
 .dr-pri-riga {
   display: flex;
   align-items: baseline;
   gap: 12px;
-  height: 62px;
+  height: 64px;
 }
 .dr-pri-prefisso {
   flex: none;
   max-width: 44%;
   overflow: hidden;
   white-space: nowrap;
-  font: 800 calc(38px * var(--ts-priorita, 1)) / 62px var(--font-dati);
+  font: 800 calc(38px * var(--ts-priorita, 1)) / 64px var(--font-dati);
   color: #fff;
 }
 .dr-pri-slot {
@@ -163,7 +165,7 @@
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
-  font: 900 calc(56px * var(--ts-priorita, 1)) / 62px var(--font-gotico);
+  font: 900 calc(56px * var(--ts-priorita, 1)) / 64px var(--font-gotico);
   color: var(--dr-oro);
   text-shadow: 0 3px 0 rgba(60, 30, 0, 0.8), 0 0 16px rgba(255, 200, 60, 0.6);
 }
@@ -296,10 +298,10 @@
   left: 16px;
   right: 16px;
   top: 62px;
-  height: 36px;
+  height: 42px;
   overflow: hidden;
   white-space: nowrap;
-  font: 700 calc(34px * var(--ts-traguardi, 1)) / 36px var(--font-dati);
+  font: 700 calc(34px * var(--ts-traguardi, 1)) / 42px var(--font-dati);
   color: #fff;
 }
 .dr-modulo-riga {

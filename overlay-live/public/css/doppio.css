@@ -3,9 +3,9 @@
 
    POSIZIONI in pixel della tela:
    Verticale 1080×1920 (produzione e reaction): webcam A sotto la pagina (y 0–1212), fascia 1212–1304, schermo B 1304–1920
-   - titolo (targa)        x 116 → 964,   y 282 → 442
+   - titolo (targa)        x 116 → 964,   y 282 → 486
    Reaction orizzontale 1920×1080 (sfondo di marca opaco: le due finestre sono fori nella pagina):
-   - titolo (targa)        x 360 → 1560,  y 28 → 168
+   - titolo (targa)        x 360 → 1560,  y 28 → 188
    - finestra A (host)     x 24 → 600,    y 192 → 894
    - divisore              x 600 → 648,   y 192 → 894
    - finestra B (schermo)  x 648 → 1896,  y 192 → 894
@@ -17,17 +17,21 @@
   left: 116px;
   top: 282px;
   width: 848px;
-  height: 160px;
+  height: 204px;
 }
+/* In orizzontale la targa sta nei 160 px sopra le finestre (che cominciano a y 192): corpi più piccoli di quelli del verticale. */
 .fm.reaction.orizzontale .fm-targa {
   --d: 88px;
-  --h-sopra: 22px;
-  --h-testo: 70px;
-  --h-sotto: 24px;
+  --c-sopra: 26px;
+  --c-testo: 58px;
+  --c-sotto: 28px;
+  --h-sopra: 28px;
+  --h-testo: 65px;
+  --h-sotto: 35px;
   left: 360px;
   top: 28px;
   width: 1200px;
-  height: 140px;
+  height: 160px;
 }
 
 /* ---------- Solo reaction in orizzontale ---------- */

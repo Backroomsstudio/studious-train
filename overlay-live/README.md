@@ -168,11 +168,11 @@ Il server li stampa all'avvio, insieme agli altri. Quello che hanno in comune:
 - **Zone di TikTok** (verticale): sui telefoni resta visibile circa x 104…976, quindi i contenuti stanno tra x 116 e 964; l'app copre in alto fino a ~230 (fino a ~270 con il nome della live) e la chat sta tra 1200 e 1700, quindi i pezzi stanno tra y 230 e 1200. La fascia social è l'unica a tutta larghezza.
 - **Parametri**: `?anteprima=1` (sfondo nero e finti schermi al posto delle camere), `&guide=1` (le zone dei telefoni, solo in verticale), `&statico=1` (tutto nello stato finale e senza animazioni: per i mockup), `&muto=1` (nessun suono da questa pagina: solo il Drum ne ha), `?formato=orizzontale` (solo Podcast e Reaction; negli altri due non cambia niente). Una sorgente di dimensioni diverse si adatta mantenendo le proporzioni. Per spostare un pezzo si cambiano i numeri in cima al foglio di stile del layout (`drum.css`, `doppio.css`, `podcast.css`; le parti comuni sono in `formati.css`).
 - **Fascia social**: la barra che scorre del layout senza premio, larga 1080 (1920 in orizzontale). Le voci sono una lista sola, nella scheda **Social del brand** della regia (in alto, uguale per tutti i layout con la barra); il Drum aggiunge l'artista ospite e il Podcast i suoi ospiti subito dopo la prima voce. La velocità si regola in ogni sezione (40–160 px/s).
-- **Dimensione dei testi**: in ogni sezione, un cursore (60–200%, 100% = base) per ogni gruppo di testi: Drum *contatore Like*, *colonna traguardi*, *brano in esecuzione*, *«Dona un…»*, *banner di sblocco*; Studio Production e Reaction *riga sopra*, *titolo*, *riga sotto*; Podcast *targa* e *pannello Tematiche*. Si vede subito nell'anteprima e resta salvata anche tra una serata e l'altra. Ogni testo sta in un riquadro di altezza fissa: il corpo si restringe da solo se la frase non entra e non supera mai l'altezza del riquadro (oltre non cresce). Il testo scorrevole della fascia non rientra. Stream Deck: `formatoTesti`.
+- **Dimensione dei testi**: in ogni sezione, un cursore (60–200%, 100% = base) per ogni gruppo di testi: Drum *contatore Like*, *colonna traguardi*, *brano in esecuzione*, *«Dona un…»*, *banner di sblocco*; Studio Production e Reaction *riga sopra*, *titolo*, *riga sotto*; Podcast *targa* e *pannello Tematiche*. Si vede subito nell'anteprima e resta salvata anche tra una serata e l'altra. Ogni testo sta in un riquadro di altezza fissa, alto quanto serve alle lettere (anche alle code di g, p, y e agli accenti): il corpo si restringe da solo se la frase non entra e non supera mai quello che il riquadro permette (oltre non cresce). I corpi di partenza (100%) sono quelli dei riquadri: nelle targhe 28 / 88 / 32 px in verticale (26 / 58 / 28 nella reaction orizzontale, che ha solo 160 px di altezza) e 48 / 32 nel Podcast; il cursore serve soprattutto a rimpicciolire, e sopra il 100% ingrandisce solo dove il riquadro ha ancora spazio. Il testo scorrevole della fascia non rientra. Stream Deck: `formatoTesti`.
 - **Il vetro non è sfocato**: i riquadri di vetro sono semitrasparenti ma non sfocano la camera, perché una pagina non può sfocare quello che sta in un'altra sorgente: il vetro è simulato (fondo scuro, grana, bordo cromato, luce nel terzo alto) e il testo ha un'ombra per leggersi anche sulla camera.
 - **Nuova serata** (regia): i Like del Drum ripartono da zero e annunci e brano si azzerano, la tematica attiva del Podcast torna alla prima; scaletta, titoli, elenco, ospiti e impostazioni restano.
 - **Mockup e controlli**: `node strumenti/mockup-formati.mjs --base http://127.0.0.1:<porta> --layout <drum|produzione|reaction|podcast> [--formato orizzontale] [--stato <stato>]` (Playwright installato a parte, non fa parte di `npm test`) controlla che ogni pezzo stia dove dice la tabella (±1 px, e dentro la zona libera) e salva `mockup/<layout>[-orizzontale][-<stato>].jpg`; gli stati sono Drum `vuoto|meta|sblocco|finale` e Podcast `completo|base` (linea e tematiche accese o spente). Le altre opzioni provano i flussi dal vivo: `--clessidra`, `--sblocco-animato`, `--eq`, `--audio` (Drum), `--testi-lunghi` (con `--layout` per gli altri layout: i testi più lunghi permessi con la dimensione al 200%), `--regia`, `--regia-drum`, `--regia-doppio` (Studio Production e Reaction) e `--regia-podcast`. **Usatelo su una porta di prova** con `OVERLAY_CONFIG` e `OVERLAY_DATI` temporanei, non durante la diretta: i comandi di prova cambiano lo stato (Like, scaletta, titoli, tematiche, ospiti).
-- **Limiti noti**: questi layout sono stati provati con Chromium e con i controlli dello strumento qui sopra, non dentro TikTok LIVE Studio né su un telefono (le posizioni seguono le zone già misurate per gli altri layout). I Like arrivano da TikTok come eventi della chat: nelle prove sono simulati (`likeEvento`, *+100*). L'«Audio del PC» e l'ASIO in modalità esclusiva non si sono potuti provare (vedi sotto).
+- **Limiti noti**: questi layout sono stati provati con Chromium e con i controlli dello strumento qui sopra, non dentro TikTok LIVE Studio né su un telefono (le posizioni seguono le zone già misurate per gli altri layout). I Like arrivano da TikTok come eventi della chat: nelle prove sono simulati (`likeEvento`, *+100*). L'«Audio del PC» e l'ASIO in modalità esclusiva non si sono potuti provare (vedi sotto). Nemmeno il carico sul PC che fa la diretta si è potuto misurare: le parti più pesanti sono il riempimento a sabbia (circa 1.800 granelli ridisegnati a ogni fotogramma) e il «respiro» continuo dell'equalizzatore; se il PC fatica, scegliete le perline e togliete il respiro.
 
 ## Drum Challenge Live
 
@@ -229,7 +229,7 @@ Per le live in cui si lavora a un beat o a un mix: la **webcam** in alto e lo **
 | Pezzo | x | y | larghezza × altezza |
 |---|---|---|---|
 | Webcam (A) | 0 | 0 | 1080 × 1212 (l'app copre fino a ~270) |
-| Titolo (targa) | 116 | 282 | 848 × 160 |
+| Titolo (targa) | 116 | 282 | 848 × 204 |
 | Fascia social | 0 | 1212 | 1080 × 92 |
 | Schermo (B: DAW o video) | 0 | 1304 | 1080 × 616 |
 
@@ -251,8 +251,8 @@ Per il podcast sul divano: la **camera** (host e ospiti) a tutto schermo, **sott
 
 | Pezzo | Verticale 1080×1920 | Orizzontale 1920×1080 |
 |---|---|---|
-| Targa | x 116, y 282, 848 × 90 | x 48, y 36, 512 × 90 |
-| Pannello Tematiche | x 116, y 400, 848 × 480 (8 righe da 48) | x 48 (1360 con «Destra»), y 150, 512 × 570 (8 righe da 58) |
+| Targa | x 116, y 282, 848 × 128 | x 48, y 36, 512 × 128 |
+| Pannello Tematiche | x 116, y 424, 848 × 480 (8 righe da 48) | x 48 (1360 con «Destra»), y 176, 512 × 570 (8 righe da 58) |
 | Linea di divisione | x 538, y 240, 4 × 860 | x 958, y 0, 4 × 968 (arriva alla fascia) |
 | Fascia social | x 0, y 1108, 1080 × 92 | x 0, y 968, 1920 × 92 |
 
@@ -269,7 +269,7 @@ Per le reaction: la **webcam** di chi commenta e lo **schermo condiviso** (il vi
 
 | Pezzo | x | y | larghezza × altezza |
 |---|---|---|---|
-| Titolo (targa) | 360 | 28 | 1200 × 140 |
+| Titolo (targa) | 360 | 28 | 1200 × 160 |
 | Finestra A (webcam, verticale) | 24 | 192 | 576 × 702 |
 | Divisore con la moneta BR | 600 | 192 | 48 × 702 |
 | Finestra B (schermo condiviso) | 648 | 192 | 1248 × 702 |

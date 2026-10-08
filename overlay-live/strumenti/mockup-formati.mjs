@@ -69,12 +69,12 @@ export const GEOMETRIA = {
     },
   },
   produzione: {
-    verticale: { titolo: p(116, 282, 848, 160, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
+    verticale: { titolo: p(116, 282, 848, 204, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
   },
   reaction: {
-    verticale: { titolo: p(116, 282, 848, 160, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
+    verticale: { titolo: p(116, 282, 848, 204, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
     orizzontale: {
-      titolo: p(360, 28, 1200, 140),
+      titolo: p(360, 28, 1200, 160),
       finestraA: p(24, 192, 576, 702),
       finestraB: p(648, 192, 1248, 702),
       divisore: p(600, 192, 48, 702),
@@ -85,15 +85,15 @@ export const GEOMETRIA = {
   },
   podcast: {
     verticale: {
-      targa: p(116, 282, 848, 90, true),
-      tematiche: p(116, 400, 848, 480, true),
+      targa: p(116, 282, 848, 128, true),
+      tematiche: p(116, 424, 848, 480, true),
       linea: p(538, 240, 4, 860, true),
       fascia: p(0, 1108, 1080, 92),
       "finto:camera": p(0, 0, 1080, 1920),
     },
     orizzontale: {
-      targa: p(48, 36, 512, 90),
-      tematiche: p(48, 150, 512, 570),
+      targa: p(48, 36, 512, 128),
+      tematiche: p(48, 176, 512, 570),
       linea: p(958, 0, 4, 968),
       fascia: p(0, 968, 1920, 92),
       "finto:camera": p(0, 0, 1920, 1080),
@@ -1362,7 +1362,109 @@ async function provaRegiaPodcast() {
 // Un testo di prova lungo `n` caratteri, con gli spazi di una frase vera (che va a capo) e senza spazio alla fine.
 const lungo = (n) => "Lunghissimo titolo di prova con tante parole per la riga ".repeat(3).slice(0, n).trimEnd().padEnd(n, "x");
 
+// Quanti pixel (con una differenza netta di colore) cambiano tra due fotografie PNG della stessa zona (gira dentro la pagina).
+const contaPixelDiversi = async ([a64, b64]) => {
+  const carica = (b64) =>
+    new Promise((ok) => {
+      const i = new Image();
+      i.onload = () => ok(i);
+      i.src = `data:image/png;base64,${b64}`;
+    });
+  const [ia, ib] = await Promise.all([carica(a64), carica(b64)]);
+  const c = document.createElement("canvas");
+  c.width = ia.width;
+  c.height = ia.height;
+  const x = c.getContext("2d", { willReadFrequently: true });
+  x.drawImage(ia, 0, 0);
+  const da = x.getImageData(0, 0, c.width, c.height).data;
+  x.clearRect(0, 0, c.width, c.height);
+  x.drawImage(ib, 0, 0);
+  const db = x.getImageData(0, 0, c.width, c.height).data;
+  let diversi = 0;
+  for (let i = 0; i < da.length; i += 4) if (Math.abs(da[i] - db[i]) + Math.abs(da[i + 1] - db[i + 1]) + Math.abs(da[i + 2] - db[i + 2]) > 60) diversi++;
+  return diversi;
+};
+
+// Il testo di una riga non è tagliato dalla riga stessa (Review Focus 4: niente esce dal riquadro). Le righe hanno un'altezza fissa
+// e `overflow: hidden`: le lettere che sporgono sopra o sotto (discendenti, accenti) vengono tagliate senza che nessuna misura di
+// larghezza o altezza se ne accorga. Per questo si fotografa la stessa zona con `overflow: hidden` e con `overflow: visible` sul solo
+// elemento: devono essere uguali. Ombre, riflessi e il cromo del testo si tolgono prima (sfumano oltre la riga anche senza tagli, e un
+// testo con sfondo ritagliato a lettera non si vedrebbe fuori dalla scatola). Ritorna le righe tagliate.
+async function inchiostroTagliato(pagina, selettori) {
+  const tagliate = [];
+  const vista = pagina.viewportSize();
+  for (const sel of selettori) {
+    const luoghi = await pagina.locator(sel).all();
+    for (const [indice, luogo] of luoghi.entries()) {
+      const box = await luogo.boundingBox();
+      const testo = ((await luogo.textContent()) ?? "").trim();
+      if (!box || box.width < 1 || box.height < 1 || !testo) continue;
+      const x = Math.max(0, box.x - 24);
+      const y = Math.max(0, box.y - 36);
+      const clip = { x, y, width: Math.min(vista.width - x, box.width + 48), height: Math.min(vista.height - y, box.height + 72) };
+      await luogo.evaluate((e) => {
+        e.dataset.provaStile = e.getAttribute("style") ?? "";
+        for (const [nome, valore] of [["text-shadow", "none"], ["filter", "none"], ["animation", "none"], ["background", "none"], ["color", "#fff"], ["-webkit-text-fill-color", "#fff"]]) e.style.setProperty(nome, valore, "important");
+      });
+      const chiusa = await pagina.screenshot({ clip, animations: "disabled", caret: "hide" });
+      await luogo.evaluate((e) => e.style.setProperty("overflow", "visible", "important"));
+      const aperta = await pagina.screenshot({ clip, animations: "disabled", caret: "hide" });
+      const corpo = await luogo.evaluate((e) => {
+        const c = parseFloat(getComputedStyle(e).fontSize);
+        e.setAttribute("style", e.dataset.provaStile);
+        delete e.dataset.provaStile;
+        return c;
+      });
+      const diversi = await pagina.evaluate(contaPixelDiversi, [chiusa.toString("base64"), aperta.toString("base64")]);
+      if (diversi > 2) tagliate.push({ sel, indice, testo: testo.slice(0, 24), pixel: diversi, corpo });
+    }
+  }
+  return tagliate;
+}
+const descriviTagliate = (tagliate, contesto) => tagliate.map((t) => `${t.sel}${t.indice ? `[${t.indice}]` : ""} («${t.testo}…», ${Math.round(t.corpo)} px, ${contesto}): le lettere sporgono dalla riga e vengono tagliate (${t.pixel} pixel)`);
+
 // I testi più lunghi nei riquadri fissi del Drum, con la dimensione dei testi al massimo (Review Focus 4).
+// Le righe di testo del Drum, con testi lunghi e brevi e la dimensione dei testi da 100% a 200%: nessuna lettera tagliata dalla sua riga.
+const RIGHE_DRUM = [".dr-modulo-titolo", ".dr-modulo-manca", "#dr-brano-titolo", "#dr-brano-artista", "#dr-pri-sopra", "#dr-pri-prefisso", "#dr-pri-slot", "#dr-like-numero", ".dr-sblocco-etichetta", "#dr-sblocco-titolo"];
+// I corpi di base del piano (px), con testi brevi e la dimensione dei testi al 100%: la riga non deve costringere il testo a scendere.
+const CORPI_BASE_DRUM = { ".dr-modulo-titolo": 34, ".dr-modulo-manca": 26, "#dr-brano-titolo": 40, "#dr-brano-artista": 24, "#dr-pri-sopra": 24, "#dr-pri-prefisso": 38, "#dr-pri-slot": 56, "#dr-like-numero": 64, ".dr-sblocco-etichetta": 28, "#dr-sblocco-titolo": 72 };
+const PASSATE_DRUM = [
+  { nome: "testi brevi al 100%", lunghi: false, ts: 100, corpiDiBase: true },
+  { nome: "testi lunghi al 100%", lunghi: true, ts: 100 },
+  { nome: "testi lunghi al 200%", lunghi: true, ts: 200 },
+  { nome: "testi brevi al 110%", lunghi: false, ts: 110 },
+  { nome: "testi brevi al 150%", lunghi: false, ts: 150 },
+  { nome: "testi brevi al 200%", lunghi: false, ts: 200 },
+];
+async function passateInchiostroDrum(browser, errori) {
+  for (const passata of PASSATE_DRUM) {
+    await comando("nuovaSerata");
+    await comando("layout", { nome: "drum" });
+    const righe = [1000, 2000, 3000, 5000, 7000, 9000, 10000, 12000, 15000, 17000, 20000, 22000].map((like, i) => (passata.lunghi ? (i === 6 ? `${like} | ${lungo(60)}` : `${like} |`) : i === 6 ? `${like} | Gypsy Queen` : `${like} |`));
+    await comando("drumScaletta", { testo: righe.join("\n") });
+    await comando("drumLike", { imposta: 11400 });
+    await comando("drumBrano", passata.lunghi ? { titolo: lungo(60), artista: lungo(40) } : { titolo: "Gypsy Queen", artista: "Quiet Riot" });
+    await comando("drumPriorita", passata.lunghi ? { prefisso: "Regala una super", slot: "Corolla di cristallo" } : { prefisso: "Regala un", slot: "Papaya" });
+    await comando("formatoTesti", { formato: "drum", valori: { contatore: passata.ts, traguardi: passata.ts, brano: passata.ts, priorita: passata.ts, sblocco: passata.ts } });
+    const pagina = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
+    pagina.on("pageerror", (e) => errori.push(`pagina: ${e.message}`));
+    await pagina.goto(`${base}/drum.html?anteprima=1&statico=1&sblocco=1`);
+    await pagina.evaluate(() => document.fonts?.ready);
+    await pagina.waitForTimeout(800);
+    errori.push(...descriviTagliate(await inchiostroTagliato(pagina, RIGHE_DRUM), passata.nome));
+    if (passata.corpiDiBase) {
+      const corpi = await pagina.evaluate((attesi) => Object.fromEntries(Object.keys(attesi).map((sel) => [sel, [...document.querySelectorAll(sel)].filter((e) => !e.hidden && e.textContent.trim()).map((e) => parseFloat(getComputedStyle(e).fontSize))])), CORPI_BASE_DRUM);
+      for (const [sel, base] of Object.entries(CORPI_BASE_DRUM)) {
+        const visti = corpi[sel];
+        if (!visti.length) errori.push(`${sel}: nessun testo da misurare (${passata.nome})`);
+        const piccoli = visti.filter((c) => c < base - 0.5);
+        if (piccoli.length) errori.push(`${sel}: il corpo di base è ${base} px ma con ${passata.nome} è sceso a ${piccoli.map(Math.round).join(", ")} px (la scatola della riga è troppo bassa per le lettere)`);
+      }
+    }
+    await pagina.close();
+  }
+}
+
 async function provaTestiLunghi() {
   await comando("nuovaSerata");
   await comando("layout", { nome: "drum" });
@@ -1438,6 +1540,8 @@ async function provaTestiLunghi() {
   }
   const corpi = misure.filter((m) => m.sel === ".dr-modulo-titolo" || m.sel === "#dr-brano-titolo").map((m) => `${m.sel} ${Math.round(m.corpo)} px`);
   await pagina.screenshot({ path: join(CARTELLA, "mockup", "drum-testi-lunghi.jpg"), type: "jpeg", quality: 88 });
+  await pagina.close();
+  await passateInchiostroDrum(browser, errori);
   await comando("formatoTesti", { formato: "drum", azzera: true });
   await comando("drumBrano", { svuota: true });
   await browser.close();
@@ -1552,6 +1656,44 @@ async function controllaTitoloVivo(browser, dimensioni, url, errori) {
   await pagina.close();
 }
 
+// Le tre righe della targa, con testi brevi e lunghi e la dimensione dei testi da 100% a 200%: nessuna lettera tagliata dalla sua
+// riga. Con testi brevi al 100% i corpi sono quelli di base: produzione e reaction in verticale sopra 28 / titolo 88 / sotto 32 (come
+// dice il piano; la targa è alta 204 px), reaction in orizzontale 26 / 58 / 28 (la targa orizzontale sta nei 160 px della griglia).
+const RIGHE_TARGA = ["#fm-titolo-sopra", "#fm-titolo-testo", "#fm-titolo-sotto"];
+const CORPI_BASE_TARGA = {
+  verticale: { "#fm-titolo-sopra": 28, "#fm-titolo-testo": 88, "#fm-titolo-sotto": 32 },
+  orizzontale: { "#fm-titolo-sopra": 26, "#fm-titolo-testo": 58, "#fm-titolo-sotto": 28 },
+};
+async function passateInchiostroTarga(browser, errori) {
+  const orizzontale = formato === "orizzontale";
+  const passate = [
+    { nome: "testi brevi al 100%", titolo: { sopra: "Giovedì · ore 01:00", testo: "Pappagallo", sotto: "Quiz, gara e pappagallo" }, ts: 100, corpiDiBase: true },
+    { nome: "testi brevi al 150%", titolo: { sopra: "Giovedì · ore 01:00", testo: "Pappagallo", sotto: "Quiz, gara e pappagallo" }, ts: 150 },
+    { nome: "testi brevi al 200%", titolo: { sopra: "Giovedì · ore 01:00", testo: "Pappagallo", sotto: "Quiz, gara e pappagallo" }, ts: 200 },
+    { nome: "testi lunghi al 200%", titolo: Object.fromEntries(Object.entries(layout === "produzione" ? { sopra: 32, testo: 28, sotto: 48 } : { sopra: 40, testo: 60, sotto: 60 }).map(([riga, n]) => [riga, lungo(n)])), ts: 200 },
+    { nome: "testi lunghi al 100%", titolo: Object.fromEntries(Object.entries(layout === "produzione" ? { sopra: 32, testo: 28, sotto: 48 } : { sopra: 40, testo: 60, sotto: 60 }).map(([riga, n]) => [riga, lungo(n)])), ts: 100 },
+  ];
+  for (const passata of passate) {
+    await preparaStato();
+    await comando(layout, { titolo: passata.titolo });
+    await comando("formatoTesti", { formato: layout, valori: { sopra: passata.ts, titolo: passata.ts, sotto: passata.ts } });
+    const pagina = await browser.newPage({ viewport: orizzontale ? { width: 1920, height: 1080 } : { width: 1080, height: 1920 } });
+    pagina.on("pageerror", (e) => errori.push(`pagina: ${e.message}`));
+    await pagina.goto(`${base}/${layout}.html?anteprima=1&statico=1${orizzontale ? "&formato=orizzontale" : ""}`);
+    await pagina.evaluate(() => document.fonts?.ready);
+    await pagina.waitForTimeout(800);
+    errori.push(...descriviTagliate(await inchiostroTagliato(pagina, RIGHE_TARGA), passata.nome));
+    if (passata.corpiDiBase) {
+      const attesi = CORPI_BASE_TARGA[orizzontale ? "orizzontale" : "verticale"];
+      const corpi = await pagina.evaluate((sels) => Object.fromEntries(sels.map((sel) => [sel, parseFloat(getComputedStyle(document.querySelector(sel)).fontSize)])), Object.keys(attesi));
+      for (const [sel, base] of Object.entries(attesi)) if (corpi[sel] < base - 0.5) errori.push(`${sel}: il corpo di base è ${base} px ma con ${passata.nome} è ${Math.round(corpi[sel])} px (la scatola della riga o la targa è troppo bassa)`);
+    }
+    await pagina.close();
+  }
+  await comando("formatoTesti", { formato: layout, azzera: true });
+  await preparaStato();
+}
+
 // Le tre righe della targa del titolo al massimo dei caratteri e con la dimensione dei testi al 200% (Review Focus 4).
 async function provaTestiLunghiTitolo() {
   const righe = layout === "produzione" ? { sopra: 32, testo: 28, sotto: 48 } : { sopra: 40, testo: 60, sotto: 60 };
@@ -1596,7 +1738,7 @@ async function provaTestiLunghiTitolo() {
     if (l.largo) errori.push(`${l.sel} (${Math.round(l.corpo)} px): il testo esce dalla riga in larghezza`);
     if (l.alto) errori.push(`${l.sel} (${Math.round(l.corpo)} px): il testo esce dalla riga in altezza`);
     if (l.x < t.x - 1 || l.x + l.w > t.x + t.w + 1 || l.y < t.y - 1 || l.y + l.h > t.y + t.h + 1) errori.push(`${l.sel}: esce dalla targa (testo x ${Math.round(l.x)}…${Math.round(l.x + l.w)}, y ${Math.round(l.y)}…${Math.round(l.y + l.h)})`);
-    if (l.y < l.scatola.su - 2 || l.y + l.h > l.scatola.giu + 2) errori.push(`${l.sel} (${Math.round(l.corpo)} px): il testo sporge dalla sua scatola (testo y ${Math.round(l.y)}…${Math.round(l.y + l.h)}, scatola y ${Math.round(l.scatola.su)}…${Math.round(l.scatola.giu)})`);
+    // Che le lettere non sporgano dalla loro riga lo dice la prova sui pixel (passateInchiostroTarga): un rettangolo del testo non sa se ci sono discendenti.
   }
   for (let i = 0; i < visibili.length; i++) {
     for (let j = i + 1; j < visibili.length; j++) {
@@ -1609,6 +1751,8 @@ async function provaTestiLunghiTitolo() {
   }
   const nome = `${layout}${orizzontale ? "-orizzontale" : ""}-testi-lunghi.jpg`;
   await pagina.screenshot({ path: join(CARTELLA, "mockup", nome), type: "jpeg", quality: 88 });
+  await pagina.close();
+  await passateInchiostroTarga(browser, errori);
   await comando("formatoTesti", { formato: layout, azzera: true });
   await preparaStato();
   await browser.close();
@@ -1672,7 +1816,7 @@ async function controllaPodcastLato(browser, dimensioni, url, errori) {
     const b = document.querySelector('[data-parte="tematiche"]').getBoundingClientRect();
     return [b.x, b.y, b.width, b.height];
   });
-  const atteso = formato === "orizzontale" ? [1360, 150, 512, 570] : GEOMETRIA.podcast.verticale.tematiche.r;
+  const atteso = formato === "orizzontale" ? [1360, 176, 512, 570] : GEOMETRIA.podcast.verticale.tematiche.r;
   if (atteso.some((v, i) => Math.abs(v - r[i]) > TOLLERANZA)) errori.push(`con lato «dx» il pannello Tematiche è [${r.map(Math.round).join(", ")}], atteso [${atteso.join(", ")}]`);
   await pagina.close();
   await comando("podcast", { tematiche: { lato: "sx" } });
@@ -1867,6 +2011,39 @@ async function controllaPodcastPrimoDisegno(browser, dimensioni, url, errori) {
 
 // Le righe della targa e le otto tematiche al massimo dei caratteri (la larghezza è il limite) e, in un secondo passaggio, con testi
 // cortissimi (il limite è l'altezza della scatola), con i testi al 200%: niente esce dal suo riquadro e niente sparisce.
+// Targa e tematiche del podcast, con testi brevi e lunghi e la dimensione dei testi da 100% a 200%: nessuna lettera tagliata dalla sua
+// riga. Con testi brevi al 100% la targa ha i corpi del piano: titolo 48, riga sotto 32.
+const RIGHE_PODCAST = ["#po-targa-testo", "#po-targa-sotto", "#po-tematiche-titolo", "#po-tematiche .po-tema-testo"];
+const CORPI_BASE_PODCAST = { "#po-targa-testo": 48, "#po-targa-sotto": 32 };
+async function passateInchiostroPodcast(browser, errori) {
+  const orizzontale = formato === "orizzontale";
+  const brevi = { titolo: { testo: "Pappagallo", sotto: "Con Quentin" }, tematiche: { titolo: "Quiz e giochi", elenco: ["Pappagallo", "Gypsy", "Quiz", "Giraffa", "Papà"], attiva: 1 } };
+  const lunghi = { titolo: { testo: lungo(32), sotto: lungo(48) }, tematiche: { titolo: lungo(32), elenco: Array.from({ length: 8 }, (_, i) => lungo(48 - i)), attiva: 3 } };
+  const passate = [
+    { nome: "testi brevi al 100%", dati: brevi, ts: 100, corpiDiBase: true },
+    { nome: "testi brevi al 150%", dati: brevi, ts: 150 },
+    { nome: "testi brevi al 200%", dati: brevi, ts: 200 },
+    { nome: "testi lunghi al 200%", dati: lunghi, ts: 200 },
+    { nome: "testi lunghi al 100%", dati: lunghi, ts: 100 },
+  ];
+  for (const passata of passate) {
+    await preparaStato();
+    await comando("podcast", passata.dati);
+    await comando("formatoTesti", { formato: "podcast", valori: { targa: passata.ts, tematiche: passata.ts } });
+    const pagina = await browser.newPage({ viewport: orizzontale ? { width: 1920, height: 1080 } : { width: 1080, height: 1920 } });
+    pagina.on("pageerror", (e) => errori.push(`pagina: ${e.message}`));
+    await pagina.goto(`${base}/podcast.html?anteprima=1&statico=1${orizzontale ? "&formato=orizzontale" : ""}`);
+    await pagina.evaluate(() => document.fonts?.ready);
+    await pagina.waitForTimeout(800);
+    errori.push(...descriviTagliate(await inchiostroTagliato(pagina, RIGHE_PODCAST), passata.nome));
+    if (passata.corpiDiBase) {
+      const corpi = await pagina.evaluate((sels) => Object.fromEntries(sels.map((sel) => [sel, parseFloat(getComputedStyle(document.querySelector(sel)).fontSize)])), Object.keys(CORPI_BASE_PODCAST));
+      for (const [sel, base] of Object.entries(CORPI_BASE_PODCAST)) if (corpi[sel] < base - 0.5) errori.push(`${sel}: il corpo di base è ${base} px ma con ${passata.nome} è ${Math.round(corpi[sel])} px (la scatola della riga o la targa è troppo bassa)`);
+    }
+    await pagina.close();
+  }
+}
+
 async function provaTestiLunghiPodcast() {
   await preparaStato();
   await comando("formatoTesti", { formato: "podcast", valori: { targa: 200, tematiche: 200 } });
@@ -1918,7 +2095,7 @@ async function provaTestiLunghiPodcast() {
       if (l.largo) errore(`${l.nome} (${Math.round(l.corpo)} px): il testo esce dalla riga in larghezza`);
       if (l.alto) errore(`${l.nome} (${Math.round(l.corpo)} px): il testo esce dalla riga in altezza`);
       if (l.x < dentro.x - 1 || l.x + l.w > dentro.x + dentro.w + 1 || l.y < dentro.y - 1 || l.y + l.h > dentro.y + dentro.h + 1) errore(`${l.nome}: esce da ${l.contenitore}`);
-      if (l.y < l.scatola.su - 2 || l.y + l.h > l.scatola.giu + 2) errore(`${l.nome} (${Math.round(l.corpo)} px): il testo sporge dalla sua scatola`);
+      // Che le lettere non sporgano dalla loro riga lo dice la prova sui pixel (passateInchiostroPodcast).
     }
     for (const gruppo of ["targa", "tematiche"]) {
       const righe = misure.righe.filter((l) => l.contenitore === gruppo);
@@ -1934,6 +2111,8 @@ async function provaTestiLunghiPodcast() {
     }
     if (passaggio === "testi lunghi") await pagina.screenshot({ path: join(CARTELLA, "mockup", nome), type: "jpeg", quality: 88 });
   }
+  await pagina.close();
+  await passateInchiostroPodcast(browser, errori);
   await comando("formatoTesti", { formato: "podcast", azzera: true });
   await preparaStato();
   await browser.close();

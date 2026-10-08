@@ -66,13 +66,13 @@ function creaInterruttore(el) {
 // ---------- Targa ----------
 const targa = $("#po-targa");
 // Le due righe: l'elemento, il gruppo di testo (dimensione scelta in regia), il corpo massimo e il minimo con cui si adattano.
-// Il titolo può scendere fino a 20 px perché nella targa orizzontale (512 px, due monete) un testo di 32 caratteri deve entrare;
-// lascia 4 px d'aria nella sua scatola (il gotico ha le aste alte e le code lunghe: a tutta altezza toccherebbero i bordi).
+// Il titolo può scendere fino a 20 px perché nella targa orizzontale (512 px, due monete) un testo di 32 caratteri deve entrare.
+// I massimi sono i corpi di base di podcast.css (--c-testo 48, --c-sotto 32): la scatola di ogni riga è alta quanto serve alle lettere.
 const titolo = creaTarga({
   statico: STATICO,
   righe: {
-    testo: { el: $("#po-targa-testo"), gruppo: "targa", massimo: 48, minimo: 20, aria: 4 },
-    sotto: { el: $("#po-targa-sotto"), gruppo: "targa", massimo: 22, minimo: 12, nascondiSeVuota: true },
+    testo: { el: $("#po-targa-testo"), gruppo: "targa", massimo: 48, minimo: 20 },
+    sotto: { el: $("#po-targa-sotto"), gruppo: "targa", massimo: 32, minimo: 14, nascondiSeVuota: true },
   },
 });
 

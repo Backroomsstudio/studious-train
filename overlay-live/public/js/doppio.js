@@ -44,9 +44,10 @@ const icona = $("#fm-titolo-icona");
 const titolo = creaTarga({
   statico: STATICO,
   righe: {
-    sopra: { el: $("#fm-titolo-sopra"), gruppo: "sopra", massimo: orizzontale ? 20 : 22, minimo: 12 },
-    testo: { el: $("#fm-titolo-testo"), gruppo: "titolo", massimo: 88, minimo: 40 }, // 88 se la scatola lo permette (84 px in verticale, 70 in orizzontale)
-    sotto: { el: $("#fm-titolo-sotto"), gruppo: "sotto", massimo: orizzontale ? 22 : 24, minimo: 14, nascondiSeVuota: true },
+    // I massimi sono i corpi di base di formati.css e doppio.css (--c-sopra, --c-testo, --c-sotto): 28 / 88 / 32 in verticale, 26 / 58 / 28 in orizzontale.
+    sopra: { el: $("#fm-titolo-sopra"), gruppo: "sopra", massimo: orizzontale ? 26 : 28, minimo: 14 },
+    testo: { el: $("#fm-titolo-testo"), gruppo: "titolo", massimo: orizzontale ? 58 : 88, minimo: orizzontale ? 32 : 40 },
+    sotto: { el: $("#fm-titolo-sotto"), gruppo: "sotto", massimo: orizzontale ? 28 : 32, minimo: 16, nascondiSeVuota: true },
   },
 });
 

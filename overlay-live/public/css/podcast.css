@@ -3,25 +3,27 @@
 
    POSIZIONI in pixel della tela:
    Verticale 1080×1920
-   - targa                x 116 → 964,   y 282 → 372
-   - pannello Tematiche   x 116 → 964,   y 400 → 880   (sempre al centro: `lato` conta solo in orizzontale)
+   - targa                x 116 → 964,   y 282 → 410
+   - pannello Tematiche   x 116 → 964,   y 424 → 904   (sempre al centro: `lato` conta solo in orizzontale)
    - linea di divisione   x 538 → 542,   y 240 → 1100
    - fascia social        x 0 → 1080,    y 1108 → 1200 (formati.css)
    Orizzontale 1920×1080 (?formato=orizzontale)
-   - targa                x 48 → 560,    y 36 → 126
-   - pannello Tematiche   x 48 → 560 (1360 → 1872 con lato «dx»),  y 150 → 720
+   - targa                x 48 → 560,    y 36 → 164
+   - pannello Tematiche   x 48 → 560 (1360 → 1872 con lato «dx»),  y 176 → 746
    - linea di divisione   x 958 → 962,   y 0 → 968
    - fascia social        x 0 → 1920,    y 968 → 1060 (formati.css)
    Per spostare un pezzo basta cambiare i numeri qui sotto. Con ?guide=1 si vedono le zone (solo verticale). */
 
 /* ---------- Targa: «Back Rooms Podcast» e la riga dell'episodio ---------- */
 .fm.podcast .fm-targa {
-  --h-testo: 50px;
-  --h-sotto: 24px;
+  --c-testo: 48px;
+  --c-sotto: 32px;
+  --h-testo: 55px;
+  --h-sotto: 40px;
   left: 116px;
   top: 282px;
   width: 848px;
-  height: 90px;
+  height: 128px;
   padding: 0 14px;
   z-index: 3;
 }
@@ -29,11 +31,11 @@
   --d: 64px;
 }
 .fm.podcast .fm-targa-testo {
-  font-size: calc(48px * var(--ts-targa, 1)); /* la pagina la adatta alla scatola (podcast.js) */
+  font-size: calc(var(--c-testo) * var(--ts-targa, 1)); /* la pagina la adatta alla scatola (podcast.js) */
   text-align: center;
 }
 .fm.podcast .fm-targa-sotto {
-  font-size: calc(22px * var(--ts-targa, 1));
+  font-size: calc(var(--c-sotto) * var(--ts-targa, 1));
   text-align: center;
 }
 .fm.podcast.orizzontale .fm-targa {
@@ -91,7 +93,7 @@
 .po-tematiche {
   --h-tema: 48px;
   left: 116px;
-  top: 400px;
+  top: 424px;
   width: 848px;
   height: 480px;
   padding: 20px;
@@ -102,7 +104,7 @@
 .fm.podcast.orizzontale .po-tematiche {
   --h-tema: 58px;
   left: 48px;
-  top: 150px;
+  top: 176px;
   width: 512px;
   height: 570px;
 }

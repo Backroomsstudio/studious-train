@@ -282,9 +282,15 @@ body.fm.anteprima {
   --acc: #ffd863;
   --acc-luce: rgba(255, 216, 99, 0.55);
   --d: 96px; /* diametro delle monete */
-  --h-sopra: 24px;
-  --h-testo: 84px;
-  --h-sotto: 28px;
+  /* Corpi di base (px) delle tre righe, moltiplicati dalla dimensione dei testi scelta in regia, e altezza delle loro scatole: quanto
+     serve all'inchiostro delle lettere (discendenti e accenti compresi). Una scatola più bassa taglierebbe le lettere sotto la riga,
+     o costringerebbe la pagina a rimpicciolire il testo (adattaTesto). */
+  --c-sopra: 28px;
+  --c-testo: 88px;
+  --c-sotto: 32px;
+  --h-sopra: 30px;
+  --h-testo: 100px;
+  --h-sotto: 40px;
   position: absolute;
   box-sizing: border-box;
   display: flex;
@@ -377,14 +383,14 @@ body.fm.anteprima {
 }
 .fm-targa-sopra > span {
   height: var(--h-sopra);
-  font: 800 calc(22px * var(--ts-sopra, 1)) / var(--h-sopra) var(--font-dati);
+  font: 800 calc(var(--c-sopra) * var(--ts-sopra, 1)) / var(--h-sopra) var(--font-dati);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--acc);
 }
 .fm-targa-sotto {
   height: var(--h-sotto);
-  font: 700 calc(24px * var(--ts-sotto, 1)) / var(--h-sotto) var(--font-dati);
+  font: 700 calc(var(--c-sotto) * var(--ts-sotto, 1)) / var(--h-sotto) var(--font-dati);
   letter-spacing: 0.04em;
   color: #e6d8ff;
 }
@@ -413,7 +419,7 @@ body.fm.anteprima {
   align-content: center;
   overflow: hidden;
   overflow-wrap: anywhere;
-  font: 900 calc(88px * var(--ts-titolo, 1)) / 1 var(--font-gotico);
+  font: 900 calc(var(--c-testo) * var(--ts-titolo, 1)) / 1 var(--font-gotico);
   /* cromo luccicante: sfumatura d'argento con una luce che passa */
   background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, transparent 62%) 150% 0 / 260% 100% no-repeat,
     linear-gradient(180deg, #ffffff 0%, #e8ebf1 30%, #8f96a3 52%, #f3f5f9 54%, #c5cad4 80%, #ffffff 100%);
