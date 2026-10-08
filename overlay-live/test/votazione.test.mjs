@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { leggiVoto } from "../lib/chat.mjs";
 import { normalizzaVoto } from "../lib/validazione.mjs";
 import * as S from "../lib/stato.mjs";
+import { percentualiPesi } from "../public/js/votazione-logica.js";
 
 const GARA = { min: 4, max: 10 };
 
@@ -156,4 +157,32 @@ test("fondiVotazione: stato senza votazione o con valori rotti → predefiniti c
   // un salvataggio con tutti i pesi a zero tiene l'ultimo valore buono, non resta senza pesi
   const senzaPesi = S.fondiVotazione({ pesi: { beat: 0, voce: 0, mix: 0, chat: 0 } }, config);
   assert.ok(Object.values(senzaPesi.pesi).some((p) => p > 0), JSON.stringify(senzaPesi.pesi));
+});
+
+// ---------- In regia: la percentuale accanto a ogni peso ----------
+
+test("percentualiPesi: 3/3/3/1 → 30/30/30/10; 1/1/1/0 → somma 100; tutti 0 → tutti 0", () => {
+  assert.deepEqual(percentualiPesi({ beat: 3, voce: 3, mix: 3, chat: 1 }), { beat: 30, voce: 30, mix: 30, chat: 10 });
+  const tre = percentualiPesi({ beat: 1, voce: 1, mix: 1, chat: 0 });
+  assert.equal(Object.values(tre).reduce((a, b) => a + b, 0), 100);
+  assert.deepEqual(tre, { beat: 34, voce: 33, mix: 33, chat: 0 }, "il resto va al più grande (il primo, a parità)");
+  assert.deepEqual(percentualiPesi({ beat: 0, voce: 0, mix: 0, chat: 0 }), { beat: 0, voce: 0, mix: 0, chat: 0 });
+});
+
+test("percentualiPesi: somma sempre 100, anche con pesi che non dividono bene, vuoti o scritti male", () => {
+  for (const pesi of [
+    { beat: 2, voce: 2, mix: 2, chat: 1 },
+    { beat: 1, voce: 1, mix: 1, chat: 1 },
+    { beat: 7, voce: 13, mix: 29, chat: 51 },
+    { beat: 100, voce: 1, mix: 1, chat: 1 },
+    { beat: 1, voce: 0, mix: 0, chat: 0 },
+  ]) {
+    const p = percentualiPesi(pesi);
+    assert.equal(Object.values(p).reduce((a, b) => a + b, 0), 100, JSON.stringify(pesi));
+    assert.ok(Object.values(p).every((x) => Number.isInteger(x) && x >= 0), JSON.stringify(p));
+  }
+  assert.deepEqual(percentualiPesi({ beat: 1, voce: 0, mix: 0, chat: 0 }), { beat: 100, voce: 0, mix: 0, chat: 0 });
+  // il campo ancora vuoto o con testo non conta (come un peso a zero); i pesi negativi nemmeno
+  assert.deepEqual(percentualiPesi({ beat: "", voce: "x", mix: -4, chat: 5 }), { beat: 0, voce: 0, mix: 0, chat: 100 });
+  assert.deepEqual(percentualiPesi({ beat: "3", voce: "3", mix: "3", chat: "1" }), { beat: 30, voce: 30, mix: 30, chat: 10 }, "anche i valori dei campi, che sono testo");
 });

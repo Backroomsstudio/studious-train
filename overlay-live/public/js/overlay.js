@@ -167,17 +167,29 @@ const tab = {
   categorie: Object.fromEntries(
     [...document.querySelectorAll(".cat")].map((cat) => [
       cat.dataset.cat,
-      { el: cat, barra: cat.querySelector(".barra"), valore: cat.querySelector(".cat-valore"), giudice: cat.querySelector(".cat-giudice") },
+      { el: cat, nome: cat.querySelector(".cat-nome"), barra: cat.querySelector(".barra"), valore: cat.querySelector(".cat-valore"), giudice: cat.querySelector(".cat-giudice") },
     ]),
   ),
+  limitiCta: [...document.querySelectorAll(".cta-testo b")], // «Vota in chat da <b>4</b> a <b>10</b>»
 };
 let tracciaMostrata = null;
 let eraConfermato = false;
 let timerTimbro = null;
 
+// Il nome di una voce (Beat, Voce, Mix, Chat) è scelto in regia; se non entra nel riquadro si rimpicciolisce.
+function scriviEtichetta(nodo, testo) {
+  if (nodo.textContent === testo) return;
+  nodo.textContent = testo;
+  adattaTesto(nodo, 26, 14);
+}
+
 function disegnaTabellone(s) {
   const t = s.corrente;
   const p = t.punteggi;
+  // Nomi delle quattro voci e intervallo dei voti dalla votazione (regia: Serata → Voti della gara).
+  for (const [nome, c] of Object.entries(tab.categorie)) scriviEtichetta(c.nome, s.votazione.etichette[nome]);
+  tab.limitiCta[0].textContent = s.votazione.min;
+  tab.limitiCta[1].textContent = s.votazione.max;
   const nascosti = s.nascondiVoti && !t.confermato;
   tab.radice.classList.toggle("fuori", !s.visibili.tabellone);
   tab.chatCta.classList.toggle("fuori", !s.visibili.tabellone);
@@ -542,6 +554,7 @@ function rimisura() {
   adattaTesto(tab.titolo, 56, 30);
   if (premio.testo.textContent) adattaTesto(premio.testo, 76, 40);
   adattaTesto(premio.invito, 27, 19);
+  for (const c of Object.values(tab.categorie)) adattaTesto(c.nome, 26, 14);
   for (const riga of righeClassifica.values()) adattaTesto(riga.traccia, 27, 18);
 }
 document.fonts?.ready.then(rimisura);

@@ -84,9 +84,9 @@
     <section class="scheda">
       <h2>Voti</h2>
       <div class="voti" id="voti">
-        <label class="voto" data-cat="beat"><span class="voto-cat">Beat</span><span class="voto-giudice"></span><input type="number" min="0" max="10" step="0.5" inputmode="decimal" data-cat="beat"></label>
-        <label class="voto" data-cat="voce"><span class="voto-cat">Voce</span><span class="voto-giudice"></span><input type="number" min="0" max="10" step="0.5" inputmode="decimal" data-cat="voce"></label>
-        <label class="voto" data-cat="mix"><span class="voto-cat">Mix</span><span class="voto-giudice"></span><input type="number" min="0" max="10" step="0.5" inputmode="decimal" data-cat="mix"></label>
+        <label class="voto" data-cat="beat"><span class="voto-cat" data-nome-voce="beat">Beat</span><span class="voto-giudice"></span><input type="number" min="4" max="10" step="0.5" inputmode="decimal" data-cat="beat"></label>
+        <label class="voto" data-cat="voce"><span class="voto-cat" data-nome-voce="voce">Voce</span><span class="voto-giudice"></span><input type="number" min="4" max="10" step="0.5" inputmode="decimal" data-cat="voce"></label>
+        <label class="voto" data-cat="mix"><span class="voto-cat" data-nome-voce="mix">Mix</span><span class="voto-giudice"></span><input type="number" min="4" max="10" step="0.5" inputmode="decimal" data-cat="mix"></label>
       </div>
       <label class="interruttore"><input type="checkbox" id="nascondi"> Nascondi i voti in overlay fino alla conferma</label>
 
@@ -207,11 +207,41 @@
       </form>
       <p class="nota">Sotto il premio, a rotazione: spiegate a chi entra in live come si partecipa. Es. <code>La traccia più votata vince | Manda la tua traccia su nero.fan/backrooms</code>. Gli indirizzi restano minuscoli e in oro.</p>
       <form id="f-giudici" class="modulo giudici" autocomplete="off">
-        <label>Beat <input name="beat" maxlength="40"></label>
-        <label>Voce <input name="voce" maxlength="40"></label>
-        <label>Mix <input name="mix" maxlength="40"></label>
+        <label><span data-nome-voce="beat">Beat</span> <input name="beat" maxlength="40"></label>
+        <label><span data-nome-voce="voce">Voce</span> <input name="voce" maxlength="40"></label>
+        <label><span data-nome-voce="mix">Mix</span> <input name="mix" maxlength="40"></label>
         <button>Salva giudici</button>
       </form>
+      <h3>Voti della gara</h3>
+      <form id="f-votazione" class="modulo votazione" autocomplete="off">
+        <div class="vz-testa"><span>Nome della voce</span><span>Peso</span><span>Conta</span></div>
+        <div class="vz-riga">
+          <input name="etichetta-beat" maxlength="12" placeholder="Beat" aria-label="Nome della prima voce">
+          <input name="peso-beat" type="number" min="0" max="100" step="1" inputmode="numeric" aria-label="Peso della prima voce">
+          <span class="vz-percento" data-percento="beat">—</span>
+        </div>
+        <div class="vz-riga">
+          <input name="etichetta-voce" maxlength="12" placeholder="Voce" aria-label="Nome della seconda voce">
+          <input name="peso-voce" type="number" min="0" max="100" step="1" inputmode="numeric" aria-label="Peso della seconda voce">
+          <span class="vz-percento" data-percento="voce">—</span>
+        </div>
+        <div class="vz-riga">
+          <input name="etichetta-mix" maxlength="12" placeholder="Mix" aria-label="Nome della terza voce">
+          <input name="peso-mix" type="number" min="0" max="100" step="1" inputmode="numeric" aria-label="Peso della terza voce">
+          <span class="vz-percento" data-percento="mix">—</span>
+        </div>
+        <div class="vz-riga">
+          <input name="etichetta-chat" maxlength="12" placeholder="Chat" aria-label="Nome della quarta voce">
+          <input name="peso-chat" type="number" min="0" max="100" step="1" inputmode="numeric" aria-label="Peso della quarta voce">
+          <span class="vz-percento" data-percento="chat">—</span>
+        </div>
+        <div class="vz-intervallo">
+          <label>Voti da <input name="min" type="number" min="0" max="10" step="1" inputmode="numeric" aria-label="Voto minimo"></label>
+          <label>a <input name="max" type="number" min="0" max="10" step="1" inputmode="numeric" aria-label="Voto massimo"></label>
+          <button>Salva voti</button>
+        </div>
+      </form>
+      <p class="nota">Il nome di ogni voce (al massimo 12 lettere) compare sul tabellone. I pesi sono relativi: la percentuale accanto dice quanto conta ogni voce nel totale, e con peso 0 la voce non conta. I voti ammessi valgono per i giudici e per la chat: un commento fuori da questo intervallo non vota.</p>
       <form id="f-tiktok" class="modulo riga-modulo" autocomplete="off">
         <input id="tiktok" placeholder="@account TikTok che va in diretta" maxlength="40">
         <button>Collega chat</button>

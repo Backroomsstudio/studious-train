@@ -11,6 +11,7 @@ import { percentuali, rimanenteBattleMs } from "./battle-logica.js";
 import { vociBarra, stimaGiroSecondi } from "./barra.js";
 import { vociStudio } from "./studio-logica.js";
 import { avviaRegiaFormati } from "./regia-formati.js";
+import { avviaRegiaVoti } from "./regia-voti.js";
 import { NOMI_ICONE } from "./formati-logica.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -104,6 +105,8 @@ const scegli = (sel, fn) =>
 
 // Drum, produzione, podcast e reaction: sezioni, scheda «Social del brand», testi, velocità e anteprime (regia-formati.js).
 const formati = avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn });
+// Serata → Voti della gara: pesi, voti ammessi e nomi delle quattro voci (regia-voti.js).
+const votazione = avviaRegiaVoti({ $, invia, avviso, riempi, salvato });
 
 const haVoti = (t) => CATEGORIE.some((c) => t.punteggi[c] !== null) || t.punteggi.chatVoti > 0;
 
@@ -146,6 +149,7 @@ function disegna(s) {
   disegnaSpareggio(s);
   disegnaClassifica(s);
   disegnaSerata(s);
+  votazione.disegna(s);
   disegnaSenzaPremio(s);
   disegnaStudio(s);
   disegnaBattle(s);
@@ -214,6 +218,8 @@ function disegnaVoti(s) {
   for (const cat of CATEGORIE) {
     $(`.voto[data-cat="${cat}"] .voto-giudice`).textContent = s.giudici[cat] ?? "";
     const input = $(`#voti input[data-cat="${cat}"]`);
+    input.min = s.votazione.min;
+    input.max = s.votazione.max;
     if (input !== document.activeElement && !attese.has(input)) {
       input.value = s.corrente.punteggi[cat] ?? "";
       input.classList.remove("errato");
@@ -260,6 +266,7 @@ function scegliVincitore(r) {
 }
 
 function disegnaClassifica(s) {
+  const [b, v, m, c] = ["beat", "voce", "mix", "chat"].map((voce) => (s.votazione.etichette[voce][0] ?? "").toUpperCase());
   $("#cl-conta").textContent = s.risultati.length ? `(${s.risultati.length} tracce · top ${s.topN} in overlay)` : "";
   $("#classifica").replaceChildren(
     ...s.risultati.map((r, i) =>
@@ -271,7 +278,7 @@ function disegnaClassifica(s) {
           "div",
           { class: "nomi" },
           el("div", { class: "t" }, r.titolo),
-          el("div", { class: "a" }, `${r.artista} · B ${formatta(r.beat)} · V ${formatta(r.voce)} · M ${formatta(r.mix)} · C ${formatta(r.chat)} (${r.chatVoti})`),
+          el("div", { class: "a" }, `${r.artista} · ${b} ${formatta(r.beat)} · ${v} ${formatta(r.voce)} · ${m} ${formatta(r.mix)} · ${c} ${formatta(r.chat)} (${r.chatVoti})`),
         ),
         el(
           "div",
@@ -349,7 +356,8 @@ function inviaVoto(input) {
   attese.delete(input);
   const testo = input.value.trim();
   const valore = testo === "" ? null : Number(testo);
-  const valido = valore === null || (valore >= 0 && valore <= 10);
+  const { min, max } = stato.votazione;
+  const valido = valore === null || (valore >= min && valore <= max);
   input.classList.toggle("errato", !valido);
   return valido ? invia("voto", { categoria: input.dataset.cat, valore }) : null;
 }

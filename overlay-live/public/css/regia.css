@@ -363,6 +363,39 @@ input::placeholder {
 #f-invito {
   margin-top: 10px;
 }
+/* Voti della gara: nome, peso e percentuale di ogni voce, poi i voti ammessi */
+.vz-testa,
+.vz-riga {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px 56px;
+  align-items: center;
+  gap: 8px;
+}
+.vz-testa {
+  font: 600 12px/1 var(--font-dati);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--testo-tenue);
+}
+.vz-percento {
+  font: 800 18px/1 var(--font-dati);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.vz-intervallo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.vz-intervallo label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.vz-intervallo input {
+  width: 72px;
+}
 .suoni {
   display: flex;
   flex-wrap: wrap;
