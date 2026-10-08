@@ -111,6 +111,8 @@ function caricaStato() {
     if (Array.isArray(salvato.giudici)) salvato.giudici = { ...config.giudici };
     // Votazione della gara (aggiunta dopo): pesi, intervallo ed etichette completi anche da uno stato vecchio o rotto.
     salvato.votazione = S.fondiVotazione(salvato.votazione, config);
+    // Tabellone ad albero (aggiunto dopo): durata e scadenza buone anche da uno stato vecchio o rotto.
+    salvato.albero = S.fondiAlbero(salvato.albero);
     return salvato;
   } catch (e) {
     console.error(`Stato salvato illeggibile (${e.message}): riparto da una serata vuota.`);
@@ -311,7 +313,16 @@ const comandi = {
   },
   widget({ nome, visibile }) {
     if (!S.WIDGET.includes(nome)) throw new Error("Widget sconosciuto");
+    // Il tabellone ad albero si spegne da solo dopo la sua durata, anche se lo si accende dall'elenco «In onda».
+    if (nome === "albero") return void (visibile ? S.mostraAlbero(stato, {}, Date.now()) : S.nascondiAlbero(stato));
     stato.visibili[nome] = Boolean(visibile);
+  },
+  // Tabellone ad albero della gara: { durataSecondi?: 0–600 (0 = resta), mostra?: true | false }. Senza `mostra` lo accende.
+  albero({ durataSecondi, mostra = true }) {
+    siNo(mostra, "mostra");
+    if (mostra) return void S.mostraAlbero(stato, { durataSecondi }, Date.now());
+    if (durataSecondi !== undefined) S.impostaDurataAlbero(stato, durataSecondi);
+    S.nascondiAlbero(stato);
   },
   apriChat({ secondi = config.durataVotoChatSecondi }) {
     S.apriVotoChat(stato, Number(secondi), Date.now());
@@ -571,8 +582,8 @@ const comandi = {
   },
   demo() {
     const ora = Date.now();
-    const { premio, invito, suoni, giudici, votazione, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
-    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, votazione, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast };
+    const { premio, invito, suoni, giudici, votazione, albero, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
+    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, votazione, albero: { ...albero, finoAlle: null }, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast };
     const finti = [
       ["Specchi Neri", "Nove", 8.4],
       ["Fuori Orario", "Kappa 23", 7.9],
@@ -598,7 +609,7 @@ const comandi = {
   // La traccia che suona su Nero in quel momento torna sul tabellone al giro successivo. Drum e podcast ripartono
   // (Like da zero, prima tematica); produzione e reaction restano come sono.
   nuovaSerata() {
-    const { premio, invito, suoni, giudici, votazione, tiktokUtente, neroAutomatico, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
+    const { premio, invito, suoni, giudici, votazione, albero, tiktokUtente, neroAutomatico, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
     stato = {
       ...S.statoIniziale(config),
       premio,
@@ -606,6 +617,7 @@ const comandi = {
       suoni,
       giudici,
       votazione,
+      albero: { ...albero, finoAlle: null },
       tiktokUtente,
       neroAutomatico,
       layout,
@@ -636,6 +648,7 @@ function esegui(nome, args, pin) {
 setInterval(() => {
   const ora = Date.now();
   if (S.chiudiChatSeScaduta(stato, ora)) cambiato();
+  if (S.chiudiAlberoSeScaduto(stato, ora)) cambiato();
   if (S.passaSeTocca(stato, ora, ATTESA_DOPO_CONFERMA_MS)) {
     console.log(`Nero.fan: sul tabellone «${stato.corrente.titolo}» di ${stato.corrente.artista}`);
     cambiato();

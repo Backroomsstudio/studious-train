@@ -1,17 +1,18 @@
 // Overlay: premio in palio, tabellone della traccia in ascolto, classifica, countdown, notifiche, vincitore e spareggio.
 // Disegna lo stato che arriva dal server e suona gli effetti; qui non si inserisce nessun dato.
 // Parametri URL: ?formato=orizzontale (predefinito verticale 1080×1920), ?w=premio,tabellone,classifica,timer,vincitore
-// (widget da includere), ?anteprima=1 (sfondo scuro per guardarlo in un browser), ?guide=1 (zone coperte dall'app TikTok),
+// (widget da includere; con albero il tabellone ad albero), ?anteprima=1 (sfondo scuro per guardarlo in un browser), ?guide=1 (zone coperte dall'app TikTok),
 // ?muto=1 (nessun suono da questa pagina), ?statico=1 (senza animazioni né suoni, per i mockup).
 import { collega, formatta, durata } from "./connessione.js";
 import { suona, volume } from "./suoni.js";
 import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suonaIn, RITARDO_CLASSIFICA_MS, SOGLIA_URGENTE_MS } from "./eventi-sonori.js";
 import { adattaTesto } from "./pagina.js";
+import { disegnaAlbero } from "./albero.js";
 
 const parametri = new URLSearchParams(location.search);
 const ORIZZONTALE = parametri.get("formato") === "orizzontale";
 const [LARGHEZZA, ALTEZZA] = ORIZZONTALE ? [1920, 1080] : [1080, 1920];
-const WIDGET = (parametri.get("w") ?? "premio,tabellone,classifica,timer,vincitore").split(",");
+const WIDGET = (parametri.get("w") ?? "premio,tabellone,classifica,timer,vincitore,albero").split(",");
 const MUTO = parametri.has("muto") || parametri.has("statico");
 const TIER = { skip: "Skip", superskip: "Super Skip", throne: "Throne" };
 const MOSTRA_CLASSIFICA_DOPO_CONFERMA_MS = 15_000;
@@ -45,6 +46,7 @@ const conn = collega({
     disegnaPremio(s);
     disegnaTabellone(s);
     aggiornaClassifica(s, eventi);
+    disegnaTabelloneAdAlbero(s);
     disegnaVincitore(s);
     disegnaSpareggio(s);
     palco.classList.toggle("schermo-pieno", Boolean(s.vincitore?.visibile || s.spareggio));
@@ -401,6 +403,22 @@ function disegnaClassifica(s, conferme) {
   }
 }
 
+// ---------- Tabellone ad albero ----------
+// Si disegna quando si accende (con i turni che entrano uno dopo l'altro) e si ridisegna da solo, senza animazioni, quando la
+// classifica cambia; da spento tiene l'ultimo disegno.
+const albero = { radice: $("#albero"), firma: null, acceso: false };
+
+function disegnaTabelloneAdAlbero(s) {
+  const acceso = Boolean(s.visibili.albero);
+  const firma = JSON.stringify(s.albero.disegno);
+  if (acceso && (!albero.acceso || firma !== albero.firma)) {
+    disegnaAlbero(albero.radice, s.albero.disegno, { animato: !albero.acceso && !parametri.has("statico") });
+    albero.firma = firma;
+  }
+  albero.acceso = acceso;
+  albero.radice.classList.toggle("fuori", !acceso);
+}
+
 // ---------- Notifiche ----------
 const notifica = { el: $("#notifica"), titolo: $("#notifica-titolo"), sotto: $("#notifica-sotto"), timer: null };
 
@@ -582,6 +600,10 @@ function scintille(tela) {
 // Con i font caricati le larghezze cambiano: si riadattano i testi lunghi. A ogni caricamento, non solo al primo
 // «ready»: con i font nella cache di OBS o LIVE Studio i pesi usati dai testi arrivano dopo lo stato.
 function rimisura() {
+  if (albero.acceso && stato) {
+    disegnaAlbero(albero.radice, stato.albero.disegno);
+    albero.firma = JSON.stringify(stato.albero.disegno);
+  }
   adatta(tab.titolo, "titolo");
   adatta(tab.artista, "artista");
   for (const c of Object.values(tab.categorie)) {

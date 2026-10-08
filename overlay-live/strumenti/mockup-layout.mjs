@@ -1,7 +1,9 @@
 // Mockup e controllo di geometria dei layout verticali con Playwright (installato a parte: non è una dipendenza di npm test).
 // Uso: node strumenti/mockup-layout.mjs --base http://127.0.0.1:4799 --layout gara [--stato <stato>] [--guida] [--controlli]
 //   layout: gara (premio, classifica, timer, tabellone con il blocco voti, barra «Vota in chat»);
-//   stati: base (la serata demo) e ultimi-minuti (timer rosso e, appena arrivata, la notifica «Nuovo primo posto!»).
+//   stati: base (la serata demo), ultimi-minuti (timer rosso e, appena arrivata, la notifica «Nuovo primo posto!») e il tabellone
+//   ad albero: albero (16 tracce con titoli e artisti lunghi) e albero-6 (6 tracce con nomi brevi). L'albero sta sopra a tutto il
+//   resto: si controlla che stia in x 116…964 e y 282…1196 e che nessun testo sia tagliato (nomi lunghi: ridotti e poi i puntini).
 // Mette il server nel layout con i dati di prova, apre la pagina (1080×1920, ?anteprima=1&statico=1), controlla che ogni pezzo
 // stia dove dice la tabella (±1 px, e dentro x 116…964 / y 230…1200 per i pezzi che lo dichiarano), che nessun pezzo ne copra
 // un altro, e salva mockup/<nome>.jpg (gara base: mockup/verticale.jpg; gara ultimi-minuti: mockup/ultimi-minuti.jpg).
@@ -34,12 +36,13 @@ export const GEOMETRIA = {
       notifica: p(564, 604, 400, 92, true), // solo mentre c'è (stato ultimi-minuti); è alta almeno 92
       tabellone: p(116, 858, 848, 260, true),
       chat: p(116, 1130, 848, 66, true), // il fondo, y 1196, sta appena sopra i commenti di TikTok (1200)
+      albero: p(116, 282, 848, 914, true), // il tabellone ad albero: dal premio al fondo della barra, sopra a tutto (solo stati albero)
     },
   },
 };
 
 // Come si trova ogni pezzo nella pagina: un selettore proprio, altrimenti il suo data-parte.
-const SELETTORI = { gara: { premio: ".premio", classifica: ".classifica", timer: ".timer", notifica: ".notifica", tabellone: ".tabellone", chat: ".chat-cta" } };
+const SELETTORI = { gara: { premio: ".premio", classifica: ".classifica", timer: ".timer", notifica: ".notifica", tabellone: ".tabellone", chat: ".chat-cta", albero: "#albero" } };
 const PAGINE = { gara: "overlay.html" };
 // Per ogni layout e stato: i pezzi che devono esserci (e non essere nascosti). Negli ultimi minuti la barra «Vota in chat» è chiusa
 // (la conferma chiude il voto) e quindi spenta: la notifica del nuovo primo posto prende il suo posto tra i pezzi da controllare.
@@ -47,10 +50,13 @@ const PRESENTI = {
   gara: {
     base: ["premio", "classifica", "timer", "tabellone", "chat"],
     "ultimi-minuti": ["premio", "classifica", "timer", "tabellone", "notifica"],
+    // con l'albero acceso gli altri pezzi ci sono ancora ma coperti: si guarda solo lui
+    albero: ["albero"],
+    "albero-6": ["albero"],
   },
 };
 const STATO_PREDEFINITO = { gara: "base" };
-const NOMI_FILE = { gara: { base: "verticale", "ultimi-minuti": "ultimi-minuti" } };
+const NOMI_FILE = { gara: { base: "verticale", "ultimi-minuti": "ultimi-minuti", albero: "gara-albero", "albero-6": "gara-albero-6" } };
 
 // I testi che la pagina della gara adatta al riquadro: il selettore, il pezzo in cui stanno, il corpo di partenza (massimo) e il
 // più piccolo accettabile (minimo). La chiave è quella di CORPI in public/js/overlay.js.
@@ -69,6 +75,16 @@ const TESTI_FISSI_GARA = [
   { selettore: ".cat-valore", pezzo: "tabellone" },
   { selettore: ".cta-testo", pezzo: "chat" },
 ];
+// I testi del tabellone ad albero: il corpo minimo è quello di public/js/albero.js (poi i puntini).
+const TESTI_ALBERO = [
+  { selettore: ".alb-titolo", pezzo: "albero", minimo: 11 },
+  { selettore: ".alb-artista", pezzo: "albero", minimo: 10 },
+  { selettore: ".alb-nome-turno", pezzo: "albero", minimo: 9 },
+  { selettore: ".alb-campione-titolo", pezzo: "albero", minimo: 11 },
+  { selettore: ".alb-punti", pezzo: "albero" },
+  { selettore: ".alb-campione-punti", pezzo: "albero" },
+];
+const STATI_ALBERO = { albero: { tracce: 16, lunghi: true }, "albero-6": { tracce: 6, lunghi: false } };
 
 // Zona libera dei telefoni: sotto l'intestazione di TikTok (230), sopra la chat (1200), tra x 116 e 964.
 const X_MIN = 116;
@@ -134,6 +150,12 @@ const apriPagina = async (browser, parametri = "") => {
 // Dati di prova dello stato scelto, come li mostrerebbe la regia.
 async function preparaStato() {
   await comando("layout", { nome: layout });
+  if (layout === "gara" && STATI_ALBERO[stato]) {
+    await comando("nuovaSerata");
+    await confermaRisultati(STATI_ALBERO[stato].tracce, STATI_ALBERO[stato].lunghi);
+    await comando("albero", { mostra: true, durataSecondi: 0 }); // resta acceso finché la pagina non l'ha fotografato
+    return;
+  }
   if (layout === "gara") await comando("demo"); // classifica, traccia con voti, voto della chat aperto e countdown
   if (layout === "gara" && stato === "ultimi-minuti") await comando("countdown", { azione: "avvia", minuti: 4 }); // timer rosso
 }
@@ -216,6 +238,18 @@ const descriviTagliate = (tagliate, contesto) => tagliate.map((t) => `${t.sel}${
 // Un testo di prova lungo `n` caratteri, con gli spazi di una frase vera (che va a capo) e senza spazio alla fine.
 const lungo = (n) => "Lunghissimo titolo di prova con tante parole per la riga ".repeat(3).slice(0, n).trimEnd().padEnd(n, "x");
 
+// `n` tracce confermate una dopo l'altra, con il totale che scende (la prima è la prima in classifica), con nomi brevi o al
+// massimo permesso (titolo da 60 caratteri, artista da 40).
+const NOMI_BREVI = ["Notte", "Alba", "Neon", "Blu", "Oro", "Luna", "Sole", "Mare", "Vento", "Fuoco", "Terra", "Cielo", "Nebbia", "Onda", "Pietra", "Brace"];
+const ARTISTI_BREVI = ["Lince", "Mira", "Dama", "Nove", "Rizzo", "Vale B", "Kappa", "Sole Nero", "Fra", "Lia", "Dino", "Ivo", "Zeta", "Ugo", "Gea", "Tom"];
+async function confermaRisultati(n, lunghi) {
+  for (let i = 0; i < n; i++) {
+    await comando("traccia", lunghi ? { titolo: `${i + 1} ${lungo(58)}`, artista: lungo(40) } : { titolo: NOMI_BREVI[i % NOMI_BREVI.length], artista: ARTISTI_BREVI[i % ARTISTI_BREVI.length] });
+    for (const categoria of ["beat", "voce", "mix"]) await comando("voto", { categoria, valore: Math.round((10 - i * 0.35) * 100) / 100 });
+    await comando("conferma");
+  }
+}
+
 const PASSATE_GARA = [
   { nome: "testi brevi", lunghi: false },
   { nome: "testi lunghi", lunghi: true },
@@ -228,12 +262,7 @@ async function preparaTestiGara(lunghi) {
   await comando("countdown", { azione: "avvia", minuti: 180 }); // senza countdown il timer è spento (e spostato)
   await comando("votazione", { min: 4, max: 10, etichette: lunghi ? { beat: "Strumentale", voce: "Voce solista", mix: "Mix e master", chat: "Chat TikTok" } : { beat: "Beat", voce: "Voce", mix: "Mix", chat: "Chat" } });
   await comando("giudici", lunghi ? { beat: lungo(40), voce: lungo(40), mix: lungo(40) } : { beat: "Dan", voce: "Lu", mix: "Mia" });
-  const brevi = [["Notte", "Lince"], ["Alba", "Mira"], ["Neon", "Dama"], ["Blu", "Nove"], ["Oro", "Rizzo"]];
-  for (const [i, [titolo, artista]] of brevi.entries()) {
-    await comando("traccia", lunghi ? { titolo: `${i + 1} ${lungo(58)}`, artista: lungo(40) } : { titolo, artista });
-    for (const categoria of ["beat", "voce", "mix"]) await comando("voto", { categoria, valore: 9.5 - i * 0.5 });
-    await comando("conferma");
-  }
+  await confermaRisultati(5, lunghi);
   await comando("traccia", { titolo: lunghi ? lungo(60) : "Sole", artista: lunghi ? lungo(40) : "Lince", tier: "throne" });
   for (const [categoria, valore] of [["beat", 8.5], ["voce", 7.5], ["mix", 9]]) await comando("voto", { categoria, valore });
   await comando("apriChat", { secondi: 60 });
@@ -256,9 +285,8 @@ const misureRighe = (pagina, selettori) =>
     return trovate;
   }, selettori);
 
-async function controllaTesti(pagina, passata, errori) {
+async function controllaTesti(pagina, righe, passata, errori) {
   const tabella = GEOMETRIA.gara.verticale;
-  const righe = [...Object.values(CORPI_GARA), ...TESTI_FISSI_GARA];
   const misure = await misureRighe(pagina, righe.map((r) => r.selettore));
   const nome = (m) => `${m.sel}${m.indice ? `[${m.indice}]` : ""} («${m.testo}…», ${m.corpo.toFixed(1)} px, ${passata.nome})`;
   for (const riga of righe) {
@@ -296,7 +324,7 @@ async function provaControlli() {
   for (const passata of PASSATE_GARA) {
     await preparaTestiGara(passata.lunghi);
     const pagina = await apriPagina(browser);
-    await controllaTesti(pagina, passata, errori);
+    await controllaTesti(pagina, [...Object.values(CORPI_GARA), ...TESTI_FISSI_GARA], passata, errori);
     if (passata.lunghi) await pagina.screenshot({ path: join(CARTELLA, "mockup", "gara-testi-lunghi.jpg"), type: "jpeg", quality: 88 });
     await pagina.close();
   }
@@ -353,6 +381,7 @@ async function main() {
 
   const file = join(CARTELLA, "mockup", `${NOMI_FILE[layout][stato]}${guida ? "-guide" : ""}.jpg`);
   await pagina.screenshot({ path: file, type: "jpeg", quality: 88 });
+  if (layout === "gara" && STATI_ALBERO[stato]) await controllaTesti(pagina, TESTI_ALBERO, { nome: stato, lunghi: STATI_ALBERO[stato].lunghi }, errori);
   await browser.close();
   if (errori.length) {
     console.error(`Problemi in ${layout}/${stato}:\n - ${errori.join("\n - ")}`);

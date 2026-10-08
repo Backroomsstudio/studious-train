@@ -154,8 +154,16 @@
         <label class="interruttore"><input type="checkbox" data-widget="tabellone"> Tabellone</label>
         <label class="interruttore"><input type="checkbox" data-widget="classifica"> Classifica</label>
         <label class="interruttore"><input type="checkbox" data-widget="timer"> Countdown</label>
+        <label class="interruttore"><input type="checkbox" data-widget="albero"> Tabellone ad albero</label>
       </div>
       <p class="nota">Con la classifica nascosta, dopo ogni conferma compare da sola per 15 secondi.</p>
+      <h3>Tabellone ad albero</h3>
+      <div class="azioni">
+        <button id="albero-mostra" class="primario">Mostra tabellone ad albero</button>
+        <button id="albero-nascondi">Nascondi</button>
+        <label class="nota">per <input type="number" id="albero-durata" min="0" max="600" step="1" inputmode="numeric" aria-label="Secondi in onda"> secondi (0 = resta finché non lo spegni)</label>
+      </div>
+      <p class="nota" id="albero-nota"></p>
 
       <h2>Suoni</h2>
       <div class="suoni">

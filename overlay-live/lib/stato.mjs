@@ -5,6 +5,7 @@ import { ICONE, oggetto, testo, numeroTra, siNo, arrotonda, normalizzaVoto, puli
 import { battleIniziale, istantaneaBattle } from "./battle.mjs";
 import { drumIniziale, istantaneaDrum } from "./drum.mjs";
 import { produzioneIniziale, reactionIniziale, podcastIniziale } from "./formati.mjs";
+import { costruisciAlbero } from "./albero.mjs";
 
 // Questi cinque restano esportati da qui: li usano server, regia e test.
 export { ICONE, arrotonda, normalizzaVoto, pulisciInstagram };
@@ -16,16 +17,18 @@ export const CATEGORIE = ["beat", "voce", "mix"];
 // e bracket (il tabellone a torneo o a punti) del battle;
 // drum* (cornice con equalizzatore, colonna dei traguardi, brano in esecuzione, «Dona un…», fascia social) del Drum Challenge,
 // pr* (titolo, fascia) di Studio Production, re* (titolo, fascia) di Reaction Release,
-// po* (targa, linea di divisione, pannello Tematiche, fascia) del Back Rooms Podcast.
+// po* (targa, linea di divisione, pannello Tematiche, fascia) del Back Rooms Podcast;
+// albero (il tabellone ad albero della gara, che si spegne da solo dopo la sua durata).
 export const WIDGET = [
   "premio", "tabellone", "classifica", "timer", "banner", "barra", "scheda", "targa", "barraStudio", "comparse",
-  "barreVita", "modalita", "timerBattle", "giudiciBattle", "popupBattle", "vittoriaBattle", "bracket",
+  "barreVita", "modalita", "timerBattle", "giudiciBattle", "popupBattle", "vittoriaBattle", "bracket", "albero",
   "drumCornice", "drumTraguardi", "drumBrano", "drumPriorita", "drumBarra",
   "prTitolo", "prBarra", "reTitolo", "reBarra",
   "poTitolo", "poLinea", "poTematiche", "poBarra",
 ];
-// Partono spenti: il tabellone del battle e i due moduli «a comando» del podcast (linea di divisione, pannello Tematiche).
-export const WIDGET_SPENTI = ["bracket", "poLinea", "poTematiche"];
+// Partono spenti: il tabellone del battle, il tabellone ad albero della gara e i due moduli «a comando» del podcast (linea di
+// divisione, pannello Tematiche).
+export const WIDGET_SPENTI = ["bracket", "albero", "poLinea", "poTematiche"];
 export const DOVE_SUONI = ["overlay", "regia", "spenti"];
 // Sotto il premio, a rotazione: spiega a chi entra in live come partecipare. Righe separate da "|".
 export const INVITO_PREDEFINITO = "La traccia più votata vince | Manda la tua traccia su nero.fan/backrooms";
@@ -64,6 +67,7 @@ export function statoIniziale(config) {
     suoni: suoniIniziali(config),
     giudici: { ...config.giudici },
     votazione: votazioneIniziale(config),
+    albero: alberoIniziale(),
     nascondiVoti: false,
     // Il tabellone del battle (bracket) e i moduli a comando del podcast restano spenti finché la regia non li accende.
     visibili: { ...Object.fromEntries(WIDGET.map((w) => [w, true])), ...Object.fromEntries(WIDGET_SPENTI.map((w) => [w, false])) },
@@ -149,6 +153,52 @@ export function fondiVotazione(salvato, config) {
   const prova = { votazione: votazioneIniziale(config) };
   applicaPerValore(prova, salvato);
   return prova.votazione;
+}
+
+// Tabellone ad albero della gara (public/js/albero.js, lib/albero.mjs): si accende dalla regia e si spegne da solo dopo
+// `durataSecondi` (0 = resta acceso finché non lo si spegne); `finoAlle` è l'istante dello spegnimento, null se non c'è.
+export const alberoIniziale = () => ({ durataSecondi: 30, finoAlle: null });
+
+const durataAlbero = (valore) => numeroTra(valore, 0, 600, "Durata del tabellone (secondi)");
+
+// La durata resta per le volte dopo.
+export function impostaDurataAlbero(stato, durataSecondi) {
+  stato.albero.durataSecondi = durataAlbero(durataSecondi);
+}
+
+// Si accende (e si prepara lo spegnimento da solo). Con `durataSecondi` si sceglie anche la durata: il valore si controlla
+// prima, così un errore non lascia metà modifica.
+export function mostraAlbero(stato, { durataSecondi } = {}, ora) {
+  if (durataSecondi !== undefined) impostaDurataAlbero(stato, durataSecondi);
+  stato.visibili.albero = true;
+  stato.albero.finoAlle = stato.albero.durataSecondi > 0 ? ora + stato.albero.durataSecondi * 1000 : null;
+}
+
+export function nascondiAlbero(stato) {
+  stato.visibili.albero = false;
+  stato.albero.finoAlle = null;
+}
+
+// Nel giro periodico del server: allo scadere lo spegne. Dice se l'ha spento.
+export function chiudiAlberoSeScaduto(stato, ora) {
+  if (!stato.visibili.albero || stato.albero.finoAlle === null || ora < stato.albero.finoAlle) return false;
+  nascondiAlbero(stato);
+  return true;
+}
+
+// Stato salvato prima del tabellone ad albero (o con valori rotti): durata e scadenza buone restano, il resto torna di partenza.
+export function fondiAlbero(salvato) {
+  const albero = alberoIniziale();
+  if (!oggetto(salvato)) return albero;
+  if (salvato.durataSecondi !== undefined) {
+    try {
+      albero.durataSecondi = durataAlbero(salvato.durataSecondi);
+    } catch {
+      // valore non valido: resta la durata di partenza
+    }
+  }
+  if (typeof salvato.finoAlle === "number" && Number.isFinite(salvato.finoAlle)) albero.finoAlle = salvato.finoAlle;
+  return albero;
 }
 
 // Live giornaliere senza premio: banner «Mandaci la tua musica», barra dei social che scorre,
@@ -573,6 +623,7 @@ export function istantanea(stato, config, ora) {
     ora,
     giudici: stato.giudici,
     votazione: stato.votazione,
+    albero: { durataSecondi: stato.albero.durataSecondi, finoAlle: stato.albero.finoAlle, disegno: costruisciAlbero(stato.risultati) },
     topN: config.topN,
     premio: stato.premio,
     invito: stato.invito,

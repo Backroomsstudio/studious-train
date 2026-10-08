@@ -3,6 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { costruisciAlbero } from "../lib/albero.mjs";
+import * as S from "../lib/stato.mjs";
 import { confronta } from "../lib/stato.mjs";
 
 // n risultati con il totale che scende: r1 è il primo, r2 il secondo… (confermati uno dopo l'altro).
@@ -137,4 +138,82 @@ test("l'ordine delle teste è quello della classifica (confronta di lib/stato.mj
   const attesi = [...elenco].sort(confronta).map((r) => r.id);
   const lati = costruisciAlbero(elenco).turni[0].partite.flatMap((p) => [p.a, p.b]);
   assert.deepEqual(lati.sort((x, y) => x.posto - y.posto).map((l) => l.id), attesi);
+});
+
+// ---------- Stato: accendere e spegnere il tabellone ad albero ----------
+
+const config = { giudici: { beat: "A", voce: "B", mix: "C" }, topN: 3, premio: "Mix" };
+
+test("il widget albero parte spento e lo stato ha durata 30 s e nessuna scadenza", () => {
+  const stato = S.statoIniziale(config);
+  assert.ok(S.WIDGET.includes("albero") && S.WIDGET_SPENTI.includes("albero"));
+  assert.equal(stato.visibili.albero, false);
+  assert.deepEqual(stato.albero, { durataSecondi: 30, finoAlle: null });
+});
+
+test("mostraAlbero accende il widget e imposta finoAlle = ora + durata (null con durata 0)", () => {
+  const stato = S.statoIniziale(config);
+  S.mostraAlbero(stato, {}, 1000);
+  assert.equal(stato.visibili.albero, true);
+  assert.equal(stato.albero.finoAlle, 31_000, "30 s di partenza");
+  S.mostraAlbero(stato, { durataSecondi: 12 }, 2000);
+  assert.deepEqual(stato.albero, { durataSecondi: 12, finoAlle: 14_000 });
+  S.mostraAlbero(stato, {}, 5000);
+  assert.equal(stato.albero.finoAlle, 17_000, "la durata scelta resta per le volte dopo");
+  S.mostraAlbero(stato, { durataSecondi: 0 }, 6000);
+  assert.deepEqual([stato.visibili.albero, stato.albero.finoAlle, stato.albero.durataSecondi], [true, null, 0], "durata 0: resta finché non lo spegni");
+  S.mostraAlbero(stato, { durataSecondi: "45" }, 7000);
+  assert.equal(stato.albero.finoAlle, 52_000, "anche un testo di cifre");
+});
+
+test("mostraAlbero con una durata fuori da 0–600 dà un errore in italiano e non cambia niente", () => {
+  const stato = S.statoIniziale(config);
+  for (const sbagliata of [601, -1, "tanto", NaN, null, {}]) {
+    assert.throws(() => S.mostraAlbero(stato, { durataSecondi: sbagliata }, 1000), /Durata del tabellone .*: tra 0 e 600/, String(sbagliata));
+    assert.deepEqual([stato.visibili.albero, stato.albero], [false, { durataSecondi: 30, finoAlle: null }], String(sbagliata));
+  }
+  S.mostraAlbero(stato, { durataSecondi: 600 }, 0);
+  assert.equal(stato.albero.finoAlle, 600_000);
+});
+
+test("chiudiAlberoSeScaduto lo spegne alla scadenza e solo allora; nascondiAlbero lo spegne subito", () => {
+  const stato = S.statoIniziale(config);
+  assert.equal(S.chiudiAlberoSeScaduto(stato, 10 ** 9), false, "spento: niente da chiudere");
+  S.mostraAlbero(stato, { durataSecondi: 30 }, 0);
+  assert.equal(S.chiudiAlberoSeScaduto(stato, 29_999), false);
+  assert.equal(stato.visibili.albero, true);
+  assert.equal(S.chiudiAlberoSeScaduto(stato, 30_000), true);
+  assert.deepEqual([stato.visibili.albero, stato.albero.finoAlle], [false, null]);
+  assert.equal(S.chiudiAlberoSeScaduto(stato, 40_000), false, "una volta sola");
+  // durata 0: non si spegne mai da solo
+  S.mostraAlbero(stato, { durataSecondi: 0 }, 0);
+  assert.equal(S.chiudiAlberoSeScaduto(stato, 10 ** 12), false);
+  assert.equal(stato.visibili.albero, true);
+  // acceso a mano dal widget (senza scadenza) e poi spento: nascondiAlbero azzera anche la scadenza
+  S.mostraAlbero(stato, { durataSecondi: 20 }, 0);
+  S.nascondiAlbero(stato);
+  assert.deepEqual([stato.visibili.albero, stato.albero.finoAlle], [false, null]);
+});
+
+test("fondiAlbero: stato vecchio o rotto → durata 30 e nessuna scadenza, i valori buoni restano", () => {
+  for (const vuoto of [undefined, null, "rotto", 7, []]) assert.deepEqual(S.fondiAlbero(vuoto), { durataSecondi: 30, finoAlle: null }, String(vuoto));
+  assert.deepEqual(S.fondiAlbero({ durataSecondi: 45, finoAlle: 99 }), { durataSecondi: 45, finoAlle: 99 });
+  assert.deepEqual(S.fondiAlbero({ durataSecondi: 9999, finoAlle: "x" }), { durataSecondi: 30, finoAlle: null });
+  assert.deepEqual(S.fondiAlbero({ durataSecondi: 0 }), { durataSecondi: 0, finoAlle: null });
+  assert.deepEqual(S.fondiAlbero({ finoAlle: Infinity }), { durataSecondi: 30, finoAlle: null });
+});
+
+test("istantanea.albero porta durata, scadenza e il disegno dei risultati confermati", () => {
+  const stato = S.statoIniziale(config);
+  assert.deepEqual(S.istantanea(stato, config, 0).albero, { durataSecondi: 30, finoAlle: null, disegno: null });
+  for (const [i, voto] of [9, 8, 7, 6].entries()) {
+    stato.corrente = S.tracciaVuota({ titolo: `T${i}`, artista: `A${i}` });
+    for (const categoria of S.CATEGORIE) S.impostaVoto(stato, { categoria, valore: voto });
+    S.conferma(stato, config, 100 + i);
+    if (i === 0) assert.equal(S.istantanea(stato, config, 0).albero.disegno, null, "con un solo risultato non c'è un albero");
+  }
+  S.mostraAlbero(stato, { durataSecondi: 20 }, 1000);
+  const foto = S.istantanea(stato, config, 1000).albero;
+  assert.deepEqual([foto.durataSecondi, foto.finoAlle, foto.disegno.dimensione], [20, 21_000, 4]);
+  assert.deepEqual(foto.disegno.turni[0].partite.map((p) => [p.a.titolo, p.b.titolo]), [["T0", "T3"], ["T1", "T2"]]);
 });

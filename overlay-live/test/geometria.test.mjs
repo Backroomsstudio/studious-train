@@ -40,13 +40,17 @@ test("la tabella dello strumento dei mockup dice gli stessi numeri del CSS", () 
     notifica: [px("x-destra"), px("y-notifica"), px("largo-destra"), Number(css.match(/\.notifica\s*\{[^}]*min-height:\s*(\d+)px/)?.[1])], // alta almeno così
     tabellone: [px("x"), px("y-tabellone"), px("largo"), px("h-tabellone")],
     chat: [px("x"), px("y-chat"), px("largo"), px("h-chat")],
+    albero: [px("x"), px("y-premio"), px("largo"), px("y-chat") + px("h-chat") - px("y-premio")], // dal premio al fondo della barra
   };
   assert.deepEqual(Object.keys(tabella).sort(), Object.keys(attesi).sort());
   for (const [pezzo, rettangolo] of Object.entries(attesi)) assert.deepEqual(tabella[pezzo].r, rettangolo, pezzo);
 });
 
-test("sovrapposizioni: i pezzi della gara non si toccano; due pezzi che si coprono vengono segnalati", () => {
-  assert.deepEqual(sovrapposizioni(GEOMETRIA.gara.verticale), []);
+test("sovrapposizioni: i pezzi della gara non si toccano (l'albero li copre di proposito); due pezzi che si coprono vengono segnalati", () => {
+  const { albero, ...pezzi } = GEOMETRIA.gara.verticale;
+  assert.deepEqual(sovrapposizioni(pezzi), []);
+  assert.deepEqual(albero.r, [116, 282, 848, 914], "l'albero sta in x 116–964 e y 282–1196");
+  assert.equal(sovrapposizioni({ albero, premio: pezzi.premio }).length, 1, "l'albero copre il premio e lo strumento lo vede"); 
   const pezzo = (x, y, w, h) => ({ r: [x, y, w, h], dentro: true });
   // bordi che si toccano o si sfiorano di 1 px (la tolleranza dello strumento) non contano
   assert.deepEqual(sovrapposizioni({ a: pezzo(0, 0, 100, 100), b: pezzo(100, 0, 100, 100), c: pezzo(0, 99, 100, 50) }), []);

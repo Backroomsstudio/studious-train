@@ -22,7 +22,8 @@ test("widget: i tredici nuovi, accesi tranne linea e tematiche", () => {
   for (const w of nuovi) assert.ok(S.WIDGET.includes(w), w);
   for (const w of nuovi.filter((x) => !["poLinea", "poTematiche"].includes(x))) assert.equal(stato.visibili[w], true, w);
   assert.deepEqual([stato.visibili.poLinea, stato.visibili.poTematiche, stato.visibili.bracket], [false, false, false]);
-  assert.deepEqual(S.WIDGET_SPENTI, ["bracket", "poLinea", "poTematiche"]);
+  // spenti anche il tabellone ad albero della gara (si accende dalla regia)
+  assert.deepEqual([stato.visibili.albero, S.WIDGET_SPENTI], [false, ["bracket", "albero", "poLinea", "poTematiche"]]);
 });
 
 const nuovaProduzione = () => ({ produzione: F.produzioneIniziale() });
