@@ -38,10 +38,10 @@ export const velocitaFascia = (valore) => numeroTra(valore, VELOCITA_MIN, VELOCI
 
 export const arrotonda = (x, cifre) => (x === null ? null : Math.round(x * 10 ** cifre) / 10 ** cifre);
 
-export function normalizzaVoto(valore) {
+export function normalizzaVoto(valore, { min = 0, max = 10 } = {}) {
   if (valore === null || valore === undefined || valore === "") return null;
   const n = Number(String(valore).replace(",", "."));
-  if (!Number.isFinite(n) || n < 0 || n > 10) throw new Error("Il voto deve essere tra 0 e 10");
+  if (!Number.isFinite(n) || n < min || n > max) throw new Error(`Il voto deve essere tra ${min} e ${max}`);
   return Math.round(n * 10) / 10;
 }
 

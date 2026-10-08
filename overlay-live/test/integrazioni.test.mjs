@@ -25,6 +25,10 @@ test("riconosce i voti scritti nei commenti", () => {
     "": null,
   };
   for (const [testo, atteso] of Object.entries(casi)) assert.equal(leggiVoto(testo), atteso, `"${testo}"`);
+  // Con l'intervallo della gara (4–10) gli stessi commenti valgono uguale; i voti sotto il 4 tornano commenti normali.
+  for (const [testo, atteso] of Object.entries(casi)) {
+    assert.equal(leggiVoto(testo, { min: 4, max: 10 }), atteso !== null && atteso >= 4 ? atteso : null, `gara "${testo}"`);
+  }
 });
 
 test("legge i commenti della live TikTok (schema attuale e precedente)", () => {

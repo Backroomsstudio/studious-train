@@ -5,11 +5,12 @@ import { TikTokLiveConnection, WebcastEvent, ControlEvent } from "tiktok-live-co
 
 const RE_VOTO = /^(?:!v(?:oto)?\s*)?(10|\d)(?:[.,](\d))?(?:\s*\/\s*10)?$/i;
 
-export function leggiVoto(testo) {
+// L'intervallo è un'opzione: il Battle legge da 0 a 10, la gara da 4 a 10 (un commento «3» non è un voto).
+export function leggiVoto(testo, { min = 0, max = 10 } = {}) {
   const m = String(testo ?? "").trim().match(RE_VOTO);
   if (!m) return null;
   const valore = Number(`${m[1]}.${m[2] ?? 0}`);
-  return valore <= 10 ? valore : null;
+  return valore >= min && valore <= max ? valore : null;
 }
 
 // Schema attuale di TikTok: testo in `content`, @username in `user.displayId`.
