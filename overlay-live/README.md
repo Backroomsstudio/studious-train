@@ -138,7 +138,7 @@ Il timer diventa rosso e lampeggia negli ultimi 30 secondi; **Pausa (F9)** lo fe
 
 | Pezzo | x | y | larghezza × altezza |
 |---|---|---|---|
-| Barre della vita (nome · barra · «CHAT VOTES» · barra · nome) | 116 | 282 | 848 × 90 |
+| Barre della vita (nome · barra · «VOTO CHAT» · barra · nome) | 116 | 282 | 848 × 90 |
 | Modalità | 116 | 398 | 530 × 146 |
 | Timer | 660 | 398 | 304 × 146 |
 | Pop-up social | 116 | 566 | 848 × 78 |

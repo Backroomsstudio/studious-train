@@ -158,3 +158,14 @@ test("ogni colore scritto negli overlay è neutro, oro/bronzo, rosso o smeraldo"
   }
   assert.equal(problemi.length, 0, `${problemi.length} colori con una tinta non ammessa, per esempio:\n${problemi.slice(0, 40).join("\n")}`);
 });
+
+// ---------- Testi ----------
+
+test("il badge delle barre del Battle dice «Voto Chat»", () => {
+  const battle = readFileSync(join(PUBLIC, "battle.html"), "utf8");
+  assert.ok(battle.includes("<span>Voto</span><span>Chat</span>"), "il badge deve dire Voto / Chat");
+  assert.ok(!/votes/i.test(battle), "battle.html non deve più dire «Votes»");
+  const readme = readFileSync(join(PUBLIC, "..", "README.md"), "utf8");
+  assert.ok(!/chat votes/i.test(readme), "il README non deve più dire «CHAT VOTES»");
+  assert.ok(readme.includes("«VOTO CHAT»"), "il README descrive il badge come «VOTO CHAT»");
+});
