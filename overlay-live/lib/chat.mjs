@@ -20,13 +20,17 @@ export function commentoTikTok(dati) {
   return utente ? { piattaforma: "tiktok", utente, testo: dati.content ?? dati.comment ?? "" } : null;
 }
 
-// Evento «like» di TikTok: `totalLikeCount` è il totale dei Like della live, `likeCount` quelli di questo messaggio.
-// Interi, senza coercione di testi; null se non c'è né un totale valido né un conteggio positivo.
+// Evento «like» di TikTok. Lo schema attuale della libreria (tiktok-live-proto v3) ha `total` (testo di sole cifre, int64: il
+// totale dei Like della live) e `count` (numero: i Like di questo messaggio); senza il campo, `total` arriva come "0".
+// `totalLikeCount` e `likeCount` sono i nomi dello schema precedente, ancora citati nella documentazione della libreria: restano
+// come ripiego, ma solo come numeri. Interi, senza altre coercioni; null se non c'è né un totale valido né un conteggio positivo.
+const intero = (x) => (typeof x === "number" && Number.isFinite(x) ? Math.floor(x) : null);
+const interoDaCifre = (x) => (typeof x === "string" && /^\d{1,15}$/.test(x) ? Number(x) : null);
+
 export function likeTikTok(dati) {
-  const intero = (x) => (typeof x === "number" && Number.isFinite(x) ? Math.floor(x) : null);
-  const totale = intero(dati?.totalLikeCount);
-  const conteggio = intero(dati?.likeCount);
-  const risultato = { totale: totale !== null && totale >= 0 ? totale : null, conteggio: conteggio !== null && conteggio > 0 ? conteggio : 0 };
+  const totale = interoDaCifre(dati?.total) ?? intero(dati?.total) ?? intero(dati?.totalLikeCount);
+  const conteggio = intero(dati?.count) ?? intero(dati?.likeCount);
+  const risultato = { totale: totale !== null && totale > 0 ? totale : null, conteggio: conteggio !== null && conteggio > 0 ? conteggio : 0 };
   return risultato.totale === null && risultato.conteggio === 0 ? null : risultato;
 }
 

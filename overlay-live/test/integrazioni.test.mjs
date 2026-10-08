@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
+import { TikTokLiveConnection, WebcastEvent } from "tiktok-live-connector";
+import { WebcastLikeMessage } from "tiktok-live-proto/v3";
 import { leggiVoto, commentoTikTok, likeTikTok } from "../lib/chat.mjs";
 import { firmaValida, versoCoda, tracciaInOnda, avviaNero } from "../lib/nero.mjs";
 
@@ -101,4 +103,35 @@ test("like: legge totale e conteggio dell'evento", () => {
   assert.deepEqual(likeTikTok({ totalLikeCount: 500 }), { totale: 500, conteggio: 0 });
   assert.deepEqual(likeTikTok({ likeCount: 2.9, totalLikeCount: 10.7 }), { totale: 10, conteggio: 2 });
   for (const dati of [{}, null, undefined, { likeCount: -2, totalLikeCount: NaN }, { totalLikeCount: "7" }]) assert.equal(likeTikTok(dati), null, JSON.stringify(dati));
+});
+
+// Un messaggio come lo consegna davvero la libreria: scritto e riletto con lo schema vero (tiktok-live-proto v3), non a mano.
+// Lì i campi si chiamano `count` (numero) e `total` (testo di cifre, int64); un campo mancante arriva come 0 e "0".
+const likeSulFilo = (campi) => WebcastLikeMessage.decode(WebcastLikeMessage.encode({ ...WebcastLikeMessage.decode(new Uint8Array()), ...campi }).finish());
+
+test("like: legge il messaggio vero della libreria (count numero, total testo di cifre)", () => {
+  const vero = likeSulFilo({ count: 15, total: "12480" });
+  assert.equal(typeof vero.total, "string", "nello schema v3 il totale è un testo");
+  assert.deepEqual(likeTikTok(vero), { totale: 12480, conteggio: 15 });
+  assert.deepEqual(likeTikTok(likeSulFilo({ count: 1, total: "1234567890123" })), { totale: 1234567890123, conteggio: 1 });
+});
+
+test("like: il totale che manca nel messaggio vero arriva come «0» e non vale come totale", () => {
+  assert.deepEqual(likeTikTok(likeSulFilo({ count: 3 })), { totale: null, conteggio: 3 });
+  assert.equal(likeTikTok(likeSulFilo({})), null);
+});
+
+test("like: il connettore consegna il messaggio decodificato com'è e likeTikTok lo legge (prova di deriva della libreria)", async () => {
+  const connessione = new TikTokLiveConnection("prova", { processInitialData: false });
+  const visti = [];
+  connessione.on(WebcastEvent.LIKE, (dati) => visti.push(likeTikTok(dati)));
+  await connessione.processDecodedData({ type: "WebcastLikeMessage", data: likeSulFilo({ count: 15, total: "12480" }) });
+  assert.deepEqual(visti, [{ totale: 12480, conteggio: 15 }]);
+});
+
+test("like: un totale testo che non è fatto di sole cifre non vale; i nomi vecchi restano accettati ma solo come numeri", () => {
+  for (const total of ["", "12e3", "-5", "12480.5", " 7", "1234567890123456", "abc"]) assert.equal(likeTikTok({ total }), null, JSON.stringify(total));
+  assert.deepEqual(likeTikTok({ count: 4, total: "x" }), { totale: null, conteggio: 4 });
+  assert.deepEqual(likeTikTok({ count: 2, total: "900", likeCount: 99, totalLikeCount: 1 }), { totale: 900, conteggio: 2 }, "i nomi nuovi vincono");
+  assert.deepEqual(likeTikTok({ likeCount: 15, totalLikeCount: 12480 }), { totale: 12480, conteggio: 15 });
 });
