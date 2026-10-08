@@ -5,9 +5,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { GEOMETRIA, sovrapposizioni } from "../strumenti/mockup-layout.mjs";
+import { GEOMETRIA, CORPI_GARA, sovrapposizioni } from "../strumenti/mockup-layout.mjs";
 
-const css = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "public", "css", "overlay.css"), "utf8");
+const PUBBLICA = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
+const css = readFileSync(join(PUBBLICA, "css", "overlay.css"), "utf8");
 const blocco = css.match(/\.verticale\s+\.palco\s*\{([^}]*)\}/)?.[1] ?? "";
 
 function px(nome) {
@@ -36,6 +37,7 @@ test("la tabella dello strumento dei mockup dice gli stessi numeri del CSS", () 
     premio: [px("x"), px("y-premio"), px("largo"), px("h-premio")],
     classifica: [px("x"), px("y-colonne"), px("largo-classifica"), px("h-classifica")],
     timer: [px("x-destra"), px("y-colonne"), px("largo-destra"), px("h-timer")],
+    notifica: [px("x-destra"), px("y-notifica"), px("largo-destra"), Number(css.match(/\.notifica\s*\{[^}]*min-height:\s*(\d+)px/)?.[1])], // alta almeno così
     tabellone: [px("x"), px("y-tabellone"), px("largo"), px("h-tabellone")],
     chat: [px("x"), px("y-chat"), px("largo"), px("h-chat")],
   };
@@ -52,4 +54,12 @@ test("sovrapposizioni: i pezzi della gara non si toccano; due pezzi che si copro
   assert.equal(trovate.length, 1);
   assert.match(trovate[0], /a e b/);
   assert.match(trovate[0], /50/);
+});
+
+test("i corpi dei testi che lo strumento controlla sono quelli di CORPI in public/js/overlay.js", () => {
+  const letterale = readFileSync(join(PUBBLICA, "js", "overlay.js"), "utf8").match(/const CORPI = (\{[\s\S]*?\n\});/)?.[1];
+  assert.ok(letterale, "manca «const CORPI = {…};» in public/js/overlay.js");
+  const corpi = new Function(`return ${letterale.replace(/\/\/[^\n]*/g, "")}`)();
+  assert.deepEqual(Object.keys(corpi).sort(), Object.keys(CORPI_GARA).sort());
+  for (const [chiave, { base, minimo }] of Object.entries(CORPI_GARA)) assert.deepEqual(corpi[chiave], [base, minimo], `${chiave}: [massimo, minimo]`);
 });

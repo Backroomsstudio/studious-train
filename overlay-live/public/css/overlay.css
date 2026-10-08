@@ -229,12 +229,12 @@ body.anteprima {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 46px;
-  margin: 0 2px 10px 4px;
+  height: 42px;
+  margin: 0 2px 8px 4px;
 }
 .cl-titolo {
   margin: 0;
-  font: 900 46px/1 var(--font-premio);
+  font: 900 42px/1 var(--font-premio);
   padding-bottom: 4px;
 }
 .cl-top {
@@ -251,7 +251,7 @@ body.anteprima {
 }
 
 .cl-lista {
-  --h: 56px;
+  --h: 58px;
   --gap: 6px;
   --num: 46px;
   position: relative;
@@ -390,14 +390,18 @@ body.anteprima {
   text-overflow: ellipsis;
 }
 .cl-traccia-testo {
+  box-sizing: border-box;
   min-width: 0;
-  font: 900 27px/1.04 var(--font-premio);
+  height: 31px;
+  font: 900 30px/1.04 var(--font-premio);
   text-transform: uppercase;
   letter-spacing: 0.01em;
 }
 .cl-artista {
+  box-sizing: border-box;
+  height: 22px;
   margin-top: 1px;
-  font: 700 22px/1.04 var(--font-premio);
+  font: 700 21px/1.04 var(--font-premio);
   opacity: 0.82;
 }
 .cl-corona {
@@ -425,7 +429,7 @@ body.anteprima {
   100% { transform: none; filter: drop-shadow(0 2px 0 rgba(90, 50, 0, 0.45)); }
 }
 .cl-punti {
-  font: 900 36px/1 var(--font-premio);
+  font: 900 40px/1 var(--font-premio);
   font-variant-numeric: tabular-nums;
 }
 .cl-riga:not(.pos-1):not(.pos-2):not(.pos-3) .cl-punti {
@@ -503,10 +507,16 @@ body.anteprima {
   height: var(--h-timer);
 }
 .timer-etichetta {
-  font: 800 23px/1 var(--font-dati);
-  letter-spacing: 0.12em;
+  box-sizing: border-box;
+  max-width: 100%;
+  height: 26px;
+  font: 800 22px/1.1 var(--font-dati);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--accento-chiaro);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .timer-cifre {
   margin-top: 6px;
@@ -650,7 +660,8 @@ body.anteprima {
 
 .tab-alto {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  /* il totale ha una colonna fissa: il titolo non cambia larghezza mentre i numeri contano */
+  grid-template-columns: minmax(0, 1fr) 340px;
   align-items: start;
   gap: 18px;
 }
@@ -721,21 +732,23 @@ body.anteprima {
 }
 
 .tab-titolo {
+  box-sizing: border-box;
+  height: 52px;
   margin: 0;
-  font: 900 50px/1.02 var(--font-dati);
+  font: 900 52px/1.02 var(--font-dati);
   text-transform: uppercase;
   letter-spacing: 0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-bottom: 2px;
   color: #fff;
   text-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), 0 0 24px rgba(189, 189, 189, 0.35);
 }
 .tab-artista {
+  box-sizing: border-box;
+  height: 34px;
   margin: 0;
-  min-height: 32px;
-  font: 800 30px/1.06 var(--font-gotico);
+  font: 800 32px/1.06 var(--font-gotico);
   color: #dedede;
   white-space: nowrap;
   overflow: hidden;
@@ -763,6 +776,7 @@ body.anteprima {
 }
 .totale-valore {
   margin-top: 4px;
+  white-space: nowrap; /* «10,00/10» non va a capo e non spinge giù i rettangoli */
   font: 900 98px/0.86 var(--font-dati);
   font-variant-numeric: tabular-nums;
   color: #fff;
@@ -804,7 +818,7 @@ body.anteprima {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 /* Colori espliciti, senza color-mix(): il browser di OBS e LIVE Studio può essere un Chromium vecchio */
 .cat {
@@ -814,13 +828,14 @@ body.anteprima {
   --colore-nome: #c6c6c6;
   --colore-scuro: #383838;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas: "nome valore" "giudice valore" "barra barra";
-  grid-template-rows: auto auto 1fr;
-  column-gap: 6px;
-  height: 100px;
+  /* il nome della voce ha tutta la larghezza; sotto, il giudice a sinistra e il voto a destra in una colonna fissa */
+  grid-template-columns: minmax(0, 1fr) 72px;
+  grid-template-areas: "nome nome" "giudice valore" "barra barra";
+  grid-template-rows: 24px minmax(0, 1fr) 12px;
+  gap: 4px 6px;
+  height: 108px;
   box-sizing: border-box;
-  padding: 10px 12px 12px;
+  padding: 8px 12px 10px;
   border-radius: 16px;
   background: linear-gradient(180deg, var(--colore-fondo), rgba(255, 255, 255, 0.03));
   border: 2px solid var(--colore-bordo);
@@ -830,18 +845,24 @@ body.anteprima {
 .cat[data-cat="chat"] { --colore: #d1d1d1; --colore-fondo: rgba(209, 209, 209, 0.18); --colore-bordo: rgba(209, 209, 209, 0.6); --colore-nome: #ececec; --colore-scuro: #535353; }
 .cat-nome {
   grid-area: nome;
-  font: 900 26px/1 var(--font-dati);
+  box-sizing: border-box;
+  height: 24px;
+  font: 900 24px/1 var(--font-dati);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--colore-nome);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .cat-giudice {
   grid-area: giudice;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-  font: 700 24px/1 var(--font-dati);
+  align-self: center;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 28px;
+  /* testo in linea (non flex): così, se il nome non entra nemmeno al corpo minimo, finisce con i puntini */
+  font: 700 22px/28px var(--font-dati);
   color: #fff;
   white-space: nowrap;
   overflow: hidden;
@@ -849,13 +870,15 @@ body.anteprima {
 }
 .cat.votato .cat-giudice::after {
   content: "✓";
-  font: 900 22px/1 var(--font-dati);
+  margin-left: 6px;
+  font-weight: 900;
   color: #e8e8e8;
 }
 .cat-valore {
   grid-area: valore;
-  align-self: start;
-  font: 900 56px/0.95 var(--font-dati);
+  align-self: center;
+  justify-self: end;
+  font: 900 44px/42px var(--font-dati);
   font-variant-numeric: tabular-nums;
   color: #fff;
   text-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), 0 0 18px var(--colore-bordo);
@@ -892,16 +915,17 @@ body.anteprima {
 
 .punto-live {
   display: none;
-  flex: none;
   width: 12px;
   height: 12px;
+  margin: 0 6px 0 4px; /* a sinistra, perché l'alone resta dentro la riga del giudice, che taglia ciò che sporge */
+  vertical-align: middle;
   border-radius: 50%;
   background: var(--rosso-live);
-  box-shadow: 0 0 10px var(--rosso-live);
+  box-shadow: 0 0 6px var(--rosso-live);
   animation: battito 1.1s ease-in-out infinite;
 }
 .chat-aperta .punto-live {
-  display: block;
+  display: inline-block;
 }
 @keyframes battito {
   50% { opacity: 0.25; }
