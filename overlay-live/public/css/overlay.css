@@ -23,10 +23,12 @@
   --h-classifica: 392px;
   --h-timer: 132px;
   --y-notifica: 604px;
-  --y-tabellone: 1236px;
-  --h-tabellone: 282px;
-  --y-chat: 1530px;
-  --h-chat: 78px;
+  /* Blocco voti: tabellone e barra «Vota in chat» stanno appena sopra i commenti di TikTok (che partono da y 1200):
+     il fondo della barra è a y 1130 + 66 = 1196, e tra classifica, tabellone e barra restano 12 px. */
+  --y-tabellone: 858px;
+  --h-tabellone: 260px;
+  --y-chat: 1130px;
+  --h-chat: 66px;
 }
 
 .orizzontale .palco {
@@ -625,7 +627,7 @@ body.anteprima {
 
 /* ---------- Tabellone ---------- */
 .tabellone {
-  padding: 16px 20px 16px;
+  padding: 14px 20px 14px;
 }
 .verticale .tabellone {
   left: var(--x);
@@ -659,14 +661,14 @@ body.anteprima {
   display: flex;
   align-items: center;
   gap: 12px;
-  height: 30px;
-  margin-bottom: 4px;
+  height: 28px;
+  margin-bottom: 2px;
 }
 .tab-ascolto {
   display: flex;
   align-items: center;
   gap: 10px;
-  font: 800 23px/1 var(--font-dati);
+  font: 800 22px/1 var(--font-dati);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accento-chiaro);
@@ -720,7 +722,7 @@ body.anteprima {
 
 .tab-titolo {
   margin: 0;
-  font: 900 56px/1.02 var(--font-dati);
+  font: 900 50px/1.02 var(--font-dati);
   text-transform: uppercase;
   letter-spacing: 0.01em;
   white-space: nowrap;
@@ -732,8 +734,8 @@ body.anteprima {
 }
 .tab-artista {
   margin: 0;
-  min-height: 37px;
-  font: 800 35px/1.06 var(--font-gotico);
+  min-height: 32px;
+  font: 800 30px/1.06 var(--font-gotico);
   color: #dedede;
   white-space: nowrap;
   overflow: hidden;
@@ -744,7 +746,7 @@ body.anteprima {
   text-align: right;
 }
 .totale-stato {
-  height: 30px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -760,7 +762,7 @@ body.anteprima {
   background: var(--podio-argento);
 }
 .totale-valore {
-  margin-top: 8px;
+  margin-top: 4px;
   font: 900 98px/0.86 var(--font-dati);
   font-variant-numeric: tabular-nums;
   color: #fff;
@@ -802,7 +804,7 @@ body.anteprima {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 /* Colori espliciti, senza color-mix(): il browser di OBS e LIVE Studio può essere un Chromium vecchio */
 .cat {
@@ -816,7 +818,7 @@ body.anteprima {
   grid-template-areas: "nome valore" "giudice valore" "barra barra";
   grid-template-rows: auto auto 1fr;
   column-gap: 6px;
-  height: 104px;
+  height: 100px;
   box-sizing: border-box;
   padding: 10px 12px 12px;
   border-radius: 16px;
@@ -944,7 +946,7 @@ body.anteprima {
 }
 .chat-timer {
   min-width: 110px;
-  padding: 10px 14px 8px;
+  padding: 8px 14px 6px;
   border-radius: 12px;
   text-align: center;
   font: 900 40px/1 var(--font-dati);
