@@ -4,7 +4,7 @@
 const GRADIENTI = [
   [
     "g-cromo",
-    `<linearGradient id="g-cromo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.44" stop-color="#a3a9b1"/><stop offset="0.52" stop-color="#3b3f46"/><stop offset="0.68" stop-color="#eceff2"/><stop offset="1" stop-color="#8f959d"/></linearGradient>`,
+    `<linearGradient id="g-cromo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.44" stop-color="#a8a8a8"/><stop offset="0.52" stop-color="#3f3f3f"/><stop offset="0.68" stop-color="#eceff2"/><stop offset="1" stop-color="#949494"/></linearGradient>`,
   ],
   [
     "g-oro",

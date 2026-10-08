@@ -32,17 +32,17 @@ export function creaEqualizzatore(canvas, { stile = "barre", senzaSegnale = true
   let ultimo = 0;
 
   const colori = ctx.createLinearGradient(0, altezza, 0, 0); // dal basso: ciano, viola, magenta
-  colori.addColorStop(0, "#36dcff");
-  colori.addColorStop(0.55, "#a066ff");
-  colori.addColorStop(1, "#ff4fd8");
+  colori.addColorStop(0, "#f2f2f2");
+  colori.addColorStop(0.55, "#a8a8a8");
+  colori.addColorStop(1, "#6e6e6e");
   const riempimentoOnda = ctx.createLinearGradient(0, 0, 0, altezza); // specchiato: magenta ai bordi, ciano al centro
-  riempimentoOnda.addColorStop(0, "rgba(255, 79, 216, 0.5)");
-  riempimentoOnda.addColorStop(0.5, "rgba(54, 220, 255, 0.78)");
-  riempimentoOnda.addColorStop(1, "rgba(255, 79, 216, 0.5)");
+  riempimentoOnda.addColorStop(0, "rgba(126, 126, 126, 0.5)");
+  riempimentoOnda.addColorStop(0.5, "rgba(187, 187, 187, 0.78)");
+  riempimentoOnda.addColorStop(1, "rgba(126, 126, 126, 0.5)");
   const lineaOnda = ctx.createLinearGradient(MARGINE, 0, larghezza - MARGINE, 0);
-  lineaOnda.addColorStop(0, "#36dcff");
-  lineaOnda.addColorStop(0.5, "#c9b2ff");
-  lineaOnda.addColorStop(1, "#ff4fd8");
+  lineaOnda.addColorStop(0, "#bbbbbb");
+  lineaOnda.addColorStop(0.5, "#bcbcbc");
+  lineaOnda.addColorStop(1, "#7e7e7e");
 
   function disegnaBarre() {
     const passo = (larghezza - 2 * MARGINE) / BARRE;
@@ -51,7 +51,7 @@ export function creaEqualizzatore(canvas, { stile = "barre", senzaSegnale = true
     const utile = altezza - 6; // sopra la barra resta posto per il cappuccio
     ctx.save();
     ctx.fillStyle = colori;
-    ctx.shadowColor = "rgba(54, 220, 255, 0.55)";
+    ctx.shadowColor = "rgba(187, 187, 187, 0.55)";
     ctx.shadowBlur = 8;
     ctx.beginPath();
     for (let i = 0; i < BARRE; i++) {
@@ -98,7 +98,7 @@ export function creaEqualizzatore(canvas, { stile = "barre", senzaSegnale = true
     ctx.fill();
     ctx.strokeStyle = lineaOnda;
     ctx.lineWidth = 2.5;
-    ctx.shadowColor = "rgba(160, 102, 255, 0.8)";
+    ctx.shadowColor = "rgba(125, 125, 125, 0.8)";
     ctx.shadowBlur = 10;
     for (const segno of [-1, 1]) {
       ctx.beginPath();

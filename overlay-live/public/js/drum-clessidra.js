@@ -5,7 +5,7 @@
 // quando cambia qualcosa o c'è animazione.
 
 export const STILI = {
-  perline: { raggio: 7, colori: ["#ffd54a", "#a066ff", "#36dcff", "#ff4fd8", "#fff2a8"], lucido: true },
+  perline: { raggio: 7, colori: ["#e6e6e6", "#7d7d7d", "#bbbbbb", "#9a9a9a", "#f4f4f4"], lucido: true },
   sabbia: { raggio: 2.5, colori: ["#f5b72a", "#ffd863", "#e09a12", "#fff0b0"], lucido: false },
 };
 
@@ -65,7 +65,7 @@ function creaSprite(stile, colore) {
     const sfera = c.createRadialGradient(centro - raggio * 0.35, centro - raggio * 0.4, raggio * 0.08, centro, centro, raggio);
     sfera.addColorStop(0, mescola(colore, [255, 255, 255], 0.85));
     sfera.addColorStop(0.35, colore);
-    sfera.addColorStop(1, mescola(colore, [10, 5, 30], 0.55));
+    sfera.addColorStop(1, mescola(colore, [10, 10, 10], 0.55));
     c.fillStyle = sfera;
     c.beginPath();
     c.arc(centro, centro, raggio - 0.5, 0, Math.PI * 2);

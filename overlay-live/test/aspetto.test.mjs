@@ -84,3 +84,77 @@ test("il premio e la classifica della gara usano --font-premio", () => {
     assert.ok(blocchi.some((b) => b.includes("var(--font-premio)")), `${selettore} deve usare var(--font-premio)`);
   }
 });
+
+// ---------- Palette ----------
+// Gli overlay sono in scala di grigi. Hanno una tinta solo tre famiglie che servono a capire cosa succede: oro/bronzo (podio,
+// premio, vincitore, Super Skip), rosso (ultimi minuti, pallino LIVE) e verde smeraldo (Skip, sblocco del Drum).
+
+function inHsl(r, g, b) {
+  const [R, G, B] = [r, g, b].map((x) => x / 255);
+  const massimo = Math.max(R, G, B);
+  const minimo = Math.min(R, G, B);
+  const l = (massimo + minimo) / 2;
+  const d = massimo - minimo;
+  if (!d) return { h: 0, s: 0, l };
+  const s = d / (1 - Math.abs(2 * l - 1));
+  const h = massimo === R ? ((G - B) / d) % 6 : massimo === G ? (B - R) / d + 2 : (R - G) / d + 4;
+  return { h: (h * 60 + 360) % 360, s, l };
+}
+
+// Neutro: differenza tra canale massimo e minimo ≤ 10 su 255. Con una tinta: rosso e oro/bronzo (345°…60°) o smeraldo
+// (135°…170°), e solo se il colore è davvero saturo (≥ 0,2): un grigio appena colorato non è una famiglia, è una dominante.
+export function coloreAmmesso(r, g, b) {
+  if (Math.max(r, g, b) - Math.min(r, g, b) <= 10) return true;
+  const { h, s } = inHsl(r, g, b);
+  return s >= 0.2 && (h >= 345 || h <= 60 || (h >= 135 && h <= 170));
+}
+
+function hslInRgb(h, s, l) {
+  const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min((n + h / 30) % 12 - 3, 9 - ((n + h / 30) % 12), 1));
+  return [f(0), f(8), f(4)].map((x) => Math.round(x * 255));
+}
+
+// Tutti i colori scritti in una riga: esadecimali, rgb(), rgba(), hsl(), hsla() e, negli script, una terna «R, G, B» tra virgolette.
+function coloriInRiga(riga, file) {
+  const trovati = [];
+  for (const m of riga.matchAll(/#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b/g)) {
+    const esa = m[1].length <= 4 ? [...m[1]].map((c) => c + c).join("") : m[1];
+    trovati.push({ testo: m[0], rgb: [0, 2, 4].map((i) => parseInt(esa.slice(i, i + 2), 16)) });
+  }
+  for (const m of riga.matchAll(/rgba?\(\s*([\d.]+)\s*[,\s]\s*([\d.]+)\s*[,\s]\s*([\d.]+)/gi)) trovati.push({ testo: m[0], rgb: [m[1], m[2], m[3]].map(Number) });
+  for (const m of riga.matchAll(/hsla?\(\s*([\d.]+)(?:deg)?\s*[,\s]\s*([\d.]+)%\s*[,\s]\s*([\d.]+)%/gi)) {
+    trovati.push({ testo: m[0], rgb: hslInRgb(Number(m[1]), Number(m[2]) / 100, Number(m[3]) / 100) });
+  }
+  if (file.endsWith(".js")) {
+    for (const m of riga.matchAll(/["'`](\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})["'`]/g)) trovati.push({ testo: m[0], rgb: [m[1], m[2], m[3]].map(Number) });
+  }
+  return trovati;
+}
+
+test("coloreAmmesso: rifiuta viola, magenta, ciano e neri tinti; accetta grigi, oro, rosso e smeraldo", () => {
+  for (const [r, g, b] of [[160, 102, 255], [255, 79, 216], [54, 220, 255], [21, 12, 40], [163, 169, 177], [10, 7, 20]]) {
+    assert.equal(coloreAmmesso(r, g, b), false, `rgb(${r},${g},${b}) non deve passare`);
+  }
+  for (const [r, g, b] of [[92, 58, 0], [255, 216, 99], [255, 48, 70], [20, 163, 111], [255, 255, 255], [11, 11, 12], [0, 0, 0], [232, 236, 242]]) {
+    assert.equal(coloreAmmesso(r, g, b), true, `rgb(${r},${g},${b}) deve passare`);
+  }
+});
+
+test("coloriInRiga legge esadecimali, rgb, rgba, hsl e terne degli script", () => {
+  assert.deepEqual(coloriInRiga("a { color: #fff; b: #a066ff; c: rgba(255, 79, 216, 0.5); d: hsl(0 0% 50%); }", "x.css").map((c) => c.rgb), [[255, 255, 255], [160, 102, 255], [255, 79, 216], [128, 128, 128]]);
+  assert.deepEqual(coloriInRiga('const C = ["205, 178, 255"];', "x.js").map((c) => c.rgb), [[205, 178, 255]]);
+  assert.deepEqual(coloriInRiga('const C = ["205, 178, 255"];', "x.css"), []);
+});
+
+test("ogni colore scritto negli overlay è neutro, oro/bronzo, rosso o smeraldo", () => {
+  const problemi = [];
+  for (const { file, testo } of fileOverlay()) {
+    senzaCommenti(file, testo)
+      .split("\n")
+      .forEach((riga, i) => {
+        for (const { testo: colore, rgb } of coloriInRiga(riga, file)) if (!coloreAmmesso(...rgb)) problemi.push(`${file}:${i + 1} ${colore}`);
+      });
+  }
+  assert.equal(problemi.length, 0, `${problemi.length} colori con una tinta non ammessa, per esempio:\n${problemi.slice(0, 40).join("\n")}`);
+});

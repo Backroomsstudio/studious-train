@@ -43,8 +43,8 @@ body {
 
 /* Solo con ?anteprima=1: sfondo scuro per controllare la grafica in un browser normale. */
 body.anteprima {
-  background: radial-gradient(900px 700px at 70% 30%, #2b1a5a, transparent 70%),
-    radial-gradient(900px 800px at 25% 75%, #142a5c, transparent 70%), #08070d;
+  background: radial-gradient(900px 700px at 70% 30%, #222222, transparent 70%),
+    radial-gradient(900px 800px at 25% 75%, #292929, transparent 70%), #08070d;
   height: 100vh;
 }
 
@@ -78,10 +78,10 @@ body.anteprima {
   position: absolute;
   box-sizing: border-box;
   border-radius: 24px;
-  background: radial-gradient(120% 90% at 0% 0%, rgba(160, 102, 255, 0.3), transparent 55%),
-    radial-gradient(90% 80% at 100% 100%, rgba(54, 220, 255, 0.13), transparent 60%),
-    linear-gradient(180deg, rgba(26, 17, 48, 0.95), rgba(8, 6, 16, 0.96));
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 38px rgba(160, 102, 255, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  background: radial-gradient(120% 90% at 0% 0%, rgba(125, 125, 125, 0.3), transparent 55%),
+    radial-gradient(90% 80% at 100% 100%, rgba(187, 187, 187, 0.13), transparent 60%),
+    linear-gradient(180deg, rgba(21, 21, 21, 0.95), rgba(8, 6, 16, 0.96));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 38px rgba(125, 125, 125, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.16);
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 .pannello::before {
@@ -90,7 +90,7 @@ body.anteprima {
   inset: 0;
   border-radius: inherit;
   padding: 2.5px;
-  background: linear-gradient(135deg, #ffffff 0%, #a066ff 28%, #4a2a8c 50%, #eadcff 70%, #36dcff 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #7d7d7d 28%, #383838 50%, #e2e2e2 70%, #bbbbbb 100%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -124,12 +124,12 @@ body.anteprima {
   gap: 8px;
   padding: 0 18px;
   background: radial-gradient(80% 120% at 50% 0%, rgba(255, 205, 70, 0.22), transparent 60%),
-    radial-gradient(120% 90% at 0% 100%, rgba(160, 102, 255, 0.35), transparent 60%),
-    linear-gradient(180deg, rgba(34, 20, 58, 0.96), rgba(10, 7, 18, 0.97));
+    radial-gradient(120% 90% at 0% 100%, rgba(125, 125, 125, 0.35), transparent 60%),
+    linear-gradient(180deg, rgba(26, 26, 26, 0.96), rgba(8, 8, 8, 0.97));
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 46px rgba(255, 196, 60, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .premio::before {
-  background: linear-gradient(135deg, #fff6c8 0%, #f2b52a 25%, #7a4a00 48%, #ffe17a 68%, #a066ff 100%);
+  background: linear-gradient(135deg, #fff6c8 0%, #f2b52a 25%, #7a4a00 48%, #ffe17a 68%, #7d7d7d 100%);
 }
 .verticale .premio {
   left: var(--x);
@@ -241,8 +241,8 @@ body.anteprima {
   font: 800 24px/1 var(--font-premio);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  background: linear-gradient(135deg, #a066ff, #6b2fe0);
-  box-shadow: 0 0 18px rgba(160, 102, 255, 0.6);
+  background: linear-gradient(135deg, #7d7d7d, #494949);
+  box-shadow: 0 0 18px rgba(125, 125, 125, 0.6);
 }
 .cl-top b {
   font-weight: 900;
@@ -326,8 +326,8 @@ body.anteprima {
   border-radius: 14px;
   overflow: visible;
   /* fondo pieno: copre la scritta "posto libero" dello slot sotto */
-  background: linear-gradient(90deg, rgba(160, 102, 255, 0.28), rgba(160, 102, 255, 0.08)), #120d20;
-  border: 2px solid rgba(205, 178, 255, 0.4);
+  background: linear-gradient(90deg, rgba(125, 125, 125, 0.28), rgba(125, 125, 125, 0.08)), #0f0f0f;
+  border: 2px solid rgba(189, 189, 189, 0.4);
   color: #fff;
 }
 /* Podio: casella oro, argento e bronzo */
@@ -345,7 +345,7 @@ body.anteprima {
 .cl-riga.pos-2 .cl-corpo {
   background: var(--podio-argento);
   color: #171a20;
-  box-shadow: 0 0 18px rgba(220, 228, 240, 0.45), inset 0 -3px 0 rgba(60, 70, 85, 0.3);
+  box-shadow: 0 0 18px rgba(227, 227, 227, 0.45), inset 0 -3px 0 rgba(69, 69, 69, 0.3);
 }
 .cl-riga.pos-3 .cl-corpo {
   background: var(--podio-bronzo);
@@ -427,7 +427,7 @@ body.anteprima {
   font-variant-numeric: tabular-nums;
 }
 .cl-riga:not(.pos-1):not(.pos-2):not(.pos-3) .cl-punti {
-  text-shadow: 0 0 14px rgba(205, 178, 255, 0.6);
+  text-shadow: 0 0 14px rgba(189, 189, 189, 0.6);
 }
 
 /* Etichetta temporanea sulla riga: NEW o ▲2 */
@@ -440,16 +440,16 @@ body.anteprima {
   font: 900 18px/1 var(--font-premio);
   letter-spacing: 0.12em;
   color: #fff;
-  background: linear-gradient(135deg, #ff4fd8, #a066ff);
-  box-shadow: 0 0 16px rgba(255, 79, 216, 0.7);
+  background: linear-gradient(135deg, #7e7e7e, #7d7d7d);
+  box-shadow: 0 0 16px rgba(126, 126, 126, 0.7);
   opacity: 0;
   transform: scale(0.5);
   transition: opacity 0.3s, transform 0.4s cubic-bezier(0.2, 1.6, 0.3, 1);
 }
 .cl-badge.su {
-  color: #052a17;
-  background: linear-gradient(135deg, #b9ffd9, #45ffa8);
-  box-shadow: 0 0 16px rgba(69, 255, 168, 0.75);
+  color: #212121;
+  background: linear-gradient(135deg, #ededed, #d1d1d1);
+  box-shadow: 0 0 16px rgba(209, 209, 209, 0.75);
 }
 .cl-riga.con-badge .cl-badge {
   opacity: 1;
@@ -504,7 +504,7 @@ body.anteprima {
   font: 800 23px/1 var(--font-dati);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--viola-chiaro);
+  color: var(--accento-chiaro);
 }
 .timer-cifre {
   margin-top: 6px;
@@ -512,7 +512,7 @@ body.anteprima {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
   color: #fff;
-  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.7), 0 0 22px rgba(205, 178, 255, 0.55);
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.7), 0 0 22px rgba(189, 189, 189, 0.55);
 }
 .timer.in-pausa .timer-cifre {
   opacity: 0.45;
@@ -570,8 +570,8 @@ body.anteprima {
   padding: 14px 18px;
   border-radius: 20px;
   color: #fff;
-  background: linear-gradient(135deg, #ff4fd8 0%, #a066ff 55%, #5a2bd6 100%);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(255, 79, 216, 0.55);
+  background: linear-gradient(135deg, #7e7e7e 0%, #7d7d7d 55%, #414141 100%);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(126, 126, 126, 0.55);
   opacity: 0;
   transform: translateX(60px) scale(0.9);
   transition: opacity 0.4s ease, transform 0.55s cubic-bezier(0.2, 1.4, 0.3, 1);
@@ -586,9 +586,9 @@ body.anteprima {
   transform: none;
 }
 .notifica.sale {
-  color: #04261a;
-  background: linear-gradient(135deg, #d9ffe9 0%, #45ffa8 50%, #1ccf86 100%);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(69, 255, 168, 0.6);
+  color: #1e1e1e;
+  background: linear-gradient(135deg, #f5f5f5 0%, #d1d1d1 50%, #a4a4a4 100%);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(209, 209, 209, 0.6);
 }
 .notifica.oro {
   color: #2a1700;
@@ -669,7 +669,7 @@ body.anteprima {
   font: 800 23px/1 var(--font-dati);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--viola-chiaro);
+  color: var(--accento-chiaro);
 }
 /* Equalizzatore animato accanto a "In ascolto" */
 .onda {
@@ -682,7 +682,7 @@ body.anteprima {
   width: 5px;
   height: 100%;
   border-radius: 2px;
-  background: linear-gradient(180deg, #36dcff, #a066ff);
+  background: linear-gradient(180deg, #bbbbbb, #7d7d7d);
   animation: onda 0.9s ease-in-out infinite;
   transform-origin: bottom;
 }
@@ -706,8 +706,8 @@ body.anteprima {
 }
 .tier.superskip {
   color: #fff;
-  background: linear-gradient(135deg, #ff4fd8, #a066ff);
-  box-shadow: 0 0 18px rgba(255, 79, 216, 0.6);
+  background: linear-gradient(135deg, #7e7e7e, #7d7d7d);
+  box-shadow: 0 0 18px rgba(126, 126, 126, 0.6);
 }
 .tier.throne {
   color: #2a1700;
@@ -728,13 +728,13 @@ body.anteprima {
   text-overflow: ellipsis;
   padding-bottom: 2px;
   color: #fff;
-  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), 0 0 24px rgba(205, 178, 255, 0.35);
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), 0 0 24px rgba(189, 189, 189, 0.35);
 }
 .tab-artista {
   margin: 0;
   min-height: 37px;
   font: 800 35px/1.06 var(--font-gotico);
-  color: #e6d8ff;
+  color: #dedede;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -751,33 +751,33 @@ body.anteprima {
   font: 800 22px/1 var(--font-dati);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--viola-chiaro);
+  color: var(--accento-chiaro);
 }
 .tabellone.confermato .totale-stato {
-  color: #2a1700;
+  color: #191919;
   padding: 0 10px;
   border-radius: 8px;
-  background: var(--podio-oro);
+  background: var(--podio-argento);
 }
 .totale-valore {
   margin-top: 8px;
   font: 900 98px/0.86 var(--font-dati);
   font-variant-numeric: tabular-nums;
   color: #fff;
-  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.6), 0 0 30px rgba(205, 178, 255, 0.55);
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.6), 0 0 30px rgba(189, 189, 189, 0.55);
 }
 .totale-valore small {
   font-size: 34px;
   margin-left: 4px;
-  color: var(--viola-chiaro);
+  color: var(--accento-chiaro);
 }
 .tabellone.confermato .totale-valore span {
-  background: var(--oro-testo);
+  background: var(--argento-testo);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   text-shadow: none;
-  filter: drop-shadow(0 4px 0 rgba(60, 30, 0, 0.9)) drop-shadow(0 0 22px rgba(255, 190, 40, 0.6));
+  filter: drop-shadow(0 4px 0 rgba(34, 34, 34, 0.9)) drop-shadow(0 0 22px rgba(193, 193, 193, 0.6));
 }
 /* Mentre il totale conta: vibra e si illumina */
 .totale-valore.calcolo span {
@@ -806,11 +806,11 @@ body.anteprima {
 }
 /* Colori espliciti, senza color-mix(): il browser di OBS e LIVE Studio può essere un Chromium vecchio */
 .cat {
-  --colore: #a066ff;
-  --colore-fondo: rgba(160, 102, 255, 0.24);
-  --colore-bordo: rgba(160, 102, 255, 0.65);
-  --colore-nome: #d4bcff;
-  --colore-scuro: #4b2a8c;
+  --colore: #7d7d7d;
+  --colore-fondo: rgba(125, 125, 125, 0.24);
+  --colore-bordo: rgba(125, 125, 125, 0.65);
+  --colore-nome: #c6c6c6;
+  --colore-scuro: #383838;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: "nome valore" "giudice valore" "barra barra";
@@ -823,9 +823,9 @@ body.anteprima {
   background: linear-gradient(180deg, var(--colore-fondo), rgba(255, 255, 255, 0.03));
   border: 2px solid var(--colore-bordo);
 }
-.cat[data-cat="voce"] { --colore: #36dcff; --colore-fondo: rgba(54, 220, 255, 0.2); --colore-bordo: rgba(54, 220, 255, 0.6); --colore-nome: #a8efff; --colore-scuro: #0d5a70; }
-.cat[data-cat="mix"] { --colore: #ff4fd8; --colore-fondo: rgba(255, 79, 216, 0.2); --colore-bordo: rgba(255, 79, 216, 0.6); --colore-nome: #ffb3ee; --colore-scuro: #7a1466; }
-.cat[data-cat="chat"] { --colore: #45ffa8; --colore-fondo: rgba(69, 255, 168, 0.18); --colore-bordo: rgba(69, 255, 168, 0.6); --colore-nome: #b4ffd9; --colore-scuro: #0d6a42; }
+.cat[data-cat="voce"] { --colore: #bbbbbb; --colore-fondo: rgba(187, 187, 187, 0.2); --colore-bordo: rgba(187, 187, 187, 0.6); --colore-nome: #e1e1e1; --colore-scuro: #4b4b4b; }
+.cat[data-cat="mix"] { --colore: #7e7e7e; --colore-fondo: rgba(126, 126, 126, 0.2); --colore-bordo: rgba(126, 126, 126, 0.6); --colore-nome: #c7c7c7; --colore-scuro: #303030; }
+.cat[data-cat="chat"] { --colore: #d1d1d1; --colore-fondo: rgba(209, 209, 209, 0.18); --colore-bordo: rgba(209, 209, 209, 0.6); --colore-nome: #ececec; --colore-scuro: #535353; }
 .cat-nome {
   grid-area: nome;
   font: 900 26px/1 var(--font-dati);
@@ -848,7 +848,7 @@ body.anteprima {
 .cat.votato .cat-giudice::after {
   content: "✓";
   font: 900 22px/1 var(--font-dati);
-  color: var(--verde);
+  color: #e8e8e8;
 }
 .cat-valore {
   grid-area: valore;
@@ -915,9 +915,9 @@ body.anteprima {
   gap: 16px;
   padding: 0 14px 0 24px;
   border-radius: 20px;
-  color: #04261a;
-  background: linear-gradient(90deg, #45ffa8, #36dcff);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 40px rgba(69, 255, 168, 0.55);
+  color: #1e1e1e;
+  background: linear-gradient(90deg, #d1d1d1, #bbbbbb);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 40px rgba(209, 209, 209, 0.55);
   font: 900 36px/1 var(--font-dati);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -940,7 +940,7 @@ body.anteprima {
   font-size: 44px;
 }
 @keyframes richiamo {
-  50% { box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 70px rgba(69, 255, 168, 0.95); }
+  50% { box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 70px rgba(209, 209, 209, 0.95); }
 }
 .chat-timer {
   min-width: 110px;
@@ -950,7 +950,7 @@ body.anteprima {
   font: 900 40px/1 var(--font-dati);
   font-variant-numeric: tabular-nums;
   color: #fff;
-  background: rgba(4, 38, 26, 0.85);
+  background: rgba(30, 30, 30, 0.85);
 }
 .chat-timer:empty {
   display: none;
@@ -964,7 +964,7 @@ body.anteprima {
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: radial-gradient(ellipse at center, rgba(40, 18, 70, 0.94) 0%, rgba(4, 2, 10, 0.98) 70%);
+  background: radial-gradient(ellipse at center, rgba(26, 26, 26, 0.94) 0%, rgba(4, 2, 10, 0.98) 70%);
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.9s, visibility 0.9s;
@@ -1012,7 +1012,7 @@ body.anteprima {
   font: 800 32px/1 var(--font-dati);
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--viola-chiaro);
+  color: var(--accento-chiaro);
   margin-bottom: 18px;
 }
 .vin-corona {
@@ -1046,11 +1046,11 @@ body.anteprima {
   margin-top: 22px;
   font: 900 84px/1 var(--font-dati);
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 0 30px rgba(205, 178, 255, 0.7);
+  text-shadow: 0 0 30px rgba(189, 189, 189, 0.7);
 }
 .vin-punti small {
   font-size: 34px;
-  color: var(--viola-chiaro);
+  color: var(--accento-chiaro);
   margin-left: 6px;
 }
 .vin-premio {

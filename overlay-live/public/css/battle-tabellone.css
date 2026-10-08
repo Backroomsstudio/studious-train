@@ -8,7 +8,7 @@
   z-index: 8;
   padding-top: 28px;
   overflow: hidden;
-  background: radial-gradient(90% 40% at 50% 0%, rgba(160, 102, 255, 0.28), transparent 70%), linear-gradient(180deg, #1b1233, #09060f);
+  background: radial-gradient(90% 40% at 50% 0%, rgba(125, 125, 125, 0.28), transparent 70%), linear-gradient(180deg, #161616, #09060f);
 }
 .bt-tabellone:not([hidden]) {
   animation: bt-tab-entra 0.6s cubic-bezier(0.2, 1, 0.3, 1) both;
@@ -77,7 +77,7 @@
   font: 800 22px/1 var(--font-dati);
   letter-spacing: 0.32em;
   text-transform: uppercase;
-  color: var(--viola-chiaro);
+  color: var(--accento-chiaro);
 }
 .bt-turno.lato {
   width: auto;
@@ -90,16 +90,16 @@
   box-sizing: border-box;
   border-radius: 16px;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(34, 22, 62, 0.97), rgba(12, 8, 22, 0.98));
+  background: linear-gradient(180deg, rgba(27, 27, 27, 0.97), rgba(10, 10, 10, 0.98));
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.28), 0 10px 24px rgba(0, 0, 0, 0.5);
 }
 .bt-carta.in-campo {
-  box-shadow: inset 0 0 0 3px #36dcff, 0 0 28px rgba(54, 220, 255, 0.7), 0 10px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 0 3px #bbbbbb, 0 0 28px rgba(187, 187, 187, 0.7), 0 10px 24px rgba(0, 0, 0, 0.5);
   animation: bt-in-campo 1.6s ease-in-out infinite;
 }
 @keyframes bt-in-campo {
   50% {
-    box-shadow: inset 0 0 0 3px #b6f3ff, 0 0 40px rgba(54, 220, 255, 0.95), 0 10px 24px rgba(0, 0, 0, 0.5);
+    box-shadow: inset 0 0 0 3px #e7e7e7, 0 0 40px rgba(187, 187, 187, 0.95), 0 10px 24px rgba(0, 0, 0, 0.5);
   }
 }
 .bt-carta-riga {
@@ -202,7 +202,7 @@
   height: 94px;
   padding: 0 18px 0 12px;
   border-radius: 18px;
-  background: linear-gradient(180deg, rgba(34, 22, 62, 0.95), rgba(12, 8, 22, 0.97));
+  background: linear-gradient(180deg, rgba(27, 27, 27, 0.95), rgba(10, 10, 10, 0.97));
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.22);
 }
 .bt-pos {
@@ -244,11 +244,11 @@
 .bt-tag {
   padding: 3px 10px;
   border-radius: 8px;
-  background: var(--ciano);
+  background: var(--accento-chiaro);
   font: 800 18px/1.1 var(--font-dati);
   font-style: normal;
   letter-spacing: 0.14em;
-  color: #04202a;
+  color: #1b1b1b;
 }
 .bt-barra-target {
   margin-top: 6px;
@@ -262,7 +262,7 @@
   height: 100%;
   width: calc(var(--p, 0) * 100%);
   border-radius: 99px;
-  background: linear-gradient(90deg, var(--viola), var(--magenta));
+  background: linear-gradient(90deg, #6e6e6e, #bdbdbd);
 }
 .bt-chips-round {
   margin-top: 6px;
@@ -276,7 +276,7 @@
   background: rgba(255, 255, 255, 0.1);
   font: 700 20px/24px var(--font-dati);
   font-variant-numeric: tabular-nums;
-  color: var(--viola-chiaro);
+  color: var(--accento-chiaro);
 }
 .bt-totale {
   font: 900 60px/1 var(--font-dati);
@@ -291,5 +291,5 @@
   color: #ffe27a;
 }
 .bt-riga-punti.in-campo {
-  box-shadow: inset 0 0 0 3px #36dcff, 0 0 24px rgba(54, 220, 255, 0.5);
+  box-shadow: inset 0 0 0 3px #bbbbbb, 0 0 24px rgba(187, 187, 187, 0.5);
 }

@@ -41,10 +41,10 @@ body.fm.anteprima {
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.4);
-  background: radial-gradient(50% 45% at 50% 40%, rgba(160, 102, 255, 0.28), transparent 70%),
+  background: radial-gradient(50% 45% at 50% 40%, rgba(125, 125, 125, 0.28), transparent 70%),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 2px, transparent 2px 46px),
     repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.16) 0 2px, transparent 2px 46px),
-    linear-gradient(180deg, #2a1650, #120a26);
+    linear-gradient(180deg, #1e1e1e, #0e0e0e);
 }
 .anteprima .fm-finto {
   display: grid;
@@ -72,7 +72,7 @@ body.fm.anteprima {
   top: calc(var(--sp-y-barra) + 92px);
   width: 1080px;
   height: calc(1920px - var(--sp-y-barra) - 92px);
-  background: radial-gradient(60% 40% at 50% 30%, rgba(54, 220, 255, 0.18), transparent 70%),
+  background: radial-gradient(60% 40% at 50% 30%, rgba(187, 187, 187, 0.18), transparent 70%),
     repeating-linear-gradient(180deg, transparent 0 56px, rgba(0, 0, 0, 0.55) 56px 60px),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 40px), #121418;
 }
@@ -99,8 +99,8 @@ body.fm.anteprima {
   position: absolute;
   box-sizing: border-box;
   border-radius: 22px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04)), rgba(12, 8, 28, 0.38);
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.42), 0 0 30px rgba(160, 102, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04)), rgba(10, 10, 10, 0.38);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.42), 0 0 30px rgba(125, 125, 125, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.65), 0 0 12px rgba(0, 0, 0, 0.55); /* il testo si legge anche sulla camera */
 }
 /* bordo cromato da 1,5 px */
@@ -150,7 +150,7 @@ body.fm.anteprima {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: linear-gradient(90deg, #4a4e56 0%, #f4f6f8 30%, #7d838c 55%, #ffffff 75%, #50545b 100%);
+  background: linear-gradient(90deg, #4e4e4e 0%, #f4f6f8 30%, #828282 55%, #ffffff 75%, #545454 100%);
 }
 .fm-moneta-faccia {
   position: absolute;
@@ -159,9 +159,9 @@ body.fm.anteprima {
   place-items: center;
   border-radius: 50%;
   backface-visibility: hidden;
-  background: radial-gradient(circle at 35% 28%, #4a3384 0%, #1d1238 48%, #07050d 78%);
-  box-shadow: inset 0 0 0 3px #d9dde3, inset 0 0 0 5px #4b4f57, inset 0 0 0 6px rgba(255, 255, 255, 0.5), inset 0 -8px 18px rgba(0, 0, 0, 0.55),
-    inset 0 6px 12px rgba(205, 178, 255, 0.35), 0 0 22px rgba(160, 102, 255, 0.55);
+  background: radial-gradient(circle at 35% 28%, #3e3e3e 0%, #171717 48%, #07050d 78%);
+  box-shadow: inset 0 0 0 3px #d9dde3, inset 0 0 0 5px #4f4f4f, inset 0 0 0 6px rgba(255, 255, 255, 0.5), inset 0 -8px 18px rgba(0, 0, 0, 0.55),
+    inset 0 6px 12px rgba(189, 189, 189, 0.35), 0 0 22px rgba(125, 125, 125, 0.55);
 }
 .fm-moneta-faccia.fronte {
   transform: translateZ(4px);
@@ -172,14 +172,14 @@ body.fm.anteprima {
 .fm-moneta-faccia img {
   width: 74%;
   height: 74%;
-  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 8px rgba(205, 178, 255, 0.6));
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 8px rgba(189, 189, 189, 0.6));
 }
 
 /* ---------- Fascia social: la barra del layout senza premio, in rilievo, larga 1080 o 1920 ---------- */
 .fm-fascia {
   width: var(--fm-larghezza);
-  background: linear-gradient(180deg, #34225e 0%, #1b1134 44%, #0a0712 56%, #150d29 100%);
-  box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.5), 0 12px 28px rgba(0, 0, 0, 0.55), 0 0 36px rgba(160, 102, 255, 0.32),
+  background: linear-gradient(180deg, #2a2a2a 0%, #161616 44%, #080808 56%, #111111 100%);
+  box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.5), 0 12px 28px rgba(0, 0, 0, 0.55), 0 0 36px rgba(125, 125, 125, 0.32),
     inset 0 2px 0 rgba(255, 255, 255, 0.14), inset 0 -2px 0 rgba(0, 0, 0, 0.7);
 }
 /* il testo passa sotto le monete e sfuma: lettura piena tra x 232 e (larghezza − 232) */
@@ -209,8 +209,8 @@ body.fm.anteprima {
 }
 .fm-fascia .fm-filo-basso {
   height: 2px;
-  background: linear-gradient(90deg, #ff4fd8 0%, #a066ff 25%, #ffffff 50%, #a066ff 75%, #36dcff 100%);
-  box-shadow: 0 0 14px rgba(160, 102, 255, 0.7);
+  background: linear-gradient(90deg, #7e7e7e 0%, #7d7d7d 25%, #ffffff 50%, #7d7d7d 75%, #bbbbbb 100%);
+  box-shadow: 0 0 14px rgba(125, 125, 125, 0.7);
 }
 .fm-fascia .fm-filo-basso .sp-luce {
   animation-delay: 5.4s;
@@ -238,8 +238,8 @@ body.fm.anteprima {
   height: 64px;
   box-sizing: border-box;
   border: 5px solid transparent;
-  border-image: linear-gradient(135deg, #ffffff 0%, #8d929a 38%, #36dcff 100%) 1;
-  filter: drop-shadow(0 0 8px rgba(54, 220, 255, 0.75));
+  border-image: linear-gradient(135deg, #ffffff 0%, #929292 38%, #bbbbbb 100%) 1;
+  filter: drop-shadow(0 0 8px rgba(187, 187, 187, 0.75));
   transition: filter 0.12s ease;
 }
 .fm-staffa.nw { left: 0; top: 0; border-width: 5px 0 0 5px; }
@@ -253,8 +253,8 @@ body.fm.anteprima {
   top: 0;
   height: 3px;
   overflow: hidden;
-  background: linear-gradient(90deg, #36dcff 0%, #a066ff 30%, #ffffff 50%, #a066ff 70%, #ff4fd8 100%);
-  box-shadow: 0 0 14px rgba(160, 102, 255, 0.8);
+  background: linear-gradient(90deg, #bbbbbb 0%, #7d7d7d 30%, #ffffff 50%, #7d7d7d 70%, #7e7e7e 100%);
+  box-shadow: 0 0 14px rgba(125, 125, 125, 0.8);
   transition: box-shadow 0.12s ease, filter 0.12s ease;
 }
 .fm-filo .sp-luce {
@@ -268,7 +268,7 @@ body.fm.anteprima {
 /* lampo a ogni colpo di batteria */
 .fm-cornice.colpo .fm-filo {
   filter: brightness(2.2);
-  box-shadow: 0 0 30px rgba(255, 255, 255, 0.95), 0 0 56px rgba(160, 102, 255, 0.9);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.95), 0 0 56px rgba(125, 125, 125, 0.9);
 }
 .fm-cornice.colpo .fm-staffa {
   filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.95)) brightness(1.6);
@@ -279,8 +279,8 @@ body.fm.anteprima {
    altezza fissa: la pagina riduce il corpo del testo finché entra (adattaTesto) e una riga vuota non occupa niente.
    L'accento (data-accento) è oro, magenta o ciano; il cambio di testo in tempo reale entra con un breve flip (classe .flip). */
 .fm-targa {
-  --acc: #ffd863;
-  --acc-luce: rgba(255, 216, 99, 0.55);
+  --acc: #d8d8d8;
+  --acc-luce: rgba(216, 216, 216, 0.55);
   --d: 96px; /* diametro delle monete */
   /* Corpi di base (px) delle tre righe, moltiplicati dalla dimensione dei testi scelta in regia, e altezza delle loro scatole: quanto
      serve all'inchiostro delle lettere (discendenti e accenti compresi). Una scatola più bassa taglierebbe le lettere sotto la riga,
@@ -300,22 +300,22 @@ body.fm.anteprima {
   padding: 0 18px;
   border-radius: 30px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.07) 36%, rgba(0, 0, 0, 0.24) 100%),
-    radial-gradient(120% 140% at 50% 0%, rgba(160, 102, 255, 0.3), transparent 62%), rgba(13, 8, 28, 0.82);
+    radial-gradient(120% 140% at 50% 0%, rgba(125, 125, 125, 0.3), transparent 62%), rgba(11, 11, 11, 0.82);
   box-shadow: 0 22px 44px rgba(0, 0, 0, 0.58), 0 0 38px var(--acc-luce), inset 0 2px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -3px 0 rgba(0, 0, 0, 0.6), inset 0 0 0 8px rgba(8, 5, 18, 0.6);
+    inset 0 -3px 0 rgba(0, 0, 0, 0.6), inset 0 0 0 8px rgba(7, 7, 7, 0.6);
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 .fm-targa[data-accento="oro"] {
-  --acc: #ffd863;
-  --acc-luce: rgba(255, 216, 99, 0.55);
+  --acc: #d8d8d8;
+  --acc-luce: rgba(216, 216, 216, 0.55);
 }
 .fm-targa[data-accento="magenta"] {
-  --acc: #ff4fd8;
-  --acc-luce: rgba(255, 79, 216, 0.55);
+  --acc: #7e7e7e;
+  --acc-luce: rgba(126, 126, 126, 0.55);
 }
 .fm-targa[data-accento="ciano"] {
-  --acc: #36dcff;
-  --acc-luce: rgba(54, 220, 255, 0.55);
+  --acc: #bbbbbb;
+  --acc-luce: rgba(187, 187, 187, 0.55);
 }
 /* bordo cromato da 5 px e filo nel colore d'accento dentro */
 .fm-targa::before {
@@ -392,7 +392,7 @@ body.fm.anteprima {
   height: var(--h-sotto);
   font: 700 calc(var(--c-sotto) * var(--ts-sotto, 1)) / var(--h-sotto) var(--font-dati);
   letter-spacing: 0.04em;
-  color: #e6d8ff;
+  color: #dedede;
 }
 .fm-targa-riga {
   display: flex;
@@ -422,7 +422,7 @@ body.fm.anteprima {
   font: 900 calc(var(--c-testo) * var(--ts-titolo, 1)) / 1 var(--font-gotico);
   /* cromo luccicante: sfumatura d'argento con una luce che passa */
   background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, transparent 62%) 150% 0 / 260% 100% no-repeat,
-    linear-gradient(180deg, #ffffff 0%, #e8ebf1 30%, #8f96a3 52%, #f3f5f9 54%, #c5cad4 80%, #ffffff 100%);
+    linear-gradient(180deg, #ffffff 0%, #e8ebf1 30%, #959595 52%, #f3f5f9 54%, #cacaca 80%, #ffffff 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

@@ -395,7 +395,7 @@ function scriviBarraRisultato(r, passi, trascorso, valore) {
 // resta DURATA_VITTORIA_MS dall'inizio del rullo e si ritira. Nome e voti si scrivono una sola volta, all'inizio;
 // il voto totale conta da 0 al totale (media di Luca, Freya, Daniele e chat) subito dopo il colpo, quando entra la scritta.
 const TITOLI_VITTORIA = { round: "Il vincitore è", torneo: "Il campione del torneo è", punti: "Il vincitore della classifica è" };
-const COLORI_CORIANDOLI = ["#ffd54a", "#fff2a8", "#36dcff", "#ff4fd8", "#ffffff", "#a066ff"];
+const COLORI_CORIANDOLI = ["#ffd54a", "#fff2a8", "#bbbbbb", "#7e7e7e", "#ffffff", "#7d7d7d"];
 const INIZIO_CONTEGGIO_MS = RULLO_VITTORIA_MS + 500;
 const DURATA_CONTEGGIO_MS = 1500;
 const USCITA_VITTORIA_MS = 500;

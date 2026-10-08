@@ -475,7 +475,7 @@ function scintille(tela) {
   let attivo = true;
   let ultimo = performance.now();
   const [cx, cy] = [LARGHEZZA / 2, ALTEZZA * 0.45];
-  const COLORI = ["255, 236, 170", "255, 210, 90", "255, 255, 255", "205, 178, 255"];
+  const COLORI = ["255, 236, 170", "255, 210, 90", "255, 255, 255", "189, 189, 189"];
 
   const nuova = (esplosione) => {
     const angolo = Math.random() * Math.PI * 2;

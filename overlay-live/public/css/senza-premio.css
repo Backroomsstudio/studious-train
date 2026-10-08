@@ -32,7 +32,7 @@ body.sp.anteprima {
   width: 1080px;
   height: calc(var(--sp-y-camera-fine) - var(--sp-y-camera));
   place-items: center;
-  background: radial-gradient(60% 50% at 50% 40%, rgba(160, 102, 255, 0.18), transparent 70%), linear-gradient(180deg, #1b1724, #0e0c14);
+  background: radial-gradient(60% 50% at 50% 40%, rgba(125, 125, 125, 0.18), transparent 70%), linear-gradient(180deg, #191919, #0e0c14);
   font: 800 28px/1 var(--font-dati);
   letter-spacing: 0.3em;
   color: rgba(255, 255, 255, 0.25);
@@ -49,8 +49,8 @@ body.sp.anteprima {
   width: 1080px;
   height: 2px;
   overflow: hidden;
-  background: linear-gradient(90deg, #36dcff 0%, #a066ff 25%, #ffffff 50%, #a066ff 75%, #ff4fd8 100%);
-  box-shadow: 0 0 14px rgba(160, 102, 255, 0.7);
+  background: linear-gradient(90deg, #bbbbbb 0%, #7d7d7d 25%, #ffffff 50%, #7d7d7d 75%, #7e7e7e 100%);
+  box-shadow: 0 0 14px rgba(125, 125, 125, 0.7);
   transition: opacity 0.6s ease;
 }
 .sp-filo-camera.fuori {
@@ -78,9 +78,9 @@ body.sp.anteprima {
   width: var(--sp-largo);
   height: var(--sp-h-banner);
   border-radius: 28px;
-  background: radial-gradient(70% 60% at 50% 30%, rgba(160, 102, 255, 0.26), transparent 70%),
-    radial-gradient(90% 80% at 100% 100%, rgba(54, 220, 255, 0.12), transparent 60%),
-    linear-gradient(180deg, #1a1130, #080610); /* pieno: copre le vecchie scritte, ma non il vecchio logo a sinistra (x 102–116): va tolto dalla scena */
+  background: radial-gradient(70% 60% at 50% 30%, rgba(125, 125, 125, 0.26), transparent 70%),
+    radial-gradient(90% 80% at 100% 100%, rgba(187, 187, 187, 0.12), transparent 60%),
+    linear-gradient(180deg, #151515, #080610); /* pieno: copre le vecchie scritte, ma non il vecchio logo a sinistra (x 102–116): va tolto dalla scena */
 }
 .sp-banner > * {
   position: absolute;
@@ -92,7 +92,7 @@ body.sp.anteprima {
   pointer-events: none;
 }
 .sp-alone {
-  box-shadow: 0 0 46px rgba(160, 102, 255, 0.5);
+  box-shadow: 0 0 46px rgba(125, 125, 125, 0.5);
   animation: sp-respira 5s ease-in-out infinite;
 }
 @keyframes sp-respira {
@@ -129,7 +129,7 @@ body.sp.anteprima {
   letter-spacing: 0.34em;
   text-transform: uppercase;
   color: #fff;
-  text-shadow: 0 0 16px rgba(160, 102, 255, 0.9), 0 0 2px #cdb2ff;
+  text-shadow: 0 0 16px rgba(125, 125, 125, 0.9), 0 0 2px #bdbdbd;
 }
 .sp-sopra span {
   flex: 0 1 auto;
@@ -142,11 +142,11 @@ body.sp.anteprima {
   flex: none;
   width: 90px;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #cdb2ff);
-  box-shadow: 0 0 10px rgba(160, 102, 255, 0.8);
+  background: linear-gradient(90deg, transparent, #bdbdbd);
+  box-shadow: 0 0 10px rgba(125, 125, 125, 0.8);
 }
 .sp-sopra i:last-child {
-  background: linear-gradient(90deg, #cdb2ff, transparent);
+  background: linear-gradient(90deg, #bdbdbd, transparent);
 }
 
 .sp-titolo {
@@ -266,7 +266,7 @@ body.sp.anteprima {
   display: block;
   width: 124px;
   height: 124px;
-  filter: drop-shadow(0 0 18px rgba(160, 102, 255, 0.55));
+  filter: drop-shadow(0 0 18px rgba(125, 125, 125, 0.55));
   animation: sp-fluttua 6s ease-in-out infinite;
 }
 .sp-logo.dx img {
@@ -283,7 +283,7 @@ body.sp.anteprima {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(160, 102, 255, 0.45), transparent 70%);
+  background: radial-gradient(circle, rgba(125, 125, 125, 0.45), transparent 70%);
   animation: sp-alone 4s ease-in-out infinite;
 }
 .sp-logo.dx .sp-logo-alone {
@@ -412,7 +412,7 @@ body.sp.anteprima {
   font: 800 24px/1 var(--font-dati);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--viola-chiaro);
+  color: var(--accento-chiaro);
   white-space: nowrap;
 }
 .sp-scheda-testa .tier {
@@ -441,12 +441,12 @@ body.sp.anteprima {
   text-overflow: ellipsis;
   padding-bottom: 2px;
   color: #fff;
-  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), 0 0 24px rgba(205, 178, 255, 0.35);
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), 0 0 24px rgba(189, 189, 189, 0.35);
 }
 .sp-scheda-artista {
   height: 40px;
   font: 800 36px/1.1 var(--font-gotico);
-  color: #e6d8ff;
+  color: #dedede;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -508,7 +508,7 @@ body.sp.anteprima {
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #a066ff, #4a2a8c);
+  background: linear-gradient(135deg, #7d7d7d, #383838);
 }
 .sp-etichetta-disco img {
   width: 34px;
@@ -529,10 +529,10 @@ body.sp.anteprima {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 34px rgba(255, 255, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 .sp-scheda.tier-superskip::before {
-  background: linear-gradient(135deg, #ffd0f4, #ff4fd8 30%, #a066ff 65%, #ff4fd8);
+  background: linear-gradient(135deg, #dddddd, #7e7e7e 30%, #7d7d7d 65%, #7e7e7e);
 }
 .sp-scheda.tier-superskip {
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 40px rgba(255, 79, 216, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 40px rgba(126, 126, 126, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 .sp-scheda.tier-throne::before {
   padding: 3px;
@@ -540,8 +540,8 @@ body.sp.anteprima {
 }
 .sp-scheda.tier-throne {
   background: radial-gradient(80% 120% at 50% 0%, rgba(255, 205, 70, 0.2), transparent 60%),
-    radial-gradient(120% 90% at 0% 100%, rgba(160, 102, 255, 0.3), transparent 60%),
-    linear-gradient(180deg, rgba(34, 20, 58, 0.96), rgba(10, 7, 18, 0.97));
+    radial-gradient(120% 90% at 0% 100%, rgba(125, 125, 125, 0.3), transparent 60%),
+    linear-gradient(180deg, rgba(26, 26, 26, 0.96), rgba(8, 8, 8, 0.97));
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 46px rgba(255, 196, 50, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .sp-scheda.tier-throne .sp-scheda-titolo {
@@ -618,8 +618,8 @@ body.sp.anteprima {
   width: 1080px;
   height: var(--sp-h-barra);
   z-index: 3;
-  background: linear-gradient(180deg, #1a1130, #080610);
-  box-shadow: 0 -8px 26px rgba(0, 0, 0, 0.45), 0 0 30px rgba(160, 102, 255, 0.25);
+  background: linear-gradient(180deg, #151515, #080610);
+  box-shadow: 0 -8px 26px rgba(0, 0, 0, 0.45), 0 0 30px rgba(125, 125, 125, 0.25);
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 .sp-barra.fuori {
@@ -656,8 +656,8 @@ body.sp.anteprima {
 .sp-barra-filo.alto {
   top: 0;
   height: 2px;
-  background: linear-gradient(90deg, #36dcff 0%, #a066ff 25%, #ffffff 50%, #a066ff 75%, #ff4fd8 100%);
-  box-shadow: 0 0 14px rgba(160, 102, 255, 0.7);
+  background: linear-gradient(90deg, #bbbbbb 0%, #7d7d7d 25%, #ffffff 50%, #7d7d7d 75%, #7e7e7e 100%);
+  box-shadow: 0 0 14px rgba(125, 125, 125, 0.7);
 }
 .sp-barra-filo.alto .sp-luce {
   animation-delay: 2.2s;
@@ -665,7 +665,7 @@ body.sp.anteprima {
 .sp-barra-filo.basso {
   bottom: 0;
   height: 1.5px;
-  background: rgba(205, 178, 255, 0.35);
+  background: rgba(189, 189, 189, 0.35);
 }
 .sp-filo-oro {
   position: absolute;
@@ -690,8 +690,8 @@ body.sp.anteprima {
   place-items: center;
   border-radius: 50%;
   z-index: 2;
-  background: radial-gradient(circle at 35% 30%, #2a1d4a, #0b0814 70%);
-  box-shadow: 0 0 18px rgba(160, 102, 255, 0.55);
+  background: radial-gradient(circle at 35% 30%, #232323, #0a0a0a 70%);
+  box-shadow: 0 0 18px rgba(125, 125, 125, 0.55);
 }
 .sp-barra-logo.sx { left: 120px; }
 .sp-barra-logo.dx { left: 892px; }
@@ -724,8 +724,8 @@ body.sp.anteprima {
   align-items: center;
 }
 .sp-icona {
-  --anello: #cdb2ff;
-  --alone: rgba(205, 178, 255, 0.5);
+  --anello: #bdbdbd;
+  --alone: rgba(189, 189, 189, 0.5);
   flex: none;
   display: grid;
   place-items: center;
@@ -734,13 +734,13 @@ body.sp.anteprima {
   box-sizing: border-box;
   border-radius: 50%;
   border: 3px solid var(--anello);
-  background: radial-gradient(circle at 35% 30%, #2a1d4a, #0b0814 70%);
+  background: radial-gradient(circle at 35% 30%, #232323, #0a0a0a 70%);
   box-shadow: 0 0 14px var(--alone);
-  color: #f4f1ff;
+  color: #f3f3f3;
 }
 .sp-icona + .sp-icona {
   margin-left: -14px;
-  box-shadow: 0 0 0 3px #120c20, 0 0 14px var(--alone);
+  box-shadow: 0 0 0 3px #0f0f0f, 0 0 14px var(--alone);
 }
 .sp-icona svg {
   width: 30px;
@@ -760,35 +760,35 @@ body.sp.anteprima {
 }
 .sp-icona.nero { --anello: #ffd863; --alone: rgba(255, 200, 60, 0.55); }
 .sp-icona.instagram,
-.sp-icona.dm { --anello: #ff4fd8; --alone: rgba(255, 79, 216, 0.5); }
-.sp-icona.tiktok { --anello: #36dcff; --alone: rgba(54, 220, 255, 0.5); }
-.sp-icona.twitch { --anello: #a066ff; --alone: rgba(160, 102, 255, 0.55); }
+.sp-icona.dm { --anello: #7e7e7e; --alone: rgba(126, 126, 126, 0.5); }
+.sp-icona.tiktok { --anello: #bbbbbb; --alone: rgba(187, 187, 187, 0.5); }
+.sp-icona.twitch { --anello: #7d7d7d; --alone: rgba(125, 125, 125, 0.55); }
 .sp-icona.kick,
 .sp-icona.spotify,
-.sp-icona.whatsapp { --anello: #45ffa8; --alone: rgba(69, 255, 168, 0.45); }
-.sp-icona.youtube { --anello: #ff2d4b; --alone: rgba(255, 45, 75, 0.5); }
+.sp-icona.whatsapp { --anello: #d1d1d1; --alone: rgba(209, 209, 209, 0.45); }
+.sp-icona.youtube { --anello: #5c5c5c; --alone: rgba(92, 92, 92, 0.5); }
 .sp-icona.sito { --anello: #d6dae0; --alone: rgba(255, 255, 255, 0.35); }
 .sp-icona.microfono,
-.sp-icona.cuffie { --anello: #cdb2ff; --alone: rgba(205, 178, 255, 0.5); }
+.sp-icona.cuffie { --anello: #bdbdbd; --alone: rgba(189, 189, 189, 0.5); }
 
 .sp-etichetta {
   font: 800 28px/1 var(--font-dati);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #e6d8ff;
+  color: #dedede;
 }
 .sp-voce[data-colore="nero"] .sp-etichetta { color: #ffe9a6; }
 .sp-voce[data-colore="instagram"] .sp-etichetta,
-.sp-voce[data-colore="dm"] .sp-etichetta { color: #ffb3ee; }
-.sp-voce[data-colore="tiktok"] .sp-etichetta { color: #a8efff; }
-.sp-voce[data-colore="twitch"] .sp-etichetta { color: #d4bcff; }
+.sp-voce[data-colore="dm"] .sp-etichetta { color: #c7c7c7; }
+.sp-voce[data-colore="tiktok"] .sp-etichetta { color: #e1e1e1; }
+.sp-voce[data-colore="twitch"] .sp-etichetta { color: #c6c6c6; }
 .sp-voce[data-colore="kick"] .sp-etichetta,
 .sp-voce[data-colore="spotify"] .sp-etichetta,
-.sp-voce[data-colore="whatsapp"] .sp-etichetta { color: #b4ffd9; }
-.sp-voce[data-colore="youtube"] .sp-etichetta { color: #ffb0bc; }
+.sp-voce[data-colore="whatsapp"] .sp-etichetta { color: #ececec; }
+.sp-voce[data-colore="youtube"] .sp-etichetta { color: #c2c2c2; }
 .sp-voce[data-colore="sito"] .sp-etichetta,
 .sp-voce[data-colore="logo"] .sp-etichetta { color: #eef0f3; }
-.sp-voce.ascolto .sp-etichetta { color: var(--viola-chiaro); }
+.sp-voce.ascolto .sp-etichetta { color: var(--accento-chiaro); }
 
 .sp-testo {
   font: 800 44px/1 var(--font-dati);
@@ -806,11 +806,11 @@ body.sp.anteprima {
 }
 .sp-trattino {
   font: 800 44px/1 var(--font-dati);
-  color: var(--viola-chiaro);
+  color: var(--accento-chiaro);
 }
 .sp-artista {
   font: 800 44px/1 var(--font-gotico);
-  color: #e6d8ff;
+  color: #dedede;
   padding-bottom: 4px;
 }
 .sp-voce .tier {
@@ -867,8 +867,8 @@ body.sp.anteprima {
   width: 872px;
   top: var(--sp-y-camera);
   height: calc(var(--sp-y-camera-fine) - var(--sp-y-camera));
-  border: 2px dashed rgba(54, 220, 255, 0.8);
-  background: rgba(54, 220, 255, 0.08);
+  border: 2px dashed rgba(187, 187, 187, 0.8);
+  background: rgba(187, 187, 187, 0.08);
 }
 .guida-commenti {
   left: 104px;

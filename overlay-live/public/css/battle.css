@@ -42,9 +42,9 @@
   --bt-y-tabellone: 282px;
   --bt-h-tabellone: 1252px;
 
-  /* un colore per lato: sinistra ciano, destra magenta (barra, nome, bordo del box artista, barra chat) */
-  --bt-sx: var(--ciano);
-  --bt-dx: var(--magenta);
+  /* un tono per lato: sinistra bianco, destra grigio medio (barra, nome, bordo del box artista, barra chat) */
+  --bt-sx: #f2f2f2;
+  --bt-dx: #8c8c8c;
 }
 
 body.bt.anteprima {
@@ -60,10 +60,10 @@ body.bt.anteprima {
   width: 1080px;
   height: var(--bt-h-camera);
   place-items: center;
-  background: radial-gradient(30% 50% at 28% 55%, rgba(255, 150, 240, 0.4), transparent 70%),
-    radial-gradient(30% 50% at 72% 55%, rgba(120, 160, 255, 0.35), transparent 70%),
+  background: radial-gradient(30% 50% at 28% 55%, rgba(179, 179, 179, 0.4), transparent 70%),
+    radial-gradient(30% 50% at 72% 55%, rgba(158, 158, 158, 0.35), transparent 70%),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 46px),
-    linear-gradient(180deg, #4a1450, #1a0828);
+    linear-gradient(180deg, #242424, #0e0e0e);
   font: 800 34px/1 var(--font-dati);
   letter-spacing: 0.3em;
   text-transform: uppercase;
@@ -78,10 +78,10 @@ body.bt.anteprima {
   position: absolute;
   box-sizing: border-box;
   border-radius: 22px;
-  background: radial-gradient(90% 80% at 0% 0%, rgba(160, 102, 255, 0.3), transparent 60%),
-    radial-gradient(80% 80% at 100% 100%, rgba(54, 220, 255, 0.14), transparent 60%),
-    linear-gradient(180deg, rgba(26, 17, 48, 0.96), rgba(8, 6, 16, 0.97));
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), 0 0 30px rgba(160, 102, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  background: radial-gradient(90% 80% at 0% 0%, rgba(125, 125, 125, 0.3), transparent 60%),
+    radial-gradient(80% 80% at 100% 100%, rgba(187, 187, 187, 0.14), transparent 60%),
+    linear-gradient(180deg, rgba(21, 21, 21, 0.96), rgba(8, 6, 16, 0.97));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), 0 0 30px rgba(125, 125, 125, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 .bt-vetro::before {
   content: "";
@@ -139,7 +139,7 @@ body.bt.anteprima {
 .bt-barra {
   position: relative;
   height: 46px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.78), rgba(18, 12, 34, 0.9));
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.78), rgba(15, 15, 15, 0.9));
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4);
   overflow: hidden;
   clip-path: polygon(0 0, 100% 0, calc(100% - 16px) 100%, 0 100%);
@@ -153,12 +153,12 @@ body.bt.anteprima {
   transform: scaleX(var(--q, 0.5));
   transform-origin: right center;
   transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-  background: linear-gradient(270deg, #b6f3ff, var(--bt-sx) 40%, #7a5cff);
+  background: linear-gradient(270deg, #e7e7e7, var(--bt-sx) 40%, #6e6e6e);
   box-shadow: 0 0 18px var(--bt-sx);
 }
 .bt-barra.dx .bt-riempi {
   transform-origin: left center;
-  background: linear-gradient(90deg, #ffc1f0, var(--bt-dx) 40%, var(--rosso));
+  background: linear-gradient(90deg, #d2d2d2, var(--bt-dx) 40%, #5e5e5e);
   box-shadow: 0 0 18px var(--bt-dx);
 }
 /* riflesso lucido sulla metà alta */
@@ -169,7 +169,7 @@ body.bt.anteprima {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.05));
 }
 .bt-barra.in-testa {
-  box-shadow: inset 0 0 0 2px #ffe27a, 0 0 22px rgba(255, 226, 122, 0.5);
+  box-shadow: inset 0 0 0 2px #e1e1e1, 0 0 22px rgba(225, 225, 225, 0.5);
 }
 .bt-perc {
   position: absolute;
@@ -195,15 +195,15 @@ body.bt.anteprima {
   align-items: center;
   justify-content: center;
   border: 3px solid transparent;
-  background: linear-gradient(#150c28, #150c28) padding-box, var(--podio-oro) border-box;
+  background: linear-gradient(#101010, #101010) padding-box, var(--podio-argento) border-box;
   clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 16px 100%, 0 50%);
-  box-shadow: 0 0 24px rgba(255, 200, 60, 0.5);
+  box-shadow: 0 0 24px rgba(202, 202, 202, 0.5);
 }
 .bt-badge span {
   font: 900 25px/1.05 var(--font-dati);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  background: var(--oro-testo);
+  background: var(--argento-testo);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -232,7 +232,7 @@ body.bt.anteprima {
   font: 800 calc(40px * var(--ts-modalitaTesto, 1))/1.1 var(--font-gotico);
   white-space: nowrap;
   overflow: hidden;
-  background: var(--oro-testo);
+  background: var(--argento-testo);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -253,7 +253,7 @@ body.bt.anteprima {
   white-space: nowrap;
   overflow: hidden;
   color: #fff;
-  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.6), 0 0 26px rgba(160, 102, 255, 0.6);
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.6), 0 0 26px rgba(125, 125, 125, 0.6);
 }
 .bt-timer.urgente .bt-timer-cifre {
   color: var(--rosso-live);
@@ -361,7 +361,7 @@ body.bt.anteprima {
   gap: 10px;
   font: 700 calc(34px * var(--ts-artistiIg, 1))/1 var(--font-dati);
   letter-spacing: 0.04em;
-  color: var(--viola-chiaro);
+  color: var(--accento-chiaro);
 }
 .bt-artista.dx .bt-artista-ig {
   justify-content: flex-end;
@@ -370,7 +370,7 @@ body.bt.anteprima {
   width: calc(34px * var(--ts-artistiIg, 1));
   height: calc(34px * var(--ts-artistiIg, 1));
   fill: none;
-  stroke: #ff7ad9;
+  stroke: #9d9d9d;
   stroke-width: 2;
 }
 .bt-artista-ig span {
@@ -441,8 +441,8 @@ body.bt.anteprima {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(90deg, rgba(54, 220, 255, 0.92), rgba(160, 102, 255, 0.92) 50%, rgba(255, 79, 216, 0.92));
-  box-shadow: 0 0 34px rgba(160, 102, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  background: linear-gradient(90deg, rgba(187, 187, 187, 0.92), rgba(125, 125, 125, 0.92) 50%, rgba(126, 126, 126, 0.92));
+  box-shadow: 0 0 34px rgba(125, 125, 125, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 .bt-chat-testo {
   flex: 1 1 auto;
@@ -450,7 +450,7 @@ body.bt.anteprima {
   font: 900 calc(34px * var(--ts-chat, 1))/1 var(--font-dati);
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #0a0714;
+  color: #090909;
   white-space: nowrap;
   overflow: hidden;
 }
@@ -463,7 +463,7 @@ body.bt.anteprima {
   margin-left: 16px;
   padding: 8px 16px;
   border-radius: 12px;
-  background: rgba(10, 7, 20, 0.85);
+  background: rgba(9, 9, 9, 0.85);
   font: 800 calc(28px * var(--ts-chat, 1))/1 var(--font-dati);
   letter-spacing: 0.06em;
   color: #fff;
@@ -542,11 +542,11 @@ body.bt.anteprima {
   width: 100%;
   height: 100%;
   overflow: visible;
-  filter: drop-shadow(0 6px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 0 22px rgba(255, 150, 30, 0.7));
+  filter: drop-shadow(0 6px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 0 22px rgba(164, 164, 164, 0.7));
 }
 .bt-vs-fulmine {
   fill: url(#g-vs);
-  stroke: #1a0b00;
+  stroke: #0d0d0d;
   stroke-width: 7;
   stroke-linejoin: round;
 }
@@ -554,7 +554,7 @@ body.bt.anteprima {
   font: 900 150px/1 var(--font-dati);
   letter-spacing: -2px;
   fill: url(#g-vs);
-  stroke: #1a0b00;
+  stroke: #0d0d0d;
   stroke-width: 12;
   stroke-linejoin: round;
   paint-order: stroke;
@@ -567,7 +567,7 @@ body.bt.anteprima {
   width: 220px;
   height: 220px;
   margin: -110px 0 0 -110px;
-  border: 8px solid #ffd23a;
+  border: 8px solid #d1d1d1;
   border-radius: 50%;
   opacity: 0;
 }
@@ -663,7 +663,7 @@ body.bt.anteprima {
   z-index: 10;
   display: grid;
   place-items: center;
-  background: radial-gradient(60% 40% at 50% 50%, rgba(20, 8, 40, 0.55), rgba(5, 3, 12, 0.82));
+  background: radial-gradient(60% 40% at 50% 50%, rgba(13, 13, 13, 0.55), rgba(5, 3, 12, 0.82));
 }
 /* Dopo l'1 il «VIA!» resta su un istante e lo sfondo si apre: dietro si vedono il fulmine e il VS che entrano. */
 .bt-conto.dopo {
@@ -672,11 +672,11 @@ body.bt.anteprima {
 }
 .bt-conto-numero {
   font: 900 560px/1 var(--font-dati);
-  background: var(--oro-testo);
+  background: var(--argento-testo);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 10px 0 rgba(0, 0, 0, 0.6)) drop-shadow(0 0 60px rgba(255, 190, 60, 0.7));
+  filter: drop-shadow(0 10px 0 rgba(0, 0, 0, 0.6)) drop-shadow(0 0 60px rgba(194, 194, 194, 0.7));
 }
 .bt-conto-numero.via {
   font-size: 330px;
@@ -729,8 +729,8 @@ body.bt.anteprima {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: radial-gradient(circle at 35% 30%, #4a2f86, #160d2c);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5), 0 0 16px rgba(160, 102, 255, 0.6);
+  background: radial-gradient(circle at 35% 30%, #3b3b3b, #111111);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5), 0 0 16px rgba(125, 125, 125, 0.6);
 }
 .bt-popup-icona img {
   width: 44px;
@@ -752,7 +752,7 @@ body.bt.anteprima {
   font: 700 17px/1 var(--font-dati);
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--viola-chiaro);
+  color: var(--accento-chiaro);
   white-space: nowrap;
   overflow: hidden;
 }
@@ -776,7 +776,7 @@ body.bt.anteprima {
   white-space: nowrap;
 }
 .bt-popup-sotto b {
-  color: #ffd54a;
+  color: #d4d4d4;
 }
 
 /* ---------- Rivelazione dei voti, vincitore e pari merito ---------- */

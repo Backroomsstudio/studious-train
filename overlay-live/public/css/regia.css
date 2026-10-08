@@ -1,3 +1,9 @@
+/* La regia non è un overlay: tiene i suoi colori (in base.css ora gli accenti sono neutri). */
+:root {
+  --ciano: #36dcff;
+  --magenta: #ff4fd8;
+}
+
 /* Regia: stessa palette dell'overlay, pensata per un monitor della postazione o un dock di OBS. */
 * {
   box-sizing: border-box;
