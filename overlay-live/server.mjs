@@ -13,7 +13,7 @@ import * as B from "./lib/battle.mjs";
 import * as D from "./lib/drum.mjs";
 import * as F from "./lib/formati.mjs";
 import { impostaTesti } from "./lib/testi.mjs";
-import { corpo, numeroTra, siNo } from "./lib/validazione.mjs";
+import { corpo, numeroTra, oggetto, siNo } from "./lib/validazione.mjs";
 import { LimiteFrequenza, leggiAudio } from "./lib/audio.mjs";
 import { avviaTikTok, leggiVoto } from "./lib/chat.mjs";
 import { firmaValida, versoCoda, avviaNero } from "./lib/nero.mjs";
@@ -73,11 +73,15 @@ function caricaConfig() {
   const tuo = JSON.parse(readFileSync(file, "utf8"));
   // I giudici sono un oggetto { beat, voce, mix }: un vecchio config con la lista viene ignorato.
   const giudici = tuo.giudici && !Array.isArray(tuo.giudici) ? tuo.giudici : {};
+  // Il modello di prima aveva pesi 1/1/1/1 (chat al 25%): non era una scelta ma il valore del modello, quindi vale «non
+  // impostato» e il config passa ai pesi nuovi (3/3/3/1, chat al 10%). Chi li vuole uguali scrive 2/2/2/2.
+  const pesiDelModelloVecchio = oggetto(tuo.pesi) && Object.keys(tuo.pesi).length === 4 && ["beat", "voce", "mix", "chat"].every((n) => tuo.pesi[n] === 1);
   return {
     ...base,
     ...tuo,
     giudici: { ...base.giudici, ...giudici },
-    pesi: { ...base.pesi, ...tuo.pesi },
+    pesi: { ...base.pesi, ...(oggetto(tuo.pesi) && !pesiDelModelloVecchio ? tuo.pesi : {}) },
+    etichette: { ...base.etichette, ...(oggetto(tuo.etichette) ? tuo.etichette : {}) },
     nero: { ...base.nero, ...tuo.nero },
   };
 }
@@ -105,6 +109,8 @@ function caricaStato() {
     // Stato di una versione precedente (tre voti per categoria): la traccia in corso riparte da zero.
     if (Array.isArray(salvato.corrente?.voti?.beat)) salvato.corrente = S.tracciaVuota();
     if (Array.isArray(salvato.giudici)) salvato.giudici = { ...config.giudici };
+    // Votazione della gara (aggiunta dopo): pesi, intervallo ed etichette completi anche da uno stato vecchio o rotto.
+    salvato.votazione = S.fondiVotazione(salvato.votazione, config);
     return salvato;
   } catch (e) {
     console.error(`Stato salvato illeggibile (${e.message}): riparto da una serata vuota.`);
@@ -171,7 +177,8 @@ function registraCommento({ piattaforma, utente, testo }) {
     if (preso) cambiato();
     return preso;
   }
-  const valore = leggiVoto(testo);
+  const { min, max } = stato.votazione;
+  const valore = leggiVoto(testo, { min, max });
   if (valore === null) return false;
   const preso = S.votoChat(stato, { piattaforma: pulisci(piattaforma, 20), utente: pulisci(utente, 40) }, valore, Date.now());
   if (preso) cambiato();
@@ -295,6 +302,10 @@ const comandi = {
   giudici(nomi) {
     for (const cat of S.CATEGORIE) if (nomi[cat] !== undefined) stato.giudici[cat] = pulisci(nomi[cat], 40);
   },
+  // Pesi, intervallo dei voti ed etichette delle quattro voci: { pesi?, min?, max?, etichette? }.
+  votazione(args) {
+    S.impostaVotazione(stato, args);
+  },
   nascondiVoti({ attivo }) {
     stato.nascondiVoti = Boolean(attivo);
   },
@@ -317,8 +328,9 @@ const comandi = {
   },
   simulaChat({ quanti = 10 }) {
     if (!stato.corrente.chat.aperta) throw new Error("Apri prima il voto della chat");
+    const { min, max } = stato.votazione;
     for (let i = 0; i < Math.min(200, Number(quanti)); i++) {
-      const voto = Math.max(0, Math.min(10, Math.round((5 + Math.random() * 3 + Math.random() * 3) * 2) / 2));
+      const voto = Math.max(min, Math.min(max, Math.round((5 + Math.random() * 3 + Math.random() * 3) * 2) / 2));
       S.votoChat(stato, { piattaforma: "test", utente: `spettatore${Math.floor(Math.random() * 5000)}` }, voto, Date.now());
     }
   },
@@ -559,8 +571,8 @@ const comandi = {
   },
   demo() {
     const ora = Date.now();
-    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
-    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast };
+    const { premio, invito, suoni, giudici, votazione, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
+    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, votazione, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast };
     const finti = [
       ["Specchi Neri", "Nove", 8.4],
       ["Fuori Orario", "Kappa 23", 7.9],
@@ -586,13 +598,14 @@ const comandi = {
   // La traccia che suona su Nero in quel momento torna sul tabellone al giro successivo. Drum e podcast ripartono
   // (Like da zero, prima tematica); produzione e reaction restano come sono.
   nuovaSerata() {
-    const { premio, invito, suoni, giudici, tiktokUtente, neroAutomatico, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
+    const { premio, invito, suoni, giudici, votazione, tiktokUtente, neroAutomatico, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
     stato = {
       ...S.statoIniziale(config),
       premio,
       invito,
       suoni,
       giudici,
+      votazione,
       tiktokUtente,
       neroAutomatico,
       layout,

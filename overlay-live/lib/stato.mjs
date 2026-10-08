@@ -63,6 +63,7 @@ export function statoIniziale(config) {
     invito: config.invito ?? INVITO_PREDEFINITO,
     suoni: suoniIniziali(config),
     giudici: { ...config.giudici },
+    votazione: votazioneIniziale(config),
     nascondiVoti: false,
     // Il tabellone del battle (bracket) e i moduli a comando del podcast restano spenti finché la regia non li accende.
     visibili: { ...Object.fromEntries(WIDGET.map((w) => [w, true])), ...Object.fromEntries(WIDGET_SPENTI.map((w) => [w, false])) },
@@ -83,6 +84,71 @@ export function statoIniziale(config) {
     // Tracce ascoltate nella serata (per «Oggi abbiamo ascoltato N tracce»).
     ascoltate: [],
   };
+}
+
+// Votazione della gara: peso di ogni voce nel totale (relativi: 3/3/3/1 sono 30/30/30/10 %), intervallo dei voti (giudici e
+// chat) e nome delle quattro voci come si leggono sul tabellone. Parte da config.json e si cambia dalla regia; il Battle ha
+// il suo voto da 0 a 10 e non la usa.
+const VOCI_VOTO = ["beat", "voce", "mix", "chat"];
+const NOME_VOCE = { beat: "Beat", voce: "Voce", mix: "Mix", chat: "Chat" };
+const MAX_ETICHETTA_VOCE = 12;
+
+const votazionePredefinita = () => ({ pesi: { beat: 3, voce: 3, mix: 3, chat: 1 }, min: 4, max: 10, etichette: { ...NOME_VOCE } });
+
+// Applica `sorgente` (la forma delle modifiche) un valore alla volta: uno rotto resta com'era e non butta via gli altri.
+function applicaPerValore(prova, sorgente) {
+  if (!oggetto(sorgente)) return;
+  const pezzi = [];
+  if (oggetto(sorgente.pesi)) for (const [nome, valore] of Object.entries(sorgente.pesi)) pezzi.push({ pesi: { [nome]: valore } });
+  if (sorgente.min !== undefined) pezzi.push({ min: sorgente.min });
+  if (sorgente.max !== undefined) pezzi.push({ max: sorgente.max });
+  if (oggetto(sorgente.etichette)) for (const [nome, valore] of Object.entries(sorgente.etichette)) pezzi.push({ etichette: { [nome]: valore } });
+  for (const modifica of pezzi) {
+    try {
+      impostaVotazione(prova, modifica);
+    } catch {
+      // valore non valido: resta quello di prima
+    }
+  }
+}
+
+// Valori di partenza: i predefiniti, poi quelli di config.json (`pesi`, `votoMin`, `votoMax`, `etichette`) che passano dagli
+// stessi controlli della regia.
+export function votazioneIniziale(config = {}) {
+  const prova = { votazione: votazionePredefinita() };
+  applicaPerValore(prova, { pesi: config.pesi, min: config.votoMin, max: config.votoMax, etichette: config.etichette });
+  return prova.votazione;
+}
+
+// Modifiche dalla regia (o dall'API), controllate su una copia: un errore non lascia metà modifica.
+export function impostaVotazione(stato, modifiche = {}) {
+  const v = JSON.parse(JSON.stringify(stato.votazione));
+  if (modifiche.pesi !== undefined) {
+    if (!oggetto(modifiche.pesi)) throw new Error('Pesi: servono i pesi, es. {"chat": 1}');
+    for (const [nome, valore] of Object.entries(modifiche.pesi)) {
+      if (!VOCI_VOTO.includes(nome)) throw new Error(`Peso sconosciuto: ${String(nome).slice(0, 20)} (beat, voce, mix o chat)`);
+      v.pesi[nome] = numeroTra(valore, 0, 100, `Peso «${NOME_VOCE[nome]}»`);
+    }
+    if (!VOCI_VOTO.some((nome) => v.pesi[nome] > 0)) throw new Error("Almeno un peso deve essere maggiore di zero");
+  }
+  if (modifiche.min !== undefined) v.min = numeroTra(modifiche.min, 0, 10, "Voto minimo");
+  if (modifiche.max !== undefined) v.max = numeroTra(modifiche.max, 0, 10, "Voto massimo");
+  if (!(v.min < v.max)) throw new Error("Il voto minimo deve essere più basso del massimo");
+  if (modifiche.etichette !== undefined) {
+    if (!oggetto(modifiche.etichette)) throw new Error('Etichette: servono le diciture, es. {"beat": "Strumentale"}');
+    for (const [nome, valore] of Object.entries(modifiche.etichette)) {
+      if (!VOCI_VOTO.includes(nome)) throw new Error(`Etichetta sconosciuta: ${String(nome).slice(0, 20)} (beat, voce, mix o chat)`);
+      v.etichette[nome] = testo(valore, MAX_ETICHETTA_VOCE, `Etichetta «${NOME_VOCE[nome]}»`, { obbligatorio: true });
+    }
+  }
+  stato.votazione = v;
+}
+
+// Stato salvato prima della votazione (o con valori rotti): ritrova tutto; quello che è buono resta.
+export function fondiVotazione(salvato, config) {
+  const prova = { votazione: votazioneIniziale(config) };
+  applicaPerValore(prova, salvato);
+  return prova.votazione;
 }
 
 // Live giornaliere senza premio: banner «Mandaci la tua musica», barra dei social che scorre,
@@ -372,7 +438,8 @@ export const ordinaCoda = (coda) =>
 
 export function impostaVoto(stato, { categoria, valore }) {
   if (!CATEGORIE.includes(categoria)) throw new Error("Categoria non valida");
-  stato.corrente.voti[categoria] = normalizzaVoto(valore);
+  const { min, max } = stato.votazione;
+  stato.corrente.voti[categoria] = normalizzaVoto(valore, { min, max });
   stato.corrente.confermato = false;
 }
 
@@ -410,7 +477,7 @@ export function votoChat(stato, { piattaforma, utente }, valore, ora) {
 // Riconfermare la stessa traccia (dopo una correzione) aggiorna il risultato senza duplicarlo.
 export function conferma(stato, config, ora) {
   const traccia = stato.corrente;
-  const p = punteggi(traccia, config.pesi);
+  const p = punteggi(traccia, stato.votazione.pesi);
   if (p.totale === null) throw new Error("Nessun voto inserito per questa traccia");
   chiudiVotoChat(stato);
 
@@ -505,6 +572,7 @@ export function istantanea(stato, config, ora) {
   return {
     ora,
     giudici: stato.giudici,
+    votazione: stato.votazione,
     topN: config.topN,
     premio: stato.premio,
     invito: stato.invito,
@@ -518,7 +586,7 @@ export function istantanea(stato, config, ora) {
       artista: t.artista,
       tier: t.tier,
       confermato: t.confermato,
-      punteggi: punteggi(t, config.pesi),
+      punteggi: punteggi(t, stato.votazione.pesi),
       posizione: t.confermato && posizione > 0 ? posizione : null,
       chat: { aperta: t.chat.aperta, chiudeAlle: t.chat.chiudeAlle, ultimi: t.chat.ultimi },
     },
