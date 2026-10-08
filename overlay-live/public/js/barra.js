@@ -49,12 +49,12 @@ export function vociSocial(sp) {
     }));
 }
 
-// Stima della durata di un giro completo della barra (per la regia): larghezze medie di Barlow Condensed.
+// Stima della durata di un giro completo della barra (per la regia): larghezze medie di Inter (circa 1,3 volte quelle del vecchio font stretto: da calibrare con una misura nel controllo di insieme).
 export function stimaGiroSecondi(voci, velocita) {
   const larghezza = voci.reduce((somma, v) => {
     const icone = v.tipo === "ascolto" ? 34 : 56 + (v.icone.length - 1) * 42 + (v.instagram ? 70 : 0);
     const testi =
-      v.tipo === "ascolto" ? `${v.titolo}${v.artista}`.length * 23 + 220 : (v.etichetta ?? "").length * 16 + (v.testo.length + (v.instagram ?? "").length) * 21;
+      v.tipo === "ascolto" ? `${v.titolo}${v.artista}`.length * 30 + 220 : (v.etichetta ?? "").length * 21 + (v.testo.length + (v.instagram ?? "").length) * 27;
     return somma + icone + 42 + testi + 96;
   }, 0);
   return velocita > 0 ? Math.round(larghezza / velocita) : 0;

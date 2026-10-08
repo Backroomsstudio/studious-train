@@ -354,7 +354,7 @@ function riempiScheda(r) {
   adattaScheda(r.tipo);
 }
 
-// Corpi della scheda: il gotico non scende sotto 34 px (poi i puntini), il resto in Barlow sì.
+// Corpi della scheda: ogni riga si restringe fino al suo minimo (poi i puntini).
 function adattaScheda(tipo) {
   if (tipo === "studio") {
     adattaTesto(scheda.titolo, 52, 34); // gotico
@@ -446,7 +446,7 @@ function schedaPerMockup(s) {
 
 // Con i font caricati le larghezze cambiano: si riadattano i testi e si rimisura il nastro.
 // Non basta «ready»: con i font già nella cache di OBS o LIVE Studio arriva prima dello stato,
-// e i pesi usati dai testi (Barlow 900, Grenze Gotisch) si caricano dopo. Si rimisura a ogni caricamento.
+// e i pesi usati dai testi (Inter 500–900) si caricano dopo. Si rimisura a ogni caricamento.
 function rimisura() {
   adattaBanner();
   if (scheda.aperta) adattaScheda(scheda.aperta);

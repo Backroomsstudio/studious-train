@@ -22,8 +22,12 @@
   --podio-bronzo: linear-gradient(160deg, #ffe1c4 0%, #f3ab70 26%, #d47c3c 52%, #f3ab70 74%, #ffd9b5 100%);
   --oro-testo: linear-gradient(180deg, #fffbe6 0%, #ffe27a 30%, #f5b72a 55%, #c98a0c 70%, #ffe58f 100%);
 
-  --font-gotico: "Grenze Gotisch", "UnifrakturCook", Georgia, serif;
-  --font-dati: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  /* San Francisco dove c'è (Mac, iPhone, o installato a mano); altrimenti Inter, quasi identico e gratuito (caricato da Google Fonts). */
+  --font-sistema: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "San Francisco", Inter, "Segoe UI", system-ui, sans-serif;
+  --font-dati: var(--font-sistema);
+  --font-gotico: var(--font-sistema);
+  /* Solo premio e classifica della gara: oggi uguale al resto; si cambia qui per un font decorativo solo lì. */
+  --font-premio: var(--font-sistema);
 
   /* Il cromo del logo: bianco, grigio, una banda scura al centro, poi di nuovo luce. */
   --cromo: linear-gradient(180deg, #ffffff 0%, #eef1f4 24%, #a4aab3 46%, #3c4047 53%, #c8cdd4 66%, #ffffff 84%, #9ea4ac 100%);

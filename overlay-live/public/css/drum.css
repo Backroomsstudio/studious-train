@@ -59,7 +59,7 @@
   min-width: 0;
 }
 /* Le righe di testo hanno una scatola alta quanto serve all'inchiostro delle lettere (discendenti e accenti compresi): circa 1,22 volte
-   il corpo di base per i testi in Barlow Condensed, 1,12 per il gotico. Più bassa taglierebbe le lettere sotto la riga. */
+   il corpo di base con il font di sistema (da riverificare con il controllo dei pixel). Più bassa taglierebbe le lettere sotto la riga. */
 .dr-brano-riga {
   display: flex;
   align-items: baseline;

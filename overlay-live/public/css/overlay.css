@@ -197,7 +197,7 @@ body.anteprima {
 }
 .premio-testo {
   position: relative;
-  font: 900 76px/1 var(--font-dati);
+  font: 900 76px/1 var(--font-premio);
   text-transform: uppercase;
   letter-spacing: 0.01em;
   white-space: nowrap;
@@ -232,13 +232,13 @@ body.anteprima {
 }
 .cl-titolo {
   margin: 0;
-  font: 900 46px/1 var(--font-gotico);
+  font: 900 46px/1 var(--font-premio);
   padding-bottom: 4px;
 }
 .cl-top {
   padding: 6px 12px 5px;
   border-radius: 10px;
-  font: 800 24px/1 var(--font-dati);
+  font: 800 24px/1 var(--font-premio);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   background: linear-gradient(135deg, #a066ff, #6b2fe0);
@@ -279,7 +279,7 @@ body.anteprima {
   height: 38px;
   margin: 0 4px 0 2px;
   border-radius: 50%;
-  font: 900 26px/1 var(--font-dati);
+  font: 900 26px/1 var(--font-premio);
   color: #fff;
   border: 2px solid rgba(255, 255, 255, 0.5);
   box-sizing: border-box;
@@ -389,13 +389,13 @@ body.anteprima {
 }
 .cl-traccia-testo {
   min-width: 0;
-  font: 900 27px/1.04 var(--font-dati);
+  font: 900 27px/1.04 var(--font-premio);
   text-transform: uppercase;
   letter-spacing: 0.01em;
 }
 .cl-artista {
   margin-top: 1px;
-  font: 700 22px/1.04 var(--font-dati);
+  font: 700 22px/1.04 var(--font-premio);
   opacity: 0.82;
 }
 .cl-corona {
@@ -423,7 +423,7 @@ body.anteprima {
   100% { transform: none; filter: drop-shadow(0 2px 0 rgba(90, 50, 0, 0.45)); }
 }
 .cl-punti {
-  font: 900 36px/1 var(--font-dati);
+  font: 900 36px/1 var(--font-premio);
   font-variant-numeric: tabular-nums;
 }
 .cl-riga:not(.pos-1):not(.pos-2):not(.pos-3) .cl-punti {
@@ -437,7 +437,7 @@ body.anteprima {
   right: 10px;
   padding: 4px 9px 3px;
   border-radius: 8px;
-  font: 900 18px/1 var(--font-dati);
+  font: 900 18px/1 var(--font-premio);
   letter-spacing: 0.12em;
   color: #fff;
   background: linear-gradient(135deg, #ff4fd8, #a066ff);
