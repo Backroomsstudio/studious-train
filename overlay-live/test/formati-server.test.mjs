@@ -316,6 +316,42 @@ test("e2e: dopo un riavvio la scaletta non si ripete", async () => {
   }
 });
 
+test("e2e: una correzione dei Like prima del primo evento vale per il primo evento (anche dopo un riavvio)", async () => {
+  const cartella = mkdtempSync(join(tmpdir(), "drum-correzione-"));
+  try {
+    const primo = await avviaServer({ cartella });
+    try {
+      assert.equal((await primo.api("drumLike", { imposta: 5000 })).ok, true);
+      assert.equal((await primo.statoCorrente()).drum.contati, 5000);
+      await primo.api("likeEvento", { totale: 5200 }); // il primo evento della live in corso
+      assert.equal((await primo.statoCorrente()).drum.contati, 5000, "il totale della live non si somma al valore impostato");
+      await primo.api("likeEvento", { totale: 5250 });
+      assert.equal((await primo.statoCorrente()).drum.contati, 5050);
+    } finally {
+      await primo.ferma();
+    }
+    // la stessa correzione, ma il server si riavvia prima che arrivi il primo evento
+    rmSync(join(cartella, "dati"), { recursive: true, force: true });
+    const secondo = await avviaServer({ cartella });
+    try {
+      assert.equal((await secondo.api("drumLike", { aggiungi: 300 })).ok, true);
+      await dormi(900); // il salvataggio su disco parte dopo 500 ms
+    } finally {
+      await secondo.ferma();
+    }
+    const terzo = await avviaServer({ cartella });
+    try {
+      assert.equal((await terzo.statoCorrente()).drum.contati, 300);
+      await terzo.api("likeEvento", { totale: 7000 });
+      assert.equal((await terzo.statoCorrente()).drum.contati, 300, "dopo il riavvio la correzione vale ancora per il primo evento");
+    } finally {
+      await terzo.ferma();
+    }
+  } finally {
+    rmSync(cartella, { recursive: true, force: true });
+  }
+});
+
 // Un'attesa che non deve durare per sempre: un test che aspetta una chiusura che non arriva deve fallire, non appendersi.
 const entro = (promessa, ms, cosa) => Promise.race([promessa, dormi(ms).then(() => Promise.reject(new Error(`Dopo ${ms} ms: ${cosa}`)))]);
 

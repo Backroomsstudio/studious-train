@@ -109,6 +109,11 @@ export function registraLike(stato, dati) {
     if (like.tiktokTotale === null) {
       if (totale < like.offset) like.offset = 0; // prima lettura sotto l'offset: è una live nuova
       like.tiktokTotale = totale;
+      if (like.voluti !== undefined) {
+        // la regia ha corretto i Like prima di questa lettura: il valore che voleva vedere resta, i Like nuovi si sommano
+        like.extra = like.voluti - totale + like.offset;
+        delete like.voluti;
+      }
     } else like.tiktokTotale = Math.max(like.tiktokTotale, totale);
     return;
   }
@@ -123,7 +128,10 @@ export function nuovaConnessioneLike(stato) {
 
 // Correzioni dalla regia, nell'ordine daOra → imposta → aggiungi. `aggiungi` parte dal valore mostrato (mai sotto zero),
 // così una correzione al ribasso oltre lo zero non lascia un debito nascosto. Un errore non cambia nulla.
-export function impostaLike(stato, dati) {
+// Se il totale di TikTok sta per essere riletto (`inLettura`: un collegamento è appena partito) o non è mai stato letto, la
+// correzione non può appoggiarsi al totale di adesso, che la prima lettura sostituisce: si ricorda anche il valore che la regia
+// vuole vedere (`like.voluti`) e registraLike lo rimette alla prima lettura.
+export function impostaLike(stato, dati, { inLettura = false } = {}) {
   if (!oggetto(dati)) throw new Error("Like: forma non valida");
   const daOra = dati.daOra === undefined ? false : siNo(dati.daOra, "Like (da ora)");
   const imposta = dati.imposta === undefined ? null : numeroTra(dati.imposta, 0, 10_000_000, "Like (imposta)");
@@ -140,6 +148,7 @@ export function impostaLike(stato, dati) {
   }
   if (imposta !== null) rendiContati(imposta);
   if (aggiungi !== null) rendiContati(Math.max(0, contati(drum) + aggiungi));
+  if (inLettura || drum.like.tiktokTotale === null) drum.like.voluti = contati(drum);
 }
 
 // Dalla regia: il testo del campo oppure `predefinita: true` (scaletta di partenza, tenendo i titoli delle tappe con lo
@@ -253,12 +262,13 @@ export function impostaVelocita(stato, n) {
 // ---------- Stato salvato, nuova serata, istantanea e prova ----------
 
 // Like salvati: il totale è null o un intero, `offset` non è negativo, `extra` è un intero. Altrimenti vale la partenza.
+// `voluti` (la correzione in attesa della prima lettura) resta solo se è un intero non negativo.
 function fondiLike(l) {
   if (!oggetto(l)) return null;
-  const { tiktokTotale, offset, extra } = l;
+  const { tiktokTotale, offset, extra, voluti } = l;
   const totaleBuono = tiktokTotale === null || (Number.isSafeInteger(tiktokTotale) && tiktokTotale >= 0);
   if (!totaleBuono || !Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(extra)) return null;
-  return { tiktokTotale, offset, extra };
+  return Number.isSafeInteger(voluti) && voluti >= 0 ? { tiktokTotale, offset, extra, voluti } : { tiktokTotale, offset, extra };
 }
 
 // Un gruppo di campi si controlla con lo stesso modificatore della regia, su una copia della partenza: se qualcosa non

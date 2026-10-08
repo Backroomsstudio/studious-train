@@ -497,7 +497,7 @@ const comandi = {
   // --- Drum Challenge Live (i Like di TikTok sbloccano una scaletta di brani; equalizzatore dall'audio di FL Studio) ---
   // { imposta | aggiungi | daOra }: correzioni a mano dei Like. Un salto di più tappe annuncia solo la più alta.
   drumLike(args) {
-    D.impostaLike(stato, args);
+    D.impostaLike(stato, args, { inLettura: primaLetturaDaTikTok });
     annunciaSblocchi();
   },
   drumScaletta(args) {

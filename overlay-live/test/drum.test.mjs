@@ -239,6 +239,80 @@ test("impostaLike: senza totale e dopo una correzione al ribasso", () => {
   assert.equal(D.contati(t.drum), 100, "la correzione parte dal valore mostrato: nessun debito nascosto");
 });
 
+// Una correzione fatta quando il totale di TikTok sta per essere riletto (collegamento appena avviato) o non è mai stato letto
+// non si può appoggiare al totale di adesso: vale per la prima lettura (`like.voluti`).
+test("correzioni prima della prima lettura: «Imposta» vale per la prima lettura", () => {
+  // ieri sera il totale era 30000; stasera la regia imposta 5000 prima del primo evento della live di stasera (5200)
+  const s = conLike(nuovo(), 30000);
+  D.impostaLike(s, { imposta: 5000 }, { inLettura: true });
+  assert.equal(D.contati(s.drum), 5000, "subito si vede il valore impostato");
+  D.nuovaConnessioneLike(s);
+  D.registraLike(s, { totale: 5200 });
+  assert.equal(D.contati(s.drum), 5000, "alla prima lettura il valore impostato resta");
+  assert.equal(s.drum.like.voluti, undefined, "e si usa una volta sola");
+  D.registraLike(s, { totale: 5250 });
+  assert.equal(D.contati(s.drum), 5050, "poi i Like nuovi si sommano");
+  assert.deepEqual(D.controllaSblocchi(s), [sblocco(3, 5000)], "e la tappa raggiunta con il valore impostato si annuncia una sola volta");
+  assert.deepEqual(D.controllaSblocchi(s), []);
+});
+
+test("correzioni prima della prima lettura: «Riparti da ora» conta da zero e non sblocca nulla", () => {
+  const s = conLike(nuovo(), 30000);
+  s.drum.annunciati = 15;
+  D.impostaLike(s, { daOra: true }, { inLettura: true });
+  D.nuovaConnessioneLike(s);
+  D.registraLike(s, { totale: 5200 });
+  assert.equal(D.contati(s.drum), 0);
+  assert.deepEqual(D.controllaSblocchi(s), [], "i Like che c'erano già non sbloccano la tappa dei 5K");
+  D.registraLike(s, { totale: 5300 });
+  assert.equal(D.contati(s.drum), 100);
+});
+
+test("correzioni prima della prima lettura: «+100» non si somma al totale della live", () => {
+  const s = nuovo(); // TikTok non è mai stato letto
+  D.impostaLike(s, { aggiungi: 100 });
+  D.impostaLike(s, { aggiungi: 100 });
+  assert.equal(D.contati(s.drum), 200);
+  D.registraLike(s, { totale: 5200 });
+  assert.equal(D.contati(s.drum), 200, "il primo evento della live non si aggiunge ai Like messi a mano");
+  D.registraLike(s, { totale: 5210 });
+  assert.equal(D.contati(s.drum), 210);
+  // con il totale già noto e nessun collegamento in corso la correzione si appoggia al totale, come sempre
+  const t = conLike(nuovo(), 5000);
+  D.impostaLike(t, { imposta: 5600 });
+  assert.equal(t.drum.like.voluti, undefined);
+  D.registraLike(t, { totale: 5100 });
+  assert.equal(D.contati(t.drum), 5700);
+});
+
+test("correzioni prima della prima lettura: senza correzioni la prima lettura conta tutta la live", () => {
+  const s = nuovo();
+  D.registraLike(s, { totale: 5200 });
+  assert.equal(D.contati(s.drum), 5200);
+  const ripresa = conLike(nuovo(), 7000);
+  D.nuovaConnessioneLike(ripresa);
+  D.registraLike(ripresa, { totale: 7050 });
+  assert.equal(D.contati(ripresa.drum), 7050, "senza correzioni il totale si rilegge come prima");
+});
+
+test("correzioni prima della prima lettura: si ricordano dopo un riavvio e «Nuova serata» le cancella", () => {
+  const s = nuovo();
+  D.impostaLike(s, { imposta: 5000 });
+  const riavviato = { drum: D.fondiDrum(JSON.parse(JSON.stringify(s.drum))) };
+  assert.equal(riavviato.drum.like.voluti, 5000);
+  assert.equal(D.contati(riavviato.drum), 5000);
+  D.registraLike(riavviato, { totale: 5200 });
+  assert.equal(D.contati(riavviato.drum), 5000);
+  for (const rotto of [-5, 12.5, "5000", NaN, null, {}, [], Infinity, 2 ** 60]) {
+    assert.equal(D.fondiDrum({ like: { tiktokTotale: null, offset: 0, extra: 0, voluti: rotto } }).like.voluti, undefined, `scartato: ${JSON.stringify(rotto)}`);
+  }
+  assert.equal(D.drumNuovaSerata(s.drum).like.voluti, undefined, "una serata nuova riparte da zero");
+  const demo = nuovo();
+  D.impostaLike(demo, { imposta: 5000 });
+  D.drumDemo(demo, "meta");
+  assert.equal(demo.drum.like.voluti, undefined, "la demo sostituisce i Like");
+});
+
 test("annunci: un evento per salto, silenzio al ribasso", () => {
   const s = nuovo();
   conLike(s, 1500);
