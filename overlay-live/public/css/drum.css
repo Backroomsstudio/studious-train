@@ -1,0 +1,497 @@
+/* Layout DRUM CHALLENGE LIVE (9:16): la camera del batterista a tutto schermo sotto la pagina, la grafica intorno e sopra.
+   Usa base.css, overlay.css, senza-premio.css e formati.css (vetro, cornice, fascia social).
+
+   POSIZIONI in pixel della tela 1080×1920 (contenuti tra x 116 e 964; la fascia e il banner chiudono a y 1200, dove inizia la chat):
+   - brano in esecuzione   x 116 → 640,  y 282 → 362
+   - «Dona un…»            x 116 → 640,  y 380 → 486
+   - contatore dei Like    x 676 → 964,  y 282 → 350
+   - colonna dei traguardi x 676 → 964,  y 366 → 1006  (4 moduli 288×148, passo 164)
+   - equalizzatore         x 116 → 964,  y 1016 → 1100
+   - cornice               x 116 → 964,  y 262 → 1100
+   - fascia social         x 0 → 1080,   y 1108 → 1200
+   - banner di sblocco     x 116 → 640,  y 520 → 690
+   I corpi dei testi sono quelli di base moltiplicati da --ts-<gruppo> (dimensione scelta in regia); la pagina li riduce da sé
+   se il testo non entra nel riquadro. Per spostare un pezzo basta cambiare i numeri qui sotto. Con ?guide=1 si vedono le zone. */
+.fm.drum .palco {
+  --dr-oro: #d8d8d8;
+  --dr-verde: var(--verde);
+}
+
+/* ---------- Brano in esecuzione ---------- */
+.dr-brano {
+  left: 116px;
+  top: 282px;
+  width: 524px;
+  height: 80px;
+  padding: 0 16px 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.dr-mini-eq {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  width: 38px;
+  height: 46px;
+}
+.dr-mini-eq b {
+  flex: 1;
+  height: var(--h, 60%);
+  border-radius: 3px 3px 1px 1px;
+  background: linear-gradient(180deg, #bbbbbb, #7d7d7d 60%, #7e7e7e);
+  box-shadow: 0 0 8px rgba(187, 187, 187, 0.55);
+  animation: dr-mini-eq 1.1s ease-in-out infinite alternate;
+  animation-delay: var(--d, 0s);
+}
+.dr-mini-eq b:nth-child(1) { --h: 45%; --d: -0.2s; }
+.dr-mini-eq b:nth-child(2) { --h: 85%; --d: -0.6s; }
+.dr-mini-eq b:nth-child(3) { --h: 60%; --d: -0.9s; }
+.dr-mini-eq b:nth-child(4) { --h: 95%; --d: -0.4s; }
+@keyframes dr-mini-eq {
+  from { transform: scaleY(0.45); }
+  to { transform: scaleY(1); }
+}
+.dr-brano-testi {
+  flex: 1;
+  min-width: 0;
+}
+/* Le righe di testo hanno una scatola alta quanto serve all'inchiostro delle lettere (discendenti e accenti compresi): circa 1,22 volte
+   il corpo di base con il font di sistema (da riverificare con il controllo dei pixel). Più bassa taglierebbe le lettere sotto la riga. */
+.dr-brano-riga {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  height: 30px;
+  line-height: 30px;
+}
+.dr-brano-etichetta {
+  flex: none;
+  font: 800 calc(22px * var(--ts-brano, 1)) / 30px var(--font-dati);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accento-chiaro);
+}
+.dr-brano-artista {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  font: 700 calc(24px * var(--ts-brano, 1)) / 30px var(--font-dati);
+  color: #dedede;
+}
+.dr-brano-titolo {
+  height: 49px;
+  white-space: nowrap;
+  overflow: hidden;
+  font: 800 calc(40px * var(--ts-brano, 1)) / 49px var(--font-dati);
+  color: var(--dr-oro);
+  text-shadow: 0 3px 0 rgba(34, 34, 34, 0.8), 0 0 14px rgba(202, 202, 202, 0.55);
+}
+
+/* ---------- Dona un [slot]: sempre in vista, con una pulsazione periodica ---------- */
+.dr-priorita {
+  left: 116px;
+  top: 380px;
+  width: 524px;
+  height: 106px;
+  padding: 0 16px 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  overflow: hidden;
+}
+.dr-pri-icona {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 3px solid var(--dr-oro);
+  background: radial-gradient(circle at 35% 30%, #3e3e3e, #141414 70%);
+  box-shadow: 0 0 18px rgba(202, 202, 202, 0.55);
+  color: var(--dr-oro);
+}
+.dr-pri-icona svg {
+  width: 46px;
+  height: 46px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.dr-pri-icona img {
+  width: 54px;
+  height: 54px;
+}
+.dr-pri-testi {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* la colonna non cresce con il testo: i testi si adattano al riquadro */
+  gap: 2px;
+}
+.dr-pri-sopra {
+  height: 30px;
+  white-space: nowrap;
+  overflow: hidden;
+  font: 800 calc(24px * var(--ts-priorita, 1)) / 30px var(--font-dati);
+  color: #dedede;
+}
+.dr-pri-riga {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  height: 64px;
+}
+.dr-pri-prefisso {
+  flex: none;
+  max-width: 44%;
+  overflow: hidden;
+  white-space: nowrap;
+  font: 800 calc(38px * var(--ts-priorita, 1)) / 64px var(--font-dati);
+  color: #fff;
+}
+.dr-pri-slot {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font: 900 calc(56px * var(--ts-priorita, 1)) / 64px var(--font-gotico);
+  color: var(--dr-oro);
+  text-shadow: 0 3px 0 rgba(34, 34, 34, 0.8), 0 0 16px rgba(202, 202, 202, 0.6);
+}
+/* pulsazione: una luce attraversa il widget e l'icona rimbalza */
+.dr-pri-luce {
+  position: absolute;
+  left: -30px;
+  top: -40px;
+  bottom: -40px;
+  width: 90px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: translateX(-120px) skewX(-18deg);
+  opacity: 0;
+}
+.dr-priorita.pulsa .dr-pri-luce {
+  animation: dr-pri-luce 1.1s ease-out;
+}
+.dr-priorita.pulsa .dr-pri-icona {
+  animation: dr-rimbalzo 0.9s cubic-bezier(0.3, 1.6, 0.4, 1);
+}
+@keyframes dr-pri-luce {
+  0% { opacity: 1; transform: translateX(-120px) skewX(-18deg); }
+  100% { opacity: 0; transform: translateX(520px) skewX(-18deg); }
+}
+@keyframes dr-rimbalzo {
+  0% { transform: scale(1) rotate(0deg); }
+  35% { transform: scale(1.22) rotate(-10deg); }
+  70% { transform: scale(0.94) rotate(6deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* ---------- Contatore dei Like ---------- */
+.dr-contatore {
+  left: 676px;
+  top: 282px;
+  width: 288px;
+  height: 68px;
+  padding: 2px 16px 2px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.dr-like-lato {
+  flex: none;
+  width: 68px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+}
+.dr-cuore {
+  width: 34px;
+  height: 32px;
+  fill: #7e7e7e;
+  stroke: #dddddd;
+  stroke-width: 1.4;
+  filter: drop-shadow(0 0 8px rgba(126, 126, 126, 0.8));
+}
+.dr-like-etichetta {
+  font: 800 clamp(18px, calc(26px * var(--ts-contatore, 1)), 30px) / 28px var(--font-dati);
+  letter-spacing: 0.16em;
+  text-indent: 0.16em;
+  text-transform: uppercase;
+  color: #dddddd;
+}
+.dr-like-numero {
+  flex: 1;
+  min-width: 0;
+  height: 64px;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  font: 800 calc(64px * var(--ts-contatore, 1)) / 64px var(--font-dati);
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+/* ---------- Colonna dei traguardi: quattro moduli di vetro 288×148 con passo 164 ---------- */
+.dr-colonna {
+  position: absolute;
+  left: 676px;
+  top: 366px;
+  width: 288px;
+  height: 640px;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.dr-modulo {
+  --bordo: var(--bordo-cromo);
+  top: calc(var(--i) * 164px);
+  left: 0;
+  width: 288px;
+  height: 148px;
+  overflow: hidden;
+}
+.dr-modulo::before {
+  background: var(--bordo);
+}
+.dr-fondo {
+  position: absolute;
+  inset: 0;
+  width: 288px;
+  height: 148px;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.dr-modulo-like {
+  position: absolute;
+  left: 16px;
+  top: 4px;
+  font: 800 min(calc(52px * var(--ts-traguardi, 1)), 62px) / 56px var(--font-dati);
+  color: #eef0f3;
+}
+.dr-modulo-icona {
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  width: 34px;
+  height: 34px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: #adadad;
+}
+.dr-modulo-titolo {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 62px;
+  height: 42px;
+  overflow: hidden;
+  white-space: nowrap;
+  font: 700 calc(34px * var(--ts-traguardi, 1)) / 42px var(--font-dati);
+  color: #fff;
+}
+.dr-modulo-riga {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 8px;
+  height: 34px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.dr-modulo-manca {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  overflow: hidden;
+  white-space: nowrap;
+  font: 700 calc(26px * var(--ts-traguardi, 1)) / 34px var(--font-dati);
+  color: #dedede;
+}
+.dr-modulo-perc {
+  flex: none;
+  font: 800 min(calc(30px * var(--ts-traguardi, 1)), 40px) / 34px var(--font-dati);
+  color: var(--dr-oro);
+  text-shadow: 0 2px 0 rgba(34, 34, 34, 0.8);
+}
+/* chiuso: spento, con il lucchetto */
+.dr-modulo[data-stato="chiusa"] {
+  opacity: 0.78;
+}
+.dr-modulo[data-stato="chiusa"] .dr-modulo-like {
+  color: #bebebe;
+}
+.dr-modulo[data-stato="chiusa"] .dr-modulo-titolo {
+  color: #c8c8c8;
+}
+/* attivo: la clessidra si riempie; bordo oro e viola, luce alta */
+.dr-modulo[data-stato="attiva"] {
+  --bordo: linear-gradient(135deg, #f5f5f5 0%, #d8d8d8 28%, #5f5f5f 52%, #ffffff 72%, #d8d8d8 100%);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.42), 0 0 34px rgba(202, 202, 202, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+.dr-modulo[data-stato="attiva"] .dr-modulo-like {
+  color: var(--dr-oro);
+  text-shadow: 0 3px 0 rgba(34, 34, 34, 0.8), 0 0 14px rgba(202, 202, 202, 0.55);
+}
+.dr-modulo[data-stato="attiva"] .dr-modulo-icona {
+  color: var(--dr-oro);
+}
+/* sbloccato: verde neon, con la spunta */
+.dr-modulo[data-stato="sbloccata"] {
+  --bordo: linear-gradient(135deg, #eafff5 0%, #45ffa8 30%, #0e6b44 52%, #b6ffe0 72%, #45ffa8 100%);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.42), 0 0 38px rgba(69, 255, 168, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 0 36px rgba(69, 255, 168, 0.16);
+}
+.dr-modulo[data-stato="sbloccata"] .dr-modulo-like {
+  color: var(--dr-verde);
+  text-shadow: 0 3px 0 rgba(0, 40, 24, 0.8), 0 0 16px rgba(69, 255, 168, 0.6);
+}
+.dr-modulo[data-stato="sbloccata"] .dr-modulo-icona {
+  color: var(--dr-verde);
+  filter: drop-shadow(0 0 8px rgba(69, 255, 168, 0.8));
+}
+/* il titolo di un brano sbloccato può andare su più righe */
+.dr-modulo[data-stato="sbloccata"] .dr-modulo-titolo {
+  height: 78px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.06;
+}
+
+/* ---------- Equalizzatore ---------- */
+.dr-eq {
+  position: absolute;
+  left: 116px;
+  top: 1016px;
+  width: 848px;
+  height: 84px;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* ---------- Banner di sblocco: sopra la camera, a sinistra della colonna ---------- */
+.dr-sblocco {
+  left: 116px;
+  top: 520px;
+  width: 524px;
+  height: 170px;
+  padding: 16px 22px;
+  overflow: hidden;
+  --bordo: linear-gradient(135deg, #eafff5 0%, #45ffa8 30%, #0e6b44 52%, #b6ffe0 72%, #45ffa8 100%);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.45), 0 0 46px rgba(69, 255, 168, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.dr-sblocco::before {
+  background: var(--bordo);
+}
+.dr-sblocco-etichetta {
+  height: 34px;
+  font: 800 calc(28px * var(--ts-sblocco, 1)) / 34px var(--font-dati);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #b4ffd9;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.dr-sblocco-titolo {
+  height: 104px;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font: 900 calc(72px * var(--ts-sblocco, 1)) / 1.02 var(--font-gotico);
+  color: var(--dr-verde);
+  text-shadow: 0 3px 0 rgba(0, 40, 24, 0.85), 0 0 22px rgba(69, 255, 168, 0.75);
+}
+
+.dr-sblocco.entra {
+  animation: dr-banner-entra 0.5s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+.dr-sblocco.esce {
+  animation: dr-banner-esce 0.38s ease-in forwards;
+}
+@keyframes dr-banner-entra {
+  0% { opacity: 0; transform: translateX(-60px) scale(0.92); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes dr-banner-esce {
+  0% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateX(-40px) scale(0.96); }
+}
+
+/* ---------- Sequenza di sblocco: urto del modulo, lampo verde, onda d'urto, perline che schizzano, colonna che scorre ---------- */
+.dr-modulo.sblocco {
+  z-index: 2; /* sopra i vicini mentre si ingrandisce */
+  animation: dr-urto 0.7s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+@keyframes dr-urto {
+  0% { transform: scale(1); }
+  12% { transform: scale(1.06) translateX(-5px); }
+  24% { transform: scale(1.06) translateX(5px); }
+  36% { transform: scale(1.05) translateX(-3px); }
+  48% { transform: scale(1.04) translateX(3px); }
+  62% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+.dr-lampo {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(90% 120% at 50% 50%, rgba(69, 255, 168, 0.95), rgba(69, 255, 168, 0.35) 55%, transparent 80%);
+  mix-blend-mode: screen;
+  animation: dr-lampo 0.6s ease-out forwards;
+}
+@keyframes dr-lampo {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  100% { opacity: 0; }
+}
+/* durante lo scorrimento il modulo che esce sparisce sotto il bordo alto della colonna (e quello che entra sotto il basso) */
+.dr-colonna.scorre {
+  clip-path: inset(-20px -80px -20px -80px);
+}
+/* il riquadro degli effetti sta sopra la colonna e non sporge dalla cornice (x 116 → 964, y 262 → 1100) */
+.dr-effetti {
+  position: absolute;
+  left: 116px;
+  top: 262px;
+  width: 848px;
+  height: 838px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+}
+.dr-onda {
+  position: absolute;
+  box-sizing: border-box;
+  border: 5px solid var(--dr-verde);
+  border-radius: 28px;
+  box-shadow: 0 0 24px rgba(69, 255, 168, 0.9), inset 0 0 24px rgba(69, 255, 168, 0.6);
+}
+.dr-schizzo {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, var(--c) 45%, #141414 125%);
+  box-shadow: 0 0 10px var(--c);
+}
+
+/* Finta camera: la scritta sta a sinistra, fuori dalla colonna dei traguardi */
+.fm.drum .fm-finto[data-finto="camera"] {
+  place-items: center start;
+  padding-left: 140px;
+}

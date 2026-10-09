@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Drum Challenge Live · Backrooms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/overlay.css">
+  <link rel="stylesheet" href="/css/senza-premio.css">
+  <link rel="stylesheet" href="/css/formati.css">
+  <link rel="stylesheet" href="/css/drum.css">
+</head>
+<body class="fm drum" data-formato="drum">
+  <div class="palco">
+    <!-- Solo con ?anteprima=1: al posto della camera del batterista -->
+    <div class="fm-finto" data-finto="camera" aria-hidden="true"><span>Camera · batterista</span></div>
+
+    <!-- CORNICE: staffe d'angolo e filo neon, lampeggiano a ogni colpo di batteria -->
+    <div class="fm-cornice" id="dr-cornice" data-parte="cornice" style="left:116px;top:262px;width:848px;height:838px">
+      <i class="fm-staffa nw"></i><i class="fm-staffa ne"></i><i class="fm-staffa sw"></i><i class="fm-staffa se"></i>
+      <i class="fm-filo"><i class="sp-luce"></i></i>
+    </div>
+
+    <!-- EQUALIZZATORE: 40 barre, o l'onda specchiata, dall'audio di FL Studio (lo ascolta la regia) -->
+    <canvas class="dr-eq" id="dr-eq" data-parte="eq" width="848" height="84"></canvas>
+
+    <!-- BRANO IN ESECUZIONE: nascosto se non c'è un titolo -->
+    <section class="dr-brano fm-vetro" id="dr-brano" data-parte="brano" hidden>
+      <i class="dr-mini-eq"><b></b><b></b><b></b><b></b></i>
+      <div class="dr-brano-testi">
+        <div class="dr-brano-riga"><span class="dr-brano-etichetta">In esecuzione</span><span class="dr-brano-artista" id="dr-brano-artista"></span></div>
+        <div class="dr-brano-titolo" id="dr-brano-titolo"></div>
+      </div>
+    </section>
+
+    <!-- DONA UN [SLOT]: sempre in vista, pulsa ogni 20 secondi e a comando -->
+    <section class="dr-priorita fm-vetro" id="dr-priorita" data-parte="priorita">
+      <div class="dr-pri-icona" id="dr-pri-icona"></div>
+      <div class="dr-pri-testi">
+        <div class="dr-pri-sopra" id="dr-pri-sopra"></div>
+        <div class="dr-pri-riga"><span class="dr-pri-prefisso" id="dr-pri-prefisso"></span><span class="dr-pri-slot" id="dr-pri-slot"></span></div>
+        <i class="dr-pri-luce"></i>
+      </div>
+    </section>
+
+    <!-- CONTATORE DEI LIKE -->
+    <section class="dr-contatore fm-vetro" id="dr-contatore" data-parte="contatore">
+      <div class="dr-like-lato">
+        <svg class="dr-cuore"><use href="#ic-cuore"/></svg>
+        <span class="dr-like-etichetta">Like</span>
+      </div>
+      <div class="dr-like-numero" id="dr-like-numero">0</div>
+    </section>
+
+    <!-- COLONNA DEI TRAGUARDI: quattro moduli (l'ultimo sbloccato, l'attivo, i prossimi), disegnati da drum.js -->
+    <section class="dr-colonna" id="dr-colonna" data-parte="colonna"></section>
+
+    <!-- BANNER DI SBLOCCO: «Brano sbloccato» e il titolo, sopra la camera -->
+    <section class="dr-sblocco fm-vetro" id="dr-sblocco" data-parte="sblocco" hidden>
+      <div class="dr-sblocco-etichetta">Brano sbloccato</div>
+      <div class="dr-sblocco-titolo" id="dr-sblocco-titolo"></div>
+    </section>
+
+    <!-- EFFETTI DELLO SBLOCCO: onda d'urto e perline che schizzano dal modulo (disegnati da drum-sblocco.js) -->
+    <div class="dr-effetti" id="dr-effetti" aria-hidden="true"></div>
+
+    <!-- FASCIA SOCIAL: i social dello studio che scorrono (con lo slot dell'artista ospite) -->
+    <section class="sp-barra fm-fascia" data-parte="fascia">
+      <div class="sp-finestra"><div class="sp-nastro" id="sp-nastro"></div></div>
+      <i class="fm-fascia-vetro"></i>
+      <div class="sp-barra-filo alto"><i class="sp-luce"></i></div>
+      <div class="sp-barra-filo basso fm-filo-basso"><i class="sp-luce"></i></div>
+      <div class="fm-moneta sx" data-moneta style="--ritardo:-5s"></div>
+      <div class="fm-moneta dx" data-moneta style="--ritardo:-1s"></div>
+    </section>
+
+    <!-- Solo con ?guide=1: zona visibile sui telefoni e zone coperte dall'app TikTok (solo verticale) -->
+    <div class="guide" aria-hidden="true">
+      <div class="guida-taglio sx"></div>
+      <div class="guida-taglio dx"></div>
+      <div class="guida-ui alto">Nome live, spettatori, classifiche TikTok</div>
+      <div class="guida-ui basso">Pulsanti TikTok</div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/drum.js"></script>
+</body>
+</html>

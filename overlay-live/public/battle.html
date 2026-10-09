@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Battle · Backrooms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/overlay.css">
+  <link rel="stylesheet" href="/css/battle.css">
+  <link rel="stylesheet" href="/css/battle-tabellone.css">
+  <link rel="stylesheet" href="/css/battle-vittoria.css">
+</head>
+<body class="verticale bt">
+  <!-- Elementi grafici: gradienti, punta e icone dei social disegnate da noi (come nel layout studio) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="g-cromo" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffffff"/>
+        <stop offset="0.44" stop-color="#a8a8a8"/>
+        <stop offset="0.52" stop-color="#3f3f3f"/>
+        <stop offset="0.68" stop-color="#eceff2"/>
+        <stop offset="1" stop-color="#949494"/>
+      </linearGradient>
+      <linearGradient id="g-oro" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fffbe0"/>
+        <stop offset="0.35" stop-color="#ffd54a"/>
+        <stop offset="0.6" stop-color="#e09a12"/>
+        <stop offset="0.8" stop-color="#ffd659"/>
+        <stop offset="1" stop-color="#b87808"/>
+      </linearGradient>
+      <linearGradient id="g-vs" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffffff"/>
+        <stop offset="0.35" stop-color="#e6e6e6"/>
+        <stop offset="0.7" stop-color="#9a9a9a"/>
+        <stop offset="1" stop-color="#454545"/>
+      </linearGradient>
+      <symbol id="ic-trofeo" viewBox="0 0 24 24"><path d="M7 3h10v5a5 5 0 0 1-10 0z"/><path d="M7 5H4v2a3 3 0 0 0 3 3M17 5h3v2a3 3 0 0 1-3 3M12 13v4M9 17h6M8 21h8"/></symbol>
+      <symbol id="punta" viewBox="0 0 100 100">
+        <path d="M50 0C53 35 65 47 100 50 65 53 53 65 50 100 47 65 35 53 0 50 35 47 47 35 50 0Z"/>
+      </symbol>
+      <symbol id="ic-nero" viewBox="0 0 24 24"><path d="M9 17.5V5.5l10-2v11.5"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></symbol>
+      <symbol id="ic-instagram" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.2" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="ic-tiktok" viewBox="0 0 24 24"><path d="M14 3.5v11a4 4 0 1 1-4-4"/><path d="M14 3.5c.6 2.6 2.5 4.4 5 4.8"/></symbol>
+      <symbol id="ic-twitch" viewBox="0 0 24 24"><path d="M4.5 3.5h15v10.5l-4.5 4.5h-4l-3 3v-3h-3.5z"/><path d="M11 8v4.5M15.5 8v4.5"/></symbol>
+      <symbol id="ic-kick" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M4 3h5v5h2V6h2V3h7v6h-2v2h-2v2h2v2h2v6h-7v-3h-2v-2H9v5H4z"/></symbol>
+      <symbol id="ic-youtube" viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="M10 9.2l5 2.8-5 2.8z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="ic-spotify" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M7 9.6c3.4-1 7-.7 10 1M7.6 12.8c2.9-.8 5.6-.5 8 .9M8.3 15.8c2.2-.6 4.2-.4 5.9.6"/></symbol>
+      <symbol id="ic-whatsapp" viewBox="0 0 24 24"><path d="M4 20.5l1.4-4.1A8.5 8.5 0 1 1 8.6 19.3z"/><path d="M9.2 8.6c.2 2.9 2.6 5.6 5.9 6.2l1.3-1.4-1.9-1-.9.8a5 5 0 0 1-2.4-2.4l.8-.9-1-1.9z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="ic-dm" viewBox="0 0 24 24"><path d="M21 3.5 3 10.6l7.2 2.7 2.7 7.2z"/><path d="M21 3.5 10.2 13.3"/></symbol>
+      <symbol id="ic-sito" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3z"/></symbol>
+      <symbol id="ic-microfono" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></symbol>
+      <symbol id="ic-cuffie" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="5" height="7" rx="2"/><rect x="16" y="14" width="5" height="7" rx="2"/></symbol>
+    </defs>
+  </svg>
+
+  <div class="palco">
+    <!-- Solo con ?anteprima=1: al posto della camera della scena (sorgente di LIVE Studio sotto questa pagina) -->
+    <div class="bt-finto" aria-hidden="true"><span>Camera 16:9</span></div>
+
+    <!-- BARRE DELLA VITA: nome · barra · «VOTO CHAT» · barra · nome. Le barre seguono la quota dei voti della chat -->
+    <section class="bt-barre" data-parte="barre">
+      <div class="bt-nome sx"><span id="bt-nome-sx"></span></div>
+      <div class="bt-barra sx"><i class="bt-riempi"></i><b class="bt-perc" id="bt-perc-sx"></b></div>
+      <div class="bt-badge"><span>Voto</span><span>Chat</span></div>
+      <div class="bt-barra dx"><i class="bt-riempi"></i><b class="bt-perc" id="bt-perc-dx"></b></div>
+      <div class="bt-nome dx"><span id="bt-nome-dx"></span></div>
+    </section>
+
+    <!-- MODALITÀ E TIMER -->
+    <section class="bt-modo bt-vetro" data-parte="modalita">
+      <div class="etichetta">Modalità</div>
+      <div class="bt-modo-nome" id="bt-modo-nome"></div>
+      <div class="bt-modo-testo" id="bt-modo-testo"></div>
+    </section>
+    <section class="bt-timer bt-vetro" data-parte="timer" id="bt-timer">
+      <div class="etichetta" id="bt-timer-etichetta"></div>
+      <div class="bt-timer-cifre" id="bt-timer-cifre"></div>
+    </section>
+
+    <!-- POP-UP SOCIAL: compaiono a intervalli (Back Rooms, Rime Vicentine), mai durante il round -->
+    <section class="bt-popup bt-vetro" data-parte="popup" id="bt-popup">
+      <div class="bt-popup-icona" id="bt-popup-icona"></div>
+      <div class="bt-popup-testi">
+        <div class="bt-popup-sopra" id="bt-popup-sopra"></div>
+        <div class="bt-popup-titolo" id="bt-popup-titolo"></div>
+      </div>
+      <div class="bt-popup-sotto" id="bt-popup-sotto"></div>
+    </section>
+
+    <!-- CAMERA: cornice attorno alla sorgente di LIVE Studio (fili neon, staffe d'angolo) -->
+    <section class="bt-camera" data-parte="camera">
+      <i class="bt-filo alto"></i><i class="bt-filo basso"></i>
+      <i class="bt-staffa as"></i><i class="bt-staffa ad"></i><i class="bt-staffa bs"></i><i class="bt-staffa bd"></i>
+      <i class="bt-lampo"></i>
+      <!-- Spacco a fulmine: divide la camera a metà (stile «intervista doppia») dal via in poi -->
+      <div class="bt-spacco" id="bt-spacco" hidden>
+        <svg viewBox="0 0 60 608" preserveAspectRatio="none"><polyline class="bt-fulmine" points="30,0 40,58 20,122 42,190 18,262 40,332 22,402 42,470 20,540 30,608"/></svg>
+      </div>
+      <div class="bt-vs" id="bt-vs" hidden>
+        <i class="bt-onda"></i>
+        <svg viewBox="0 0 220 190" aria-label="VS">
+          <path class="bt-vs-fulmine" d="M128 4 L66 104 L104 104 L82 186 L158 76 L120 76 Z"/>
+          <text class="bt-vs-testo" x="110" y="134" text-anchor="middle">VS</text>
+        </svg>
+      </div>
+      <div class="bt-stop" id="bt-stop">STOP</div>
+    </section>
+
+    <!-- BOX DEGLI ARTISTI: in basso ai due lati della camera -->
+    <section class="bt-artisti" data-parte="artisti">
+      <div class="bt-artista sx bt-vetro">
+        <div class="bt-artista-nome" id="bt-art-nome-sx"></div>
+        <div class="bt-artista-ig" id="bt-art-ig-sx"><svg><use href="#ic-instagram"/></svg><span></span></div>
+      </div>
+      <div class="bt-artista dx bt-vetro">
+        <div class="bt-artista-nome" id="bt-art-nome-dx"></div>
+        <div class="bt-artista-ig" id="bt-art-ig-dx"><svg><use href="#ic-instagram"/></svg><span></span></div>
+      </div>
+    </section>
+
+    <!-- GIUDICI E VOTO DELLA CHAT, sotto la camera -->
+    <section class="bt-giudici" data-parte="giudici">
+      <div class="bt-giudice bt-vetro" data-giudice="luca"><div class="bt-giudice-nome"></div><div class="bt-giudice-voti"><b class="sx">?</b><i></i><b class="dx">?</b></div></div>
+      <div class="bt-giudice bt-vetro" data-giudice="freya"><div class="bt-giudice-nome"></div><div class="bt-giudice-voti"><b class="sx">?</b><i></i><b class="dx">?</b></div></div>
+      <div class="bt-giudice bt-vetro" data-giudice="daniele"><div class="bt-giudice-nome"></div><div class="bt-giudice-voti"><b class="sx">?</b><i></i><b class="dx">?</b></div></div>
+    </section>
+    <section class="bt-chat" data-parte="chat">
+      <div class="bt-chat-testo" id="bt-chat-testo"></div>
+      <div class="bt-chat-conta" id="bt-chat-conta"></div>
+    </section>
+
+    <!-- TABELLONE: torneo a eliminazione o classifica a punti. Copre camera e widget, si accende dalla regia -->
+    <section class="bt-tabellone bt-vetro" data-parte="tabellone" id="bt-tabellone" hidden></section>
+
+    <!-- 3-2-1 prima del via, a tutto schermo -->
+    <section class="bt-conto" data-parte="conto" id="bt-conto" hidden>
+      <div class="bt-conto-numero" id="bt-conto-numero"></div>
+    </section>
+
+    <!-- SCHERMATA DEL VINCITORE, a tutta pagina: rullo, poi nome, voto totale (media di Luca, Freya, Daniele e chat) e i quattro voti.
+         Parte da sola a fine rivelazione; la regia la rifà con «Rivedi vincitore» -->
+    <section class="bt-vittoria" data-parte="vittoria" id="bt-vittoria" hidden>
+      <i class="bt-vit-raggi"></i>
+      <div class="bt-vit-coriandoli" id="bt-vit-coriandoli" aria-hidden="true"></div>
+      <div class="bt-vit-contenuto">
+        <svg class="bt-vit-coppa" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-trofeo"/></svg>
+        <div class="bt-vit-titolo" id="bt-vit-titolo"></div>
+        <div class="bt-vit-nome"><b id="bt-vit-nome"></b></div>
+        <div class="bt-vit-ig" id="bt-vit-ig"><svg><use href="#ic-instagram"/></svg><span></span></div>
+        <div class="bt-vit-totale">
+          <div class="bt-vit-etichetta">Voto totale</div>
+          <div class="bt-vit-cifre"><b id="bt-vit-cifre">0,00</b><span>/10</span></div>
+        </div>
+        <div class="bt-vit-voti" id="bt-vit-voti"></div>
+      </div>
+      <i class="bt-vit-flash"></i>
+    </section>
+
+    <!-- Solo con ?guide=1: tagli dei telefoni e zone coperte dall'app TikTok -->
+    <div class="guide" aria-hidden="true">
+      <div class="guida-taglio sx"></div>
+      <div class="guida-taglio dx"></div>
+      <div class="guida-ui alto">Nome live, spettatori, classifiche TikTok</div>
+      <div class="guida-ui basso">Pulsanti TikTok</div>
+      <div class="bt-guida chat">Chat TikTok · 1200 → 1700</div>
+      <div class="bt-guida regali">Cuori e regali</div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/battle.js"></script>
+</body>
+</html>

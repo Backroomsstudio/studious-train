@@ -1,0 +1,885 @@
+/* Layout SENZA PREMIO (live giornaliere di ascolto), una sola sorgente Link 1080×1920 su sfondo trasparente.
+   Usa base.css e overlay.css (palco, pannello di vetro, onda, pastiglie dei tier, guide, keyframes) più queste classi sp-.
+
+   POSIZIONI in pixel della tela, misurate sull'anteprima di LIVE Studio dello studio (screenshot 421×923, k = 0,4807):
+   - visibile sui telefoni circa x 102…978: tutto sta tra x 116 e 964 (la barra va a filo, ma il testo sfuma ai lati);
+   - in alto l'app TikTok copre fino a ~270, in basso i pulsanti partono da ~1768;
+   - la camera dello studio va da y 634 a y 1265; sotto la barra (da y 1358) restano liberi i commenti dei telefoni.
+   Per spostare un pezzo basta cambiare i numeri qui sotto. Con ?guide=1 si vedono le zone. */
+.sp .palco {
+  --sp-x: 116px;
+  --sp-largo: 848px;
+  --sp-y-banner: 284px;
+  --sp-h-banner: 330px;
+  --sp-y-filo: 630px; /* filo luminoso sopra la camera */
+  --sp-y-camera: 634px;
+  --sp-y-camera-fine: 1265px;
+  --sp-y-scheda: 1106px; /* scheda «Ora in ascolto», alta 148: finisce a 1254, sotto il mento di chi parla */
+  --sp-y-barra: 1266px;
+  --sp-h-barra: 92px;
+}
+
+body.sp.anteprima {
+  background: #000; /* la loro scena è nera */
+}
+
+/* ---------- Finta camera e filo sopra la camera ---------- */
+.sp-finta-camera {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: var(--sp-y-camera);
+  width: 1080px;
+  height: calc(var(--sp-y-camera-fine) - var(--sp-y-camera));
+  place-items: center;
+  background: radial-gradient(60% 50% at 50% 40%, rgba(125, 125, 125, 0.18), transparent 70%), linear-gradient(180deg, #191919, #0e0c14);
+  font: 800 28px/1 var(--font-dati);
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.25);
+  text-transform: uppercase;
+}
+.anteprima .sp-finta-camera {
+  display: grid;
+}
+
+.sp-filo-camera {
+  position: absolute;
+  left: 0;
+  top: var(--sp-y-filo);
+  width: 1080px;
+  height: 2px;
+  overflow: hidden;
+  background: linear-gradient(90deg, #bbbbbb 0%, #7d7d7d 25%, #ffffff 50%, #7d7d7d 75%, #7e7e7e 100%);
+  box-shadow: 0 0 14px rgba(125, 125, 125, 0.7);
+  transition: opacity 0.6s ease;
+}
+.sp-filo-camera.fuori {
+  transform: none !important;
+}
+.sp-luce {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 320px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, #fff, transparent);
+  transform: translateX(-320px);
+  animation: sp-scorri-luce 7s linear 1.6s infinite;
+}
+@keyframes sp-scorri-luce {
+  0%, 62% { transform: translateX(-320px); }
+  100% { transform: translateX(1100px); }
+}
+
+/* ---------- Banner ---------- */
+.sp-banner {
+  left: var(--sp-x);
+  top: var(--sp-y-banner);
+  width: var(--sp-largo);
+  height: var(--sp-h-banner);
+  border-radius: 28px;
+  background: radial-gradient(70% 60% at 50% 30%, rgba(125, 125, 125, 0.26), transparent 70%),
+    radial-gradient(90% 80% at 100% 100%, rgba(187, 187, 187, 0.12), transparent 60%),
+    linear-gradient(180deg, #151515, #080610); /* pieno: copre le vecchie scritte, ma non il vecchio logo a sinistra (x 102–116): va tolto dalla scena */
+}
+.sp-banner > * {
+  position: absolute;
+}
+.sp-alone,
+.sp-oro {
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.sp-alone {
+  box-shadow: 0 0 46px rgba(125, 125, 125, 0.5);
+  animation: sp-respira 5s ease-in-out infinite;
+}
+@keyframes sp-respira {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+/* Livello d'oro del richiamo: bordo dorato e bagliore, acceso solo per 2,4 s */
+.sp-oro {
+  opacity: 0;
+  box-shadow: 0 0 50px rgba(255, 196, 60, 0.55), inset 0 0 30px rgba(255, 196, 60, 0.15);
+}
+.sp-oro::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 3px;
+  background: linear-gradient(135deg, #fff6c8 0%, #f2b52a 25%, #7a4a00 48%, #ffe17a 68%, #f2b52a 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.sp-sopra {
+  left: 0;
+  right: 0;
+  top: 14px;
+  height: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 22px;
+  font: 800 38px/36px var(--font-dati);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 0 16px rgba(125, 125, 125, 0.9), 0 0 2px #bdbdbd;
+}
+.sp-sopra span {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  margin-right: -0.34em; /* la spaziatura dopo l'ultima lettera non sposta il centro */
+}
+.sp-sopra i {
+  flex: none;
+  width: 90px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #bdbdbd);
+  box-shadow: 0 0 10px rgba(125, 125, 125, 0.8);
+}
+.sp-sopra i:last-child {
+  background: linear-gradient(90deg, #bdbdbd, transparent);
+}
+
+.sp-titolo {
+  left: 24px;
+  width: 800px;
+  top: 46px;
+  height: 132px;
+  box-sizing: border-box;
+  padding: 0 14px 6px;
+  font: 900 112px/126px var(--font-gotico); /* riga fissa: un titolo ridotto resta centrato nel suo spazio */
+  white-space: nowrap;
+  overflow: hidden;
+  text-align: center;
+  animation-delay: 0.35s;
+}
+
+.sp-divisore {
+  left: 199px;
+  width: 450px;
+  top: 182px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.sp-divisore i {
+  flex: 1;
+  height: 2px;
+  background: var(--cromo-orizzontale);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 60%);
+  mask-image: linear-gradient(90deg, transparent, #000 60%);
+}
+.sp-divisore i:last-child {
+  -webkit-mask-image: linear-gradient(90deg, #000 40%, transparent);
+  mask-image: linear-gradient(90deg, #000 40%, transparent);
+}
+.sp-divisore-centro {
+  display: grid;
+  width: 22px;
+  height: 22px;
+}
+.sp-divisore .punta {
+  width: 22px;
+  height: 22px;
+  animation: sp-ruota 14s linear infinite;
+}
+@keyframes sp-ruota {
+  to { transform: rotate(360deg); }
+}
+
+.sp-pillola-riga {
+  left: 160px;
+  width: 528px;
+  top: 212px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.sp-pillola {
+  padding: 7px 22px 6px 26px;
+  border-radius: 99px;
+  font: 900 26px/1 var(--font-dati);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #0a0a0c;
+  background: var(--cromo-orizzontale);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.sp-link {
+  left: 160px;
+  width: 528px;
+  top: 254px;
+  height: 70px;
+  box-sizing: border-box;
+  padding: 0 4px 2px;
+  font: 900 62px/68px var(--font-dati);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-align: center;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.95) 50%, transparent 60%) no-repeat, var(--oro-testo);
+  background-size: 250% 100%, 100% 100%;
+  background-position: 170% 0, 0 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 3px 0 rgba(60, 30, 0, 0.9)) drop-shadow(0 0 18px rgba(255, 190, 40, 0.45));
+  animation: luccichio 7s ease-in-out 1.3s infinite;
+}
+.sp-sottolinea {
+  left: 184px;
+  width: 480px;
+  top: 318px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--podio-oro);
+  box-shadow: 0 0 12px rgba(255, 200, 60, 0.8);
+  transform: scaleX(0);
+  opacity: 0;
+}
+
+/* Loghi BR ai lati di «link in bio» e del link, come nel loro layout */
+.sp-logo {
+  top: 186px;
+  width: 124px;
+  height: 124px;
+  perspective: 600px;
+}
+.sp-logo.sx { left: 20px; }
+.sp-logo.dx { right: 20px; }
+.sp-logo img {
+  position: relative;
+  display: block;
+  width: 124px;
+  height: 124px;
+  filter: drop-shadow(0 0 18px rgba(125, 125, 125, 0.55));
+  animation: sp-fluttua 6s ease-in-out infinite;
+}
+.sp-logo.dx img {
+  animation-delay: -3s;
+}
+@keyframes sp-fluttua {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-6px) rotate(3deg); }
+}
+.sp-logo-alone {
+  position: absolute;
+  left: -28px;
+  top: -28px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(125, 125, 125, 0.45), transparent 70%);
+  animation: sp-alone 4s ease-in-out infinite;
+}
+.sp-logo.dx .sp-logo-alone {
+  animation-delay: -2s;
+}
+@keyframes sp-alone {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.9; }
+}
+/* Riflesso cromato che attraversa il logo (maschera con la forma del logo) */
+.sp-logo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  -webkit-mask: url(/assets/logo-br.png) center / contain no-repeat;
+  mask: url(/assets/logo-br.png) center / contain no-repeat;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.9) 50%, transparent 62%) no-repeat;
+  background-size: 260% 100%;
+  background-position: 160% 0;
+  animation: sp-riflesso-logo 7s ease-in-out infinite;
+  pointer-events: none;
+}
+.sp-logo.dx::after {
+  animation-delay: 0.9s;
+}
+@keyframes sp-riflesso-logo {
+  0%, 62% { background-position: 160% 0; }
+  100% { background-position: -60% 0; }
+}
+
+/* ---------- Richiamo: il link «chiama» (a mano dalla regia o da solo ogni N minuti) ---------- */
+.sp-banner.richiamo .sp-oro {
+  animation: sp-oro 2.4s ease-in-out both;
+}
+@keyframes sp-oro {
+  0% { opacity: 0; }
+  12%, 75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.sp-banner.richiamo .sp-link {
+  animation: sp-richiamo-link 0.9s ease-out both, luccichio 7s ease-in-out 1.3s infinite;
+}
+@keyframes sp-richiamo-link {
+  30% {
+    transform: scale(1.1);
+    filter: brightness(1.7) drop-shadow(0 3px 0 rgba(60, 30, 0, 0.9)) drop-shadow(0 0 44px rgba(255, 190, 40, 0.8));
+  }
+}
+.sp-banner.richiamo .sp-sottolinea {
+  animation: sp-sottolinea 2.4s ease-in-out both;
+}
+@keyframes sp-sottolinea {
+  0% { transform: scaleX(0); opacity: 1; }
+  20%, 80% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+.sp-banner.richiamo .sp-logo img {
+  animation: sp-moneta 1.2s cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+@keyframes sp-moneta {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+.sp-schizzi {
+  left: 424px;
+  top: 289px;
+  width: 0;
+  height: 0;
+}
+.sp-schizzi svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--r, 22px);
+  height: var(--r, 22px);
+  margin: calc(var(--r, 22px) / -2);
+  fill: url(#g-oro);
+  filter: drop-shadow(0 0 8px rgba(255, 200, 60, 0.9));
+  opacity: 0;
+  animation: sp-punta-vola 1.2s ease-out var(--ritardo, 0.2s) both;
+}
+@keyframes sp-punta-vola {
+  0% { opacity: 0; transform: translate(var(--x0), 0) scale(0.3) rotate(0deg); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(var(--x0) + var(--dx)), var(--dy)) scale(1) rotate(180deg); }
+}
+
+/* ---------- Scheda «Ora in ascolto» (e spot dello studio) ---------- */
+/* La zona ritaglia la scheda e sta sotto la barra: la scheda sale da dietro la barra. */
+.sp-scheda-zona {
+  position: absolute;
+  left: 60px;
+  top: 1010px;
+  width: 960px;
+  height: calc(var(--sp-y-barra) - 1010px);
+  overflow: hidden;
+  z-index: 2;
+}
+.sp-scheda {
+  left: 56px;
+  top: calc(var(--sp-y-scheda) - 1010px);
+  width: var(--sp-largo);
+  height: 148px;
+  padding: 8px 22px; /* testa 30 + 4 + titolo 58 + artista 40 = 132 */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 108px;
+  gap: 20px;
+  align-items: center;
+  border-radius: 24px;
+  transform: translateY(164px);
+  transition: transform 500ms cubic-bezier(0.6, 0, 0.8, 0.3);
+}
+.sp-scheda.su {
+  transform: none;
+  transition: transform 600ms cubic-bezier(0.2, 1.25, 0.3, 1);
+}
+.sp-scheda-testi {
+  min-width: 0;
+}
+.sp-scheda-testa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 30px;
+  margin-bottom: 4px;
+  font: 800 24px/1 var(--font-dati);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accento-chiaro);
+  white-space: nowrap;
+}
+.sp-scheda-testa .tier {
+  font-size: 24px;
+  padding: 6px 14px 5px;
+}
+.sp-mini-logo {
+  display: none;
+  width: 30px;
+  height: 30px;
+}
+.sp-corona {
+  display: none;
+  flex: none;
+  width: 40px;
+  height: 31px;
+  margin: -6px -4px 0 -2px;
+  filter: drop-shadow(0 2px 0 rgba(90, 50, 0, 0.45));
+}
+.sp-scheda-titolo {
+  font: 900 54px/1.04 var(--font-dati);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-bottom: 2px;
+  color: #fff;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), 0 0 24px rgba(189, 189, 189, 0.35);
+}
+.sp-scheda-artista {
+  height: 40px;
+  font: 800 36px/1.1 var(--font-gotico);
+  color: #dedede;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sp-scheda-artista .link {
+  color: #ffd863;
+  text-shadow: 0 0 14px rgba(255, 200, 60, 0.6);
+}
+
+/* Arrivo: titolo e artista entrano sfocati, un riflesso attraversa la scheda */
+.sp-scheda.arriva .sp-scheda-titolo,
+.sp-scheda.arriva .sp-scheda-artista {
+  animation: titolo-entra 0.9s cubic-bezier(0.2, 0.9, 0.2, 1) 0.25s both;
+}
+.sp-scheda.arriva .sp-scheda-artista {
+  animation-delay: 0.37s;
+}
+.sp-scheda.cambia .sp-scheda-titolo,
+.sp-scheda.cambia .sp-scheda-artista {
+  animation: titolo-entra 0.8s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+.sp-scheda::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.5) 50%, transparent 65%) no-repeat;
+  background-size: 250% 100%;
+  background-position: 170% 0;
+  pointer-events: none;
+}
+.sp-scheda.arriva::after {
+  animation: sp-riflesso-una 1s ease-in-out 0.6s both;
+}
+@keyframes sp-riflesso-una {
+  from { background-position: 170% 0; }
+  to { background-position: -70% 0; }
+}
+
+/* Vinile che gira, con il logo BR sull'etichetta */
+.sp-vinile {
+  position: relative;
+  width: 108px;
+  height: 108px;
+}
+.sp-disco {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, #0b0b0e 0 2px, #1b1b22 2px 4px);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12), 0 8px 24px rgba(0, 0, 0, 0.6);
+  animation: sp-ruota 1.8s linear infinite;
+}
+.sp-etichetta-disco {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7d7d7d, #383838);
+}
+.sp-etichetta-disco img {
+  width: 34px;
+  height: 34px;
+}
+.sp-vinile-luce {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.16) 45%, transparent 60%);
+}
+
+/* Per tier: chi paga si vede (e si vede più a lungo) */
+.sp-scheda.tier-skip::before {
+  background: var(--bordo-cromo);
+}
+.sp-scheda.tier-skip {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 34px rgba(255, 255, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.sp-scheda.tier-superskip::before {
+  background: linear-gradient(135deg, #dddddd, #7e7e7e 30%, #7d7d7d 65%, #7e7e7e);
+}
+.sp-scheda.tier-superskip {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 40px rgba(126, 126, 126, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.sp-scheda.tier-throne::before {
+  padding: 3px;
+  background: linear-gradient(135deg, #fff6c8 0%, #f2b52a 25%, #7a4a00 48%, #ffe17a 68%, #f2b52a 100%);
+}
+.sp-scheda.tier-throne {
+  background: radial-gradient(80% 120% at 50% 0%, rgba(255, 205, 70, 0.2), transparent 60%),
+    radial-gradient(120% 90% at 0% 100%, rgba(125, 125, 125, 0.3), transparent 60%),
+    linear-gradient(180deg, rgba(26, 26, 26, 0.96), rgba(8, 8, 8, 0.97));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 46px rgba(255, 196, 50, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.sp-scheda.tier-throne .sp-scheda-titolo {
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.95) 50%, transparent 60%) no-repeat, var(--oro-testo);
+  background-size: 250% 100%, 100% 100%;
+  background-position: 170% 0, 0 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 3px 0 rgba(60, 30, 0, 0.9)) drop-shadow(0 0 16px rgba(255, 190, 40, 0.45));
+}
+.sp-scheda.tier-throne .sp-corona {
+  display: block;
+  animation: corona-arriva 1.1s cubic-bezier(0.2, 1.6, 0.3, 1) 0.5s both, corona 2.6s ease-in-out 1.6s infinite;
+}
+.sp-scheda.tier-throne .sp-etichetta-disco {
+  background: var(--podio-oro);
+}
+
+/* Spot dello studio: logo al posto dell'onda, titolo gotico cromato, riga con il sito in oro */
+.sp-scheda.studio .onda {
+  display: none;
+}
+.sp-scheda.studio .sp-mini-logo {
+  display: block;
+}
+.sp-scheda.studio .sp-scheda-titolo {
+  font: 900 52px/1.04 var(--font-gotico);
+  text-transform: none;
+  padding: 0 4px 2px 0;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, transparent 62%) no-repeat, var(--cromo);
+  background-size: 260% 100%, 100% 100%;
+  background-position: 160% 0, 0 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.85)) drop-shadow(0 0 14px rgba(255, 255, 255, 0.14));
+}
+.sp-scheda.studio .sp-scheda-artista {
+  height: 36px;
+  font: 800 30px/36px var(--font-dati);
+  color: #fff;
+}
+
+/* Punte d'oro che salgono dalla barra quando arriva un Throne */
+.sp-scintille {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.sp-scintille svg {
+  position: absolute;
+  bottom: -20px;
+  width: var(--r, 24px);
+  height: var(--r, 24px);
+  fill: url(#g-oro);
+  filter: drop-shadow(0 0 8px rgba(255, 200, 60, 0.9));
+  opacity: 0;
+  animation: sp-sale-punta 1.4s ease-out var(--ritardo, 0s) both;
+}
+@keyframes sp-sale-punta {
+  0% { opacity: 0; transform: translateY(0) scale(0.4) rotate(0deg); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-190px) scale(1) rotate(200deg); }
+}
+
+/* ---------- Barra che scorre ---------- */
+.sp-barra {
+  position: absolute;
+  left: 0;
+  top: var(--sp-y-barra);
+  width: 1080px;
+  height: var(--sp-h-barra);
+  z-index: 3;
+  background: linear-gradient(180deg, #151515, #080610);
+  box-shadow: 0 -8px 26px rgba(0, 0, 0, 0.45), 0 0 30px rgba(125, 125, 125, 0.25);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.sp-barra.fuori {
+  transform: translateY(30px) !important;
+}
+.sp-finestra {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* il testo passa sotto i loghi e sfuma: lettura piena tra x 232 e 848 */
+  -webkit-mask-image: linear-gradient(90deg, transparent 188px, #000 232px, #000 848px, transparent 892px);
+  mask-image: linear-gradient(90deg, transparent 188px, #000 232px, #000 848px, transparent 892px);
+}
+.sp-barra.senza-loghi .sp-finestra {
+  -webkit-mask-image: linear-gradient(90deg, transparent 104px, #000 160px, #000 920px, transparent 976px);
+  mask-image: linear-gradient(90deg, transparent 104px, #000 160px, #000 920px, transparent 976px);
+}
+.sp-nastro {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: var(--sp-h-barra);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  will-change: transform;
+}
+.sp-barra-filo {
+  position: absolute;
+  left: 0;
+  width: 1080px;
+  overflow: hidden;
+}
+.sp-barra-filo.alto {
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #bbbbbb 0%, #7d7d7d 25%, #ffffff 50%, #7d7d7d 75%, #7e7e7e 100%);
+  box-shadow: 0 0 14px rgba(125, 125, 125, 0.7);
+}
+.sp-barra-filo.alto .sp-luce {
+  animation-delay: 2.2s;
+}
+.sp-barra-filo.basso {
+  bottom: 0;
+  height: 1.5px;
+  background: rgba(189, 189, 189, 0.35);
+}
+.sp-filo-oro {
+  position: absolute;
+  inset: 0;
+  background: var(--podio-oro);
+  opacity: 0;
+}
+.sp-filo-oro.lampo-oro {
+  animation: sp-filo-oro 0.9s ease-out;
+}
+@keyframes sp-filo-oro {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.sp-barra-logo {
+  position: absolute;
+  top: 12px;
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  z-index: 2;
+  background: radial-gradient(circle at 35% 30%, #232323, #0a0a0a 70%);
+  box-shadow: 0 0 18px rgba(125, 125, 125, 0.55);
+}
+.sp-barra-logo.sx { left: 120px; }
+.sp-barra-logo.dx { left: 892px; }
+.sp-barra-logo img {
+  width: 50px;
+  height: 50px;
+  animation: logo-respira 4s ease-in-out infinite;
+}
+.sp-barra-logo.dx img {
+  animation-delay: -2s;
+}
+.sp-barra.senza-loghi .sp-barra-logo {
+  display: none;
+}
+
+/* Pezzi del nastro: una voce e il suo separatore */
+.sp-pezzo {
+  flex: none;
+  display: flex;
+  align-items: center;
+  height: var(--sp-h-barra);
+}
+.sp-voce {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.sp-icone {
+  display: flex;
+  align-items: center;
+}
+.sp-icona {
+  --anello: #bdbdbd;
+  --alone: rgba(189, 189, 189, 0.5);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 3px solid var(--anello);
+  background: radial-gradient(circle at 35% 30%, #232323, #0a0a0a 70%);
+  box-shadow: 0 0 14px var(--alone);
+  color: #f3f3f3;
+}
+.sp-icona + .sp-icona {
+  margin-left: -14px;
+  box-shadow: 0 0 0 3px #0f0f0f, 0 0 14px var(--alone);
+}
+.sp-icona svg {
+  width: 30px;
+  height: 30px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sp-icona.logo {
+  border-color: rgba(255, 255, 255, 0.7);
+}
+.sp-icona.logo img {
+  width: 40px;
+  height: 40px;
+}
+.sp-icona.nero { --anello: #ffd863; --alone: rgba(255, 200, 60, 0.55); }
+.sp-icona.instagram,
+.sp-icona.dm { --anello: #7e7e7e; --alone: rgba(126, 126, 126, 0.5); }
+.sp-icona.tiktok { --anello: #bbbbbb; --alone: rgba(187, 187, 187, 0.5); }
+.sp-icona.twitch { --anello: #7d7d7d; --alone: rgba(125, 125, 125, 0.55); }
+.sp-icona.kick,
+.sp-icona.spotify,
+.sp-icona.whatsapp { --anello: #d1d1d1; --alone: rgba(209, 209, 209, 0.45); }
+.sp-icona.youtube { --anello: #5c5c5c; --alone: rgba(92, 92, 92, 0.5); }
+.sp-icona.sito { --anello: #d6dae0; --alone: rgba(255, 255, 255, 0.35); }
+.sp-icona.microfono,
+.sp-icona.cuffie { --anello: #bdbdbd; --alone: rgba(189, 189, 189, 0.5); }
+
+.sp-etichetta {
+  font: 800 28px/1 var(--font-dati);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #dedede;
+}
+.sp-voce[data-colore="nero"] .sp-etichetta { color: #ffe9a6; }
+.sp-voce[data-colore="instagram"] .sp-etichetta,
+.sp-voce[data-colore="dm"] .sp-etichetta { color: #c7c7c7; }
+.sp-voce[data-colore="tiktok"] .sp-etichetta { color: #e1e1e1; }
+.sp-voce[data-colore="twitch"] .sp-etichetta { color: #c6c6c6; }
+.sp-voce[data-colore="kick"] .sp-etichetta,
+.sp-voce[data-colore="spotify"] .sp-etichetta,
+.sp-voce[data-colore="whatsapp"] .sp-etichetta { color: #ececec; }
+.sp-voce[data-colore="youtube"] .sp-etichetta { color: #c2c2c2; }
+.sp-voce[data-colore="sito"] .sp-etichetta,
+.sp-voce[data-colore="logo"] .sp-etichetta { color: #eef0f3; }
+.sp-voce.ascolto .sp-etichetta { color: var(--accento-chiaro); }
+
+.sp-testo {
+  font: 800 44px/1 var(--font-dati);
+  color: #fff;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.6);
+}
+.sp-testo.oro {
+  font-weight: 900;
+  color: #ffd863;
+  text-shadow: 0 3px 0 rgba(60, 30, 0, 0.8), 0 0 14px rgba(255, 200, 60, 0.6);
+}
+.sp-testo.maiuscolo {
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.sp-trattino {
+  font: 800 44px/1 var(--font-dati);
+  color: var(--accento-chiaro);
+}
+.sp-artista {
+  font: 800 44px/1 var(--font-gotico);
+  color: #dedede;
+  padding-bottom: 4px;
+}
+.sp-voce .tier {
+  font-size: 24px;
+  padding: 6px 14px 5px;
+}
+.sp-sep {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: 0 36px;
+  fill: url(#g-cromo);
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.45));
+  animation: sp-ruota 12s linear infinite;
+}
+
+/* ---------- Entrata al caricamento (senza suono; mai con ?statico) ---------- */
+.entrata .sp-banner {
+  animation: pezzo-entra 1.1s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+.entrata .sp-banner > .sp-logo,
+.entrata .sp-banner > .sp-sopra,
+.entrata .sp-banner > .sp-titolo,
+.entrata .sp-banner > .sp-divisore,
+.entrata .sp-banner > .sp-pillola-riga,
+.entrata .sp-banner > .sp-link {
+  animation: pezzo-entra 1.1s cubic-bezier(0.2, 0.9, 0.2, 1) var(--d, 0s) both;
+}
+.entrata .sp-banner > .sp-logo { --d: 0.1s; }
+.entrata .sp-banner > .sp-sopra { --d: 0.2s; }
+.entrata .sp-banner > .sp-titolo { --d: 0.3s; }
+.entrata .sp-banner > .sp-divisore { --d: 0.45s; }
+.entrata .sp-banner > .sp-pillola-riga { --d: 0.55s; }
+.entrata .sp-banner > .sp-link { --d: 0.65s; }
+.entrata .sp-barra,
+.entrata .sp-filo-camera {
+  animation: sp-barra-entra 0.8s cubic-bezier(0.2, 0.9, 0.2, 1) 0.4s both;
+}
+@keyframes sp-barra-entra {
+  from { opacity: 0; transform: translateY(100px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- Guide (?guide=1): in più rispetto all'overlay della gara ---------- */
+.guida-camera,
+.guida-commenti {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+}
+.guida-camera {
+  left: 104px;
+  width: 872px;
+  top: var(--sp-y-camera);
+  height: calc(var(--sp-y-camera-fine) - var(--sp-y-camera));
+  border: 2px dashed rgba(187, 187, 187, 0.8);
+  background: rgba(187, 187, 187, 0.08);
+}
+.guida-commenti {
+  left: 104px;
+  width: 656px;
+  top: 1190px;
+  height: 570px;
+  place-items: start;
+  padding: 14px 18px;
+  border: 2px dashed rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.06);
+}
+.guide-attive .sp-finta-camera {
+  font-size: 0; /* con le guide la scritta è già nel riquadro della camera */
+}

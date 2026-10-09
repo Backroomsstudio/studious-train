@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Back Rooms Podcast · Backrooms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/overlay.css">
+  <link rel="stylesheet" href="/css/senza-premio.css">
+  <link rel="stylesheet" href="/css/formati.css">
+  <link rel="stylesheet" href="/css/podcast.css">
+</head>
+<body class="fm podcast" data-formato="podcast">
+  <div class="palco">
+    <!-- Solo con ?anteprima=1: al posto della camera del divano -->
+    <div class="fm-finto" data-finto="camera" aria-hidden="true"><span>Camera · divano</span></div>
+
+    <!-- LINEA DI DIVISIONE: filo neon cromato che si disegna dal centro verso gli estremi (spenta all'inizio) -->
+    <div class="po-linea fuori" id="po-linea" data-parte="linea" hidden></div>
+
+    <!-- TARGA: «Back Rooms Podcast» e la riga dell'episodio, con le monete BR ai lati -->
+    <section class="fm-targa" id="po-targa" data-parte="targa" data-accento="ciano">
+      <div class="fm-moneta sx" data-moneta style="--ritardo:-3s"></div>
+      <div class="fm-targa-testi">
+        <div class="fm-targa-riga"><div class="fm-targa-testo" id="po-targa-testo"></div></div>
+        <div class="fm-targa-sotto" id="po-targa-sotto" hidden></div>
+      </div>
+      <div class="fm-moneta dx" data-moneta style="--ritardo:-6s"></div>
+    </section>
+
+    <!-- TEMATICHE: pannello a vetro con gli argomenti del giorno; la tematica attiva ha il bordo oro (spento all'inizio) -->
+    <section class="fm-vetro po-tematiche fuori" id="po-tematiche" data-parte="tematiche" data-lato="sx" hidden>
+      <div class="po-tematiche-titolo" id="po-tematiche-titolo"></div>
+      <div class="po-elenco" id="po-elenco"><i class="po-cursore" id="po-cursore" hidden></i></div>
+    </section>
+
+    <!-- FASCIA SOCIAL: i social dello studio che scorrono (con gli ospiti) -->
+    <section class="sp-barra fm-fascia" data-parte="fascia">
+      <div class="sp-finestra"><div class="sp-nastro" id="sp-nastro"></div></div>
+      <i class="fm-fascia-vetro"></i>
+      <div class="sp-barra-filo alto"><i class="sp-luce"></i></div>
+      <div class="sp-barra-filo basso fm-filo-basso"><i class="sp-luce"></i></div>
+      <div class="fm-moneta sx" data-moneta style="--ritardo:-5s"></div>
+      <div class="fm-moneta dx" data-moneta style="--ritardo:-1s"></div>
+    </section>
+
+    <!-- Solo con ?guide=1: zona visibile sui telefoni e zone coperte dall'app TikTok (solo verticale) -->
+    <div class="guide" aria-hidden="true">
+      <div class="guida-taglio sx"></div>
+      <div class="guida-taglio dx"></div>
+      <div class="guida-ui alto">Nome live, spettatori, classifiche TikTok</div>
+      <div class="guida-ui basso">Pulsanti TikTok</div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/podcast.js"></script>
+</body>
+</html>

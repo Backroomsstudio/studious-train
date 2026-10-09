@@ -1,0 +1,450 @@
+/* Stile comune dei quattro layout nuovi: DRUM CHALLENGE LIVE, STUDIO PRODUCTION, BACK ROOMS PODCAST e REACTION RELEASE.
+   Usa base.css, overlay.css (palco, guide, regole .fuori e .statico) e senza-premio.css (pezzi della barra che scorre).
+   Una sola sorgente Link su sfondo trasparente: 1080×1920, oppure 1920×1080 con ?formato=orizzontale (podcast e reaction).
+
+   POSIZIONI (verticale), in pixel della tela 1080×1920 (le camere vanno messe in LIVE Studio sotto questa sorgente):
+   - sui telefoni resta visibile circa x 104…976: i contenuti stanno tra x 116 e 964 (fasce e linee a tutta larghezza no);
+   - in alto l'app TikTok copre fino a ~230 (fino a ~270 con il nome della live), la chat sta tra 1200 e 1700;
+   - la fascia social è alta 92 px e finisce dove inizia la chat (drum e podcast) o stacca le due camere (produzione, reaction).
+   Per spostare un pezzo basta cambiare i numeri qui sotto. Con ?guide=1 si vedono le zone (solo verticale). */
+.fm .palco {
+  --fm-larghezza: 1080px; /* larghezza della fascia social */
+  --sp-h-barra: 92px; /* i pezzi del nastro (senza-premio.css) leggono questa altezza */
+  --sp-y-barra: 1108px;
+}
+.fm.produzione .palco,
+.fm.reaction .palco {
+  --sp-y-barra: 1212px; /* sopra la camera A (webcam), sotto il finto schermo B */
+}
+.fm.orizzontale .palco {
+  --fm-larghezza: 1920px;
+}
+.fm.reaction.orizzontale .palco {
+  --sp-y-barra: 920px;
+}
+.fm.podcast.orizzontale .palco {
+  --sp-y-barra: 968px;
+}
+
+body.fm.anteprima {
+  background: #000; /* la scena è nera: sotto la pagina ci sono le camere */
+}
+
+/* ---------- Finti schermi (solo ?anteprima=1): al posto delle camere e dello schermo del PC ---------- */
+.fm-finto {
+  display: none;
+  position: absolute;
+  place-items: center;
+  overflow: hidden;
+  box-sizing: border-box;
+  font: 800 30px/1 var(--font-dati);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  background: radial-gradient(50% 45% at 50% 40%, rgba(125, 125, 125, 0.28), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 2px, transparent 2px 46px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.16) 0 2px, transparent 2px 46px),
+    linear-gradient(180deg, #1e1e1e, #0e0e0e);
+}
+.anteprima .fm-finto {
+  display: grid;
+}
+.fm-finto span {
+  padding: 10px 22px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.35);
+}
+.fm-finto[data-finto="camera"] {
+  left: 0;
+  top: 0;
+  width: var(--larghezza);
+  height: var(--altezza);
+}
+/* Produzione e reaction in verticale: la webcam sopra la fascia, lo schermo sotto. */
+.fm-finto[data-finto="A"] {
+  left: 0;
+  top: 0;
+  width: 1080px;
+  height: var(--sp-y-barra);
+}
+.fm-finto[data-finto="B"] {
+  left: 0;
+  top: calc(var(--sp-y-barra) + 92px);
+  width: 1080px;
+  height: calc(1920px - var(--sp-y-barra) - 92px);
+  background: radial-gradient(60% 40% at 50% 30%, rgba(187, 187, 187, 0.18), transparent 70%),
+    repeating-linear-gradient(180deg, transparent 0 56px, rgba(0, 0, 0, 0.55) 56px 60px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 40px), #121418;
+}
+/* Reaction in orizzontale: A a sinistra (verticale, 576×702), B a destra, tra le due il divisore. */
+.fm.reaction.orizzontale .fm-finto[data-finto="A"] {
+  left: 24px;
+  top: 192px;
+  width: 576px;
+  height: 702px;
+}
+.fm.reaction.orizzontale .fm-finto[data-finto="B"] {
+  left: 648px;
+  top: 192px;
+  width: 1248px;
+  height: 702px;
+}
+.guide-attive .fm-finto span {
+  visibility: hidden; /* con le guide la scritta è già nel riquadro */
+}
+
+/* ---------- Vetro: fondo scuro semitrasparente, grana, bordo cromato, luce nel terzo alto ----------
+   Una pagina non può sfocare la camera che sta dietro (è un'altra sorgente): il vetro si simula, non si sfoca. */
+.fm-vetro {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04)), rgba(10, 10, 10, 0.38);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.42), 0 0 30px rgba(125, 125, 125, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.65), 0 0 12px rgba(0, 0, 0, 0.55); /* il testo si legge anche sulla camera */
+}
+/* bordo cromato da 1,5 px */
+.fm-vetro::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: var(--bordo-cromo);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+/* luce nel terzo alto e grana sottile (feTurbulence al 7%) */
+.fm-vetro::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 34%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.07'/%3E%3C/svg%3E");
+}
+
+/* ---------- Moneta 3D col logo BR (gira mostrando lo spessore) ---------- */
+.fm-moneta {
+  --d: 96px;
+  position: absolute;
+  width: var(--d);
+  height: var(--d);
+  perspective: 520px;
+  z-index: 4;
+}
+.fm-moneta-corpo {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: fm-moneta-gira 9s cubic-bezier(0.5, 0, 0.2, 1) var(--ritardo, 0s) infinite;
+}
+@keyframes fm-moneta-gira {
+  0%, 62% { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+.fm-moneta-bordo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #4e4e4e 0%, #f4f6f8 30%, #828282 55%, #ffffff 75%, #545454 100%);
+}
+.fm-moneta-faccia {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  backface-visibility: hidden;
+  background: radial-gradient(circle at 35% 28%, #3e3e3e 0%, #171717 48%, #07050d 78%);
+  box-shadow: inset 0 0 0 3px #d9dde3, inset 0 0 0 5px #4f4f4f, inset 0 0 0 6px rgba(255, 255, 255, 0.5), inset 0 -8px 18px rgba(0, 0, 0, 0.55),
+    inset 0 6px 12px rgba(189, 189, 189, 0.35), 0 0 22px rgba(125, 125, 125, 0.55);
+}
+.fm-moneta-faccia.fronte {
+  transform: translateZ(4px);
+}
+.fm-moneta-faccia.retro {
+  transform: rotateY(180deg) translateZ(4px);
+}
+.fm-moneta-faccia img {
+  width: 74%;
+  height: 74%;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 8px rgba(189, 189, 189, 0.6));
+}
+
+/* ---------- Fascia social: la barra del layout senza premio, in rilievo, larga 1080 o 1920 ---------- */
+.fm-fascia {
+  width: var(--fm-larghezza);
+  background: linear-gradient(180deg, #2a2a2a 0%, #161616 44%, #080808 56%, #111111 100%);
+  box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.5), 0 12px 28px rgba(0, 0, 0, 0.55), 0 0 36px rgba(125, 125, 125, 0.32),
+    inset 0 2px 0 rgba(255, 255, 255, 0.14), inset 0 -2px 0 rgba(0, 0, 0, 0.7);
+}
+/* il testo passa sotto le monete e sfuma: lettura piena tra x 232 e (larghezza − 232) */
+.fm-fascia .sp-finestra {
+  -webkit-mask-image: linear-gradient(90deg, transparent 188px, #000 232px, #000 calc(var(--fm-larghezza) - 232px), transparent calc(var(--fm-larghezza) - 188px));
+  mask-image: linear-gradient(90deg, transparent 188px, #000 232px, #000 calc(var(--fm-larghezza) - 232px), transparent calc(var(--fm-larghezza) - 188px));
+}
+.fm-fascia .sp-barra-filo {
+  width: var(--fm-larghezza);
+}
+.fm-fascia .sp-luce {
+  animation-name: fm-scorri-luce;
+}
+@keyframes fm-scorri-luce {
+  0%, 62% { transform: translateX(-320px); }
+  100% { transform: translateX(calc(var(--fm-larghezza) + 20px)); }
+}
+.fm-fascia-vetro {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 46%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+  pointer-events: none;
+  z-index: 1;
+}
+.fm-fascia .fm-filo-basso {
+  height: 2px;
+  background: linear-gradient(90deg, #7e7e7e 0%, #7d7d7d 25%, #ffffff 50%, #7d7d7d 75%, #bbbbbb 100%);
+  box-shadow: 0 0 14px rgba(125, 125, 125, 0.7);
+}
+.fm-fascia .fm-filo-basso .sp-luce {
+  animation-delay: 5.4s;
+}
+.fm-fascia .fm-moneta {
+  --d: 68px;
+  top: 12px;
+}
+.fm-fascia .fm-moneta.sx {
+  left: 120px;
+}
+.fm-fascia .fm-moneta.dx {
+  left: calc(var(--fm-larghezza) - 188px);
+}
+
+/* ---------- Cornice a staffe: quattro staffe d'angolo e un filo neon in alto (lampeggiano a comando) ---------- */
+.fm-cornice {
+  position: absolute;
+  pointer-events: none;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fm-staffa {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  box-sizing: border-box;
+  border: 5px solid transparent;
+  border-image: linear-gradient(135deg, #ffffff 0%, #929292 38%, #bbbbbb 100%) 1;
+  filter: drop-shadow(0 0 8px rgba(187, 187, 187, 0.75));
+  transition: filter 0.12s ease;
+}
+.fm-staffa.nw { left: 0; top: 0; border-width: 5px 0 0 5px; }
+.fm-staffa.ne { right: 0; top: 0; border-width: 5px 5px 0 0; }
+.fm-staffa.sw { left: 0; bottom: 0; border-width: 0 0 5px 5px; }
+.fm-staffa.se { right: 0; bottom: 0; border-width: 0 5px 5px 0; }
+.fm-filo {
+  position: absolute;
+  left: 76px;
+  right: 76px;
+  top: 0;
+  height: 3px;
+  overflow: hidden;
+  background: linear-gradient(90deg, #bbbbbb 0%, #7d7d7d 30%, #ffffff 50%, #7d7d7d 70%, #7e7e7e 100%);
+  box-shadow: 0 0 14px rgba(125, 125, 125, 0.8);
+  transition: box-shadow 0.12s ease, filter 0.12s ease;
+}
+.fm-filo .sp-luce {
+  animation-name: fm-scorri-luce-cornice;
+  animation-delay: 1.2s;
+}
+@keyframes fm-scorri-luce-cornice {
+  0%, 62% { transform: translateX(-320px); }
+  100% { transform: translateX(900px); }
+}
+/* lampo a ogni colpo di batteria */
+.fm-cornice.colpo .fm-filo {
+  filter: brightness(2.2);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.95), 0 0 56px rgba(125, 125, 125, 0.9);
+}
+.fm-cornice.colpo .fm-staffa {
+  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.95)) brightness(1.6);
+}
+
+/* ---------- Targa del titolo: placca 3D cromata con monete BR ai lati, punto REC e un colore d'accento ----------
+   Righe: sopra (piccola, nel colore d'accento), testo (grande, cromo luccicante), sotto (piccola). Ogni riga ha la sua scatola di
+   altezza fissa: la pagina riduce il corpo del testo finché entra (adattaTesto) e una riga vuota non occupa niente.
+   L'accento (data-accento) è oro, magenta o ciano; il cambio di testo in tempo reale entra con un breve flip (classe .flip). */
+.fm-targa {
+  --acc: #d8d8d8;
+  --acc-luce: rgba(216, 216, 216, 0.55);
+  --d: 96px; /* diametro delle monete */
+  /* Corpi di base (px) delle tre righe, moltiplicati dalla dimensione dei testi scelta in regia, e altezza delle loro scatole: quanto
+     serve all'inchiostro delle lettere (discendenti e accenti compresi). Una scatola più bassa taglierebbe le lettere sotto la riga,
+     o costringerebbe la pagina a rimpicciolire il testo (adattaTesto). */
+  --c-sopra: 28px;
+  --c-testo: 88px;
+  --c-sotto: 32px;
+  --h-sopra: 30px;
+  --h-testo: 100px;
+  --h-sotto: 40px;
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 18px;
+  border-radius: 30px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.07) 36%, rgba(0, 0, 0, 0.24) 100%),
+    radial-gradient(120% 140% at 50% 0%, rgba(125, 125, 125, 0.3), transparent 62%), rgba(11, 11, 11, 0.82);
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.58), 0 0 38px var(--acc-luce), inset 0 2px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.6), inset 0 0 0 8px rgba(7, 7, 7, 0.6);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fm-targa[data-accento="oro"] {
+  --acc: #d8d8d8;
+  --acc-luce: rgba(216, 216, 216, 0.55);
+}
+.fm-targa[data-accento="magenta"] {
+  --acc: #7e7e7e;
+  --acc-luce: rgba(126, 126, 126, 0.55);
+}
+.fm-targa[data-accento="ciano"] {
+  --acc: #bbbbbb;
+  --acc-luce: rgba(187, 187, 187, 0.55);
+}
+/* bordo cromato da 5 px e filo nel colore d'accento dentro */
+.fm-targa::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 5px;
+  background: var(--bordo-cromo);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.fm-targa::after {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border-radius: 22px;
+  border: 2px solid var(--acc);
+  opacity: 0.55;
+  box-shadow: 0 0 14px var(--acc-luce), inset 0 0 14px var(--acc-luce);
+  pointer-events: none;
+}
+.fm-targa .fm-moneta {
+  position: relative;
+  flex: none;
+  z-index: 2;
+}
+.fm-targa-testi {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* la colonna non cresce con il testo */
+  gap: 2px;
+}
+.fm-targa-sopra {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--h-sopra);
+}
+.fm-rec {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ff2d4b;
+  box-shadow: 0 0 8px #ff2d4b, 0 0 20px rgba(255, 45, 75, 0.75);
+  animation: fm-rec 1.4s ease-in-out infinite;
+}
+@keyframes fm-rec {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.8); }
+}
+.fm-targa-sopra > span,
+.fm-targa-sotto {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-shadow: 0 0 12px var(--acc-luce), 0 2px 0 rgba(0, 0, 0, 0.7);
+}
+.fm-targa-sopra > span {
+  height: var(--h-sopra);
+  font: 800 calc(var(--c-sopra) * var(--ts-sopra, 1)) / var(--h-sopra) var(--font-dati);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--acc);
+}
+.fm-targa-sotto {
+  height: var(--h-sotto);
+  font: 700 calc(var(--c-sotto) * var(--ts-sotto, 1)) / var(--h-sotto) var(--font-dati);
+  letter-spacing: 0.04em;
+  color: #dedede;
+}
+.fm-targa-riga {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--h-testo);
+}
+.fm-targa-icona {
+  flex: none;
+  width: 54px;
+  height: 54px;
+  fill: none;
+  stroke: var(--acc);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px var(--acc-luce));
+}
+.fm-targa-testo {
+  flex: 1;
+  min-width: 0;
+  height: var(--h-testo);
+  display: grid;
+  align-content: center;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font: 900 calc(var(--c-testo) * var(--ts-titolo, 1)) / 1 var(--font-gotico);
+  /* cromo luccicante: sfumatura d'argento con una luce che passa */
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, transparent 62%) 150% 0 / 260% 100% no-repeat,
+    linear-gradient(180deg, #ffffff 0%, #e8ebf1 30%, #959595 52%, #f3f5f9 54%, #cacaca 80%, #ffffff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.65)) drop-shadow(0 0 14px var(--acc-luce));
+  animation: fm-luccica 6s ease-in-out infinite;
+}
+@keyframes fm-luccica {
+  0%, 55% { background-position: 150% 0, 0 0; }
+  100% { background-position: -150% 0, 0 0; }
+}
+/* il testo che cambia entra con un flip breve (la pagina cambia le parole a metà) */
+.fm-targa .flip {
+  animation: fm-flip 0.38s ease-in-out;
+}
+/* il testo grande continua a scintillare dopo un cambio: il flip si somma allo scintillio del cromo, non lo sostituisce */
+.fm-targa .fm-targa-testo.flip {
+  animation: fm-flip 0.38s ease-in-out, fm-luccica 6s ease-in-out infinite;
+}
+@keyframes fm-flip {
+  0% { transform: perspective(700px) rotateX(0deg); opacity: 1; }
+  45% { transform: perspective(700px) rotateX(88deg); opacity: 0.15; }
+  55% { transform: perspective(700px) rotateX(-88deg); opacity: 0.15; }
+  100% { transform: perspective(700px) rotateX(0deg); opacity: 1; }
+}

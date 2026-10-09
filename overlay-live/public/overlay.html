@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Overlay live · Backrooms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/overlay.css">
+  <link rel="stylesheet" href="/css/albero.css">
+</head>
+<body class="verticale">
+  <!-- Elementi grafici condivisi: gradienti, la "punta" a stella del logo, corona e trofeo -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="g-cromo" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffffff"/>
+        <stop offset="0.44" stop-color="#a8a8a8"/>
+        <stop offset="0.52" stop-color="#3f3f3f"/>
+        <stop offset="0.68" stop-color="#eceff2"/>
+        <stop offset="1" stop-color="#949494"/>
+      </linearGradient>
+      <linearGradient id="g-oro" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fffbe0"/>
+        <stop offset="0.35" stop-color="#ffd54a"/>
+        <stop offset="0.6" stop-color="#e09a12"/>
+        <stop offset="0.8" stop-color="#ffd659"/>
+        <stop offset="1" stop-color="#b87808"/>
+      </linearGradient>
+      <symbol id="punta" viewBox="0 0 100 100">
+        <path d="M50 0C53 35 65 47 100 50 65 53 53 65 50 100 47 65 35 53 0 50 35 47 47 35 50 0Z"/>
+      </symbol>
+      <symbol id="corona" viewBox="0 0 64 50">
+        <path d="M5 39 8 15 21 28 32 7 43 28 56 15 59 39Z" fill="url(#g-oro)" stroke="#5c3a00" stroke-width="2" stroke-linejoin="round"/>
+        <rect x="6" y="39" width="52" height="8" rx="2" fill="url(#g-oro)" stroke="#5c3a00" stroke-width="2"/>
+        <circle cx="8" cy="12" r="4" fill="#fff3b8" stroke="#5c3a00" stroke-width="1.6"/>
+        <circle cx="32" cy="5" r="4.4" fill="#fff3b8" stroke="#5c3a00" stroke-width="1.6"/>
+        <circle cx="56" cy="12" r="4" fill="#fff3b8" stroke="#5c3a00" stroke-width="1.6"/>
+        <circle cx="32" cy="31" r="3.4" fill="#7e7e7e" stroke="#5c3a00" stroke-width="1.4"/>
+      </symbol>
+      <symbol id="trofeo" viewBox="0 0 64 64">
+        <path d="M18 9H7v5c0 7 5 12 12 13M46 9h11v5c0 7-5 12-12 13" fill="none" stroke="url(#g-oro)" stroke-width="4.5" stroke-linecap="round"/>
+        <path d="M17 5h30v15c0 9-6.7 16-15 16S17 29 17 20Z" fill="url(#g-oro)" stroke="#5c3a00" stroke-width="1.8"/>
+        <path d="M28 36h8v9h-8Z" fill="url(#g-oro)" stroke="#5c3a00" stroke-width="1.6"/>
+        <path d="M20 45h24l3 9H17Z" fill="url(#g-oro)" stroke="#5c3a00" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M32 11l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8Z" fill="#fff8d6"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="palco">
+    <!-- PREMIO IN PALIO: la prima cosa che legge chi entra in live -->
+    <section class="pannello premio" data-widget="premio">
+      <svg class="trofeo"><use href="#trofeo"/></svg>
+      <div class="premio-testi">
+        <div class="premio-sopra"><span class="premio-etichetta">In palio</span><span class="premio-invito" id="premio-invito"></span></div>
+        <div class="premio-testo" id="premio-testo"></div>
+      </div>
+      <svg class="trofeo"><use href="#trofeo"/></svg>
+    </section>
+
+    <!-- CLASSIFICA -->
+    <section class="pannello classifica" data-widget="classifica">
+      <header class="cl-testa">
+        <h2 class="cl-titolo cromo luccica">Classifica</h2>
+        <span class="cl-top">Top <b id="cl-n">5</b></span>
+      </header>
+      <div class="cl-lista" id="cl-lista"></div>
+    </section>
+
+    <!-- TIMER -->
+    <section class="pannello timer spento" data-widget="timer">
+      <div class="timer-etichetta" id="timer-etichetta">Il vincitore si decide tra</div>
+      <div class="timer-cifre" id="timer-cifre">00:00</div>
+    </section>
+
+    <!-- NOTIFICHE: nuova entrata, scalate, nuovo primo posto -->
+    <div class="notifica" id="notifica" data-widget="classifica">
+      <svg class="notifica-corona"><use href="#corona"/></svg>
+      <div class="notifica-testi">
+        <div class="notifica-titolo" id="notifica-titolo"></div>
+        <div class="notifica-sotto" id="notifica-sotto"></div>
+      </div>
+    </div>
+
+    <!-- TABELLONE TRACCIA IN ASCOLTO -->
+    <section class="pannello tabellone" data-widget="tabellone">
+      <div class="tab-alto">
+        <div class="tab-info">
+          <header class="tab-testa">
+            <span class="tab-ascolto"><i class="onda"><b></b><b></b><b></b><b></b></i>In ascolto</span>
+            <span class="tier" id="t-tier" hidden></span>
+          </header>
+          <h1 class="tab-titolo" id="t-titolo">In attesa della traccia</h1>
+          <p class="tab-artista" id="t-artista"></p>
+        </div>
+        <div class="totale">
+          <div class="totale-stato" id="totale-stato">Totale</div>
+          <div class="totale-valore"><span id="totale">—</span><small>/10</small></div>
+        </div>
+      </div>
+
+      <div class="categorie">
+        <div class="cat" data-cat="beat">
+          <span class="cat-nome">Beat</span><span class="cat-giudice"></span>
+          <span class="cat-valore">—</span>
+          <div class="barra"><i></i></div>
+        </div>
+        <div class="cat" data-cat="voce">
+          <span class="cat-nome">Voce</span><span class="cat-giudice"></span>
+          <span class="cat-valore">—</span>
+          <div class="barra"><i></i></div>
+        </div>
+        <div class="cat" data-cat="mix">
+          <span class="cat-nome">Mix</span><span class="cat-giudice"></span>
+          <span class="cat-valore">—</span>
+          <div class="barra"><i></i></div>
+        </div>
+        <div class="cat cat-chat" data-cat="chat">
+          <span class="cat-nome">Chat</span><span class="cat-giudice"><span class="punto-live"></span><span id="chat-voti">0 voti</span></span>
+          <span class="cat-valore">—</span>
+          <div class="barra"><i></i></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VOTO CHAT APERTO: sotto il tabellone -->
+    <div class="chat-cta" id="chat-cta" data-widget="tabellone">
+      <span class="cta-testo">Vota in chat da <b>4</b> a <b>10</b></span>
+      <span class="chat-timer" id="chat-timer"></span>
+    </div>
+
+    <!-- TABELLONE AD ALBERO: dalla classifica, sopra a tutto il resto mentre è acceso dalla regia -->
+    <section class="pannello albero fuori" id="albero" data-widget="albero" data-parte="albero"></section>
+
+    <!-- VINCITORE (schermo intero) -->
+    <section class="schermo vincitore" id="vincitore" data-widget="vincitore">
+      <div class="vin-raggi"></div>
+      <canvas class="vin-scintille" id="vin-scintille"></canvas>
+      <div class="vin-contenuto">
+        <img class="vin-logo pezzo" src="/assets/logo-br.png" alt="" style="--d: 0s">
+        <div class="vin-sopra pezzo" style="--d: 1.6s">Il vincitore della live</div>
+        <svg class="vin-corona pezzo" style="--d: 2s"><use href="#corona"/></svg>
+        <div class="vin-titolo pezzo" id="vin-titolo" style="--d: 2.1s"></div>
+        <div class="vin-artista pezzo" id="vin-artista" style="--d: 2.4s"></div>
+        <div class="vin-punti pezzo" style="--d: 2.7s"><span id="vin-punti"></span><small>/10</small></div>
+        <div class="vin-premio pezzo" style="--d: 3s">
+          <svg class="trofeo"><use href="#trofeo"/></svg>
+          <div><span>Vince</span><b id="vin-premio"></b></div>
+          <svg class="trofeo"><use href="#trofeo"/></svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- SPAREGGIO: pari merito in testa, decidono i giudici -->
+    <section class="schermo spareggio" id="spareggio" data-widget="vincitore">
+      <div class="vin-raggi"></div>
+      <div class="vin-contenuto">
+        <div class="spa-titolo cromo luccica pezzo" style="--d: 0s">Spareggio</div>
+        <div class="vin-sopra pezzo" style="--d: .4s">Pari merito · decidono i giudici</div>
+        <div class="spa-lista" id="spa-lista"></div>
+      </div>
+    </section>
+
+    <!-- Solo con ?guide=1: zona visibile sui telefoni e zone coperte dall'app TikTok -->
+    <div class="guide" aria-hidden="true">
+      <div class="guida-taglio sx"></div>
+      <div class="guida-taglio dx"></div>
+      <div class="guida-ui alto">Nome live, spettatori, classifiche TikTok</div>
+      <div class="guida-ui basso">Pulsanti TikTok</div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/overlay.js"></script>
+</body>
+</html>
