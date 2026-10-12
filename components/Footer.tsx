@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { CookiePreferencesLink } from "@/components/Analytics";
 import { BookingTrigger } from "@/components/BookingModal";
 import { Magnetic } from "@/components/Magnetic";
 import { MapEmbed } from "@/components/MapEmbed";
@@ -146,7 +147,15 @@ export function Footer() {
               </p>
             ))}
           </div>
-          <p>Studio di registrazione · Arcugnano (VI) · Vicenza · Veneto</p>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <p>Studio di registrazione · Arcugnano (VI) · Vicenza · Veneto</p>
+            <p className="flex gap-4">
+              <a className="transition-colors hover:text-white" href="/privacy">
+                Privacy e cookie
+              </a>
+              <CookiePreferencesLink className="uppercase tracking-[0.16em] transition-colors hover:text-white" />
+            </p>
+          </div>
         </div>
       </div>
     </footer>

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Instrument_Serif, Manrope } from "next/font/google";
+import { Analytics } from "@/components/Analytics";
 import { BookingProvider } from "@/components/BookingModal";
 import { CustomCursor } from "@/components/CustomCursor";
 import { SmoothScroll } from "@/components/SmoothScroll";
@@ -85,6 +86,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <BookingProvider>
             {children}
             <CustomCursor />
+            <Analytics />
           </BookingProvider>
         </SmoothScroll>
       </body>
