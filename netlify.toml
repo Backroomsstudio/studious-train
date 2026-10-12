@@ -6,3 +6,5 @@
 [build.environment]
   NODE_VERSION = "22"
   NEXT_TELEMETRY_DISABLED = "1"
+  # ID di misurazione di Google Analytics 4 (pubblico per natura: è visibile nel codice della pagina)
+  NEXT_PUBLIC_GA_ID = "G-VTL6MDD9VZ"
