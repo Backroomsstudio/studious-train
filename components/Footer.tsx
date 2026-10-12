@@ -153,6 +153,9 @@ export function Footer() {
               <a className="transition-colors hover:text-white" href="/privacy">
                 Privacy e cookie
               </a>
+              <a className="transition-colors hover:text-white" href="/termini">
+                Termini
+              </a>
               <CookiePreferencesLink className="uppercase tracking-[0.16em] transition-colors hover:text-white" />
             </p>
           </div>

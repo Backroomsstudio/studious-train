@@ -71,6 +71,28 @@ export default function PrivacyPage() {
               : "Non servono cookie per usare il sito."}
           </p>
 
+          <h2 className={h2} id="hub">
+            Statistiche dei nostri canali social (Backrooms Studio Hub)
+          </h2>
+          <p className={p}>
+            Backrooms Studio Hub è uno strumento interno, usato solo dai soci dello studio, per consultare le statistiche degli account ufficiali di{" "}
+            {studio.name} su TikTok e Instagram (follower, visualizzazioni, like, commenti, condivisioni dei contenuti pubblicati) e le informazioni di base del
+            profilo. Non accede ai dati di altri utenti, non legge messaggi privati e non pubblica contenuti. I dati servono solo a creare report interni, sono
+            salvati su un computer dello studio accessibile ai soli soci tramite rete privata e non sono venduti né condivisi con terzi. Revocando
+            l&apos;autorizzazione dalle impostazioni dell&apos;account TikTok o Instagram la raccolta si interrompe subito; su richiesta cancelliamo lo storico.
+          </p>
+          <p className={p} lang="en">
+            <strong className="text-white">In English.</strong> Backrooms Studio Hub is an internal tool used only by the partners of {studio.name} to view
+            analytics of the studio&apos;s own TikTok and Instagram accounts (followers, views, likes, comments, shares) and basic profile information. It does not
+            access other users&apos; data or private messages and never posts content. Data is used only for internal reports, stored on a computer owned by the
+            studio and reachable only by the partners over a private network, and is never sold or shared. Revoking access in the TikTok or Instagram account
+            settings stops collection immediately; stored data is deleted on request. Contact:{" "}
+            <a className="text-white underline underline-offset-4" href={`mailto:${studio.email}`}>
+              {studio.email}
+            </a>
+            .
+          </p>
+
           <h2 className={h2}>I tuoi diritti</h2>
           <p className={p}>
             Puoi chiedere accesso, rettifica, cancellazione, limitazione, portabilità e opposizione scrivendo a {studio.email} (artt. 15-22

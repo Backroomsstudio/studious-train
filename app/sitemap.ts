@@ -18,5 +18,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     })),
     { url: `${SITE_URL}/privacy`, lastModified: new Date(), changeFrequency: "yearly" as const, priority: 0.2 },
+    { url: `${SITE_URL}/termini`, lastModified: new Date(), changeFrequency: "yearly" as const, priority: 0.2 },
   ];
 }
