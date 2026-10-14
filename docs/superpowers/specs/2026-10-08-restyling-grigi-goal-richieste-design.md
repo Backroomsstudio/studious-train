@@ -291,3 +291,13 @@ Nuove sezioni o blocchi: *Goal Like e Follower* (§5.3), *Serata → Voti* (pesi
 - **Geometria del Drum e del blocco voti**: i numeri sono di partenza; non provati su un telefono vero né dentro TikTok LIVE Studio.
 - **Tabellone ad albero con 16**: nomi lunghi si troncano con i puntini; con meno di 4 partecipanti il disegno è piccolo.
 - **Carico sul PC della diretta**: aggiunte leggere (Goal, albero, striscia); resta non misurato come per il resto.
+
+## Aggiornamenti emersi durante l'implementazione
+
+Scelte fatte lungo la strada (tutte registrate come `Ruling:` nel registro del piano):
+
+- **Targhe** (misure fissate dalla prova sui pixel, che misura l'inchiostro delle lettere): Studio Production e Reaction in verticale 848 × 230 con corpi di base 30 / 94 / 36; Reaction in orizzontale 1200 × 160 con 26 / 60 / 28; Podcast in verticale 848 × 140 con 56 / 34 (pannello Tematiche spostato a y 432, altezza 472) e in orizzontale 512 × 136 con 50 / 28 (monete da 44 px). I titoli molto lunghi possono andare su due righe o scendere ai minimi (28 px in verticale; 12 px per la riga sotto del Podcast orizzontale, 14 px per le tematiche orizzontali): mai lettere tagliate.
+- **Limiti dei titoli**: Studio Production 40 / 36 / 60, Reaction 48 / 60 / 60, Podcast 40 / 60.
+- **Titoli salvati** (Studio Production): fino a 6, nome fino a 24 caratteri e unico (senza badare alle maiuscole); *Usa* riempie le tre righe e non cambia il preset; *Togli* cancella. La dicitura «Ospite» del Podcast è modificabile (40 caratteri, non vuota).
+- **Senza premio**: «Traccia N di TOT» usa il totale vero della coda di Nero; chi paga lo skip fa comparire il banner oro, e tutte le fasce a pagamento sono oro.
+- **Goal**: non compare nel formato orizzontale della gara.
