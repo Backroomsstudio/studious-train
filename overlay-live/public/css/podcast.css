@@ -4,7 +4,7 @@
    POSIZIONI in pixel della tela:
    Verticale 1080×1920
    - targa                x 116 → 964,   y 282 → 410
-   - pannello Tematiche   x 116 → 964,   y 424 → 904   (sempre al centro: `lato` conta solo in orizzontale)
+   - pannello Tematiche   x 116 → 964,   y 432 → 904   (sempre al centro: `lato` conta solo in orizzontale)
    - linea di divisione   x 538 → 542,   y 240 → 1100
    - fascia social        x 0 → 1080,    y 1108 → 1200 (formati.css)
    Orizzontale 1920×1080 (?formato=orizzontale)
@@ -16,14 +16,14 @@
 
 /* ---------- Targa: «Back Rooms Podcast» e la riga dell'episodio ---------- */
 .fm.podcast .fm-targa {
-  --c-testo: 48px;
-  --c-sotto: 32px;
-  --h-testo: 55px;
-  --h-sotto: 40px;
+  --c-testo: 56px;
+  --c-sotto: 34px;
+  --h-testo: 69px;
+  --h-sotto: 42px;
   left: 116px;
   top: 282px;
   width: 848px;
-  height: 128px;
+  height: 140px;
   padding: 0 14px;
   z-index: 3;
 }
@@ -39,13 +39,18 @@
   text-align: center;
 }
 .fm.podcast.orizzontale .fm-targa {
+  --c-testo: 50px;
+  --c-sotto: 28px;
+  --h-testo: 62px;
+  --h-sotto: 35px;
   left: 48px;
   top: 36px;
   width: 512px;
+  height: 136px;
   padding: 0 12px;
 }
 .fm.podcast.orizzontale .fm-targa .fm-moneta {
-  --d: 56px;
+  --d: 44px;
 }
 
 /* ---------- Linea di divisione: filo neon cromato che si disegna dal centro verso gli estremi ---------- */
@@ -93,9 +98,9 @@
 .po-tematiche {
   --h-tema: 48px;
   left: 116px;
-  top: 424px;
+  top: 432px;
   width: 848px;
-  height: 480px;
+  height: 472px;
   padding: 20px;
   z-index: 2;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04)), rgba(10, 10, 10, 0.56);

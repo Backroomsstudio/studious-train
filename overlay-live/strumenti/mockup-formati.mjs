@@ -70,10 +70,10 @@ export const GEOMETRIA = {
     },
   },
   produzione: {
-    verticale: { titolo: p(116, 282, 848, 204, true), goal: p(116, 1076, 400, 120, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
+    verticale: { titolo: p(116, 282, 848, 230, true), goal: p(116, 1076, 400, 120, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
   },
   reaction: {
-    verticale: { titolo: p(116, 282, 848, 204, true), richiesta: p(116, 524, 848, 72, true), scaletta: p(116, 608, 848, 306, true), goal: p(116, 1076, 400, 120, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
+    verticale: { titolo: p(116, 282, 848, 230, true), richiesta: p(116, 524, 848, 72, true), scaletta: p(116, 608, 848, 306, true), goal: p(116, 1076, 400, 120, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
     orizzontale: {
       titolo: p(360, 28, 1200, 160),
       goal: p(1584, 40, 300, 90),
@@ -89,15 +89,15 @@ export const GEOMETRIA = {
   },
   podcast: {
     verticale: {
-      targa: p(116, 282, 848, 128, true),
+      targa: p(116, 282, 848, 140, true),
       goal: p(116, 960, 400, 120, true),
-      tematiche: p(116, 424, 848, 480, true),
+      tematiche: p(116, 432, 848, 472, true),
       linea: p(538, 240, 4, 860, true),
       fascia: p(0, 1108, 1080, 92),
       "finto:camera": p(0, 0, 1080, 1920),
     },
     orizzontale: {
-      targa: p(48, 36, 512, 128),
+      targa: p(48, 36, 512, 136),
       goal: p(1400, 36, 400, 120),
       tematiche: p(48, 176, 512, 570),
       linea: p(958, 0, 4, 968),
@@ -1254,10 +1254,14 @@ async function provaRegiaDoppio() {
   await attesa(500);
   if ((await stato()).produzione.titolo.testo !== "Beat live 3") errori.push("un titolo vuoto non doveva cambiare quello in onda");
   if ((await avvisi()) !== avvisiPrima) errori.push("un titolo vuoto, mentre lo si riscrive, non doveva dare un avviso");
-  await campo("pr-testo").fill("x".repeat(29));
+  await campo("pr-testo").fill("x".repeat(37));
   await attesa(500);
-  if ((await avvisi()) <= avvisiPrima) errori.push("un testo di 29 caratteri doveva mostrare un avviso");
-  if ((await stato()).produzione.titolo.testo !== "Beat live 3") errori.push("un testo di 29 caratteri non doveva cambiare quello in onda");
+  if ((await avvisi()) <= avvisiPrima) errori.push("un testo di 37 caratteri doveva mostrare un avviso");
+  if ((await stato()).produzione.titolo.testo !== "Beat live 3") errori.push("un testo di 37 caratteri non doveva cambiare quello in onda");
+  await campo("pr-testo").fill("x".repeat(36));
+  await entro("il titolo di 36 caratteri (il massimo)", (st) => st.produzione.titolo.testo === "x".repeat(36), 3000);
+  await campo("pr-testo").fill("Beat live 3");
+  await entro("il titolo «Beat live 3»", (st) => st.produzione.titolo.testo === "Beat live 3", 3000);
   await campoVale("pr-testo", "Beat live 3");
 
   // 4) un cambio da fuori arriva nei campi che non si stanno usando, ma non in quello in uso
@@ -1302,13 +1306,49 @@ async function provaRegiaDoppio() {
   await pagina.locator('#re-regia [data-anteprima-formato="verticale"]').click();
   if (/formato=orizzontale/.test(await iframe.getAttribute("src"))) errori.push("l'anteprima della reaction non è tornata in verticale");
 
+  // 7) titoli salvati: nome, «Salva questo titolo», «Usa», «Togli», il limite di 6 e gli errori con avviso
+  await comando("layout", { nome: "produzione" });
+  await campo("pr-salva-nome").waitFor();
+  await comando("produzione", { titolo: { sopra: "Sopra A", testo: "Titolo A", sotto: "Sotto A" } });
+  await campo("pr-salva-nome").fill("Puntata A");
+  await campo("pr-salva").click();
+  await entro("il titolo salvato «Puntata A»", (st) => st.produzione.salvati.length === 1 && st.produzione.salvati[0].nome === "Puntata A", 3000);
+  await pagina.waitForFunction(() => document.querySelectorAll("#pr-salvati li").length === 1, null, { timeout: 3000 }).catch(() => errori.push("la lista dei titoli salvati doveva avere una riga"));
+  if ((await campo("pr-salva-nome").inputValue()) !== "") errori.push("dopo il salvataggio il campo del nome doveva svuotarsi");
+  const prima7 = await avvisi();
+  await campo("pr-salva-nome").fill("puntata a");
+  await campo("pr-salva").click();
+  await attesa(400);
+  if ((await avvisi()) <= prima7) errori.push("un nome già usato doveva mostrare un avviso");
+  await campo("pr-salva-nome").fill("");
+  await campo("pr-salva").click();
+  await attesa(400);
+  if ((await stato()).produzione.salvati.length !== 1) errori.push("un nome vuoto non doveva salvare niente");
+  await comando("produzione", { titolo: { sopra: "Altro", testo: "Altro titolo", sotto: "" } });
+  await campoVale("pr-testo", "Altro titolo");
+  await pagina.locator("#pr-salvati button[data-usa]").first().click();
+  await entro("il titolo salvato rimesso in onda", (st) => st.produzione.titolo.testo === "Titolo A" && st.produzione.titolo.sopra === "Sopra A" && st.produzione.titolo.sotto === "Sotto A", 3000);
+  await campoVale("pr-testo", "Titolo A");
+  for (let i = 2; i <= 6; i++) {
+    await campo("pr-salva-nome").fill(`Puntata ${i}`);
+    await campo("pr-salva").click();
+    await entro(`il titolo salvato ${i}`, (st) => st.produzione.salvati.length === i, 3000);
+  }
+  await pagina.waitForFunction(() => document.querySelector("#pr-salva").disabled, null, { timeout: 3000 }).catch(() => errori.push("con 6 titoli salvati il bottone «Salva questo titolo» doveva spegnersi"));
+  await pagina.locator("#pr-salvati button[data-togli]").first().click();
+  await entro("un titolo salvato tolto", (st) => st.produzione.salvati.length === 5, 3000);
+  await pagina.waitForFunction(() => !document.querySelector("#pr-salva").disabled, null, { timeout: 3000 }).catch(() => errori.push("tolto un titolo il bottone «Salva questo titolo» doveva riaccendersi"));
+  for (const voce of (await stato()).produzione.salvati) await comando("produzione", { togli: voce.id });
+  await pagina.waitForFunction(() => !document.querySelector("#pr-salvati-vuoto").hidden, null, { timeout: 3000 }).catch(() => errori.push("senza titoli salvati doveva comparire «Nessun titolo salvato»"));
+  await pagina.locator("#pr-regia").screenshot({ path: join(CARTELLA, "mockup", "regia-produzione.jpg"), type: "jpeg", quality: 85 });
+
   await comando("produzione", { preset: "cooking" });
   await browser.close();
   if (errori.length) {
     console.error(`Regia doppio: problemi\n - ${errori.join("\n - ")}`);
     process.exit(1);
   }
-  console.log("ok regia-doppio: preset, titolo in onda mentre si scrive (150 ms), errori con avviso, campi in uso, ripristino della reaction e anteprima");
+  console.log("ok regia-doppio: preset, titolo in onda mentre si scrive (150 ms), errori con avviso, campi in uso, ripristino della reaction, titoli salvati e anteprima");
 }
 
 // La regia del Back Rooms Podcast: i quattro moduli a comando, le tematiche (elenco, scelta dell'attiva, avanti e indietro, lato),
@@ -1512,10 +1552,25 @@ async function provaRegiaPodcast() {
   if (!arrivato) errori.push(`«Puntata 7» doveva essere in onda entro 600 ms dall'ultimo tasto (c'è «${(await stato()).podcast.titolo.testo}»)`);
   await campo("po-sotto").fill("Con ospiti");
   await entro("la riga dell'episodio", (st) => st.podcast.titolo.sotto === "Con ospiti");
-  await campo("po-testo").fill("x".repeat(33));
-  await aspettaTosto("32 caratteri", "un titolo di 33 caratteri");
-  if ((await stato()).podcast.titolo.testo !== "Puntata 7") errori.push("un titolo di 33 caratteri non doveva cambiare quello in onda");
+  await campo("po-testo").fill("x".repeat(41));
+  await aspettaTosto("40 caratteri", "un titolo di 41 caratteri");
+  if ((await stato()).podcast.titolo.testo !== "Puntata 7") errori.push("un titolo di 41 caratteri non doveva cambiare quello in onda");
   await pagina.waitForFunction(() => document.querySelector("#po-testo").value === "Puntata 7", null, { timeout: 3000 }).catch(() => errori.push("dopo l'errore il campo del titolo doveva tornare a «Puntata 7»"));
+
+  // 8) diciture: la parola davanti al nome dell'ospite si cambia (uscendo dal campo), non può restare vuota e il limite è 40
+  await comando("podcast", { etichette: { ospite: "Ospite" } });
+  await pagina.waitForFunction(() => document.querySelector("#po-etichetta-ospite").value === "Ospite", null, { timeout: 3000 }).catch(() => errori.push("la dicitura degli ospiti doveva partire da «Ospite»"));
+  await campo("po-etichetta-ospite").fill("In studio con noi");
+  await campo("po-etichetta-ospite").press("Tab");
+  await entro("la dicitura «In studio con noi»", (st) => st.podcast.etichette.ospite === "In studio con noi");
+  await campo("po-etichetta-ospite").fill("");
+  await campo("po-etichetta-ospite").press("Tab");
+  await attesa(300);
+  if ((await stato()).podcast.etichette.ospite !== "In studio con noi") errori.push("una dicitura vuota non doveva cambiare quella in onda");
+  await pagina.waitForFunction(() => document.querySelector("#po-etichetta-ospite").value === "In studio con noi", null, { timeout: 3000 }).catch(() => errori.push("dopo una dicitura vuota il campo doveva tornare a «In studio con noi»"));
+  if ((await campo("po-etichetta-ospite").getAttribute("maxlength")) !== "40") errori.push("il campo della dicitura doveva accettare al massimo 40 caratteri");
+  await comando("podcast", { etichette: { ospite: "Ospite" } });
+  await pagina.evaluate(() => document.activeElement?.blur()); // il Tab è finito sulla riga di un ospite: lì lo stato non si riscrive
 
   // uno stato di esempio per l'immagine: titolo e episodio, un ospite, cinque tematiche con la seconda in onda e tutti i moduli accesi
   await campo("po-testo").evaluate((e) => e.blur());
@@ -1836,12 +1891,14 @@ async function controllaTitoloVivo(browser, dimensioni, url, errori) {
 }
 
 // Le tre righe della targa, con testi brevi e lunghi e la dimensione dei testi da 100% a 200%: nessuna lettera tagliata dalla sua
-// riga. Con testi brevi al 100% i corpi sono quelli di base: produzione e reaction in verticale sopra 28 / titolo 88 / sotto 32 (come
-// dice il piano; la targa è alta 204 px), reaction in orizzontale 26 / 58 / 28 (la targa orizzontale sta nei 160 px della griglia).
+// riga. Con testi brevi al 100% i corpi sono quelli di base: produzione e reaction in verticale sopra 30 / titolo 94 / sotto 36 (come
+// dice il piano; la targa è alta 230 px), reaction in orizzontale 26 / 60 / 28 (la targa orizzontale sta nei 160 px della griglia).
+// I limiti di caratteri di ogni riga (gli stessi di lib/formati.mjs).
+const LIMITI_RIGHE_TARGA = { produzione: { sopra: 40, testo: 36, sotto: 60 }, reaction: { sopra: 48, testo: 60, sotto: 60 } };
 const RIGHE_TARGA = ["#fm-titolo-sopra", "#fm-titolo-testo", "#fm-titolo-sotto"];
 const CORPI_BASE_TARGA = {
-  verticale: { "#fm-titolo-sopra": 28, "#fm-titolo-testo": 88, "#fm-titolo-sotto": 32 },
-  orizzontale: { "#fm-titolo-sopra": 26, "#fm-titolo-testo": 58, "#fm-titolo-sotto": 28 },
+  verticale: { "#fm-titolo-sopra": 30, "#fm-titolo-testo": 94, "#fm-titolo-sotto": 36 },
+  orizzontale: { "#fm-titolo-sopra": 26, "#fm-titolo-testo": 60, "#fm-titolo-sotto": 28 },
 };
 async function passateInchiostroTarga(browser, errori) {
   const orizzontale = formato === "orizzontale";
@@ -1849,8 +1906,8 @@ async function passateInchiostroTarga(browser, errori) {
     { nome: "testi brevi al 100%", titolo: { sopra: "Giovedì · ore 01:00", testo: "Pappagallo", sotto: "Quiz, gara e pappagallo" }, ts: 100, corpiDiBase: true },
     { nome: "testi brevi al 150%", titolo: { sopra: "Giovedì · ore 01:00", testo: "Pappagallo", sotto: "Quiz, gara e pappagallo" }, ts: 150 },
     { nome: "testi brevi al 200%", titolo: { sopra: "Giovedì · ore 01:00", testo: "Pappagallo", sotto: "Quiz, gara e pappagallo" }, ts: 200 },
-    { nome: "testi lunghi al 200%", titolo: Object.fromEntries(Object.entries(layout === "produzione" ? { sopra: 32, testo: 28, sotto: 48 } : { sopra: 40, testo: 60, sotto: 60 }).map(([riga, n]) => [riga, lungo(n)])), ts: 200 },
-    { nome: "testi lunghi al 100%", titolo: Object.fromEntries(Object.entries(layout === "produzione" ? { sopra: 32, testo: 28, sotto: 48 } : { sopra: 40, testo: 60, sotto: 60 }).map(([riga, n]) => [riga, lungo(n)])), ts: 100 },
+    { nome: "testi lunghi al 200%", titolo: Object.fromEntries(Object.entries(LIMITI_RIGHE_TARGA[layout]).map(([riga, n]) => [riga, lungo(n)])), ts: 200 },
+    { nome: "testi lunghi al 100%", titolo: Object.fromEntries(Object.entries(LIMITI_RIGHE_TARGA[layout]).map(([riga, n]) => [riga, lungo(n)])), ts: 100 },
   ];
   for (const passata of passate) {
     await preparaStato();
@@ -1875,7 +1932,7 @@ async function passateInchiostroTarga(browser, errori) {
 
 // Le tre righe della targa del titolo al massimo dei caratteri e con la dimensione dei testi al 200% (Review Focus 4).
 async function provaTestiLunghiTitolo() {
-  const righe = layout === "produzione" ? { sopra: 32, testo: 28, sotto: 48 } : { sopra: 40, testo: 60, sotto: 60 };
+  const righe = LIMITI_RIGHE_TARGA[layout];
   await preparaStato();
   await comando(layout, { titolo: Object.fromEntries(Object.entries(righe).map(([riga, n]) => [riga, lungo(n)])) });
   await comando("formatoTesti", { formato: layout, valori: { sopra: 200, titolo: 200, sotto: 200 } });
@@ -2040,6 +2097,9 @@ async function controllaPodcastVivo(browser, dimensioni, url, errori) {
   // la dimensione dei testi scelta in regia vale subito (senza cambiare le parole) e si toglie con «Ripristina»
   const corpoTema = () => pagina.evaluate(() => parseFloat(getComputedStyle(document.querySelector("#po-tematiche .po-tema-testo") ?? document.querySelector("#po-targa-testo")).fontSize));
   const corpoTarga = () => pagina.evaluate(() => parseFloat(getComputedStyle(document.querySelector("#po-targa-testo")).fontSize));
+  await comando("podcast", { titolo: { testo: "Prova" } }); // un titolo corto: il corpo sta al massimo e il 60% si nota
+  await entro("il titolo «Prova»", async () => (await leggiPodcast(pagina)).targa === "Prova");
+  await pagina.waitForTimeout(300);
   const interoTarga = await corpoTarga();
   await comando("formatoTesti", { formato: "podcast", valori: { targa: 60 } });
   await pagina.waitForTimeout(300);
@@ -2048,6 +2108,8 @@ async function controllaPodcastVivo(browser, dimensioni, url, errori) {
   await comando("formatoTesti", { formato: "podcast", azzera: true });
   await pagina.waitForTimeout(300);
   if (Math.abs((await corpoTarga()) - interoTarga) > 1) errori.push("targa: «Ripristina tutti al 100%» doveva riportare il corpo com'era");
+  await comando("podcast", { titolo: { testo: "Back Rooms Podcast" } });
+  await entro("il titolo di partenza", async () => (await leggiPodcast(pagina)).targa === "Back Rooms Podcast");
 
   if (stato === "completo") {
     const interoTema = await corpoTema();
@@ -2191,13 +2253,13 @@ async function controllaPodcastPrimoDisegno(browser, dimensioni, url, errori) {
 // Le righe della targa e le otto tematiche al massimo dei caratteri (la larghezza è il limite) e, in un secondo passaggio, con testi
 // cortissimi (il limite è l'altezza della scatola), con i testi al 200%: niente esce dal suo riquadro e niente sparisce.
 // Targa e tematiche del podcast, con testi brevi e lunghi e la dimensione dei testi da 100% a 200%: nessuna lettera tagliata dalla sua
-// riga. Con testi brevi al 100% la targa ha i corpi del piano: titolo 48, riga sotto 32.
+// riga. Con testi brevi al 100% la targa ha i corpi di base: titolo 56, riga sotto 34 (in orizzontale 50 e 28).
 const RIGHE_PODCAST = ["#po-targa-testo", "#po-targa-sotto", "#po-tematiche-titolo", "#po-tematiche .po-tema-testo"];
-const CORPI_BASE_PODCAST = { "#po-targa-testo": 48, "#po-targa-sotto": 32 };
+const CORPI_BASE_PODCAST = { verticale: { "#po-targa-testo": 56, "#po-targa-sotto": 34 }, orizzontale: { "#po-targa-testo": 50, "#po-targa-sotto": 28 } };
 async function passateInchiostroPodcast(browser, errori) {
   const orizzontale = formato === "orizzontale";
   const brevi = { titolo: { testo: "Pappagallo", sotto: "Con Quentin" }, tematiche: { titolo: "Quiz e giochi", elenco: ["Pappagallo", "Gypsy", "Quiz", "Giraffa", "Papà"], attiva: 1 } };
-  const lunghi = { titolo: { testo: lungo(32), sotto: lungo(48) }, tematiche: { titolo: lungo(32), elenco: Array.from({ length: 8 }, (_, i) => lungo(48 - i)), attiva: 3 } };
+  const lunghi = { titolo: { testo: lungo(40), sotto: lungo(60) }, tematiche: { titolo: lungo(32), elenco: Array.from({ length: 8 }, (_, i) => lungo(48 - i)), attiva: 3 } };
   const passate = [
     { nome: "testi brevi al 100%", dati: brevi, ts: 100, corpiDiBase: true },
     { nome: "testi brevi al 150%", dati: brevi, ts: 150 },
@@ -2216,8 +2278,8 @@ async function passateInchiostroPodcast(browser, errori) {
     await pagina.waitForTimeout(800);
     errori.push(...descriviTagliate(await inchiostroTagliato(pagina, RIGHE_PODCAST), passata.nome));
     if (passata.corpiDiBase) {
-      const corpi = await pagina.evaluate((sels) => Object.fromEntries(sels.map((sel) => [sel, parseFloat(getComputedStyle(document.querySelector(sel)).fontSize)])), Object.keys(CORPI_BASE_PODCAST));
-      for (const [sel, base] of Object.entries(CORPI_BASE_PODCAST)) if (corpi[sel] < base - 0.5) errori.push(`${sel}: il corpo di base è ${base} px ma con ${passata.nome} è ${Math.round(corpi[sel])} px (la scatola della riga o la targa è troppo bassa)`);
+      const corpi = await pagina.evaluate((sels) => Object.fromEntries(sels.map((sel) => [sel, parseFloat(getComputedStyle(document.querySelector(sel)).fontSize)])), Object.keys(CORPI_BASE_PODCAST[formato]));
+      for (const [sel, base] of Object.entries(CORPI_BASE_PODCAST[formato])) if (corpi[sel] < base - 0.5) errori.push(`${sel}: il corpo di base è ${base} px ma con ${passata.nome} è ${Math.round(corpi[sel])} px (la scatola della riga o la targa è troppo bassa)`);
     }
     await pagina.close();
   }
@@ -2234,7 +2296,7 @@ async function provaTestiLunghiPodcast() {
   pagina.on("pageerror", (e) => errori.push(`pagina: ${e.message}`));
   const nome = `podcast${orizzontale ? "-orizzontale" : ""}-testi-lunghi.jpg`;
   const PASSAGGI = [
-    ["testi lunghi", { titolo: { testo: lungo(32), sotto: lungo(48) }, tematiche: { titolo: lungo(32), elenco: Array.from({ length: 8 }, (_, i) => lungo(48 - i)), attiva: 3 } }],
+    ["testi lunghi", { titolo: { testo: lungo(40), sotto: lungo(60) }, tematiche: { titolo: lungo(32), elenco: Array.from({ length: 8 }, (_, i) => lungo(48 - i)), attiva: 3 } }],
     ["testi corti", { titolo: { testo: "Podcast", sotto: "Ep. 1" }, tematiche: { titolo: "Oggi", elenco: ["Sì", "No", "Forse", "Mah", "Ok", "Ehi", "Bene", "Via"], attiva: 3 } }],
   ];
   for (const [passaggio, dati] of PASSAGGI) {

@@ -72,12 +72,12 @@ function creaInterruttore(el) {
 const targa = $("#po-targa");
 // Le due righe: l'elemento, il gruppo di testo (dimensione scelta in regia), il corpo massimo e il minimo con cui si adattano.
 // Il titolo può scendere fino a 20 px perché nella targa orizzontale (512 px, due monete) un testo di 32 caratteri deve entrare.
-// I massimi sono i corpi di base di podcast.css (--c-testo 48, --c-sotto 32): la scatola di ogni riga è alta quanto serve alle lettere.
+// I massimi sono i corpi di base di podcast.css (--c-testo 56, --c-sotto 34; in orizzontale 50 e 28): la scatola di ogni riga è alta quanto serve alle lettere.
 const titolo = creaTarga({
   statico: STATICO,
   righe: {
-    testo: { el: $("#po-targa-testo"), gruppo: "targa", massimo: 48, minimo: 20 },
-    sotto: { el: $("#po-targa-sotto"), gruppo: "targa", massimo: 32, minimo: 14, nascondiSeVuota: true },
+    testo: { el: $("#po-targa-testo"), gruppo: "targa", massimo: orizzontale ? 50 : 56, minimo: 20 },
+    sotto: { el: $("#po-targa-sotto"), gruppo: "targa", massimo: orizzontale ? 28 : 34, minimo: orizzontale ? 12 : 14, nascondiSeVuota: true },
   },
 });
 
@@ -130,7 +130,7 @@ function riempiPannello(s) {
     riga.icona.toggleAttribute("hidden", stati[i] === "prossima"); // la prossima ha un cerchietto, disegnato dal CSS
     riga.icona.querySelector("use").setAttribute("href", stati[i] === "fatta" ? "#ic-spunta" : "#ic-play");
     riga.testo.textContent = voce;
-    adattaRiga(riga.testo, 34 * scala, 22);
+    adattaRiga(riga.testo, 34 * scala, orizzontale ? 14 : 22); // 48 caratteri nel pannello orizzontale (512 px) chiedono un corpo piccolo
   });
   cursore.hidden = t.elenco.length === 0;
   cursore.style.setProperty("--attiva", String(t.attiva));

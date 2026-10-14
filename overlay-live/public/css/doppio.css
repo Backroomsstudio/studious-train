@@ -3,7 +3,7 @@
 
    POSIZIONI in pixel della tela:
    Verticale 1080×1920 (produzione e reaction): webcam A sotto la pagina (y 0–1212), fascia 1212–1304, schermo B 1304–1920
-   - titolo (targa)        x 116 → 964,   y 282 → 486
+   - titolo (targa)        x 116 → 964,   y 282 → 512
    Reaction orizzontale 1920×1080 (sfondo di marca opaco: le due finestre sono fori nella pagina):
    - titolo (targa)        x 360 → 1560,  y 28 → 188
    - finestra A (host)     x 24 → 600,    y 192 → 894
@@ -14,24 +14,52 @@
    Con ?guide=1 si vedono le zone (solo verticale). */
 .fm.produzione .fm-targa,
 .fm.reaction .fm-targa {
+  /* Corpi di base grandi (30 / 94 / 36) e righe centrate nel riquadro: la targa è alta 230 px (dal 100% al 200% la riga cresce
+     fin dove la sua scatola glielo lascia, poi la pagina la adatta: doppio.js). */
+  --c-sopra: 30px;
+  --c-testo: 94px;
+  --c-sotto: 36px;
+  --h-sopra: 37px;
+  --h-testo: 116px;
+  --h-sotto: 44px;
   left: 116px;
   top: 282px;
   width: 848px;
-  height: 204px;
+  height: 230px;
 }
 /* In orizzontale la targa sta nei 160 px sopra le finestre (che cominciano a y 192): corpi più piccoli di quelli del verticale. */
 .fm.reaction.orizzontale .fm-targa {
   --d: 88px;
   --c-sopra: 26px;
-  --c-testo: 58px;
+  --c-testo: 60px;
   --c-sotto: 28px;
-  --h-sopra: 28px;
-  --h-testo: 65px;
+  --h-sopra: 32px;
+  --h-testo: 74px;
   --h-sotto: 35px;
   left: 360px;
   top: 28px;
   width: 1200px;
   height: 160px;
+}
+/* Le tre righe stanno al centro della targa (la moneta e l'icona restano ai lati). */
+.fm.produzione .fm-targa-sopra,
+.fm.reaction .fm-targa-sopra,
+.fm.produzione .fm-targa-riga,
+.fm.reaction .fm-targa-riga {
+  justify-content: center;
+}
+.fm.produzione .fm-targa-sopra > span,
+.fm.reaction .fm-targa-sopra > span {
+  flex: 0 1 auto;
+}
+.fm.produzione .fm-targa-testo,
+.fm.reaction .fm-targa-testo {
+  flex: 0 1 auto;
+  text-align: center;
+}
+.fm.produzione .fm-targa-sotto,
+.fm.reaction .fm-targa-sotto {
+  text-align: center;
 }
 
 /* ---------- Reaction: richiesta in onda e scaletta ---------- */

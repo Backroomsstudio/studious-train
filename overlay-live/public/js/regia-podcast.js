@@ -81,6 +81,17 @@ export function avviaRegiaPodcast({ $, el, invia, riempi }) {
     if (esito.ok) for (const campo of [campoTitolo, campoElenco]) delete campo.dataset.modificato; // da qui i campi seguono lo stato
   });
 
+  // ----- Diciture: la parola che precede il nome dell'ospite in fascia (si salva uscendo dal campo) -----
+  const campoEtichetta = $("#po-etichetta-ospite");
+  campoEtichetta.addEventListener("change", async () => {
+    if (!campoEtichetta.value.trim()) {
+      if (stato) campoEtichetta.value = stato.podcast.etichette?.ospite ?? "Ospite"; // la dicitura non può restare vuota
+      return;
+    }
+    const esito = await invia("podcast", { etichette: { ospite: campoEtichetta.value } });
+    if (!esito.ok && stato) campoEtichetta.value = stato.podcast.etichette?.ospite ?? "Ospite";
+  });
+
   // ----- Ospiti: si salvano uscendo da un campo; una riga senza nome non va in onda -----
   const elencoOspiti = $("#po-ospiti");
   const aggiungi = $("#po-ospiti-aggiungi");
@@ -145,6 +156,7 @@ export function avviaRegiaPodcast({ $, el, invia, riempi }) {
       riempi(campoElenco, t.elenco.join("\n"));
       if (lato !== document.activeElement) lato.value = t.lato;
       disegnaOspiti(s);
+      riempi(campoEtichetta, s.podcast.etichette?.ospite ?? "Ospite");
     },
     // Scorciatoie con il Podcast in onda: una funzione da chiamare, o null se il tasto non è suo.
     scorciatoia(tasto) {

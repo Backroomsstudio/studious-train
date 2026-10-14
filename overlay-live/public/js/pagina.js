@@ -67,7 +67,7 @@ export function adattaTesto(el, massimo, minimo) {
   let corpo = massimo;
   el.style.fontSize = `${corpo}px`;
   while (!entra(el) && corpo > minimo) {
-    corpo -= 2;
+    corpo = Math.max(minimo, corpo - 2); // mai sotto il minimo, anche se si parte da un corpo dispari
     el.style.fontSize = `${corpo}px`;
   }
 }

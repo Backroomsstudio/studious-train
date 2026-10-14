@@ -759,7 +759,16 @@
           <label class="sp-riga">Riga sopra <input id="pr-sopra" autocomplete="off"></label>
           <label class="sp-riga">Titolo <input id="pr-testo" autocomplete="off"></label>
           <label class="sp-riga">Riga sotto <input id="pr-sotto" autocomplete="off"></label>
-          <p class="nota">Al massimo 32, 28 e 48 caratteri (oltre, compare un avviso e resta in onda il testo di prima). Il titolo non può restare vuoto: mentre lo riscrivete resta in onda quello di prima.</p>
+          <p class="nota">Al massimo 40, 36 e 60 caratteri (oltre, compare un avviso e resta in onda il testo di prima). Il titolo non può restare vuoto: mentre lo riscrivete resta in onda quello di prima.</p>
+
+          <h3>Titoli salvati <span class="conta">al massimo 6</span></h3>
+          <p class="nota">Salvate il titolo che avete scritto con un nome: poi si rimette in onda con un tocco, con le sue tre righe (il colore della targa non cambia).</p>
+          <div class="sp-riga pr-salva">
+            <input id="pr-salva-nome" maxlength="24" placeholder="Nome (es. Puntata 12)" autocomplete="off" aria-label="Nome del titolo da salvare">
+            <button type="button" class="piccolo primario" id="pr-salva">Salva questo titolo</button>
+          </div>
+          <ul class="pr-salvati" id="pr-salvati"></ul>
+          <p class="nota" id="pr-salvati-vuoto">Nessun titolo salvato.</p>
         </div>
 
         <div class="sp-colonna" id="pr-col2">
@@ -811,7 +820,7 @@
           <h3>Titolo <span class="conta">va in onda mentre scrivete</span></h3>
           <label class="sp-riga">Titolo della targa <input id="po-testo" autocomplete="off"></label>
           <label class="sp-riga">Riga dell'episodio <input id="po-sotto" autocomplete="off"></label>
-          <p class="nota">Al massimo 32 e 48 caratteri (oltre, compare un avviso e resta in onda il testo di prima); la riga dell'episodio si può lasciare vuota. Il titolo non può restare vuoto: mentre lo riscrivete resta in onda quello di prima.</p>
+          <p class="nota">Al massimo 40 e 60 caratteri (oltre, compare un avviso e resta in onda il testo di prima); la riga dell'episodio si può lasciare vuota. Il titolo non può restare vuoto: mentre lo riscrivete resta in onda quello di prima.</p>
         </div>
 
         <div class="sp-colonna" id="po-col2">
@@ -821,7 +830,11 @@
           <div class="azioni"><button type="button" class="piccolo primario" id="po-tem-salva">Salva tematiche</button></div>
           <p class="nota">Le righe vuote si saltano. Salvando, la tematica attiva resta la stessa (o l'ultima, se l'elenco si accorcia); finché non salvate, il testo scritto qui non viene toccato.</p>
 
-          <h3>Ospiti <span class="conta">in fascia come «Ospite · Nome · @contatto» · al massimo 4</span></h3>
+          <h3>Diciture <span class="conta">le parole fisse della fascia</span></h3>
+          <label class="sp-riga">Dicitura degli ospiti <input id="po-etichetta-ospite" maxlength="40" autocomplete="off" placeholder="Ospite"></label>
+          <p class="nota">È la parola che precede il nome dell'ospite in fascia («Ospite · Nome · @contatto»); si salva uscendo dal campo e non può restare vuota.</p>
+
+          <h3>Ospiti <span class="conta">in fascia come «Dicitura · Nome · @contatto» · al massimo 4</span></h3>
           <ul class="po-ospiti" id="po-ospiti"></ul>
           <div class="azioni"><button type="button" class="piccolo" id="po-ospiti-aggiungi">+ Aggiungi ospite</button></div>
           <p class="nota">Si salva uscendo dal campo; una riga senza nome non va in onda.</p>

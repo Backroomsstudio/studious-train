@@ -113,8 +113,50 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn, 
   for (const chip of document.querySelectorAll("button[data-preset]")) chip.addEventListener("click", () => invia("produzione", { preset: chip.dataset.preset }));
   $("#re-ripristina").addEventListener("click", () => invia("reaction", { titolo: TITOLO_REACTION_PREDEFINITO }));
 
+  // ----- Studio Production: titoli salvati (nome, «Salva questo titolo», «Usa», «Togli»; al massimo 6) -----
+  const nomeSalvato = $("#pr-salva-nome");
+  const elencoSalvati = $("#pr-salvati");
+  let firmaSalvati = "";
+  $("#pr-salva").addEventListener("click", async () => {
+    const esito = await invia("produzione", { salva: { nome: nomeSalvato.value } });
+    if (esito.ok) {
+      nomeSalvato.value = "";
+      avviso("Titolo salvato", "ok");
+    }
+  });
+  nomeSalvato.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") $("#pr-salva").click();
+  });
+  elencoSalvati.addEventListener("click", (e) => {
+    const bottone = e.target.closest("button[data-usa], button[data-togli]");
+    if (!bottone) return;
+    if (bottone.dataset.usa) invia("produzione", { usa: bottone.dataset.usa });
+    else invia("produzione", { togli: bottone.dataset.togli });
+  });
+  function disegnaSalvati(s) {
+    const salvati = s.produzione.salvati ?? [];
+    const firma = JSON.stringify(salvati);
+    $("#pr-salva").disabled = salvati.length >= 6;
+    $("#pr-salvati-vuoto").hidden = salvati.length > 0;
+    if (firma === firmaSalvati) return;
+    firmaSalvati = firma;
+    elencoSalvati.replaceChildren(
+      ...salvati.map((v) =>
+        el(
+          "li",
+          { class: "pr-salvato" },
+          el("span", { class: "pr-salvato-nome", title: [v.sopra, v.testo, v.sotto].filter(Boolean).join(" · ") }, v.nome),
+          el("span", { class: "pr-salvato-testo" }, v.testo),
+          el("button", { type: "button", class: "piccolo primario", "data-usa": v.id }, "Usa"),
+          el("button", { type: "button", class: "piccolo", "data-togli": v.id, title: "Togli questo titolo salvato" }, "Togli"),
+        ),
+      ),
+    );
+  }
+
   // I campi del titolo seguono lo stato, tranne quello in uso; il preset in onda è evidenziato.
   function disegnaTitoli(s) {
+    disegnaSalvati(s);
     for (const formato of Object.keys(PREFISSO_TITOLO)) {
       for (const [riga, campo] of Object.entries(campiTitolo(formato))) riempi(campo, s[formato].titolo[riga]);
     }
