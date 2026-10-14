@@ -1,7 +1,7 @@
 // Parti pure delle pagine dei quattro layout nuovi (voci della fascia social, simboli, dimensione dei testi).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { vociFascia, velocitaFascia, ETICHETTE_TESTI, scalaTesto, NOMI_ICONE, NOMI_ICONE_REGALO, STILE_PRESET, stileTitolo, TITOLO_REACTION_PREDEFINITO, statiTematiche, vociScaletta, testoRichiesta } from "../public/js/formati-logica.js";
+import { vociFascia, velocitaFascia, ETICHETTE_TESTI, scalaTesto, NOMI_ICONE, NOMI_ICONE_REGALO, STILE_PRESET, stileTitolo, TITOLO_REACTION_PREDEFINITO, statiTematiche, vociScaletta, testoRichiesta, vociStriscia, testoIstruzione } from "../public/js/formati-logica.js";
 import { ID_SIMBOLI, svgSimboli } from "../public/js/simboli.js";
 import { senzaPremioIniziale } from "../lib/stato.mjs";
 import { ICONE } from "../lib/validazione.mjs";
@@ -127,4 +127,30 @@ test("vociScaletta toglie le righe vuote e taglia a 8; testoRichiesta con e senz
   assert.equal(testoRichiesta({ utente: "@mario", brano: { titolo: "Satellite", artista: "" } }), "Richiesta di @mario: Satellite");
   assert.equal(testoRichiesta({ utente: "", brano: { titolo: "Satellite", artista: "Mira" } }), "Richiesta: Satellite — Mira");
   assert.equal(testoRichiesta({ utente: "mario", brano: null }), "");
+});
+
+const drumStato = ({ brano = { titolo: "Seven Nation Army", artista: "The White Stripes" }, ospite = { etichetta: "Artista ospite", handle: "@lince.music", icona: "instagram" }, drumBrano = true, slot = "Rosa", icona = "rosa" } = {}) => ({
+  drum: { brano, ospite, priorita: { prefisso: "Dona una", slot, dopo: "per saltare la fila e scegliere il brano", regalo: "", icona }, striscia: { velocita: 80 } },
+  visibili: { drumBrano },
+});
+
+test("vociStriscia: brano, ospite e regalo in quest'ordine; senza brano manca la prima, senza ospite la seconda; il regalo è lo slot", () => {
+  const tutte = vociStriscia(drumStato());
+  assert.deepEqual(tutte.map((v) => v.tipo), ["brano", "ospite", "regalo"]);
+  assert.deepEqual([tutte[0].etichetta, tutte[0].testo], ["In esecuzione", "Seven Nation Army — The White Stripes"]);
+  assert.deepEqual([tutte[1].etichetta, tutte[1].testo, tutte[1].icone], ["Artista ospite", "@lince.music", ["instagram"]]);
+  assert.deepEqual([tutte[2].etichetta, tutte[2].testo, tutte[2].oro, tutte[2].icone], ["Salta la coda e dona una", "Rosa", true, ["rosa"]]);
+  assert.deepEqual(vociStriscia(drumStato({ brano: { titolo: "", artista: "Chi" } })).map((v) => v.tipo), ["ospite", "regalo"]);
+  assert.deepEqual(vociStriscia(drumStato({ ospite: { etichetta: "Ospite", handle: "", icona: "tiktok" } })).map((v) => v.tipo), ["brano", "regalo"]);
+  assert.deepEqual(vociStriscia(drumStato({ drumBrano: false })).map((v) => v.tipo), ["ospite", "regalo"], "drumBrano spento: niente voce del brano");
+  assert.equal(vociStriscia(drumStato({ brano: { titolo: "Solo titolo", artista: "" } }))[0].testo, "Solo titolo");
+  assert.equal(vociStriscia(drumStato({ slot: "Corona", icona: "corona" })).at(-1).testo, "Corona");
+  const chiavi = new Set(vociStriscia(drumStato()).map((v) => v.chiave));
+  assert.equal(chiavi.size, 3, "ogni voce ha la sua chiave");
+});
+
+test("testoIstruzione compone le tre parti", () => {
+  assert.deepEqual(testoIstruzione({ prefisso: "Dona una", slot: "Rosa", dopo: "per saltare la fila e scegliere il brano" }), { prima: "Dona una", regalo: "Rosa", dopo: "per saltare la fila e scegliere il brano" });
+  assert.deepEqual(testoIstruzione({ prefisso: "", slot: "Corona", dopo: "" }), { prima: "", regalo: "Corona", dopo: "" });
+  assert.deepEqual(testoIstruzione(undefined), { prima: "", regalo: "", dopo: "" });
 });

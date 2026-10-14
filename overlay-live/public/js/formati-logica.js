@@ -88,3 +88,22 @@ export function testoRichiesta(richiesta) {
   const utente = (richiesta.utente ?? "").trim().replace(/^@+/, "");
   return `${utente ? `Richiesta di @${utente}` : "Richiesta"}: ${titolo}${artista ? ` — ${artista}` : ""}`;
 }
+
+// Le voci della striscia a scorrimento del Drum, in giro continuo: «In esecuzione: Titolo — Artista» (se c'è un brano e il widget
+// del brano è acceso), «Artista ospite · @handle» (se c'è un contatto) e «Salta la coda e dona una Rosa» (lo slot dell'istruzione).
+export function vociStriscia(s) {
+  const d = s.drum;
+  const voci = [];
+  const titolo = d.brano.titolo.trim();
+  if (titolo && s.visibili?.drumBrano !== false) {
+    const artista = d.brano.artista.trim();
+    voci.push({ tipo: "brano", chiave: `brano|${titolo}|${artista}`, icone: ["cuffie"], etichetta: "In esecuzione", testo: artista ? `${titolo} — ${artista}` : titolo });
+  }
+  const handle = d.ospite.handle.trim();
+  if (handle) voci.push({ tipo: "ospite", chiave: `ospite|${d.ospite.etichetta}|${handle}|${d.ospite.icona}`, icone: [d.ospite.icona], etichetta: d.ospite.etichetta, testo: handle });
+  voci.push({ tipo: "regalo", chiave: `regalo|${d.priorita.slot}|${d.priorita.icona}`, icone: [d.priorita.icona], etichetta: "Salta la coda e dona una", testo: d.priorita.slot, oro: true });
+  return voci;
+}
+
+// Le tre parti dell'istruzione su una riga: «Dona una» · «Rosa» · «per saltare la fila e scegliere il brano».
+export const testoIstruzione = (priorita) => ({ prima: priorita?.prefisso ?? "", regalo: priorita?.slot ?? "", dopo: priorita?.dopo ?? "" });

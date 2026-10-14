@@ -28,10 +28,10 @@ function creaPezzo(voce) {
 const MISURE = { 1080: { bordoVisibile: 980, riempiFino: 1500 }, 1920: { bordoVisibile: 1800, riempiFino: 2400 } };
 
 // voci(s) → le voci in ordine di passaggio; velocita(s) → pixel al secondo. aggiorna(s) a ogni stato, rimisura() a font caricati.
-export function creaFascia({ radice, nastro, larghezza, voci, velocita, statico = false }) {
+export function creaFascia({ radice, nastro, larghezza, voci, velocita, statico = false, inizio = 236 }) {
   const misure = MISURE[larghezza] ?? { bordoVisibile: larghezza - 100, riempiFino: larghezza + 420 };
   let stato = null;
-  const scorrevole = creaNastro({ nastro, creaPezzo, inizio: () => 236, velocita: () => (stato ? velocita(stato) : 0), statico, ...misure });
+  const scorrevole = creaNastro({ nastro, creaPezzo, inizio: () => inizio, velocita: () => (stato ? velocita(stato) : 0), statico, ...misure });
   return {
     radice,
     aggiorna(s) {

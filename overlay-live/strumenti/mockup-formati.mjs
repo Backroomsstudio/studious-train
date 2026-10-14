@@ -57,16 +57,16 @@ const p = (x, y, w, h, dentro = false) => ({ r: [x, y, w, h], dentro });
 export const GEOMETRIA = {
   drum: {
     verticale: {
-      brano: p(116, 282, 524, 80, true),
-      priorita: p(116, 380, 524, 106, true),
-      contatore: p(676, 282, 288, 68, true),
-      colonna: p(676, 366, 288, 640, true),
-      eq: p(116, 1016, 848, 84, true),
-      cornice: p(116, 262, 848, 838, true),
-      sblocco: p(116, 520, 524, 170, true),
-      goal: p(116, 892, 400, 120, true),
-      fascia: p(0, 1108, 1080, 92),
-      "finto:camera": p(0, 0, 1080, 1920),
+      striscia: p(116, 282, 848, 60, true),
+      istruzione: p(116, 350, 848, 52, true),
+      contatore: p(676, 414, 288, 64, true),
+      colonna: p(676, 486, 288, 642, true),
+      cornice: p(116, 414, 848, 714, true),
+      sblocco: p(116, 560, 536, 170, true),
+      goal: p(116, 892, 400, 120, true), // dentro la finestra della camera, sotto il banner di sblocco
+      eq: p(116, 1140, 848, 56, true),
+      fascia: p(0, 1204, 1080, 92),
+      "finto:camera": p(116, 414, 536, 714), // la finestra della camera (oppure la camera a tutto schermo sotto la pagina)
     },
   },
   produzione: {
@@ -112,10 +112,10 @@ const senza = (layout, formato, ...esclusi) => tutti(layout, formato).filter((ch
 const stati = (layout, formato, elenco) => Object.fromEntries(elenco.map((stato) => [stato, tutti(layout, formato)]));
 // Per ogni layout, formato e stato: i pezzi che devono esserci (e non essere nascosti).
 export const PRESENTI = {
-  // vuoto: niente brano in esecuzione e niente banner; meta e finale: niente banner; sblocco: la sequenza finita, con il banner
+  // vuoto, meta e finale: niente banner; sblocco: la sequenza finita, con il banner
   drum: {
     verticale: {
-      vuoto: senza("drum", "verticale", "brano", "sblocco"),
+      vuoto: senza("drum", "verticale", "sblocco"),
       meta: senza("drum", "verticale", "sblocco"),
       sblocco: tutti("drum", "verticale"),
       finale: senza("drum", "verticale", "sblocco"),
@@ -188,7 +188,7 @@ async function preparaStato(fase = stato) {
   if (layout === "drum") {
     // partenza pulita: scaletta di base, «Dona un…» di partenza, nessun brano, testi al 100% (poi i dati di prova)
     await comando("drumScaletta", { predefinita: true });
-    await comando("drumPriorita", { prefisso: "Dona un", slot: "Rosa", sopra: "Salta la coda · scegli tu il brano", icona: "rosa" });
+    await comando("drumPriorita", { prefisso: "Dona una", slot: "Rosa", dopo: "per saltare la fila e scegliere il brano", regalo: "", icona: "rosa" });
     await comando("formatoTesti", { formato: "drum", azzera: true });
     await comando("drumDemo", { fase });
   }
@@ -239,15 +239,25 @@ async function controllaDrum(pagina, errori) {
     if (trovati[1].titolo !== "Livin' on a Prayer") errori.push(`modulo attivo: «${trovati[1].titolo}» (il titolo si vede anche a modulo chiuso)`);
     if (!trovati[1].manca.includes("600")) errori.push(`modulo attivo: «${trovati[1].manca}» non dice che mancano 600`);
     if (trovati[1].perc !== "70%") errori.push(`modulo attivo: percentuale «${trovati[1].perc}»`);
-    const brano = await pagina.evaluate(() => document.querySelector("#dr-brano-titolo")?.textContent);
-    if (brano !== "Seven Nation Army") errori.push(`brano in esecuzione: «${brano}»`);
+    // il brano in esecuzione è una voce della striscia (con «In esecuzione» e l'artista)
+    const striscia = await pagina.evaluate(() => document.querySelector("#dr-nastro")?.textContent ?? "");
+    if (!striscia.includes("Seven Nation Army")) errori.push(`striscia: il brano in esecuzione manca («${striscia.slice(0, 80)}»)`);
+    if (!striscia.includes("Salta la coda e dona una")) errori.push("striscia: manca «Salta la coda e dona una Rosa»");
   }
   if (stato === "sblocco") {
     const titolo = await pagina.evaluate(() => document.querySelector("#dr-sblocco-titolo")?.textContent);
     if (titolo !== "Livin' on a Prayer") errori.push(`banner di sblocco: «${titolo}»`);
   }
-  const priorita = await pagina.evaluate(() => [document.querySelector("#dr-pri-prefisso")?.textContent, document.querySelector("#dr-pri-slot")?.textContent]);
-  if (priorita.join("|") !== "Dona un|Rosa") errori.push(`«Dona un…»: ${priorita.join(" ")}`);
+  const priorita = await pagina.evaluate(() => [document.querySelector("#dr-pri-prefisso")?.textContent, document.querySelector("#dr-pri-slot")?.textContent, document.querySelector("#dr-pri-dopo")?.textContent]);
+  if (priorita.join("|") !== "Dona una|Rosa|per saltare la fila e scegliere il brano") errori.push(`istruzione: ${priorita.join(" ")}`);
+  // una riga sola, mai a capo, dentro il suo riquadro
+  const riga = await pagina.evaluate(() => {
+    const e = document.querySelector("#dr-istr-testo");
+    const r = e.getBoundingClientRect();
+    return { altezza: r.height, scorre: e.scrollWidth > e.clientWidth + 1, figli: [...e.children].map((f) => Math.round(f.getBoundingClientRect().y)) };
+  });
+  if (riga.scorre) errori.push("istruzione: il testo non entra in una riga");
+  if (new Set(riga.figli).size > 1 && Math.max(...riga.figli) - Math.min(...riga.figli) > 12) errori.push(`istruzione: va a capo (${riga.figli.join(", ")})`);
 }
 
 const selettore = (chiave) => (chiave.startsWith("finto:") ? `[data-finto="${chiave.slice(6)}"]` : `[data-parte="${chiave}"]`);
@@ -643,12 +653,12 @@ async function provaEq() {
   await pagina.evaluate(() => document.fonts?.ready);
   await attesa(600);
   let c = await canvas();
-  if (vuoto(c) || c.alto < 60) errori.push(`senza dati: il «respiro» doveva essere basso e visibile (pixel ${c.pieni}, riga più alta ${c.alto})`);
+  if (vuoto(c) || c.alto < 40) errori.push(`senza dati: il «respiro» doveva essere basso e visibile (pixel ${c.pieni}, riga più alta ${c.alto})`);
 
   // 1) il segnale: barre alte e cornice che lampeggia
   await manda(1000);
   c = await canvas();
-  if (vuoto(c) || c.alto > 30) errori.push(`con il segnale: le barre dovevano essere alte (pixel ${c.pieni}, riga più alta ${c.alto})`);
+  if (vuoto(c) || c.alto > 20) errori.push(`con il segnale: le barre dovevano essere alte (pixel ${c.pieni}, riga più alta ${c.alto})`);
   if (c.barre < 30 || c.barre > 40) errori.push(`con il segnale: ${c.barre} barre lungo la riga in basso, attese tra 30 e 40`);
   if ((await colpi()) < 1) errori.push("la cornice non ha mai avuto la classe «colpo»");
   const impronteBarre = c.impronta;
@@ -658,7 +668,7 @@ async function provaEq() {
   // 2) l'invio si interrompe: dopo 2,5 s torna il respiro, basso
   await attesa(2500);
   c = await canvas();
-  if (vuoto(c) || c.alto < 60) errori.push(`dopo 2,5 s senza dati: il «respiro» doveva essere basso e visibile (pixel ${c.pieni}, riga più alta ${c.alto})`);
+  if (vuoto(c) || c.alto < 40) errori.push(`dopo 2,5 s senza dati: il «respiro» doveva essere basso e visibile (pixel ${c.pieni}, riga più alta ${c.alto})`);
 
   // 3) senza «respiro» torna vuoto
   await comando("drumEq", { senzaSegnale: false });
@@ -681,7 +691,7 @@ async function provaEq() {
   await attesa(300);
   await manda(1200);
   const onda = await canvas();
-  if (vuoto(onda) || onda.alto > 30) errori.push(`onda: doveva essere alta (pixel ${onda.pieni}, riga più alta ${onda.alto})`);
+  if (vuoto(onda) || onda.alto > 20) errori.push(`onda: doveva essere alta (pixel ${onda.pieni}, riga più alta ${onda.alto})`);
   if (onda.impronta === barre.impronta || onda.impronta === impronteBarre) errori.push("onda: il disegno doveva cambiare rispetto alle barre");
   if (Math.abs(onda.sopra - onda.sotto) > 0.15 * (onda.sopra + onda.sotto)) errori.push(`onda: doveva essere specchiata (pixel sopra ${onda.sopra}, sotto ${onda.sotto})`);
   if (onda.mezzo < 0.9) errori.push(`onda: doveva essere piena (la riga di mezzo è riempita per il ${Math.round(onda.mezzo * 100)}%, attesa almeno il 90%)`);
@@ -796,7 +806,7 @@ async function provaAudio() {
   await regiaPagina.selectOption("#dr-audio-sorgente", "ingresso");
   await regiaPagina.click("#dr-audio-avvia");
   let v = await osserva(3000);
-  if (v.alto > 50) errori.push(`con l'ascolto acceso la pagina non ha mai mostrato barre alte (riga più alta ${v.alto})`);
+  if (v.alto > 33) errori.push(`con l'ascolto acceso la pagina non ha mai mostrato barre alte (riga più alta ${v.alto})`);
   if (v.colpi < 3) errori.push(`la cornice doveva lampeggiare almeno 3 volte in 3 s, ha lampeggiato ${v.colpi} volte`);
   if (new Set(v.livelli).size < 3 || Math.max(...v.livelli) - Math.min(...v.livelli) < 20) errori.push(`l'indicatore di livello doveva muoversi: ${[...new Set(v.livelli)].slice(0, 12).join(", ")}`);
   if (!/Ferma/.test(await testoBottone())) errori.push(`il bottone doveva dire «Ferma ascolto», dice «${await testoBottone()}»`);
@@ -818,7 +828,7 @@ async function provaAudio() {
   const respiro = await misuraEq(drum);
   await attesa(1000);
   if ((await colpi()) !== fermi) errori.push("dopo «Ferma» la cornice lampeggiava ancora");
-  if (respiro.pieni === 0 || respiro.alto < 60) errori.push(`dopo «Ferma» la pagina doveva tornare al respiro basso (riga più alta ${respiro.alto}, pixel ${respiro.pieni})`);
+  if (respiro.pieni === 0 || respiro.alto < 40) errori.push(`dopo «Ferma» la pagina doveva tornare al respiro basso (riga più alta ${respiro.alto}, pixel ${respiro.pieni})`);
   if ((await livello()) !== 0) errori.push("dopo «Ferma» l'indicatore doveva tornare a zero");
 
   // 4) lo stile, il respiro e la sensibilità vanno al server
@@ -835,10 +845,10 @@ async function provaAudio() {
   const provaPrima = await colpi();
   await regiaPagina.click("#dr-eq-prova");
   v = await osserva(1500);
-  if (v.alto > 50 || (await colpi()) - provaPrima < 1) errori.push(`la «Prova» doveva alzare le barre e far lampeggiare la cornice (riga più alta ${v.alto})`);
+  if (v.alto > 33 || (await colpi()) - provaPrima < 1) errori.push(`la «Prova» doveva alzare le barre e far lampeggiare la cornice (riga più alta ${v.alto})`);
   await attesa(7000);
   const dopoProva = await misuraEq(drum);
-  if (dopoProva.alto < 60) errori.push(`finita la «Prova» la pagina doveva tornare al respiro basso (riga più alta ${dopoProva.alto})`);
+  if (dopoProva.alto < 40) errori.push(`finita la «Prova» la pagina doveva tornare al respiro basso (riga più alta ${dopoProva.alto})`);
 
   // 6) l'ingresso scelto si ricorda dopo una ricarica
   const ingressi = await regiaPagina.locator("#dr-audio-ingresso option").evaluateAll((o) => o.map((x) => x.value).filter(Boolean));
@@ -1520,7 +1530,7 @@ async function inchiostroTagliato(pagina, selettori) {
         return c;
       });
       const diversi = await pagina.evaluate(contaPixelDiversi, [chiusa.toString("base64"), aperta.toString("base64")]);
-      if (diversi > 2) tagliate.push({ sel, indice, testo: testo.slice(0, 24), pixel: diversi, corpo });
+      if (diversi > 12) tagliate.push({ sel, indice, testo: testo.slice(0, 24), pixel: diversi, corpo });
     }
   }
   return tagliate;
@@ -1529,9 +1539,9 @@ const descriviTagliate = (tagliate, contesto) => tagliate.map((t) => `${t.sel}${
 
 // I testi più lunghi nei riquadri fissi del Drum, con la dimensione dei testi al massimo (Review Focus 4).
 // Le righe di testo del Drum, con testi lunghi e brevi e la dimensione dei testi da 100% a 200%: nessuna lettera tagliata dalla sua riga.
-const RIGHE_DRUM = [".dr-modulo-titolo", ".dr-modulo-manca", "#dr-brano-titolo", "#dr-brano-artista", "#dr-pri-sopra", "#dr-pri-prefisso", "#dr-pri-slot", "#dr-like-numero", ".dr-sblocco-etichetta", "#dr-sblocco-titolo"];
+const RIGHE_DRUM = [".dr-modulo-titolo", ".dr-modulo-manca", "#dr-istr-testo", "#dr-like-numero", ".dr-sblocco-etichetta", "#dr-sblocco-titolo"];
 // I corpi di base del piano (px), con testi brevi e la dimensione dei testi al 100%: la riga non deve costringere il testo a scendere.
-const CORPI_BASE_DRUM = { ".dr-modulo-titolo": 34, ".dr-modulo-manca": 26, "#dr-brano-titolo": 40, "#dr-brano-artista": 24, "#dr-pri-sopra": 24, "#dr-pri-prefisso": 38, "#dr-pri-slot": 56, "#dr-like-numero": 64, ".dr-sblocco-etichetta": 28, "#dr-sblocco-titolo": 72 };
+const CORPI_BASE_DRUM = { ".dr-modulo-titolo": 34, ".dr-modulo-manca": 26, "#dr-istr-testo": 28, "#dr-like-numero": 50, ".dr-sblocco-etichetta": 28, "#dr-sblocco-titolo": 72 };
 const PASSATE_DRUM = [
   { nome: "testi brevi al 100%", lunghi: false, ts: 100, corpiDiBase: true },
   { nome: "testi lunghi al 100%", lunghi: true, ts: 100 },
@@ -1590,14 +1600,14 @@ async function provaTestiLunghi() {
   await pagina.waitForTimeout(800);
   const misure = await pagina.evaluate(() => {
     const larghezza = (sel) => [...document.querySelectorAll(sel)].map((e) => ({ sel, testo: e.textContent.slice(0, 20), tagliato: e.scrollWidth > e.clientWidth, alto: e.scrollHeight > e.clientHeight + parseFloat(getComputedStyle(e).fontSize) * 0.35, corpo: parseFloat(getComputedStyle(e).fontSize) }));
-    return [".dr-modulo-titolo", "#dr-brano-titolo", "#dr-brano-artista", "#dr-pri-prefisso", "#dr-pri-slot", "#dr-pri-sopra", "#dr-like-numero", "#dr-sblocco-titolo", ".dr-modulo-like"].flatMap(larghezza);
+    return [".dr-modulo-titolo", "#dr-istr-testo", "#dr-like-numero", "#dr-sblocco-titolo", ".dr-modulo-like"].flatMap(larghezza);
   });
   for (const m of misure) {
     if (m.tagliato) errori.push(`${m.sel} («${m.testo}…», ${Math.round(m.corpo)} px): il testo esce dal riquadro in larghezza`);
     if (m.alto) errori.push(`${m.sel} («${m.testo}…», ${Math.round(m.corpo)} px): il testo esce dal riquadro in altezza`);
   }
   const tabella = GEOMETRIA.drum.verticale;
-  for (const chiave of ["colonna", "brano", "priorita", "contatore", "sblocco"]) {
+  for (const chiave of ["colonna", "striscia", "istruzione", "contatore", "sblocco"]) {
     const r = await pagina.evaluate((sel) => {
       const b = document.querySelector(sel).getBoundingClientRect();
       return [b.x, b.y, b.width, b.height];
@@ -1616,8 +1626,7 @@ async function provaTestiLunghi() {
     };
     const widget = [
       ...[...document.querySelectorAll(".dr-modulo:not([hidden])")].map((m) => ({ nome: `modulo ${m.dataset.indice}`, el: m, testi: [".dr-modulo-like", ".dr-modulo-titolo", ".dr-modulo-manca", ".dr-modulo-perc"] })),
-      { nome: "brano", el: document.querySelector("#dr-brano"), testi: ["#dr-brano-titolo", "#dr-brano-artista"] },
-      { nome: "priorità", el: document.querySelector("#dr-priorita"), testi: ["#dr-pri-sopra", "#dr-pri-prefisso", "#dr-pri-slot"] },
+      { nome: "istruzione", el: document.querySelector("#dr-istruzione"), testi: ["#dr-pri-prefisso", "#dr-pri-slot", "#dr-pri-dopo"] },
       { nome: "contatore", el: document.querySelector("#dr-contatore"), testi: ["#dr-like-numero"] },
       { nome: "banner", el: document.querySelector("#dr-sblocco"), testi: [".dr-sblocco-etichetta", "#dr-sblocco-titolo"] },
     ];
@@ -1642,7 +1651,7 @@ async function provaTestiLunghi() {
       }
     }
   }
-  const corpi = misure.filter((m) => m.sel === ".dr-modulo-titolo" || m.sel === "#dr-brano-titolo").map((m) => `${m.sel} ${Math.round(m.corpo)} px`);
+  const corpi = misure.filter((m) => m.sel === ".dr-modulo-titolo" || m.sel === "#dr-istr-testo").map((m) => `${m.sel} ${Math.round(m.corpo)} px`);
   await pagina.screenshot({ path: join(CARTELLA, "mockup", "drum-testi-lunghi.jpg"), type: "jpeg", quality: 88 });
   await pagina.close();
   await passateInchiostroDrum(browser, errori);

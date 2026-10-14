@@ -14,7 +14,7 @@ import { avviaPagina, applicaTesti, adattaTesto, nodo, simbolo, logo, rilancia, 
 import { creaFascia } from "./fascia.js";
 import { creaGoal } from "./goal.js";
 import { chiaveGoal } from "./goal-logica.js";
-import { vociFascia, velocitaFascia } from "./formati-logica.js";
+import { vociFascia, velocitaFascia, vociStriscia, testoIstruzione } from "./formati-logica.js";
 import { formattaLike, etichettaLike, finestraScaletta, livelloVoce, titoloModulo } from "./drum-logica.js";
 import { creaClessidra } from "./drum-clessidra.js";
 import { creaSblocco } from "./drum-sblocco.js";
@@ -27,8 +27,8 @@ const PULSAZIONE_MS = 20_000;
 const CONTEGGIO_MS = 600;
 const USCITA_BANNER_MS = 380;
 const COLPO_MS = 250; // quanto dura il lampo della cornice a ogni colpo
-// Quale interruttore «In onda» della regia accende ogni parte (il brano si nasconde da sé senza titolo).
-const WIDGET = { "#dr-cornice": "drumCornice", "#dr-eq": "drumCornice", "#dr-brano": "drumBrano", "#dr-priorita": "drumPriorita", "#dr-contatore": "drumTraguardi", "#dr-colonna": "drumTraguardi", "#dr-sblocco": "drumTraguardi" };
+// Quale interruttore «In onda» della regia accende ogni parte (il brano è una voce della striscia: lo accende «drumBrano»).
+const WIDGET = { "#dr-cornice": "drumCornice", "#dr-eq": "drumCornice", "#dr-striscia": "drumStriscia", "#dr-istruzione": "drumPriorita", "#dr-contatore": "drumTraguardi", "#dr-colonna": "drumTraguardi", "#dr-sblocco": "drumTraguardi" };
 
 let stato = null;
 let primoDisegno = true;
@@ -40,6 +40,17 @@ const fascia = creaFascia({
   larghezza: 1080,
   voci: (s) => vociFascia(s, "drum"),
   velocita: (s) => velocitaFascia(s, "drum"),
+  statico: STATICO,
+});
+
+// La striscia a scorrimento: lo stesso nastro della fascia social, con le voci del Drum e la sua velocità.
+const striscia = creaFascia({
+  radice: $("#dr-striscia"),
+  nastro: $("#dr-nastro"),
+  larghezza: 848,
+  inizio: 0,
+  voci: vociStriscia,
+  velocita: (s) => s.drum.striscia.velocita,
   statico: STATICO,
 });
 
@@ -75,6 +86,7 @@ function disegna(s, eventi) {
   for (const [sel, widget] of Object.entries(WIDGET)) $(sel).classList.toggle("fuori", !s.visibili[widget]);
   fascia.radice.classList.toggle("fuori", !s.visibili.drumBarra);
   fascia.aggiorna(s);
+  striscia.aggiorna(s);
   equalizzatore.imposta(d.eq);
   // Lo sblocco parte dall'evento (mai al primo disegno, mai nei mockup, mai a colonna spenta); se in un aggiornamento ne
   // arrivano più d'uno conta l'ultimo. Spegnere la colonna a metà sequenza la interrompe.
@@ -85,11 +97,10 @@ function disegna(s, eventi) {
   }
   disegnaContatore(d);
   disegnaColonna(d);
-  disegnaBrano(d);
   disegnaPriorita(d);
   disegnaBanner(d);
   // Il richiamo della regia: «Dona un…» pulsa subito (mai al primo disegno).
-  if (!primoDisegno && eventi.some((e) => e.nome === "richiamoDrum")) rilancia($("#dr-priorita"), "pulsa");
+  if (!primoDisegno && eventi.some((e) => e.nome === "richiamoDrum")) rilancia($("#dr-istruzione"), "pulsa");
 }
 
 // Gli effetti suonano da qui solo se la regia ha scelto «overlay» e in onda c'è il Drum.
@@ -119,7 +130,7 @@ function disegnaContatore(d) {
   numero.mostrato = d.contati;
   cancelAnimationFrame(numero.animazione);
   el.textContent = formattaLike(d.contati);
-  adattaTesto(el, 64 * ts(d.testi, "contatore"), 30);
+  adattaTesto(el, 50 * ts(d.testi, "contatore"), 26);
   // Cresce: il numero sale in 600 ms (mai al primo disegno, mai nei mockup).
   if (primoDisegno || STATICO || prima === null || d.contati <= prima) return;
   const t0 = performance.now();
@@ -137,7 +148,7 @@ function creaModulo(i) {
   el.style.setProperty("--i", i);
   const fondo = nodo("canvas", "dr-fondo"); // la clessidra (perline o sabbia) si disegna qui
   fondo.width = 288;
-  fondo.height = 148;
+  fondo.height = 150;
   const icona = simbolo("ic-lucchetto", "dr-modulo-icona");
   const like = nodo("div", "dr-modulo-like");
   const titolo = nodo("div", "dr-modulo-titolo");
@@ -199,45 +210,22 @@ function riempiModulo(m, voce, d, cresce = false) {
   if (voce.stato === "attiva") adattaTesto(m.manca, 26 * scala, 14);
 }
 
-// ---------- Brano in esecuzione ----------
-function disegnaBrano(d) {
-  const b = d.brano;
-  if (!cambiata("brano", b, d.testi.brano)) return;
-  const radice = $("#dr-brano");
-  radice.hidden = !b.titolo; // senza titolo il widget non c'è
-  if (!b.titolo) return;
-  const titolo = $("#dr-brano-titolo");
-  const artista = $("#dr-brano-artista");
-  titolo.textContent = b.titolo;
-  artista.textContent = b.artista;
-  // Con l'artista la riga sopra è sua (l'equalizzatore già dice che sta suonando); senza, c'è l'etichetta «In esecuzione».
-  artista.hidden = !b.artista;
-  $(".dr-brano-etichetta").hidden = Boolean(b.artista);
-  adattaTesto(titolo, 40 * ts(d.testi, "brano"), 18);
-  if (b.artista) adattaTesto(artista, 24 * ts(d.testi, "brano"), 16);
-}
-
-// ---------- Dona un [slot] ----------
+// ---------- Istruzione su una riga ----------
 function disegnaPriorita(d) {
   const p = d.priorita;
   if (!cambiata("priorita", p, d.testi.priorita)) return;
   const icona = $("#dr-pri-icona");
   icona.replaceChildren(p.icona === "logo" ? logo() : simbolo(`ic-${p.icona}`));
-  const sopra = $("#dr-pri-sopra");
-  const prefisso = $("#dr-pri-prefisso");
-  const slot = $("#dr-pri-slot");
-  sopra.textContent = p.dopo;
-  sopra.hidden = !p.dopo;
-  prefisso.textContent = p.prefisso;
-  slot.textContent = p.slot;
-  const scala = ts(d.testi, "priorita");
-  if (p.dopo) adattaTesto(sopra, 24 * scala, 16);
-  adattaTesto(prefisso, 38 * scala, 20);
-  adattaTesto(slot, 56 * scala, 24);
+  const t = testoIstruzione(p);
+  $("#dr-pri-prefisso").textContent = t.prima;
+  $("#dr-pri-slot").textContent = t.regalo;
+  $("#dr-pri-dopo").textContent = t.dopo;
+  // Una riga sola, mai a capo: tutta la riga si restringe (i tre pezzi sono in em) finché sta; il minimo è 16 px.
+  adattaTesto($("#dr-istr-testo"), 28 * ts(d.testi, "priorita"), 16);
 }
 // Pulsazione periodica: sempre in vista, ogni tanto richiama l'attenzione (e a comando dalla regia).
 setInterval(() => {
-  if (!STATICO && stato?.visibili.drumPriorita) rilancia($("#dr-priorita"), "pulsa");
+  if (!STATICO && stato?.visibili.drumPriorita) rilancia($("#dr-istruzione"), "pulsa");
 }, PULSAZIONE_MS);
 
 // ---------- Banner di sblocco ----------
@@ -297,6 +285,7 @@ const sblocco = creaSblocco({
 // Con i font caricati le larghezze cambiano: si riadattano i testi e si rimisura il nastro.
 function rimisura() {
   fascia.rimisura();
+  striscia.rimisura();
   firme = {};
   if (stato) disegna(stato, []);
 }

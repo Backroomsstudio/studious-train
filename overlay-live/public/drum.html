@@ -21,31 +21,24 @@
     <div class="fm-finto" data-finto="camera" aria-hidden="true"><span>Camera · batterista</span></div>
 
     <!-- CORNICE: staffe d'angolo e filo neon, lampeggiano a ogni colpo di batteria -->
-    <div class="fm-cornice" id="dr-cornice" data-parte="cornice" style="left:116px;top:262px;width:848px;height:838px">
+    <div class="fm-cornice" id="dr-cornice" data-parte="cornice" style="left:116px;top:414px;width:848px;height:714px">
       <i class="fm-staffa nw"></i><i class="fm-staffa ne"></i><i class="fm-staffa sw"></i><i class="fm-staffa se"></i>
       <i class="fm-filo"><i class="sp-luce"></i></i>
     </div>
 
     <!-- EQUALIZZATORE: 40 barre, o l'onda specchiata, dall'audio di FL Studio (lo ascolta la regia) -->
-    <canvas class="dr-eq" id="dr-eq" data-parte="eq" width="848" height="84"></canvas>
+    <canvas class="dr-eq" id="dr-eq" data-parte="eq" width="848" height="56"></canvas>
 
-    <!-- BRANO IN ESECUZIONE: nascosto se non c'è un titolo -->
-    <section class="dr-brano fm-vetro" id="dr-brano" data-parte="brano" hidden>
-      <i class="dr-mini-eq"><b></b><b></b><b></b><b></b></i>
-      <div class="dr-brano-testi">
-        <div class="dr-brano-riga"><span class="dr-brano-etichetta">In esecuzione</span><span class="dr-brano-artista" id="dr-brano-artista"></span></div>
-        <div class="dr-brano-titolo" id="dr-brano-titolo"></div>
-      </div>
+    <!-- STRISCIA A SCORRIMENTO: «In esecuzione: Titolo — Artista», l'artista ospite e «Salta la coda e dona una Rosa» -->
+    <section class="dr-striscia fm-vetro" id="dr-striscia" data-parte="striscia">
+      <div class="dr-striscia-finestra"><div class="sp-nastro" id="dr-nastro"></div></div>
     </section>
 
-    <!-- DONA UN [SLOT]: sempre in vista, pulsa ogni 20 secondi e a comando -->
-    <section class="dr-priorita fm-vetro" id="dr-priorita" data-parte="priorita">
+    <!-- ISTRUZIONE SU UNA RIGA: «Dona una Rosa per saltare la fila e scegliere il brano» (sempre in vista, pulsa ogni 20 secondi e a comando) -->
+    <section class="dr-istruzione fm-vetro" id="dr-istruzione" data-parte="istruzione">
       <div class="dr-pri-icona" id="dr-pri-icona"></div>
-      <div class="dr-pri-testi">
-        <div class="dr-pri-sopra" id="dr-pri-sopra"></div>
-        <div class="dr-pri-riga"><span class="dr-pri-prefisso" id="dr-pri-prefisso"></span><span class="dr-pri-slot" id="dr-pri-slot"></span></div>
-        <i class="dr-pri-luce"></i>
-      </div>
+      <div class="dr-istr-testo" id="dr-istr-testo"><span class="dr-istr-prima" id="dr-pri-prefisso"></span><span class="dr-istr-regalo" id="dr-pri-slot"></span><span class="dr-istr-dopo" id="dr-pri-dopo"></span></div>
+      <i class="dr-pri-luce"></i>
     </section>
 
     <!-- CONTATORE DEI LIKE -->
