@@ -491,6 +491,49 @@ body.anteprima {
   100% { box-shadow: 0 0 0 24px rgba(255, 255, 255, 0), 0 0 0 rgba(255, 255, 255, 0); }
 }
 
+/* ---------- Traccia N di TOTALE (coda di Nero) ---------- */
+/* Sta sotto il timer; la notifica «Nuovo primo posto!» (stessa zona, solo per 6 secondi) la copre di proposito. */
+.coda-nero {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6px 20px 6px;
+}
+.verticale .coda-nero {
+  left: var(--x-destra);
+  top: 598px;
+  width: var(--largo-destra);
+  height: 76px;
+}
+.coda-nero[hidden] {
+  display: none;
+}
+.coda-riga {
+  box-sizing: border-box;
+  height: 36px;
+  font: 900 28px/36px var(--font-dati);
+  letter-spacing: 0;
+  padding: 0 6px 0 2px;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.coda-sotto {
+  box-sizing: border-box;
+  height: 28px;
+  font: 800 21px/28px var(--font-dati);
+  color: #ffd863;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.coda-nero.fuori {
+  opacity: 0 !important;
+}
+
 /* ---------- Timer ---------- */
 .timer {
   display: flex;

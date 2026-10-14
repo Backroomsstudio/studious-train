@@ -7,6 +7,7 @@ import { collega, formatta, durata } from "./connessione.js";
 import { suona, volume } from "./suoni.js";
 import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suonaIn, RITARDO_CLASSIFICA_MS, SOGLIA_URGENTE_MS } from "./eventi-sonori.js";
 import { adattaTesto } from "./pagina.js";
+import { avanzamentoCoda } from "./barra.js";
 import { creaGoal } from "./goal.js";
 import { chiaveGoal } from "./goal-logica.js";
 import { disegnaAlbero } from "./albero.js";
@@ -201,6 +202,8 @@ const CORPI = {
   rigaArtista: [22, 14], // artista di una riga della classifica
   etichettaTimer: [22, 12], // «Il vincitore si decide tra»
   instagram: [24, 14], // @instagram dell'artista, accanto all'artista
+  codaRiga: [28, 16], // «Traccia 15 di 38»
+  codaSotto: [21, 12], // «mancano 23 canzoni»
 };
 const adatta = (nodo, chiave) => adattaTesto(nodo, ...CORPI[chiave]);
 // Scrive un testo e, se è cambiato, lo riadatta al riquadro.
@@ -210,7 +213,20 @@ function scrivi(nodo, testo, chiave) {
   adatta(nodo, chiave);
 }
 
+// «Traccia 15 di 38» e «mancano 23 canzoni»: il numero della traccia sul totale vero della coda di Nero, così chi entra in live capisce
+// che conviene skippare. Senza il dato di Nero (o senza tracce ascoltate) il riquadro non c'è.
+const codaNero = { el: $("#coda-nero"), riga: $("#coda-riga"), sotto: $("#coda-sotto") };
+function disegnaCodaNero(s) {
+  const a = avanzamentoCoda(s);
+  codaNero.el.hidden = !a;
+  codaNero.el.classList.toggle("fuori", !s.visibili.tabellone);
+  if (!a) return;
+  scrivi(codaNero.riga, `Traccia ${a.numero} di ${a.totale}`, "codaRiga");
+  scrivi(codaNero.sotto, a.mancano === 0 ? "è l'ultima canzone" : a.mancano === 1 ? "manca 1 canzone" : `mancano ${a.mancano} canzoni`, "codaSotto");
+}
+
 function disegnaTabellone(s) {
+  disegnaCodaNero(s);
   const t = s.corrente;
   const p = t.punteggi;
   // Nomi delle quattro voci e intervallo dei voti dalla votazione (regia: Serata → Voti della gara).
@@ -238,6 +254,7 @@ function disegnaTabellone(s) {
     tab.artista.textContent = "";
   }
   scrivi(tab.artista, t.artista, "artista");
+  // «15 di 38 · mancano 23»: il numero della traccia sul totale vero della coda di Nero, così chi entra capisce che conviene skippare
   tab.tier.hidden = !TIER[t.tier];
   tab.tier.textContent = TIER[t.tier] ?? "";
   tab.tier.className = `tier ${t.tier ?? ""}`;

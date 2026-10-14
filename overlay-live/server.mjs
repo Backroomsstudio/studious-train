@@ -582,6 +582,10 @@ const comandi = {
       ...(conteggio !== undefined && { conteggio: numeroTra(conteggio, 1, 100_000, "Like (conteggio)") }),
     });
   },
+  // Simula la lettura della coda di Nero (le tracce che aspettano ancora): per provare «15 di 38 · mancano 23» senza Nero.
+  codaNero({ inAttesa }) {
+    S.impostaCodaNero(stato, inAttesa === null ? null : numeroTra(inAttesa, 0, 100_000, "Tracce in coda"));
+  },
   // --- Goal Like e Follower ---
   goal(args) {
     G.impostaGoal(stato, args);

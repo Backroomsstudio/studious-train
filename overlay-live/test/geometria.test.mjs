@@ -41,6 +41,7 @@ test("la tabella dello strumento dei mockup dice gli stessi numeri del CSS", () 
     notifica: [px("x-destra"), px("y-notifica"), px("largo-destra"), Number(css.match(/\.notifica\s*\{[^}]*min-height:\s*(\d+)px/)?.[1])], // alta almeno così
     tabellone: [px("x"), px("y-tabellone"), px("largo"), px("h-tabellone")],
     chat: [px("x"), px("y-chat"), px("largo"), px("h-chat")],
+    coda: [px("x-destra"), 598, px("largo-destra"), 76], // «Traccia N di TOT», sotto il timer
     goal: [POSIZIONI_GOAL.gara.x, POSIZIONI_GOAL.gara.y, LARGHEZZA_GOAL, ALTEZZA_GOAL], // il Goal: public/js/goal-logica.js
     albero: [px("x"), px("y-premio"), px("largo"), px("y-chat") + px("h-chat") - px("y-premio")], // dal premio al fondo della barra
   };
@@ -49,7 +50,7 @@ test("la tabella dello strumento dei mockup dice gli stessi numeri del CSS", () 
 });
 
 test("sovrapposizioni: i pezzi della gara non si toccano (l'albero li copre di proposito); due pezzi che si coprono vengono segnalati", () => {
-  const { albero, ...pezzi } = GEOMETRIA.gara.verticale; // il Goal è tra i pezzi: sta nel vuoto tra timer, notifica e tabellone
+  const { albero, notifica, ...pezzi } = GEOMETRIA.gara.verticale; // la notifica copre di proposito il riquadro «Traccia N di TOT» (per 6 s) // il Goal è tra i pezzi: sta nel vuoto tra timer, notifica e tabellone
   assert.deepEqual(sovrapposizioni(pezzi), []);
   assert.deepEqual(albero.r, [116, 282, 848, 914], "l'albero sta in x 116–964 e y 282–1196");
   assert.equal(sovrapposizioni({ albero, premio: pezzi.premio }).length, 1, "l'albero copre il premio e lo strumento lo vede"); 

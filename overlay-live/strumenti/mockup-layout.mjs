@@ -33,6 +33,7 @@ export const GEOMETRIA = {
       premio: p(116, 282, 848, 156, true),
       classifica: p(116, 454, 432, 392, true),
       timer: p(564, 454, 400, 132, true),
+      coda: p(564, 598, 400, 76, true), // «Traccia N di TOT»: la notifica (sotto) la copre di proposito per i 6 secondi in cui c'è
       notifica: p(564, 604, 400, 92, true), // solo mentre c'è (stato ultimi-minuti); è alta almeno 92
       tabellone: p(116, 858, 848, 260, true),
       chat: p(116, 1130, 848, 66, true), // il fondo, y 1196, sta appena sopra i commenti di TikTok (1200)
@@ -51,7 +52,7 @@ export const GEOMETRIA = {
 };
 
 // Come si trova ogni pezzo nella pagina: un selettore proprio, altrimenti il suo data-parte.
-const SELETTORI = { senzaPremio: { banner: ".sp-banner", scheda: "#sp-scheda", barra: ".sp-barra", goal: ".gl" }, gara: { premio: ".premio", classifica: ".classifica", timer: ".timer", notifica: ".notifica", tabellone: ".tabellone", chat: ".chat-cta", goal: ".gl", albero: "#albero" } };
+const SELETTORI = { senzaPremio: { banner: ".sp-banner", scheda: "#sp-scheda", barra: ".sp-barra", goal: ".gl" }, gara: { premio: ".premio", classifica: ".classifica", timer: ".timer", notifica: ".notifica", tabellone: ".tabellone", chat: ".chat-cta", coda: ".coda-nero", goal: ".gl", albero: "#albero" } };
 const PAGINE = { gara: "overlay.html", senzaPremio: "senza-premio.html" };
 const SCHEDE = ["standard", "skip", "superskip", "throne", "studio"]; // --layout senzaPremio --scheda <tipo>
 // Per ogni layout e stato: i pezzi che devono esserci (e non essere nascosti). Negli ultimi minuti la barra «Vota in chat» è chiusa
@@ -67,6 +68,8 @@ const PRESENTI = {
   },
   gara: {
     base: ["premio", "classifica", "timer", "tabellone", "chat", "goal"],
+    // con la coda di Nero conosciuta compare «Traccia N di TOT · mancano X» sotto il timer
+    coda: ["premio", "classifica", "timer", "coda", "tabellone", "chat", "goal"],
     "ultimi-minuti": ["premio", "classifica", "timer", "tabellone", "notifica", "goal"],
     // la traccia in ascolto ha un Instagram: sta sulla riga dell'artista, dentro il tabellone
     instagram: ["premio", "classifica", "timer", "tabellone", "chat", "goal"],
@@ -76,7 +79,7 @@ const PRESENTI = {
   },
 };
 const STATO_PREDEFINITO = { gara: "base", senzaPremio: "base" };
-const NOMI_FILE = { senzaPremio: { base: "senza-premio", standard: "senza-premio-gratis", skip: "senza-premio-skip", superskip: "senza-premio-superskip", throne: "senza-premio-throne", studio: "senza-premio-spot" }, gara: { base: "verticale", "ultimi-minuti": "ultimi-minuti", instagram: "gara-instagram", albero: "gara-albero", "albero-6": "gara-albero-6" } };
+const NOMI_FILE = { senzaPremio: { base: "senza-premio", standard: "senza-premio-gratis", skip: "senza-premio-skip", superskip: "senza-premio-superskip", throne: "senza-premio-throne", studio: "senza-premio-spot" }, gara: { base: "verticale", "ultimi-minuti": "ultimi-minuti", instagram: "gara-instagram", coda: "gara-coda", albero: "gara-albero", "albero-6": "gara-albero-6" } };
 
 // I testi che la pagina della gara adatta al riquadro: il selettore, il pezzo in cui stanno, il corpo di partenza (massimo) e il
 // più piccolo accettabile (minimo). La chiave è quella di CORPI in public/js/overlay.js.
@@ -89,6 +92,8 @@ export const CORPI_GARA = {
   rigaArtista: { selettore: ".cl-artista", pezzo: "classifica", base: 22, minimo: 14 },
   etichettaTimer: { selettore: ".timer-etichetta", pezzo: "timer", base: 22, minimo: 12 },
   instagram: { selettore: "#t-ig-testo", pezzo: "tabellone", base: 24, minimo: 14 },
+  codaRiga: { selettore: "#coda-riga", pezzo: "coda", base: 28, minimo: 16 },
+  codaSotto: { selettore: "#coda-sotto", pezzo: "coda", base: 21, minimo: 12 },
 };
 // Testi che non si adattano (corpo fisso) ma devono comunque restare nel riquadro e senza lettere tagliate.
 const TESTI_FISSI_GARA = [
@@ -179,6 +184,7 @@ async function preparaStato() {
   }
   if (layout === "gara") await comando("demo"); // classifica, traccia con voti, voto della chat aperto e countdown
   if (layout === "gara" && stato === "ultimi-minuti") await comando("countdown", { azione: "avvia", minuti: 4 }); // timer rosso
+  if (layout === "gara" && stato === "coda") await comando("codaNero", { inAttesa: 23 });
   if (layout === "gara" && stato === "instagram") await comando("correggiTraccia", { instagram: "https://instagram.com/lince.music/" });
 }
 
@@ -223,8 +229,8 @@ const contaPixelDiversi = async ([a64, b64]) => {
 // nemmeno al corpo minimo) si saltano: lì il testo che sporge è proprio quello che i puntini nascondono (le giudica `controllaTesti`).
 async function inchiostroTagliato(pagina, selettori) {
   const tagliate = [];
-  // Le cifre del countdown cambiano ogni secondo e starebbero nella zona fotografata accanto all'etichetta: si nascondono per la misura.
-  const stileTimer = await pagina.addStyleTag({ content: ".timer *:not(.timer-etichetta) { visibility: hidden !important; }" });
+  // Le cifre del countdown cambiano ogni secondo e starebbero nella zona fotografata accanto all'etichetta (si nascondono per la misura); il pallino della chat e le barre dell'onda pulsano (si fermano).
+  const stileTimer = await pagina.addStyleTag({ content: ".timer *:not(.timer-etichetta) { visibility: hidden !important; } .punto-live, .onda b { animation: none !important; } .cat-valore { visibility: hidden !important; }" });
   const vista = pagina.viewportSize();
   for (const sel of selettori) {
     const luoghi = await pagina.locator(sel).all();
@@ -250,7 +256,7 @@ async function inchiostroTagliato(pagina, selettori) {
         return c;
       });
       const diversi = await pagina.evaluate(contaPixelDiversi, [chiusa.toString("base64"), aperta.toString("base64")]);
-      if (diversi > 2) tagliate.push({ sel, indice, testo: testo.slice(0, 24), pixel: diversi, corpo });
+      if (diversi > 12) tagliate.push({ sel, indice, testo: testo.slice(0, 24), pixel: diversi, corpo });
     }
   }
   await stileTimer.evaluate((e) => e.remove());
@@ -290,6 +296,7 @@ async function preparaTestiGara(lunghi) {
   await confermaRisultati(5, lunghi);
   await comando("traccia", { titolo: lunghi ? lungo(60) : "Sole", artista: lunghi ? lungo(40) : "Lince", tier: "throne" });
   await comando("correggiTraccia", { instagram: lunghi ? "lunghissimo.handle.instagram.x" : "lince.music" }); // 30 caratteri: il massimo
+  await comando("codaNero", { inAttesa: lunghi ? 12345 : 23 }); // «Traccia N di TOT» e «mancano X canzoni» (la regia non lo scrive: lo legge da Nero)
   for (const [categoria, valore] of [["beat", 8.5], ["voce", 7.5], ["mix", 9]]) await comando("voto", { categoria, valore });
   await comando("apriChat", { secondi: 60 });
   await comando("simulaChat", { quanti: lunghi ? 137 : 7 });
