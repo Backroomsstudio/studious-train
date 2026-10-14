@@ -372,3 +372,41 @@ test("Nero: le tracce in coda si leggono da queueCount o dalla lunghezza di queu
   assert.equal(inAttesaInCoda({ meta: { queueCount: "x" } }), null);
   assert.equal(inAttesaInCoda(null), null);
 });
+
+test("senza premio: scheda fissa di partenza, etichette modificabili (40 caratteri, non vuote), stato vecchio → predefiniti", () => {
+  const stato = statoSenzaPremio();
+  assert.equal(stato.senzaPremio.schedaFissa, true);
+  assert.deepEqual(stato.senzaPremio.etichette, { inAscolto: "Ora in ascolto", ascoltate: "Oggi abbiamo ascoltato", tracce: "tracce" });
+  S.impostaSenzaPremio(stato, { schedaFissa: false, etichette: { inAscolto: "Sul palco adesso" } });
+  assert.equal(stato.senzaPremio.schedaFissa, false);
+  assert.deepEqual(stato.senzaPremio.etichette, { inAscolto: "Sul palco adesso", ascoltate: "Oggi abbiamo ascoltato", tracce: "tracce" });
+  const prima = structuredClone(stato.senzaPremio);
+  assert.throws(() => S.impostaSenzaPremio(stato, { etichette: { inAscolto: "x".repeat(41) } }), /40|Ora in ascolto|etichetta/i);
+  assert.throws(() => S.impostaSenzaPremio(stato, { schedaFissa: true, etichette: { ascoltate: "  " } }), /vuot|obblig|scrivi/i);
+  assert.throws(() => S.impostaSenzaPremio(stato, { etichette: { sconosciuta: "x" } }), /sconosciut/i);
+  assert.deepEqual(stato.senzaPremio, prima, "un errore non cambia niente (nemmeno schedaFissa)");
+  // uno stato salvato prima di questi campi, o con valori rotti: predefiniti, tenendo i campi buoni
+  const vecchio = S.fondiSenzaPremio({ velocita: 100 });
+  assert.equal(vecchio.schedaFissa, true);
+  assert.equal(vecchio.etichette.inAscolto, "Ora in ascolto");
+  const rotto = S.fondiSenzaPremio({ schedaFissa: "boh", etichette: { inAscolto: "x".repeat(50), tracce: "brani" } });
+  assert.equal(rotto.schedaFissa, true);
+  assert.deepEqual(rotto.etichette, { inAscolto: "Ora in ascolto", ascoltate: "Oggi abbiamo ascoltato", tracce: "brani" });
+});
+
+test("Instagram della traccia in ascolto: vuoto di partenza, in istantanea; una traccia nuova da Nero lo azzera; correggiTraccia non tocca i voti", () => {
+  const stato = statoSenzaPremio();
+  assert.equal(stato.corrente.instagram, "");
+  assert.equal(foto(stato).corrente.instagram, "");
+  stato.corrente = S.tracciaVuota({ titolo: "Satellite", artista: "Mira", instagram: "mira.music" });
+  stato.corrente.voti.beat = 7;
+  assert.equal(foto(stato).corrente.instagram, "mira.music");
+  delete stato.corrente.instagram; // uno stato salvato prima del campo
+  assert.equal(foto(stato).corrente.instagram, "", "campo mancante → vuoto");
+  stato.corrente = S.tracciaVuota({ titolo: "Satellite", artista: "Mira", instagram: "mira.music" });
+  stato.neroAutomatico = true;
+  S.tracciaDaNero(stato, { neroId: "n2", titolo: "Cromo", artista: "Vale B", tier: "skip", instagram: "vale.b" }, { ora: 1e9, attesaMs: 0 });
+  assert.deepEqual([stato.corrente.titolo, stato.corrente.instagram], ["Cromo", "vale.b"], "la traccia nuova da Nero porta il suo Instagram (non quello di prima)");
+  S.tracciaDaNero(stato, { neroId: "n3", titolo: "Asfalto", artista: "Dama", tier: "standard" }, { ora: 2e9, attesaMs: 0 });
+  assert.equal(stato.corrente.instagram, "", "senza Instagram da Nero resta vuoto: quello scritto a mano non passa alla traccia dopo");
+});

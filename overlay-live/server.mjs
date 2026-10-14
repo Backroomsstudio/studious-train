@@ -13,7 +13,7 @@ import * as B from "./lib/battle.mjs";
 import * as D from "./lib/drum.mjs";
 import * as F from "./lib/formati.mjs";
 import { impostaTesti } from "./lib/testi.mjs";
-import { corpo, numeroTra, oggetto, siNo, testo } from "./lib/validazione.mjs";
+import { corpo, numeroTra, oggetto, siNo, testo, pulisciInstagram } from "./lib/validazione.mjs";
 import * as G from "./lib/goal.mjs";
 import { registraVisto, controllaVisti } from "./lib/regali.mjs";
 import { LimiteFrequenza, leggiAudio } from "./lib/audio.mjs";
@@ -303,9 +303,11 @@ const comandi = {
   traccia({ titolo, artista, tier = null }) {
     stato.corrente = S.tracciaVuota({ titolo: pulisci(titolo), artista: pulisci(artista), tier });
   },
-  correggiTraccia({ titolo, artista }) {
+  correggiTraccia({ titolo, artista, instagram }) {
+    const nome = instagram === undefined ? undefined : pulisciInstagram(instagram); // controllato prima: un errore non cambia niente
     if (titolo !== undefined) stato.corrente.titolo = pulisci(titolo);
     if (artista !== undefined) stato.corrente.artista = pulisci(artista);
+    if (nome !== undefined) stato.corrente.instagram = nome;
   },
   inCoda({ titolo, artista }) {
     if (!pulisci(titolo) && !pulisci(artista)) throw new Error("Scrivi almeno titolo o artista");

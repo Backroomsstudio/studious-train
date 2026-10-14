@@ -227,6 +227,11 @@ export function senzaPremioIniziale() {
     ascoltateNellaBarra: true, // «Oggi abbiamo ascoltato N tracce», da 3 tracce in su
     loghiBarra: true,
     filoCamera: true,
+    // La scheda «Ora in ascolto» resta fissa finché suona la traccia (gli spot passano dall'alto); con false torna a salire e scendere
+    // con i tempi per tipo di invio.
+    schedaFissa: true,
+    // Testi fissi della scheda e della barra (modificabili dalla regia, al massimo 40 caratteri).
+    etichette: { inAscolto: "Ora in ascolto", ascoltate: "Oggi abbiamo ascoltato", tracce: "tracce" },
     // Secondi in cui resta la scheda «Ora in ascolto»: chi paga si vede più a lungo.
     durate: { standard: 8, skip: 10, superskip: 12, throne: 15 },
     suonoTraccia: "delicato",
@@ -237,6 +242,8 @@ export function senzaPremioIniziale() {
 
 // Uno stato salvato da una versione precedente (senza questi campi, o con solo una parte) li ritrova completi.
 // Ogni valore salvato passa dagli stessi controlli della regia: quelli rotti tornano al predefinito.
+const NOME_ETICHETTA = { inAscolto: "Ora in ascolto", ascoltate: "Oggi abbiamo ascoltato", tracce: "tracce" };
+
 export function fondiSenzaPremio(salvato) {
   const prova = { senzaPremio: senzaPremioIniziale() };
   if (!oggetto(salvato)) return prova.senzaPremio;
@@ -244,7 +251,7 @@ export function fondiSenzaPremio(salvato) {
     const valore = salvato[chiave];
     if (valore === undefined) continue;
     // durate e spot campo per campo: una durata rotta non butta via le altre
-    const pezzi = (chiave === "durate" || chiave === "spot") && oggetto(valore) ? Object.entries(valore).map(([k, v]) => ({ [chiave]: { [k]: v } })) : [{ [chiave]: valore }];
+    const pezzi = (chiave === "durate" || chiave === "spot" || chiave === "etichette") && oggetto(valore) ? Object.entries(valore).map(([k, v]) => ({ [chiave]: { [k]: v } })) : [{ [chiave]: valore }];
     for (const modifica of pezzi) {
       try {
         impostaSenzaPremio(prova, modifica);
@@ -283,7 +290,7 @@ export function impostaSenzaPremio(stato, modifiche = {}) {
     if (accese > MAX_VOCI_ACCESE) throw new Error(`Barra: al massimo ${MAX_VOCI_ACCESE} voci accese, spegnetene una`);
   }
   if (modifiche.velocita !== undefined) sp.velocita = numeroTra(modifiche.velocita, 40, 160, "Velocità della barra (pixel al secondo)");
-  for (const chiave of ["inAscoltoNellaBarra", "ascoltateNellaBarra", "loghiBarra", "filoCamera"]) {
+  for (const chiave of ["inAscoltoNellaBarra", "ascoltateNellaBarra", "loghiBarra", "filoCamera", "schedaFissa"]) {
     if (modifiche[chiave] !== undefined) sp[chiave] = siNo(modifiche[chiave], chiave);
   }
   if (modifiche.durate !== undefined) {
@@ -291,6 +298,13 @@ export function impostaSenzaPremio(stato, modifiche = {}) {
     for (const [tier, secondi] of Object.entries(modifiche.durate)) {
       if (!TIER_SCHEDA.includes(tier)) throw new Error("Durata della scheda: tipo di invio sconosciuto");
       sp.durate[tier] = numeroTra(secondi, 4, 20, "Durata della scheda (secondi)");
+    }
+  }
+  if (modifiche.etichette !== undefined) {
+    if (!oggetto(modifiche.etichette)) throw new Error("Etichette: serve un elenco, es. {\"inAscolto\": \"Ora in ascolto\"}");
+    for (const [chiave, valore] of Object.entries(modifiche.etichette)) {
+      if (!Object.hasOwn(sp.etichette, chiave)) throw new Error(`Etichetta sconosciuta: ${String(chiave).slice(0, 20)} (inAscolto, ascoltate, tracce)`);
+      sp.etichette[chiave] = testo(valore, 40, `Etichetta «${NOME_ETICHETTA[chiave]}»`, { obbligatorio: true });
     }
   }
   if (modifiche.suonoTraccia !== undefined) {
@@ -415,17 +429,20 @@ export function tracciaDaNero(stato, traccia, { ora = 0, attesaMs = 0 } = {}) {
   if (!traccia || traccia.neroId === stato.neroUltimo) return false;
   stato.neroUltimo = traccia.neroId;
   if (!stato.neroAutomatico) return true;
-  const { titolo, artista, tier } = traccia;
+  const { titolo, artista, tier, instagram = "" } = traccia;
   stato.coda = stato.coda.filter((v) => !(v.titolo === titolo && v.artista === artista));
-  if (stato.corrente.titolo === titolo && stato.corrente.artista === artista) return true;
+  if (stato.corrente.titolo === titolo && stato.corrente.artista === artista) {
+    if (instagram && !stato.corrente.instagram) stato.corrente.instagram = instagram;
+    return true;
+  }
   // Si vota solo nella gara: negli altri layout la traccia passa subito, anche se restano voti di una gara.
   const aspetta =
     stato.layout === "gara" &&
     (stato.corrente.confermato ? attesaMs > 0 && ora - (stato.ultimaConfermaAlle ?? -Infinity) < attesaMs : haVoti(stato.corrente));
   if (aspetta) {
-    stato.neroInArrivo = { titolo, artista, tier };
+    stato.neroInArrivo = { titolo, artista, tier, instagram };
   } else {
-    stato.corrente = tracciaVuota({ titolo, artista, tier });
+    stato.corrente = tracciaVuota({ titolo, artista, tier, instagram });
     stato.neroInArrivo = null;
   }
   return true;
@@ -456,6 +473,7 @@ export function tracciaVuota(dati = {}) {
     titolo: dati.titolo ?? "",
     artista: dati.artista ?? "",
     tier: dati.tier ?? null,
+    instagram: dati.instagram ?? "", // senza @
     voti: Object.fromEntries(CATEGORIE.map((c) => [c, null])),
     chat: { aperta: false, chiudeAlle: null, voti: {}, ultimi: [] },
     confermato: false,
@@ -652,6 +670,7 @@ export function istantanea(stato, config, ora) {
       titolo: t.titolo,
       artista: t.artista,
       tier: t.tier,
+      instagram: typeof t.instagram === "string" ? t.instagram : "",
       confermato: t.confermato,
       punteggi: punteggi(t, stato.votazione.pesi),
       posizione: t.confermato && posizione > 0 ? posizione : null,

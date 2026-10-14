@@ -2,6 +2,7 @@
 // (Settings → Developer → Stream triggers), che a ogni submission pagata manda un POST firmato.
 // Doc webhook: https://www.nero.fan/docs/stream-triggers
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { pulisciInstagram } from "./validazione.mjs";
 
 // Header X-Nero-Signature: "sha256=" + HMAC-SHA256(corpo grezzo, segreto)
 export function firmaValida(corpo, firma, segreto) {
@@ -12,6 +13,22 @@ export function firmaValida(corpo, firma, segreto) {
 }
 
 const testo = (v) => String(v ?? "").trim().slice(0, 120);
+// L'Instagram dell'artista come lo manda Nero (il nome del campo non è documentato: si provano i più probabili, in ordine).
+// «@nome», «nome» o il link del profilo danno il nome senza @; un campo mancante, un numero o un testo non valido → vuoto.
+export function instagramDaNero(o) {
+  const candidati = [o?.submitterInstagram, o?.submitterInstagramHandle, o?.instagram, o?.submitter?.instagram, o?.submitter?.socials?.instagram];
+  for (const c of candidati) {
+    if (typeof c !== "string" || !c.trim()) continue;
+    try {
+      const nome = pulisciInstagram(c);
+      if (nome) return nome;
+    } catch {
+      // non valido: si prova il campo dopo
+    }
+  }
+  return "";
+}
+
 const tier = (t) => (["standard", "skip", "superskip", "throne"].includes(t) ? t : "standard");
 
 // submission.paid → voce di coda. Gli altri eventi (goal.reached) per ora non servono.
@@ -24,6 +41,7 @@ export function versoCoda(evento, ora) {
     titolo: testo(d.submissionName),
     artista: testo(d.submitterName),
     tier: tier(d.tier),
+    instagram: instagramDaNero(d),
     importo: typeof d.amountPaid === "number" ? d.amountPaid : null,
     ricevutoAlle: typeof d.timestamp === "number" ? d.timestamp : ora,
   };
@@ -40,7 +58,7 @@ const API_NERO = process.env.NERO_API ?? "https://api.nero.fan";
 export function tracciaInOnda(coda) {
   const c = coda?.current;
   if (!c?.streamSubmissionId) return null;
-  return { neroId: c.streamSubmissionId, titolo: testo(c.submissionName), artista: testo(c.submitterName), tier: tier(c.tier) };
+  return { neroId: c.streamSubmissionId, titolo: testo(c.submissionName), artista: testo(c.submitterName), tier: tier(c.tier), instagram: instagramDaNero(c) };
 }
 
 // Quante tracce aspettano ancora in coda su Nero (senza quella in riproduzione): `meta.queueCount`, o la lunghezza di `queue`.

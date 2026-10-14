@@ -5,7 +5,7 @@ import { EventEmitter } from "node:events";
 import { TikTokLiveConnection, WebcastEvent } from "tiktok-live-connector";
 import { WebcastLikeMessage, WebcastGiftMessage, WebcastSocialMessage, Gift, User, CommonMessageData, MessageCommonText } from "tiktok-live-proto/v3";
 import { leggiVoto, commentoTikTok, likeTikTok, regaloTikTok, followTikTok, avviaTikTok } from "../lib/chat.mjs";
-import { firmaValida, versoCoda, tracciaInOnda, avviaNero } from "../lib/nero.mjs";
+import { firmaValida, versoCoda, tracciaInOnda, instagramDaNero, avviaNero } from "../lib/nero.mjs";
 
 test("riconosce i voti scritti nei commenti", () => {
   const casi = {
@@ -67,6 +67,7 @@ test("webhook Nero.fan: una submission pagata diventa una voce di coda", () => {
     titolo: "Notti a Vicenza",
     artista: "Lince",
     tier: "superskip",
+    instagram: "",
     importo: 15,
     ricevutoAlle: 1700,
   });
@@ -81,7 +82,7 @@ const codaNero = {
 };
 
 test("Nero.fan: la traccia in riproduzione diventa la traccia del tabellone", () => {
-  assert.deepEqual(tracciaInOnda(codaNero), { neroId: "4f56", titolo: "Notti a Vicenza", artista: "Lince", tier: "superskip" });
+  assert.deepEqual(tracciaInOnda(codaNero), { neroId: "4f56", titolo: "Notti a Vicenza", artista: "Lince", tier: "superskip", instagram: "" });
   assert.equal(tracciaInOnda({ queue: [], current: null }), null);
   assert.equal(tracciaInOnda(null), null);
 });
@@ -270,4 +271,23 @@ test("avviaTikTok: regali e follow arrivano a suRegalo e suFollow con le stesse 
   } finally {
     ferma();
   }
+});
+
+test("instagramDaNero: @nome, nome e link del profilo danno il nome; campo mancante, numero o testo con spazi → vuoto", () => {
+  assert.equal(instagramDaNero({ submitterInstagram: "@mira.music" }), "mira.music");
+  assert.equal(instagramDaNero({ submitterInstagramHandle: "mira_music" }), "mira_music");
+  assert.equal(instagramDaNero({ instagram: "https://www.instagram.com/mira.music/?hl=it" }), "mira.music");
+  assert.equal(instagramDaNero({ submitter: { instagram: "instagram.com/mira.music" } }), "mira.music");
+  assert.equal(instagramDaNero({ submitter: { socials: { instagram: "@mira" } } }), "mira");
+  assert.equal(instagramDaNero({ submitterInstagram: "", instagram: "@seconda" }), "seconda", "un campo vuoto passa al successivo");
+  for (const rotto of [{}, null, undefined, { instagram: 12345 }, { instagram: "mira music" }, { instagram: "@" }, { instagram: "x".repeat(40) }, { instagram: { a: 1 } }]) assert.equal(instagramDaNero(rotto), "");
+});
+
+test("Nero.fan: tracciaInOnda e versoCoda portano l'Instagram dell'artista", () => {
+  const coda = { queue: [], current: { streamSubmissionId: "9", submissionName: "Notti", submitterName: "Lince", tier: "throne", submitterInstagram: "@lince.music" } };
+  assert.equal(tracciaInOnda(coda).instagram, "lince.music");
+  assert.equal(tracciaInOnda({ current: { streamSubmissionId: "9", submissionName: "Notti" } }).instagram, "");
+  const voce = versoCoda({ event: "submission.paid", data: { sessionId: "s", timestamp: 5, submissionName: "Notti", submitterName: "Lince", tier: "skip", submitterInstagram: "instagram.com/lince.music/" } }, 0);
+  assert.equal(voce.instagram, "lince.music");
+  assert.equal(versoCoda({ event: "submission.paid", data: { sessionId: "s", timestamp: 5, submissionName: "Notti" } }, 0).instagram, "");
 });
