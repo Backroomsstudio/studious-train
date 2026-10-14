@@ -59,21 +59,21 @@ test("produzione: limiti e tempo reale", () => {
   const s = nuovaProduzione();
   const prima = structuredClone(s.produzione);
   assert.throws(() => F.impostaProduzione(s, { titolo: { testo: "" } }), /vuoto/);
-  assert.throws(() => F.impostaProduzione(s, { titolo: { testo: "x".repeat(29) } }), /28/);
-  assert.throws(() => F.impostaProduzione(s, { titolo: { sopra: "x".repeat(33) } }), /32/);
-  assert.throws(() => F.impostaProduzione(s, { titolo: { sotto: "x".repeat(49) } }), /48/);
+  assert.throws(() => F.impostaProduzione(s, { titolo: { testo: "x".repeat(37) } }), /36/);
+  assert.throws(() => F.impostaProduzione(s, { titolo: { sopra: "x".repeat(41) } }), /40/);
+  assert.throws(() => F.impostaProduzione(s, { titolo: { sotto: "x".repeat(61) } }), /60/);
   assert.throws(() => F.impostaProduzione(s, { velocita: 39 }), /40/);
   assert.throws(() => F.impostaProduzione(s, { velocita: 161 }), /160/);
   assert.throws(() => F.impostaProduzione(s, { titolo: { testo: "Nuovo" }, velocita: 5 }));
-  assert.throws(() => F.impostaProduzione(s, { preset: "mix", titolo: { sotto: "x".repeat(49) } }));
+  assert.throws(() => F.impostaProduzione(s, { preset: "mix", titolo: { sotto: "x".repeat(61) } }));
   assert.throws(() => F.impostaProduzione(s, { titolo: "Cooking" }), /Titolo/);
   assert.throws(() => F.impostaProduzione(s, null), /Produzione/);
   assert.deepEqual(s.produzione, prima, "un errore lascia lo stato com'era");
-  F.impostaProduzione(s, { titolo: { testo: "x".repeat(28), sopra: "y".repeat(32), sotto: "z".repeat(48) } });
-  assert.deepEqual([s.produzione.titolo.testo.length, s.produzione.titolo.sopra.length, s.produzione.titolo.sotto.length], [28, 32, 48]);
+  F.impostaProduzione(s, { titolo: { testo: "x".repeat(36), sopra: "y".repeat(40), sotto: "z".repeat(60) } });
+  assert.deepEqual([s.produzione.titolo.testo.length, s.produzione.titolo.sopra.length, s.produzione.titolo.sotto.length], [36, 40, 60]);
   F.impostaProduzione(s, { titolo: { sotto: "" } });
   assert.equal(s.produzione.titolo.sotto, "", "il sotto si svuota");
-  assert.equal(s.produzione.titolo.testo.length, 28, "il resto non cambia");
+  assert.equal(s.produzione.titolo.testo.length, 36, "il resto non cambia");
   F.impostaProduzione(s, { titolo: { testo: "  Con spazi  " } });
   assert.equal(s.produzione.titolo.testo, "Con spazi");
   for (const v of [40, 160, "120"]) F.impostaProduzione(s, { velocita: v });
@@ -124,9 +124,9 @@ test("formati: stato salvato rotto", () => {
   assert.deepEqual(F.fondiProduzione({ testi: { titolo: 150 } }).testi, { ...testiBase("produzione"), titolo: 150 });
   assert.deepEqual(F.fondiReaction({ testi: { titolo: 999 } }).testi, testiBase("reaction"));
   assert.deepEqual(F.fondiReaction({ testi: { inventato: 100 } }).testi, testiBase("reaction"));
-  assert.deepEqual(F.fondiProduzione({ titolo: { sopra: "x".repeat(33), sotto: "Va bene" } }).titolo, { ...F.produzioneIniziale().titolo, sotto: "Va bene" }, "un campo rotto non scarta gli altri");
+  assert.deepEqual(F.fondiProduzione({ titolo: { sopra: "x".repeat(41), sotto: "Va bene" } }).titolo, { ...F.produzioneIniziale().titolo, sotto: "Va bene" }, "un campo rotto non scarta gli altri");
   assert.equal(F.fondiReaction({ titolo: { testo: "x".repeat(40) } }).titolo.testo.length, 40, "ogni formato ha i suoi limiti");
-  assert.equal(F.fondiProduzione({ titolo: { testo: "x".repeat(40) } }).titolo.testo, "Cooking Beats");
+  assert.equal(F.fondiProduzione({ titolo: { testo: "x".repeat(37) } }).titolo.testo, "Cooking Beats");
   assert.deepEqual(F.fondiReaction({ pippo: 1, titolo: { pippo: 2 } }), F.reactionIniziale(), "i campi sconosciuti non entrano");
 
   const mia = nuovaProduzione();
@@ -148,6 +148,7 @@ test("podcast: partenza", () => {
   assert.deepEqual(p, {
     titolo: { testo: "Back Rooms Podcast", sotto: "" },
     ospiti: [],
+    etichette: { ospite: "Ospite" },
     tematiche: { titolo: "Tematiche di oggi", elenco: [], attiva: 0, lato: "sx" },
     velocita: 80,
     testi: testiBase("podcast"),
@@ -171,8 +172,8 @@ test("podcast: ospiti e titolo", () => {
   assert.throws(() => F.impostaPodcast(s, { ospiti: "rotto" }), /Ospiti/);
   assert.throws(() => F.impostaPodcast(s, { ospiti: [null] }), /Ospite 1/);
   assert.throws(() => F.impostaPodcast(s, { titolo: { testo: "" } }), /vuoto/);
-  assert.throws(() => F.impostaPodcast(s, { titolo: { testo: "x".repeat(33) } }), /32/);
-  assert.throws(() => F.impostaPodcast(s, { titolo: { sotto: "x".repeat(49) } }), /48/);
+  assert.throws(() => F.impostaPodcast(s, { titolo: { testo: "x".repeat(41) } }), /40/);
+  assert.throws(() => F.impostaPodcast(s, { titolo: { sotto: "x".repeat(61) } }), /60/);
   assert.throws(() => F.impostaPodcast(s, { titolo: { testo: "Nuovo" }, velocita: 5 }));
   assert.throws(() => F.impostaPodcast(s, null), /Podcast/);
   assert.deepEqual(s.podcast, prima, "un errore lascia lo stato com'era");
@@ -182,7 +183,7 @@ test("podcast: ospiti e titolo", () => {
   assert.deepEqual(s.podcast.ospiti, []);
   F.impostaPodcast(s, { titolo: { sotto: "Puntata 12" } });
   assert.deepEqual(s.podcast.titolo, { testo: "Back Rooms Podcast", sotto: "Puntata 12" });
-  F.impostaPodcast(s, { titolo: { testo: "x".repeat(32), sopra: "non esiste" } });
+  F.impostaPodcast(s, { titolo: { testo: "x".repeat(40), sopra: "non esiste" } });
   assert.deepEqual(Object.keys(s.podcast.titolo), ["testo", "sotto"], "il titolo ha solo testo e sotto");
   for (const v of [40, 160, "120"]) F.impostaPodcast(s, { velocita: v });
   assert.equal(s.podcast.velocita, 120);

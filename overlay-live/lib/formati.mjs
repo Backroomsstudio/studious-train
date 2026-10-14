@@ -1,5 +1,6 @@
 // Regole dei layout «Studio Production», «Reaction Release» e «Back Rooms Podcast».
 // Solo funzioni pure: i modificatori lavorano su `stato.<formato>`, come per lo studio e il battle.
+import { randomUUID } from "node:crypto";
 import { ICONE, corpo, numeroTra, oggetto, testo, velocitaFascia } from "./validazione.mjs";
 import { controllaRichieste, impostaMappatura, richiesteIniziali } from "./regali.mjs";
 import { controllaTesti, testiBase } from "./testi.mjs";
@@ -15,9 +16,9 @@ export const PRESET_TITOLI = {
 
 // Righe del titolo di ogni formato con il loro limite di caratteri (il titolo vero non può mancare).
 const LIMITI_TITOLO = {
-  produzione: { sopra: 32, testo: 28, sotto: 48 },
+  produzione: { sopra: 40, testo: 36, sotto: 60 },
   reaction: { sopra: 48, testo: 60, sotto: 60 },
-  podcast: { testo: 32, sotto: 48 },
+  podcast: { testo: 40, sotto: 60 },
 };
 const NOMI_RIGHE = { sopra: "Riga sopra il titolo", testo: "Titolo", sotto: "Riga sotto il titolo" };
 
@@ -25,7 +26,46 @@ const presetNoto = (preset) => typeof preset === "string" && Object.hasOwn(PRESE
 
 export function produzioneIniziale() {
   const { sopra, testo: titolo, sotto } = PRESET_TITOLI.cooking;
-  return { titolo: { preset: "cooking", sopra, testo: titolo, sotto }, velocita: 80, testi: testiBase("produzione") };
+  return { titolo: { preset: "cooking", sopra, testo: titolo, sotto }, velocita: 80, testi: testiBase("produzione"), salvati: [] };
+}
+
+// Titoli che la regia si tiene da parte per riusarli con un tocco (accento e icona sono quelli del preset in onda).
+export const MAX_SALVATI = 6;
+const MAX_NOME_SALVATO = 24;
+
+function titoloSalvato(voce, i) {
+  const n = `Titolo salvato ${i + 1}`;
+  if (!oggetto(voce)) throw new Error(`${n}: servono nome e righe`);
+  const { sopra, testo: scritta, sotto } = LIMITI_TITOLO.produzione;
+  const accento = typeof voce.accento === "string" ? voce.accento : "oro";
+  const icona = typeof voce.icona === "string" ? voce.icona : "cappello";
+  if (typeof voce.id !== "string" || !voce.id) throw new Error(`${n}: manca l'id`);
+  return {
+    id: voce.id.slice(0, 40),
+    nome: testo(voce.nome, MAX_NOME_SALVATO, `${n} (nome)`, { obbligatorio: true }),
+    sopra: testo(voce.sopra ?? "", sopra, n),
+    testo: testo(voce.testo, scritta, n, { obbligatorio: true }),
+    sotto: testo(voce.sotto ?? "", sotto, n),
+    accento,
+    icona,
+  };
+}
+
+// L'elenco dei titoli salvati con le modifiche date (salva, usa e togli sono già stati scritti su `nuova`).
+function salvaTitolo(nuova, dati) {
+  if (!oggetto(dati)) throw new Error("Salva: serve il nome");
+  const nome = testo(dati.nome ?? "", MAX_NOME_SALVATO, "Nome del titolo salvato", { obbligatorio: true });
+  if (nuova.salvati.some((v) => v.nome.toLowerCase() === nome.toLowerCase())) throw new Error("Esiste già un titolo salvato con questo nome");
+  if (nuova.salvati.length >= MAX_SALVATI) throw new Error(`Titoli salvati: al massimo ${MAX_SALVATI}, toglierne uno prima`);
+  const { accento, icona } = PRESET_TITOLI[nuova.titolo.preset] ?? PRESET_TITOLI.cooking;
+  const { sopra, testo: scritta, sotto } = nuova.titolo;
+  nuova.salvati = [...nuova.salvati, { id: randomUUID(), nome, sopra, testo: scritta, sotto, accento, icona }];
+}
+
+function trovaSalvato(nuova, id) {
+  const voce = typeof id === "string" ? nuova.salvati.find((v) => v.id === id) : undefined;
+  if (!voce) throw new Error("Titolo salvato non trovato");
+  return voce;
 }
 
 export function reactionIniziale() {
@@ -76,8 +116,8 @@ function titoloCon(attuale, modifiche, formato) {
 // Dalla regia: un preset riempie le tre righe (e ne sceglie lo stile), un `titolo` nella stessa chiamata prevale campo
 // per campo, la velocità è quella della fascia social. Si controlla tutto su una copia: nessuna metà modifica.
 export function impostaProduzione(stato, dati) {
-  const { titolo, preset, velocita } = corpo(dati, "Produzione");
-  const nuova = { ...stato.produzione, titolo: { ...stato.produzione.titolo } };
+  const { titolo, preset, velocita, salva, usa, togli } = corpo(dati, "Produzione");
+  const nuova = { ...stato.produzione, titolo: { ...stato.produzione.titolo }, salvati: [...(stato.produzione.salvati ?? [])] };
   if (preset !== undefined) {
     if (!presetNoto(preset)) throw new Error("Preset sconosciuto: cooking, sessione o mix");
     const { sopra, testo: scritta, sotto } = PRESET_TITOLI[preset];
@@ -85,6 +125,15 @@ export function impostaProduzione(stato, dati) {
   }
   if (titolo !== undefined) nuova.titolo = titoloCon(nuova.titolo, titolo, "produzione");
   if (velocita !== undefined) nuova.velocita = velocitaFascia(velocita);
+  if (usa !== undefined) {
+    const { sopra, testo: scritta, sotto } = trovaSalvato(nuova, usa);
+    nuova.titolo = { ...nuova.titolo, sopra, testo: scritta, sotto };
+  }
+  if (togli !== undefined) {
+    const { id } = trovaSalvato(nuova, togli);
+    nuova.salvati = nuova.salvati.filter((v) => v.id !== id);
+  }
+  if (salva !== undefined) salvaTitolo(nuova, salva);
   stato.produzione = nuova;
 }
 
@@ -132,7 +181,24 @@ export function fondiProduzione(salvato) {
   const iniziale = produzioneIniziale();
   const preset = oggetto(salvato) && oggetto(salvato.titolo) ? salvato.titolo.preset : undefined;
   if (presetNoto(preset)) iniziale.titolo.preset = preset;
-  return fondiFormato("produzione", iniziale, impostaProduzione, salvato);
+  const produzione = fondiFormato("produzione", iniziale, impostaProduzione, salvato);
+  // I titoli salvati si ritrovano uno a uno: le voci rotte o con un id già visto escono.
+  const visti = new Set();
+  const nomi = new Set();
+  if (oggetto(salvato) && Array.isArray(salvato.salvati)) {
+    salvato.salvati.forEach((voce, i) => {
+      try {
+        const v = titoloSalvato(voce, i);
+        if (visti.has(v.id) || nomi.has(v.nome.toLowerCase()) || produzione.salvati.length >= MAX_SALVATI) return;
+        visti.add(v.id);
+        nomi.add(v.nome.toLowerCase());
+        produzione.salvati.push(v);
+      } catch {
+        // voce rotta: si scarta
+      }
+    });
+  }
+  return produzione;
 }
 
 // Scaletta e durata della richiesta si ritrovano campo per campo; la coda delle richieste passa dal controllo di regali.mjs.
@@ -156,6 +222,7 @@ export function podcastIniziale() {
   return {
     titolo: { testo: "Back Rooms Podcast", sotto: "" },
     ospiti: [],
+    etichette: { ospite: "Ospite" },
     tematiche: { titolo: "Tematiche di oggi", elenco: [], attiva: 0, lato: "sx" },
     velocita: 80,
     testi: testiBase("podcast"),
@@ -199,8 +266,15 @@ function tematicheCon(attuali, modifiche) {
 
 // Dalla regia: titolo (anche una riga sola), ospiti, tematiche e velocità della fascia. Tutto su una copia.
 export function impostaPodcast(stato, dati) {
-  const { titolo, ospiti, tematiche, velocita } = corpo(dati, "Podcast");
-  const nuovo = { ...stato.podcast, titolo: { ...stato.podcast.titolo }, tematiche: { ...stato.podcast.tematiche } };
+  const { titolo, ospiti, tematiche, velocita, etichette } = corpo(dati, "Podcast");
+  const nuovo = { ...stato.podcast, titolo: { ...stato.podcast.titolo }, tematiche: { ...stato.podcast.tematiche }, etichette: { ospite: "Ospite", ...stato.podcast.etichette } };
+  if (etichette !== undefined) {
+    if (!oggetto(etichette)) throw new Error("Diciture: serve l'oggetto con la dicitura dell'ospite");
+    for (const [chiave, valore] of Object.entries(etichette)) {
+      if (chiave !== "ospite") throw new Error(`Dicitura sconosciuta: ${chiave}`);
+      nuovo.etichette.ospite = testo(valore, 40, "Dicitura degli ospiti", { obbligatorio: true });
+    }
+  }
   if (titolo !== undefined) nuovo.titolo = titoloCon(nuovo.titolo, titolo, "podcast");
   if (ospiti !== undefined) nuovo.ospiti = controllaOspiti(ospiti);
   if (tematiche !== undefined) nuovo.tematiche = tematicheCon(nuovo.tematiche, tematiche);
@@ -236,5 +310,6 @@ export function podcastNuovaSerata(podcast) {
 export const fondiPodcast = (salvato) =>
   fondiFormato("podcast", podcastIniziale(), impostaPodcast, salvato, (s) => [
     ...(s.ospiti !== undefined ? [{ ospiti: s.ospiti }] : []),
+    ...(oggetto(s.etichette) && s.etichette.ospite !== undefined ? [{ etichette: { ospite: s.etichette.ospite } }] : []),
     ...(oggetto(s.tematiche) ? ["elenco", "lato", "titolo", "attiva"].filter((c) => s.tematiche[c] !== undefined).map((c) => ({ tematiche: { [c]: s.tematiche[c] } })) : []),
   ]);

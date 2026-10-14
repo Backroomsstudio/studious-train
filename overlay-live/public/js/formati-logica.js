@@ -68,7 +68,7 @@ export function vociFascia(s, layout) {
     const o = s.drum?.ospite;
     if (o?.handle) ospiti = [voceOspite(`ospite|drum|${o.icona}|${o.etichetta}|${o.handle}`, o.icona, o.etichetta, o.handle)];
   } else if (layout === "podcast") {
-    ospiti = (s.podcast?.ospiti ?? []).map((o) => voceOspite(`ospite|${o.nome}|${o.handle}|${o.icona}`, o.icona, "Ospite", o.handle ? `${o.nome} · ${o.handle}` : o.nome));
+    ospiti = (s.podcast?.ospiti ?? []).map((o) => voceOspite(`ospite|${o.nome}|${o.handle}|${o.icona}`, o.icona, s.podcast?.etichette?.ospite ?? "Ospite", o.handle ? `${o.nome} · ${o.handle}` : o.nome));
   }
   return primo ? [primo, ...ospiti, ...resto] : ospiti;
 }
