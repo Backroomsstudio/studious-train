@@ -8,6 +8,8 @@ import { collega } from "./connessione.js";
 import { avviaPagina, applicaTesti, adattaTesto, nodo, simbolo, ts, $, STATICO } from "./pagina.js";
 import { creaTarga } from "./targa.js";
 import { creaFascia } from "./fascia.js";
+import { creaGoal } from "./goal.js";
+import { chiaveGoal } from "./goal-logica.js";
 import { vociFascia, velocitaFascia, statiTematiche } from "./formati-logica.js";
 
 const { palco, orizzontale } = avviaPagina({ orizzontaleAmmesso: true });
@@ -24,9 +26,12 @@ const fascia = creaFascia({
   statico: STATICO,
 });
 
+const goal = creaGoal({ palco, chiave: chiaveGoal("podcast", orizzontale), statico: STATICO });
+
 collega({
-  suStato(s) {
+  suStato(s, eventi) {
     ultimo = s;
+    goal.aggiorna(s, eventi);
     fascia.radice.classList.toggle("fuori", !s.visibili.poBarra);
     fascia.aggiorna(s);
     applicaTesti(palco, s.podcast.testi);

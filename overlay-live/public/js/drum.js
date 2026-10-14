@@ -12,6 +12,8 @@ import { suona, volume } from "./suoni.js";
 import { suoniDrum, suonaIn } from "./eventi-sonori.js";
 import { avviaPagina, applicaTesti, adattaTesto, nodo, simbolo, logo, rilancia, ts, $, STATICO, parametri } from "./pagina.js";
 import { creaFascia } from "./fascia.js";
+import { creaGoal } from "./goal.js";
+import { chiaveGoal } from "./goal-logica.js";
 import { vociFascia, velocitaFascia } from "./formati-logica.js";
 import { formattaLike, etichettaLike, finestraScaletta, livelloVoce, titoloBrano } from "./drum-logica.js";
 import { creaClessidra } from "./drum-clessidra.js";
@@ -52,11 +54,14 @@ function lampoCornice() {
 }
 const equalizzatore = creaEqualizzatore($("#dr-eq"), { statico: STATICO, suColpo: lampoCornice });
 
+const goal = creaGoal({ palco, chiave: chiaveGoal("drum", false), statico: STATICO });
+
 collega({
   suStato(s, eventi) {
     const prima = stato;
     stato = s;
     disegna(s, eventi);
+    goal.aggiorna(s, eventi);
     suoni(prima, s, eventi);
     primoDisegno = false;
   },

@@ -64,17 +64,19 @@ export const GEOMETRIA = {
       eq: p(116, 1016, 848, 84, true),
       cornice: p(116, 262, 848, 838, true),
       sblocco: p(116, 520, 524, 170, true),
+      goal: p(116, 892, 400, 120, true),
       fascia: p(0, 1108, 1080, 92),
       "finto:camera": p(0, 0, 1080, 1920),
     },
   },
   produzione: {
-    verticale: { titolo: p(116, 282, 848, 204, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
+    verticale: { titolo: p(116, 282, 848, 204, true), goal: p(116, 1076, 400, 120, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
   },
   reaction: {
-    verticale: { titolo: p(116, 282, 848, 204, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
+    verticale: { titolo: p(116, 282, 848, 204, true), goal: p(116, 1076, 400, 120, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
     orizzontale: {
       titolo: p(360, 28, 1200, 160),
+      goal: p(1584, 40, 300, 90),
       finestraA: p(24, 192, 576, 702),
       finestraB: p(648, 192, 1248, 702),
       divisore: p(600, 192, 48, 702),
@@ -86,6 +88,7 @@ export const GEOMETRIA = {
   podcast: {
     verticale: {
       targa: p(116, 282, 848, 128, true),
+      goal: p(116, 960, 400, 120, true),
       tematiche: p(116, 424, 848, 480, true),
       linea: p(538, 240, 4, 860, true),
       fascia: p(0, 1108, 1080, 92),
@@ -93,6 +96,7 @@ export const GEOMETRIA = {
     },
     orizzontale: {
       targa: p(48, 36, 512, 128),
+      goal: p(1400, 36, 400, 120),
       tematiche: p(48, 176, 512, 570),
       linea: p(958, 0, 4, 968),
       fascia: p(0, 968, 1920, 92),

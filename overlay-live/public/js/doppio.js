@@ -9,6 +9,8 @@ import { collega } from "./connessione.js";
 import { avviaPagina, applicaTesti, $, STATICO } from "./pagina.js";
 import { creaTarga } from "./targa.js";
 import { creaFascia } from "./fascia.js";
+import { creaGoal } from "./goal.js";
+import { chiaveGoal } from "./goal-logica.js";
 import { vociFascia, velocitaFascia, stileTitolo } from "./formati-logica.js";
 
 const FORMATO = document.body.dataset.formato; // "produzione" | "reaction"
@@ -27,12 +29,15 @@ const fascia = creaFascia({
   statico: STATICO,
 });
 
+const goal = creaGoal({ palco, chiave: chiaveGoal(FORMATO, orizzontale), statico: STATICO });
+
 collega({
-  suStato(s) {
+  suStato(s, eventi) {
     fascia.radice.classList.toggle("fuori", !s.visibili[BARRA]);
     fascia.aggiorna(s);
     applicaTesti(palco, s[FORMATO].testi);
     disegnaTitolo(s);
+    goal.aggiorna(s, eventi);
     primoDisegno = false;
   },
 });
