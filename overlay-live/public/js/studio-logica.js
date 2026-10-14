@@ -17,7 +17,7 @@ export function vociStudio(s) {
           tipo: "artista",
           chiave: `artista|${st.artista}|${st.instagram}`,
           icone: ["microfono"],
-          etichetta: "In studio ora",
+          etichetta: st.etichette?.inStudio ?? "In studio ora",
           testo: breve(st.artista, 32),
           instagram: st.instagram ? `@${st.instagram}` : "",
         }

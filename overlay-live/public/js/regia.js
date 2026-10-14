@@ -705,6 +705,7 @@ function disegnaStudio(s) {
   riempi(f.artista, st.artista);
   riempi(f.instagram, st.instagram ? `@${st.instagram}` : "");
   riempi(f.etichetta, st.etichetta);
+  riempi(f.inStudio, st.etichette.inStudio);
   $("#st-artista-barra").checked = st.artistaNellaBarra;
   const ogni = $("#st-ogni");
   // un valore messo da Stream Deck o API che non è tra le scelte: si aggiunge, così la regia mostra quello in onda
@@ -793,7 +794,7 @@ const studio = async (modifiche, messaggio) => {
 $("#f-st-artista").addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
-  const esito = await studio({ artista: f.artista.value, instagram: f.instagram.value, etichetta: f.etichetta.value }, "Targa in onda");
+  const esito = await studio({ artista: f.artista.value, instagram: f.instagram.value, etichetta: f.etichetta.value, etichette: { inStudio: f.inStudio.value } }, "Targa in onda");
   if (esito.ok) salvato(f); // al prossimo stato il campo Instagram mostra il nome pulito, con la @
 });
 $("#st-svuota").addEventListener("click", async () => {

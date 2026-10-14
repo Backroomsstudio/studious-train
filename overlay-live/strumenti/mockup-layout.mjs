@@ -41,6 +41,13 @@ export const GEOMETRIA = {
       albero: p(116, 282, 848, 914, true), // il tabellone ad albero: dal premio al fondo della barra, sopra a tutto (solo stati albero)
     },
   },
+  studio: {
+    verticale: {
+      goal: p(116, 290, 400, 120, true), // il Goal (public/js/goal-logica.js): sul bordo alto della camera del fonico
+      targa: p(150, 600, 780, 156), // la targa dell'artista (la linguetta «Live session in studio» sporge sopra)
+      barra: p(0, 1296, 1080, 92),
+    },
+  },
   senzaPremio: {
     verticale: {
       banner: p(116, 284, 848, 330, true),
@@ -52,12 +59,13 @@ export const GEOMETRIA = {
 };
 
 // Come si trova ogni pezzo nella pagina: un selettore proprio, altrimenti il suo data-parte.
-const SELETTORI = { senzaPremio: { banner: ".sp-banner", scheda: "#sp-scheda", barra: ".sp-barra", goal: ".gl" }, gara: { premio: ".premio", classifica: ".classifica", timer: ".timer", notifica: ".notifica", tabellone: ".tabellone", chat: ".chat-cta", coda: ".coda-nero", goal: ".gl", albero: "#albero" } };
-const PAGINE = { gara: "overlay.html", senzaPremio: "senza-premio.html" };
+const SELETTORI = { studio: { goal: ".gl", targa: ".st-targa", barra: ".sp-barra" }, senzaPremio: { banner: ".sp-banner", scheda: "#sp-scheda", barra: ".sp-barra", goal: ".gl" }, gara: { premio: ".premio", classifica: ".classifica", timer: ".timer", notifica: ".notifica", tabellone: ".tabellone", chat: ".chat-cta", coda: ".coda-nero", goal: ".gl", albero: "#albero" } };
+const PAGINE = { gara: "overlay.html", senzaPremio: "senza-premio.html", studio: "studio.html" };
 const SCHEDE = ["standard", "skip", "superskip", "throne", "studio"]; // --layout senzaPremio --scheda <tipo>
 // Per ogni layout e stato: i pezzi che devono esserci (e non essere nascosti). Negli ultimi minuti la barra «Vota in chat» è chiusa
 // (la conferma chiude il voto) e quindi spenta: la notifica del nuovo primo posto prende il suo posto tra i pezzi da controllare.
 const PRESENTI = {
+  studio: { base: ["goal", "targa", "barra"] },
   senzaPremio: {
     base: ["banner", "barra", "goal"],
     standard: ["banner", "scheda", "barra", "goal"],
@@ -78,8 +86,8 @@ const PRESENTI = {
     "albero-6": ["albero"],
   },
 };
-const STATO_PREDEFINITO = { gara: "base", senzaPremio: "base" };
-const NOMI_FILE = { senzaPremio: { base: "senza-premio", standard: "senza-premio-gratis", skip: "senza-premio-skip", superskip: "senza-premio-superskip", throne: "senza-premio-throne", studio: "senza-premio-spot" }, gara: { base: "verticale", "ultimi-minuti": "ultimi-minuti", instagram: "gara-instagram", coda: "gara-coda", albero: "gara-albero", "albero-6": "gara-albero-6" } };
+const STATO_PREDEFINITO = { gara: "base", senzaPremio: "base", studio: "base" };
+const NOMI_FILE = { studio: { base: "studio" }, senzaPremio: { base: "senza-premio", standard: "senza-premio-gratis", skip: "senza-premio-skip", superskip: "senza-premio-superskip", throne: "senza-premio-throne", studio: "senza-premio-spot" }, gara: { base: "verticale", "ultimi-minuti": "ultimi-minuti", instagram: "gara-instagram", coda: "gara-coda", albero: "gara-albero", "albero-6": "gara-albero-6" } };
 
 // I testi che la pagina della gara adatta al riquadro: il selettore, il pezzo in cui stanno, il corpo di partenza (massimo) e il
 // più piccolo accettabile (minimo). La chiave è quella di CORPI in public/js/overlay.js.
@@ -176,6 +184,7 @@ const apriPagina = async (browser, parametri = "") => {
 // Dati di prova dello stato scelto, come li mostrerebbe la regia.
 async function preparaStato() {
   await comando("layout", { nome: layout });
+  if (layout === "studio") await comando("studio", { artista: "Lince", instagram: "lince.music" });
   if (layout === "gara" && STATI_ALBERO[stato]) {
     await comando("nuovaSerata");
     await confermaRisultati(STATI_ALBERO[stato].tracce, STATI_ALBERO[stato].lunghi);
@@ -346,7 +355,40 @@ async function controllaTesti(pagina, righe, passata, errori) {
   errori.push(...descriviTagliate(await inchiostroTagliato(pagina, righe.map((r) => r.selettore)), passata.nome));
 }
 
+// ----- Live session in studio (--layout studio --controlli) -----
+// La linguetta «Live session in studio» ha il corpo calcolato di almeno 34 px, testo bianco, sta dentro la larghezza della targa e non
+// ha lettere tagliate; con la dicitura scelta in regia (40 caratteri) resta dentro la targa; le comparse usano il font di sistema.
+async function provaControlliStudio() {
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const errori = [];
+  for (const dicitura of ["Live session in studio", "x".repeat(0) + "Dal vivo dal nostro studio di Vicenza oggi"]) {
+    await comando("layout", { nome: "studio" });
+    await comando("studio", { artista: "Lince", instagram: "lince.music", etichetta: dicitura.slice(0, 32), etichette: { inStudio: "In studio ora" } });
+    const pagina = await apriPagina(browser);
+    const f = await pagina.evaluate(() => {
+      const e = document.querySelector(".st-etichetta");
+      const t = document.querySelector(".st-targa").getBoundingClientRect();
+      const r = e.getBoundingClientRect();
+      return { corpo: parseFloat(getComputedStyle(e).fontSize), colore: getComputedStyle(e).color, dentro: r.x >= t.x && r.right <= t.right, testo: e.textContent.trim(), famiglia: getComputedStyle(document.querySelector(".st-comparsa-titolo")).fontFamily };
+    });
+    if (f.corpo < 34) errori.push(`linguetta «${f.testo}»: corpo ${f.corpo} px, doveva essere almeno 34`);
+    if (f.colore !== "rgb(255, 255, 255)") errori.push(`linguetta: colore ${f.colore}, doveva essere bianco`);
+    if (!f.dentro) errori.push(`linguetta «${f.testo}»: esce dalla larghezza della targa`);
+    if (!/-apple-system|SF Pro|system-ui/i.test(f.famiglia)) errori.push(`comparse: il font è ${f.famiglia.slice(0, 40)}, doveva essere quello di sistema`);
+    errori.push(...descriviTagliate(await inchiostroTagliato(pagina, [".st-etichetta span"]), `linguetta «${f.testo}»`));
+    await pagina.close();
+  }
+  await browser.close();
+  if (errori.length) {
+    console.error(`Problemi nella live session in studio:\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log("ok live session in studio: linguetta da 34 px in bianco dentro la targa, nessuna lettera tagliata, comparse in San Francisco");
+}
+
 async function provaControlli() {
+  if (layout === "studio") return provaControlliStudio();
   if (layout !== "gara") {
     console.error(`--controlli: per ora solo il layout gara (non ${layout})`);
     process.exit(2);

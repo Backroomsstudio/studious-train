@@ -137,3 +137,20 @@ test("live session in studio: nessuna pagina suona e la traccia di Nero non aspe
   S.tracciaDaNero(stato, { neroId: "n1", titolo: "Asfalto", artista: "Dama" }, { ora: 0, attesaMs: 10_000 });
   assert.equal(stato.corrente.titolo, "Asfalto");
 });
+
+test("diciture dello studio: «In studio ora» modificabile (40 caratteri, non vuota), usata dalla barra, ritrovata da uno stato vecchio", () => {
+  const stato = statoStudio();
+  assert.deepEqual(stato.studio.etichette, { inStudio: "In studio ora" });
+  S.impostaStudio(stato, { artista: "Lince", etichette: { inStudio: "Oggi in sala" } });
+  assert.equal(stato.studio.etichette.inStudio, "Oggi in sala");
+  const voce = vociStudio(foto(stato)).find((v) => v.tipo === "artista");
+  assert.equal(voce.etichetta, "Oggi in sala");
+  const prima = structuredClone(stato.studio);
+  assert.throws(() => S.impostaStudio(stato, { artista: "Altro", etichette: { inStudio: "x".repeat(41) } }), /40|In studio ora/);
+  assert.throws(() => S.impostaStudio(stato, { etichette: { inStudio: "  " } }), /vuot/);
+  assert.throws(() => S.impostaStudio(stato, { etichette: { altra: "x" } }), /sconosciut/);
+  assert.deepEqual(stato.studio, prima, "un errore non cambia niente");
+  assert.deepEqual(S.fondiStudio({ artista: "Lince" }).etichette, { inStudio: "In studio ora" }, "stato vecchio: predefinite");
+  assert.deepEqual(S.fondiStudio({ etichette: { inStudio: "x".repeat(50) } }).etichette, { inStudio: "In studio ora" }, "valore rotto: predefinite");
+  assert.equal(S.fondiStudio({ etichette: { inStudio: "Sala A" } }).etichette.inStudio, "Sala A");
+});

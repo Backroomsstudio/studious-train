@@ -342,6 +342,7 @@ export function studioIniziale() {
     durataComparsa: 10, // secondi
     velocita: 80, // pixel al secondo della barra
     artistaNellaBarra: true, // «In studio ora: nome · @instagram» tra i social
+    etichette: { inStudio: "In studio ora" }, // dicitura della linguetta e della barra (40 caratteri al massimo, non vuota)
   };
 }
 
@@ -356,6 +357,13 @@ export function impostaStudio(stato, modifiche = {}) {
   if (modifiche.durataComparsa !== undefined) st.durataComparsa = numeroTra(modifiche.durataComparsa, 4, 20, "Durata della comparsa (secondi)");
   if (modifiche.velocita !== undefined) st.velocita = numeroTra(modifiche.velocita, 40, 160, "Velocità della barra (pixel al secondo)");
   if (modifiche.artistaNellaBarra !== undefined) st.artistaNellaBarra = siNo(modifiche.artistaNellaBarra, "artistaNellaBarra");
+  if (modifiche.etichette !== undefined) {
+    if (!oggetto(modifiche.etichette)) throw new Error("Etichette: serve un elenco, es. {\"inStudio\": \"In studio ora\"}");
+    for (const [chiave, valore] of Object.entries(modifiche.etichette)) {
+      if (!Object.hasOwn(st.etichette, chiave)) throw new Error(`Etichetta sconosciuta: ${String(chiave).slice(0, 20)} (inStudio)`);
+      st.etichette[chiave] = testo(valore, 40, "Etichetta «In studio ora»", { obbligatorio: true });
+    }
+  }
   stato.studio = st;
 }
 

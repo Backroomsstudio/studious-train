@@ -167,6 +167,7 @@ function adattaTarga() {
   const vuota = targa.radice.classList.contains("vuota");
   if (targa.artista.textContent) adattaTesto(targa.artista, vuota ? 72 : 80, 40);
   if (targa.igTesto.textContent) adattaTesto(targa.igTesto, 38, 24);
+  if (targa.etichetta.textContent) adattaTesto(targa.etichetta, 34, 20); // la linguetta: 34 px, o meno se la dicitura è lunga
 }
 
 // ---------- Barra dei social ----------

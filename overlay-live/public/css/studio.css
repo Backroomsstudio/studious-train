@@ -363,29 +363,34 @@ body.st.anteprima {
 .st-etichetta {
   position: absolute;
   left: 50%;
-  top: -21px;
-  height: 40px;
+  top: -48px;
+  height: 60px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 22px 0 18px;
+  gap: 16px;
+  padding: 0 30px 0 24px;
   border-radius: 99px;
   transform: translateX(-50%) translateZ(26px);
-  font: 900 22px/1 var(--font-dati);
-  letter-spacing: 0.22em;
+  font: 900 34px/1 var(--font-dati);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   white-space: nowrap;
-  color: #0a0a0c;
-  background: var(--cromo-orizzontale);
-  box-shadow: 0 2px 0 #909090, 0 4px 0 #515151, 0 8px 16px rgba(0, 0, 0, 0.55), 0 0 22px rgba(255, 255, 255, 0.3), inset 0 1px 0 #fff;
+  color: #fff;
+  background: linear-gradient(180deg, #6a6a6a 0%, #2b2b2b 48%, #0f0f0f 100%);
+  border: 2px solid #bdbdbd;
+  box-shadow: 0 2px 0 #909090, 0 4px 0 #515151, 0 8px 16px rgba(0, 0, 0, 0.55), 0 0 22px rgba(255, 255, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   z-index: 5;
 }
 .st-etichetta span {
-  margin-right: -0.22em;
+  display: block;
+  max-width: 640px; /* la dicitura lunga si riduce (adattaTarga) e non esce dalla targa */
+  padding-bottom: 2px;
+  overflow: hidden;
+  margin-right: -0.14em;
 }
 .st-rec {
-  width: 14px;
-  height: 14px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #ff8a98, #ff2d4b 60%, #a3001a);
   box-shadow: 0 0 10px rgba(255, 45, 75, 0.9);
@@ -474,9 +479,9 @@ body.st.anteprima {
   min-width: 0;
 }
 .st-comparsa-sopra {
-  height: 26px;
-  font: 800 24px/26px var(--font-dati);
-  letter-spacing: 0.16em;
+  height: 30px;
+  font: 800 28px/30px var(--font-dati);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
@@ -497,8 +502,8 @@ body.st.anteprima {
   filter: drop-shadow(0 1px 0 #a1a1a1) drop-shadow(0 1px 0 #676767) drop-shadow(0 2px 0 #262626) drop-shadow(0 8px 12px rgba(0, 0, 0, 0.6));
 }
 .st-comparsa-sotto {
-  height: 34px;
-  font: 800 30px/34px var(--font-dati);
+  height: 38px;
+  font: 800 34px/38px var(--font-dati);
   white-space: nowrap;
   overflow: hidden;
   color: #fff;
