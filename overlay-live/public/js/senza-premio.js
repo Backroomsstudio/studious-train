@@ -7,6 +7,8 @@ import { collega } from "./connessione.js";
 import { suona, volume } from "./suoni.js";
 import { suoniSenzaPremio, richiesteScheda, suonaIn, SALITA_SCHEDA_MS, USCITA_SCHEDA_MS, DURATA_SPOT_MS, RICHIAMO_MS } from "./eventi-sonori.js";
 import { vociBarra, ETICHETTE_TIER } from "./barra.js";
+import { creaGoal } from "./goal.js";
+import { chiaveGoal } from "./goal-logica.js";
 
 const LARGHEZZA = 1080;
 const ALTEZZA = 1920;
@@ -87,10 +89,13 @@ let stato = null;
 let primoDisegno = true;
 let ultimaTracciaAlle = -Infinity;
 
+const goal = creaGoal({ palco, chiave: chiaveGoal("senzaPremio", false), statico: STATICO });
+
 collega({
   suStato(s, eventi) {
     const prima = stato;
     stato = s;
+    goal.aggiorna(s, eventi);
     const ora = performance.now();
     const suoni = suoniSenzaPremio(prima, s, eventi, { ora, ultimaTracciaAlle, richiamoInCorso });
     if (suoni.some((x) => x.traccia)) ultimaTracciaAlle = ora;

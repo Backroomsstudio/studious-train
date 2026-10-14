@@ -8,6 +8,8 @@
 import { collega } from "./connessione.js";
 import { vociStudio, richiesteComparsa, prossimaComparsa, USCITA_COMPARSA_MS, SALITA_COMPARSA_MS, GIRO_TARGA_MS } from "./studio-logica.js";
 import { creaNastro } from "./nastro.js";
+import { creaGoal } from "./goal.js";
+import { chiaveGoal } from "./goal-logica.js";
 
 const LARGHEZZA = 1080;
 const ALTEZZA = 1920;
@@ -106,10 +108,13 @@ for (const el of document.querySelectorAll("[data-moneta]")) costruisciMoneta(el
 let stato = null;
 let primoDisegno = true;
 
+const goal = creaGoal({ palco, chiave: chiaveGoal("studio", false), statico: new URLSearchParams(location.search).has("statico") });
+
 collega({
   suStato(s, eventi) {
     const prima = stato;
     stato = s;
+    goal.aggiorna(s, eventi);
     disegnaTarga(s);
     disegnaBarra(s);
     disegnaComparse(prima, s, eventi);

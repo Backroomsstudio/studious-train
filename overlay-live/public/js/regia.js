@@ -12,6 +12,7 @@ import { vociBarra, stimaGiroSecondi } from "./barra.js";
 import { vociStudio } from "./studio-logica.js";
 import { avviaRegiaFormati } from "./regia-formati.js";
 import { avviaRegiaVoti } from "./regia-voti.js";
+import { avviaRegiaGoal } from "./regia-goal.js";
 import { NOMI_ICONE } from "./formati-logica.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -108,6 +109,9 @@ const formati = avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn }
 // Serata → Voti della gara: pesi, voti ammessi e nomi delle quattro voci (regia-voti.js).
 const votazione = avviaRegiaVoti({ $, invia, avviso, riempi, salvato });
 
+// Goal Like e Follower (regia-goal.js).
+const goalRegia = avviaRegiaGoal({ $, invia, avviso, riempi, salvato });
+
 const haVoti = (t) => CATEGORIE.some((c) => t.punteggi[c] !== null) || t.punteggi.chatVoti > 0;
 
 // ---------- Suoni ----------
@@ -150,6 +154,7 @@ function disegna(s) {
   disegnaClassifica(s);
   disegnaSerata(s);
   votazione.disegna(s);
+  goalRegia.disegna(s);
   disegnaSenzaPremio(s);
   disegnaStudio(s);
   disegnaBattle(s);

@@ -72,6 +72,13 @@
   0% { transform: scale(1.22); filter: brightness(1.8); }
   100% { transform: none; filter: none; }
 }
+.schermo-pieno .gl,
+.con-albero .gl,
+.bt-tabellone:not([hidden]) ~ .gl,
+.bt-conto:not([hidden]) ~ .gl,
+.bt-vittoria:not([hidden]) ~ .gl {
+  opacity: 0 !important;
+}
 .statico .gl,
 .statico .gl-numero {
   animation: none;

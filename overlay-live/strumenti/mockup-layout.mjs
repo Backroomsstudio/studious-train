@@ -36,20 +36,21 @@ export const GEOMETRIA = {
       notifica: p(564, 604, 400, 92, true), // solo mentre c'è (stato ultimi-minuti); è alta almeno 92
       tabellone: p(116, 858, 848, 260, true),
       chat: p(116, 1130, 848, 66, true), // il fondo, y 1196, sta appena sopra i commenti di TikTok (1200)
+      goal: p(564, 712, 400, 120, true), // il Goal (public/js/goal-logica.js): nel vuoto sotto timer e notifica
       albero: p(116, 282, 848, 914, true), // il tabellone ad albero: dal premio al fondo della barra, sopra a tutto (solo stati albero)
     },
   },
 };
 
 // Come si trova ogni pezzo nella pagina: un selettore proprio, altrimenti il suo data-parte.
-const SELETTORI = { gara: { premio: ".premio", classifica: ".classifica", timer: ".timer", notifica: ".notifica", tabellone: ".tabellone", chat: ".chat-cta", albero: "#albero" } };
+const SELETTORI = { gara: { premio: ".premio", classifica: ".classifica", timer: ".timer", notifica: ".notifica", tabellone: ".tabellone", chat: ".chat-cta", goal: ".gl", albero: "#albero" } };
 const PAGINE = { gara: "overlay.html" };
 // Per ogni layout e stato: i pezzi che devono esserci (e non essere nascosti). Negli ultimi minuti la barra «Vota in chat» è chiusa
 // (la conferma chiude il voto) e quindi spenta: la notifica del nuovo primo posto prende il suo posto tra i pezzi da controllare.
 const PRESENTI = {
   gara: {
-    base: ["premio", "classifica", "timer", "tabellone", "chat"],
-    "ultimi-minuti": ["premio", "classifica", "timer", "tabellone", "notifica"],
+    base: ["premio", "classifica", "timer", "tabellone", "chat", "goal"],
+    "ultimi-minuti": ["premio", "classifica", "timer", "tabellone", "notifica", "goal"],
     // con l'albero acceso gli altri pezzi ci sono ancora ma coperti: si guarda solo lui
     albero: ["albero"],
     "albero-6": ["albero"],
@@ -336,7 +337,74 @@ async function provaControlli() {
   console.log("ok testi della gara: dentro i loro riquadri, ridotti al minimo e poi con i puntini, nessuna lettera tagliata; mockup in mockup/gara-testi-lunghi.jpg");
 }
 
+// ----- Regia del Goal (--regia-goal) -----
+// Apre la regia, scrive obiettivi, follower di adesso e posizione, preme «Mostra ora» e controlla cosa è andato in onda (stato del
+// server e pagina del layout). Salva mockup/regia-goal.jpg.
+async function provaRegiaGoal() {
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const errori = [];
+  const stato = async () => (await fetch(`${base}/api/stato`).then((r) => r.json())).dati ?? (await fetch(`${base}/api/stato`).then((r) => r.json()));
+  const pagina = await browser.newPage({ viewport: { width: 1100, height: 2600 } });
+  await pagina.goto(`${base}/regia.html`);
+  await pagina.waitForSelector("#goal-regia");
+  const campo = (form, nome) => pagina.locator(`${form} [name="${nome}"]`);
+  const scrivi = async (form, nome, valore) => {
+    await campo(form, nome).fill(String(valore));
+  };
+  await scrivi("#f-goal", "like-obiettivo", 20000);
+  await scrivi("#f-goal", "like-passo", 2000);
+  await scrivi("#f-goal", "follower-obiettivo", 100);
+  await pagina.click("#f-goal button");
+  await pagina.waitForTimeout(300);
+  await scrivi("#f-goal-follower", "totale", 87);
+  await pagina.click("#f-goal-follower button:not([data-aggiungi])");
+  await pagina.waitForTimeout(300);
+  await pagina.click("#f-goal-follower [data-aggiungi=\"10\"]");
+  await pagina.waitForTimeout(300);
+  await pagina.selectOption("#goal-layout", "gara");
+  await scrivi("#f-goal-posizione", "x", 300);
+  await scrivi("#f-goal-posizione", "y", 720);
+  await pagina.click("#f-goal-posizione button");
+  await pagina.waitForTimeout(300);
+  await pagina.click("[data-muovi=\"8,0\"]");
+  await pagina.waitForTimeout(300);
+  let s = await (await fetch(`${base}/api/stato`)).json();
+  s = s.dati ?? s;
+  const g = s.goal;
+  const dice = (cosa, vero) => vero || errori.push(cosa);
+  dice(`obiettivi: ${JSON.stringify([g.like.obiettivo, g.like.passo, g.follower.obiettivo])}, attesi [20000, 2000, 100]`, g.like.obiettivo === 20000 && g.like.passo === 2000 && g.follower.obiettivo === 100);
+  dice(`follower di adesso: ${g.follower.totale}, atteso 97 (87 + 10)`, g.follower.totale === 97);
+  dice(`posizione della gara: ${JSON.stringify(g.posizioni.gara)}, attesa x 308 (300 + 8) e y 720`, g.posizioni.gara?.x === 308 && g.posizioni.gara?.y === 720);
+  const anteprima = await pagina.textContent("#goal-anteprima");
+  dice(`anteprima: «${anteprima}» non dice «Mancano 3 follower»`, /Mancano 3 follower/.test(anteprima));
+  dice("l'avviso «Imposta i follower» è ancora acceso", await pagina.locator("#goal-avviso").isHidden());
+  // «Ripristina posizione» toglie quella scelta
+  await pagina.click("#goal-ripristina");
+  await pagina.waitForTimeout(300);
+  s = await (await fetch(`${base}/api/stato`)).json();
+  s = s.dati ?? s;
+  dice("«Ripristina posizione» non ha tolto la posizione della gara", s.goal.posizioni.gara === undefined);
+  // «Mostra ora»: la pagina della gara lo riceve (in modo «a comparsa» compare per la durata scelta)
+  await fetch(`${base}/api/goal`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ modo: "comparsa", ogniMinuti: 60, durataSecondi: 5 }) });
+  const gara = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
+  await gara.goto(`${base}/overlay.html?anteprima=1`);
+  await gara.waitForTimeout(6500);
+  dice("a comparsa: dopo la prima comparsa il Goal doveva essere sparito", await gara.locator(".gl.fuori").count() === 1);
+  await pagina.click("#goal-mostra");
+  await gara.waitForTimeout(700);
+  dice("«Mostra ora»: il Goal doveva comparire", await gara.locator(".gl:not(.fuori)").count() === 1);
+  await pagina.screenshot({ path: join(CARTELLA, "mockup", "regia-goal.jpg"), type: "jpeg", quality: 85, fullPage: false, clip: { x: 0, y: (await pagina.locator("#goal-regia").boundingBox()).y - 10, width: 1100, height: 900 } });
+  await browser.close();
+  if (errori.length) {
+    console.error(`Problemi nella regia del Goal:\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log("ok regia del Goal: obiettivi, follower di adesso, posizione, ripristino e «Mostra ora»; mockup in mockup/regia-goal.jpg");
+}
+
 async function main() {
+  if (args.includes("--regia-goal")) return provaRegiaGoal();
   if (controlli) return provaControlli();
   const tabella = GEOMETRIA[layout]?.verticale;
   const pezziAttesi = PRESENTI[layout]?.[stato];

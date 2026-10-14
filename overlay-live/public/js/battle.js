@@ -10,6 +10,8 @@ import { collega, durata } from "./connessione.js";
 import { suona, volume } from "./suoni.js";
 import { suoniBattle, suoniTimerBattle, msTimerBattle, suonaIn } from "./eventi-sonori.js";
 import { prossimaComparsa } from "./studio-logica.js";
+import { creaGoal } from "./goal.js";
+import { chiaveGoal } from "./goal-logica.js";
 import { disegnaTabellone } from "./battle-tabellone.js";
 import {
   percentuali,
@@ -111,10 +113,13 @@ function scriviConLink(el, testo) {
 let stato = null;
 let primoDisegno = true;
 
+const goal = creaGoal({ palco, chiave: chiaveGoal("battle", false), statico: new URLSearchParams(location.search).has("statico") });
+
 const conn = collega({
   suStato(s, eventi) {
     const prima = stato;
     stato = s;
+    goal.aggiorna(s, eventi);
     suoni(prima, s, eventi);
     disegna(s);
     effetti(prima, s, eventi);
@@ -142,6 +147,7 @@ function disegna(s) {
   const b = s.battle;
   applicaTesti(b);
   for (const el of document.querySelectorAll("[data-parte]")) {
+    if (el.dataset.parte === "goal") continue; // il Goal lo gestisce goal.js (visibile, a comparsa o spento)
     const widget = WIDGET[el.dataset.parte];
     el.hidden = !PARTI.includes(el.dataset.parte) || (widget !== undefined && s.visibili[widget] === false);
   }

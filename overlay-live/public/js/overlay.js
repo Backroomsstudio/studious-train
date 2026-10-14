@@ -7,6 +7,8 @@ import { collega, formatta, durata } from "./connessione.js";
 import { suona, volume } from "./suoni.js";
 import { suoniTraccia, cambiClassifica, suoniClassifica, suoniTimer, suonaIn, RITARDO_CLASSIFICA_MS, SOGLIA_URGENTE_MS } from "./eventi-sonori.js";
 import { adattaTesto } from "./pagina.js";
+import { creaGoal } from "./goal.js";
+import { chiaveGoal } from "./goal-logica.js";
 import { disegnaAlbero } from "./albero.js";
 
 const parametri = new URLSearchParams(location.search);
@@ -36,12 +38,16 @@ function adattaPalco() {
 addEventListener("resize", adattaPalco);
 adattaPalco();
 
+// Il Goal ha la posizione della gara verticale; in orizzontale la gara non lo mostra.
+const goal = ORIZZONTALE ? null : creaGoal({ palco, chiave: chiaveGoal("gara", false), statico: parametri.has("statico") });
+
 let stato = null;
 let primoDisegno = true;
 const conn = collega({
   suStato(s, eventi) {
     const prima = stato;
     stato = s;
+    goal?.aggiorna(s, eventi);
     riproduci(suoniTraccia(prima, s, eventi));
     disegnaPremio(s);
     disegnaTabellone(s);
@@ -50,6 +56,7 @@ const conn = collega({
     disegnaVincitore(s);
     disegnaSpareggio(s);
     palco.classList.toggle("schermo-pieno", Boolean(s.vincitore?.visibile || s.spareggio));
+    palco.classList.toggle("con-albero", Boolean(s.visibili.albero)); // il Goal sta sotto il tabellone ad albero, non sopra
     primoDisegno = false;
   },
 });

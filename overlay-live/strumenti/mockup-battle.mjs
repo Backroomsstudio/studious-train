@@ -22,10 +22,11 @@ export const GEOMETRIA = {
   giudici: [116, 1292, 848, 150],
   chat: [116, 1456, 848, 78],
   tabellone: [116, 282, 848, 1252],
+  goal: [116, 672, 400, 120], // il Goal (public/js/goal-logica.js): sul bordo alto della camera, che è un buco della pagina
   conto: [0, 0, 1080, 1920],
   vittoria: [0, 0, 1080, 1920],
 };
-const FISSI = ["barre", "modalita", "timer", "camera", "artisti", "giudici", "chat"];
+const FISSI = ["barre", "modalita", "timer", "camera", "artisti", "giudici", "chat", "goal"];
 // Pezzi a tutta larghezza: non devono stare dentro x 116…964.
 const A_TUTTA_LARGHEZZA = ["camera", "conto", "vittoria"];
 // Il contenuto della schermata del vincitore sta nella zona libera: sotto l'intestazione di TikTok (230), sopra la chat (1200).

@@ -261,6 +261,58 @@
       </div>
     </section>
 
+    <!-- GOAL LIKE E FOLLOWER: uguale in tutti i layout -->
+    <section class="scheda sp-regia" id="goal-regia">
+      <h2>Goal Like e Follower <span class="conta">«Mancano X like al nuovo obiettivo» in tutti i layout</span></h2>
+      <label class="interruttore"><input type="checkbox" data-widget="goal"> Goal in onda</label>
+      <form id="f-goal" class="modulo" autocomplete="off">
+        <div class="gl-testa"><span></span><span>Obiettivo</span><span>Passo</span></div>
+        <div class="gl-riga-regia">
+          <span>Like</span>
+          <input name="like-obiettivo" type="number" min="1" step="1" inputmode="numeric" aria-label="Obiettivo dei like">
+          <input name="like-passo" type="number" min="0" step="1" inputmode="numeric" aria-label="Passo dei like">
+        </div>
+        <div class="gl-riga-regia">
+          <span>Follower</span>
+          <input name="follower-obiettivo" type="number" min="1" step="1" inputmode="numeric" aria-label="Obiettivo dei follower">
+          <input name="follower-passo" type="number" min="0" step="1" inputmode="numeric" aria-label="Passo dei follower">
+        </div>
+        <button>Salva obiettivi</button>
+      </form>
+      <p class="nota">Raggiunto l'obiettivo, il nuovo è il primo multiplo del passo sopra il totale (con passo 0 resta quello scelto). I like li conta il Drum Challenge: dal «Riparti da ora» del Drum partono da zero.</p>
+      <form id="f-goal-follower" class="modulo gl-azioni" autocomplete="off">
+        <label>Follower di adesso <input name="totale" type="number" min="0" step="1" inputmode="numeric" aria-label="Follower di adesso"></label>
+        <button>Imposta</button>
+        <button type="button" data-aggiungi="1">+1</button>
+        <button type="button" data-aggiungi="10">+10</button>
+      </form>
+      <p class="nota avviso-goal" id="goal-avviso" hidden>Imposta i follower di adesso: finché non si sa, la riga dei follower non va in onda (poi si aggiorna da sola con i follow della live).</p>
+      <form id="f-goal-modo" class="modulo gl-azioni" autocomplete="off">
+        <label>Compare <select name="modo"><option value="fisso">sempre</option><option value="comparsa">a comparsa</option></select></label>
+        <label>ogni <input name="ogniMinuti" type="number" min="1" max="60" step="1" inputmode="numeric" aria-label="Ogni quanti minuti"> min</label>
+        <label>per <input name="durataSecondi" type="number" min="5" max="120" step="1" inputmode="numeric" aria-label="Secondi in vista"> s</label>
+        <button>Salva</button>
+        <button type="button" id="goal-mostra" class="primario">Mostra ora</button>
+      </form>
+      <h3>Posizione</h3>
+      <form id="f-goal-posizione" class="modulo gl-azioni" autocomplete="off">
+        <label>Layout <select name="layout" id="goal-layout"></select></label>
+        <label>X <input name="x" type="number" min="0" max="1920" step="1" inputmode="numeric" aria-label="Posizione X"></label>
+        <label>Y <input name="y" type="number" min="0" max="1920" step="1" inputmode="numeric" aria-label="Posizione Y"></label>
+        <label>Scala <input name="scala" type="number" min="60" max="200" step="5" inputmode="numeric" aria-label="Scala in percentuale"> %</label>
+        <button>Applica</button>
+      </form>
+      <div class="azioni">
+        <button type="button" data-muovi="-8,0" aria-label="8 pixel a sinistra">←</button>
+        <button type="button" data-muovi="8,0" aria-label="8 pixel a destra">→</button>
+        <button type="button" data-muovi="0,-8" aria-label="8 pixel in su">↑</button>
+        <button type="button" data-muovi="0,8" aria-label="8 pixel in giù">↓</button>
+        <button type="button" id="goal-ripristina">Ripristina posizione</button>
+      </div>
+      <p class="nota">Ogni layout ha la sua posizione (la tela è 1080×1920, o 1920×1080 per Podcast e Reaction orizzontali): il Goal non esce mai dalla tela.</p>
+      <p class="nota" id="goal-anteprima"></p>
+    </section>
+
     <!-- SOCIAL DEL BRAND: una lista sola per tutte le fasce che scorrono -->
     <section class="scheda sp-regia" id="social-regia">
       <h2>Social del brand <span class="conta">una lista sola, in tutte le barre che scorrono: senza premio, studio, drum, produzione, podcast e reaction</span></h2>

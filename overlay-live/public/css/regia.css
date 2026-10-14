@@ -364,6 +364,31 @@ input::placeholder {
   margin-top: 10px;
 }
 /* Voti della gara: nome, peso e percentuale di ogni voce, poi i voti ammessi */
+.gl-testa,
+.gl-riga-regia {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+.gl-testa {
+  font: 600 12px/1 var(--font-dati);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--testo-tenue);
+}
+.gl-azioni {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.gl-azioni input[type="number"] {
+  width: 84px;
+}
+#goal-regia .avviso-goal {
+  color: #ffd863;
+}
 .vz-testa,
 .vz-riga {
   display: grid;
