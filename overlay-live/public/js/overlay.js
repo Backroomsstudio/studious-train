@@ -123,7 +123,7 @@ function scriviInvito(testo) {
       .split(LINK)
       .map((pezzo, i) => (i % 2 ? Object.assign(document.createElement("b"), { className: "link", textContent: pezzo }) : pezzo)),
   );
-  adattaLarghezza(premio.invito, 27, 19);
+  adattaLarghezza(premio.invito, 30, 20);
 }
 
 function disegnaPremio(s) {
@@ -186,10 +186,10 @@ let timerTimbro = null;
 const CORPI = {
   titolo: [52, 24], // titolo della traccia in ascolto
   artista: [32, 18], // artista in ascolto
-  categoria: [24, 14], // nome della voce (Beat, Voce, Mix, Chat)
-  giudice: [22, 12], // nome del giudice (per la chat: «37 voti»)
-  rigaTraccia: [30, 18], // titolo di una riga della classifica
-  rigaArtista: [21, 13], // artista di una riga della classifica
+  categoria: [26, 14], // nome della voce (Beat, Voce, Mix, Chat)
+  giudice: [24, 12], // nome del giudice (per la chat: «37 voti»)
+  rigaTraccia: [32, 18], // titolo di una riga della classifica
+  rigaArtista: [22, 14], // artista di una riga della classifica
   etichettaTimer: [22, 12], // «Il vincitore si decide tra»
 };
 const adatta = (nodo, chiave) => adattaTesto(nodo, ...CORPI[chiave]);
@@ -612,7 +612,7 @@ function rimisura() {
   }
   adatta(timer.etichetta, "etichettaTimer");
   if (premio.testo.textContent) adattaLarghezza(premio.testo, 76, 40);
-  adattaLarghezza(premio.invito, 27, 19);
+  adattaLarghezza(premio.invito, 30, 20);
   for (const riga of righeClassifica.values()) {
     adatta(riga.traccia, "rigaTraccia");
     adatta(riga.artista, "rigaArtista");

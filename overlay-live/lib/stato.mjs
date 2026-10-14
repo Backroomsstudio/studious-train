@@ -87,6 +87,8 @@ export function statoIniziale(config) {
     podcast: podcastIniziale(),
     // Tracce ascoltate nella serata (per «Oggi abbiamo ascoltato N tracce»).
     ascoltate: [],
+    // Tracce che aspettano ancora in coda su Nero (null = non si sa).
+    codaNero: null,
   };
 }
 
@@ -369,6 +371,14 @@ export function registraAscolto(stato, ora) {
   if (ultima && ora - ultima.alle > PAUSA_NUOVA_LIVE_MS) stato.ascoltate = [];
   stato.ascoltate.push({ id: t.id, titolo: t.titolo, artista: t.artista, tier: t.tier, alle: ora });
   if (stato.ascoltate.length > MAX_ASCOLTATE) stato.ascoltate.splice(0, stato.ascoltate.length - MAX_ASCOLTATE);
+  return true;
+}
+
+// Le tracce che aspettano ancora in coda su Nero (per «Traccia 15 di 38 · mancano 23»). Dà true se è cambiato.
+export function impostaCodaNero(stato, inAttesa) {
+  const nuovo = Number.isSafeInteger(inAttesa) && inAttesa >= 0 ? inAttesa : null;
+  if (stato.codaNero === nuovo) return false;
+  stato.codaNero = nuovo;
   return true;
 }
 
@@ -656,5 +666,6 @@ export function istantanea(stato, config, ora) {
     reaction: stato.reaction,
     podcast: stato.podcast,
     ascoltate: ascoltateNellaLive(stato, ora),
+    codaNero: Number.isSafeInteger(stato.codaNero) && stato.codaNero >= 0 ? stato.codaNero : null,
   };
 }

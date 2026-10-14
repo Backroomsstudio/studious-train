@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as S from "../lib/stato.mjs";
 import { suoniSenzaPremio, richiesteScheda, suonaIn, suoniTraccia, PAUSA_MIN_TRACCIA_MS } from "../public/js/eventi-sonori.js";
-import { vociBarra, breve, stimaGiroSecondi, MIN_ASCOLTATE } from "../public/js/barra.js";
+import { vociBarra, breve, stimaGiroSecondi, avanzamentoCoda, MIN_ASCOLTATE } from "../public/js/barra.js";
+import { inAttesaInCoda } from "../lib/nero.mjs";
 
 const config = { giudici: { beat: "A", voce: "B", mix: "C" }, pesi: { beat: 1, voce: 1, mix: 1, chat: 1 }, topN: 3, premio: "Mix" };
 const foto = (stato, ora = 0) => structuredClone(S.istantanea(stato, config, ora));
@@ -342,4 +343,32 @@ test("richiamo: niente campanella se ce n'è già uno in corso; ogni suono dice 
   assert.deepEqual(suoniSenzaPremio(s, s, richiamo), [{ nome: "premio", parte: "banner" }]);
   stato.corrente = S.tracciaVuota({ titolo: "Cromo", artista: "Vale B" });
   assert.equal(suoniSenzaPremio(s, foto(stato))[0].parte, "scheda");
+});
+
+test("coda Nero: «Traccia 15 di 38 · mancano 23» con il totale vero della coda", () => {
+  const stato = statoSenzaPremio();
+  assert.equal(foto(stato).codaNero, null, "senza lettura dalla coda il totale non si conosce");
+  assert.equal(S.impostaCodaNero(stato, 23), true);
+  assert.equal(S.impostaCodaNero(stato, 23), false, "stesso valore: niente cambio");
+  assert.equal(S.impostaCodaNero(stato, -4), true, "valore non valido: totale sconosciuto");
+  assert.equal(foto(stato).codaNero, null);
+  S.impostaCodaNero(stato, 23);
+  for (let i = 0; i < 15; i++) stato.ascoltate.push({ id: `a${i}`, titolo: `T${i}`, artista: "A", alle: 0 });
+  stato.corrente = S.tracciaVuota({ titolo: "Satellite", artista: "Mira" });
+  const foto15 = foto(stato);
+  assert.equal(foto15.codaNero, 23);
+  assert.deepEqual(avanzamentoCoda({ ascoltate: 15, codaNero: 23 }), { numero: 15, totale: 38, mancano: 23, testo: "Traccia 15 di 38 · mancano 23 canzoni" });
+  assert.equal(avanzamentoCoda({ ascoltate: 38, codaNero: 0 }).testo, "Traccia 38 di 38 · è l'ultima");
+  assert.equal(avanzamentoCoda({ ascoltate: 4, codaNero: 1 }).testo, "Traccia 4 di 5 · manca 1 canzone");
+  assert.equal(avanzamentoCoda({ ascoltate: 4, codaNero: null }), null);
+  assert.equal(avanzamentoCoda({ ascoltate: 0, codaNero: 9 }), null);
+  const voci = vociBarra(foto15);
+  assert.equal(voci.find((v) => v.tipo === "ascoltate").testo, "Traccia 15 di 38 · mancano 23 canzoni");
+});
+
+test("Nero: le tracce in coda si leggono da queueCount o dalla lunghezza di queue", () => {
+  assert.equal(inAttesaInCoda({ meta: { queueCount: 23 }, queue: [] }), 23);
+  assert.equal(inAttesaInCoda({ queue: [{}, {}, {}] }), 3);
+  assert.equal(inAttesaInCoda({ meta: { queueCount: "x" } }), null);
+  assert.equal(inAttesaInCoda(null), null);
 });

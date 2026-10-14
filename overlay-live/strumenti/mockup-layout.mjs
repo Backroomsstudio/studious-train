@@ -63,10 +63,10 @@ const NOMI_FILE = { gara: { base: "verticale", "ultimi-minuti": "ultimi-minuti",
 export const CORPI_GARA = {
   titolo: { selettore: "#t-titolo", pezzo: "tabellone", base: 52, minimo: 24 },
   artista: { selettore: "#t-artista", pezzo: "tabellone", base: 32, minimo: 18 },
-  categoria: { selettore: ".cat-nome", pezzo: "tabellone", base: 24, minimo: 14 },
-  giudice: { selettore: ".cat-giudice", pezzo: "tabellone", base: 22, minimo: 12 },
-  rigaTraccia: { selettore: ".cl-traccia-testo", pezzo: "classifica", base: 30, minimo: 18 },
-  rigaArtista: { selettore: ".cl-artista", pezzo: "classifica", base: 21, minimo: 13 },
+  categoria: { selettore: ".cat-nome", pezzo: "tabellone", base: 26, minimo: 14 },
+  giudice: { selettore: ".cat-giudice", pezzo: "tabellone", base: 24, minimo: 12 },
+  rigaTraccia: { selettore: ".cl-traccia-testo", pezzo: "classifica", base: 32, minimo: 18 },
+  rigaArtista: { selettore: ".cl-artista", pezzo: "classifica", base: 22, minimo: 14 },
   etichettaTimer: { selettore: ".timer-etichetta", pezzo: "timer", base: 22, minimo: 12 },
 };
 // Testi che non si adattano (corpo fisso) ma devono comunque restare nel riquadro e senza lettere tagliate.

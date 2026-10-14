@@ -180,7 +180,7 @@ body.anteprima {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font: 800 27px/1 var(--font-dati);
+  font: 800 30px/1 var(--font-dati);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: #fff;
@@ -251,7 +251,7 @@ body.anteprima {
 }
 
 .cl-lista {
-  --h: 58px;
+  --h: 60px;
   --gap: 6px;
   --num: 46px;
   position: relative;
@@ -392,16 +392,16 @@ body.anteprima {
 .cl-traccia-testo {
   box-sizing: border-box;
   min-width: 0;
-  height: 31px;
-  font: 900 30px/1.04 var(--font-premio);
+  height: 34px;
+  font: 900 32px/1.04 var(--font-premio);
   text-transform: uppercase;
   letter-spacing: 0.01em;
 }
 .cl-artista {
   box-sizing: border-box;
-  height: 22px;
+  height: 24px;
   margin-top: 1px;
-  font: 700 21px/1.04 var(--font-premio);
+  font: 700 22px/1.04 var(--font-premio);
   opacity: 0.82;
 }
 .cl-corona {
@@ -846,8 +846,8 @@ body.anteprima {
 .cat-nome {
   grid-area: nome;
   box-sizing: border-box;
-  height: 24px;
-  font: 900 24px/1 var(--font-dati);
+  height: 26px;
+  font: 900 26px/1 var(--font-dati);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--colore-nome);
@@ -860,9 +860,9 @@ body.anteprima {
   align-self: center;
   box-sizing: border-box;
   min-width: 0;
-  height: 28px;
+  height: 30px;
   /* testo in linea (non flex): così, se il nome non entra nemmeno al corpo minimo, finisce con i puntini */
-  font: 700 22px/28px var(--font-dati);
+  font: 700 24px/30px var(--font-dati);
   color: #fff;
   white-space: nowrap;
   overflow: hidden;

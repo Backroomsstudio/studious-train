@@ -4,6 +4,16 @@ export const ETICHETTE_TIER = { skip: "Skip", superskip: "Super Skip", throne: "
 // «Oggi abbiamo ascoltato N tracce» compare da questo numero in su (con 1 o 2 non convince nessuno).
 export const MIN_ASCOLTATE = 3;
 
+// «Traccia 15 di 38 · mancano 23 canzoni»: il numero della traccia in ascolto sul totale vero (ascoltate + ancora in coda su Nero),
+// così chi entra capisce quanta fila c'è davanti e che conviene skippare. null se la coda non si conosce o non è partito niente.
+export function avanzamentoCoda(s) {
+  const numero = s?.ascoltate;
+  const mancano = s?.codaNero;
+  if (!Number.isSafeInteger(numero) || numero < 1 || !Number.isSafeInteger(mancano) || mancano < 0) return null;
+  const resto = mancano === 0 ? "è l'ultima" : mancano === 1 ? "manca 1 canzone" : `mancano ${mancano} canzoni`;
+  return { numero, totale: numero + mancano, mancano, testo: `Traccia ${numero} di ${numero + mancano} · ${resto}` };
+}
+
 export function breve(testo, max) {
   const t = String(testo ?? "").trim();
   return t.length > max ? `${t.slice(0, max - 1).trimEnd()}…` : t;
@@ -26,8 +36,11 @@ export function vociBarra(s) {
           tier: ETICHETTE_TIER[t.tier] ? t.tier : null,
         }
       : null;
+  const avanzamento = avanzamentoCoda(s);
   const ascoltate =
-    sp.ascoltateNellaBarra && s.ascoltate >= MIN_ASCOLTATE
+    sp.ascoltateNellaBarra && avanzamento
+      ? { tipo: "ascoltate", chiave: `coda|${avanzamento.numero}|${avanzamento.totale}`, icone: ["cuffie"], etichetta: "In ascolto", testo: avanzamento.testo }
+      : sp.ascoltateNellaBarra && s.ascoltate >= MIN_ASCOLTATE
       ? { tipo: "ascoltate", chiave: `ascoltate|${s.ascoltate}`, icone: ["cuffie"], etichetta: "Oggi abbiamo ascoltato", testo: `${s.ascoltate} tracce` }
       : null;
   const [primo, ...resto] = social;

@@ -43,7 +43,15 @@ export function tracciaInOnda(coda) {
   return { neroId: c.streamSubmissionId, titolo: testo(c.submissionName), artista: testo(c.submitterName), tier: tier(c.tier) };
 }
 
-// Controlla la coda ogni `intervallo` ms e chiama suInOnda con la traccia in riproduzione (o null).
+// Quante tracce aspettano ancora in coda su Nero (senza quella in riproduzione): `meta.queueCount`, o la lunghezza di `queue`.
+// null se la risposta non lo dice.
+export function inAttesaInCoda(coda) {
+  const n = coda?.meta?.queueCount;
+  if (Number.isSafeInteger(n) && n >= 0) return n;
+  return Array.isArray(coda?.queue) ? coda.queue.length : null;
+}
+
+// Controlla la coda ogni `intervallo` ms e chiama suInOnda(traccia, { inAttesa }) con la traccia in riproduzione (o null) e le tracce ancora in coda.
 // suStato riceve { stato: "spento" | "attesa" | "collegato", messaggio } per la regia.
 export function avviaNero(username, suInOnda, suStato = () => {}, { intervallo = 3000, scarica = fetch } = {}) {
   const nome = String(username ?? "").trim().replace(/^@/, "");
@@ -78,11 +86,12 @@ export function avviaNero(username, suInOnda, suStato = () => {}, { intervallo =
         suStato({ stato: "attesa", messaggio: `Nessuna sessione live su Nero per ${nome}: riprovo ogni 30 secondi` });
         prossimo = 30_000;
       } else {
-        const traccia = tracciaInOnda(await json(`/queue/${sessione}/slim?_t=${Date.now()}`));
+        const coda = await json(`/queue/${sessione}/slim?_t=${Date.now()}`);
+        const traccia = tracciaInOnda(coda);
         if (fermato) return;
         errori = 0;
         suStato({ stato: "collegato", messaggio: traccia ? `Su Nero suona «${traccia.titolo}» di ${traccia.artista}` : "Collegato a Nero: nessuna traccia in riproduzione" });
-        suInOnda(traccia);
+        suInOnda(traccia, { inAttesa: inAttesaInCoda(coda) });
       }
     } catch (e) {
       errori++;

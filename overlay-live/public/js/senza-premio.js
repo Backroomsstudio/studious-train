@@ -272,6 +272,7 @@ function disegnaBarra(s) {
   const sp = s.senzaPremio;
   barra.radice.classList.toggle("fuori", !s.visibili.barra);
   barra.radice.classList.toggle("senza-loghi", !sp.loghiBarra);
+  barra.radice.classList.toggle("pagata", Boolean(s.corrente.titolo.trim() && ETICHETTE_TIER[s.corrente.tier]));
   barra.filoCamera.classList.toggle("fuori", !(sp.filoCamera && s.visibili.barra));
 
   const nuova = vociBarra(s);

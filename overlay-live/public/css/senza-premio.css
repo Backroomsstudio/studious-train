@@ -521,30 +521,18 @@ body.sp.anteprima {
   background: linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.16) 45%, transparent 60%);
 }
 
-/* Per tier: chi paga si vede (e si vede più a lungo) */
-.sp-scheda.tier-skip::before {
-  background: var(--bordo-cromo);
-}
-.sp-scheda.tier-skip {
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 34px rgba(255, 255, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-}
-.sp-scheda.tier-superskip::before {
-  background: linear-gradient(135deg, #dddddd, #7e7e7e 30%, #7d7d7d 65%, #7e7e7e);
-}
-.sp-scheda.tier-superskip {
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 40px rgba(126, 126, 126, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-}
-.sp-scheda.tier-throne::before {
+/* Per tier: chi paga lo skip (Skip, Super Skip, Throne) vede la sua scheda tutta dorata; la corona resta del Throne */
+.sp-scheda:is(.tier-skip, .tier-superskip, .tier-throne)::before {
   padding: 3px;
   background: linear-gradient(135deg, #fff6c8 0%, #f2b52a 25%, #7a4a00 48%, #ffe17a 68%, #f2b52a 100%);
 }
-.sp-scheda.tier-throne {
+.sp-scheda:is(.tier-skip, .tier-superskip, .tier-throne) {
   background: radial-gradient(80% 120% at 50% 0%, rgba(255, 205, 70, 0.2), transparent 60%),
     radial-gradient(120% 90% at 0% 100%, rgba(125, 125, 125, 0.3), transparent 60%),
     linear-gradient(180deg, rgba(26, 26, 26, 0.96), rgba(8, 8, 8, 0.97));
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 46px rgba(255, 196, 50, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
-.sp-scheda.tier-throne .sp-scheda-titolo {
+.sp-scheda:is(.tier-skip, .tier-superskip, .tier-throne) .sp-scheda-titolo {
   background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.95) 50%, transparent 60%) no-repeat, var(--oro-testo);
   background-size: 250% 100%, 100% 100%;
   background-position: 170% 0, 0 0;
@@ -558,7 +546,7 @@ body.sp.anteprima {
   display: block;
   animation: corona-arriva 1.1s cubic-bezier(0.2, 1.6, 0.3, 1) 0.5s both, corona 2.6s ease-in-out 1.6s infinite;
 }
-.sp-scheda.tier-throne .sp-etichetta-disco {
+.sp-scheda:is(.tier-skip, .tier-superskip, .tier-throne) .sp-etichetta-disco {
   background: var(--podio-oro);
 }
 
@@ -621,6 +609,11 @@ body.sp.anteprima {
   background: linear-gradient(180deg, #151515, #080610);
   box-shadow: 0 -8px 26px rgba(0, 0, 0, 0.45), 0 0 30px rgba(125, 125, 125, 0.25);
   transition: opacity 0.6s ease, transform 0.6s ease;
+}
+/* Con una traccia pagata in ascolto anche la barra diventa dorata */
+.sp-barra.pagata {
+  background: linear-gradient(180deg, #3a2800, #150f00);
+  box-shadow: 0 -8px 26px rgba(0, 0, 0, 0.45), 0 0 34px rgba(255, 196, 50, 0.55), inset 0 2px 0 #f2b52a, inset 0 -2px 0 #f2b52a;
 }
 .sp-barra.fuori {
   transform: translateY(30px) !important;

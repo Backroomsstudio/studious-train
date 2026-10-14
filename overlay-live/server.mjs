@@ -106,6 +106,7 @@ function caricaStato() {
     salvato.podcast = F.fondiPodcast(salvato.podcast);
     if (!S.LAYOUT.includes(salvato.layout)) salvato.layout = iniziale.layout;
     salvato.ascoltate = Array.isArray(salvato.ascoltate) ? salvato.ascoltate.filter((a) => a && typeof a === "object") : [];
+    salvato.codaNero = null; // si rilegge da Nero ogni 3 secondi
     // Stato di una versione precedente (tre voti per categoria): la traccia in corso riparte da zero.
     if (Array.isArray(salvato.corrente?.voti?.beat)) salvato.corrente = S.tracciaVuota();
     if (Array.isArray(salvato.giudici)) salvato.giudici = { ...config.giudici };
@@ -192,7 +193,11 @@ function registraCommento({ piattaforma, utente, testo }) {
 function collegaNero() {
   avviaNero(
     config.nero.username,
-    (traccia) => S.tracciaDaNero(stato, traccia, { ora: Date.now(), attesaMs: ATTESA_DOPO_CONFERMA_MS }) && cambiato(),
+    (traccia, { inAttesa } = {}) => {
+      const coda = S.impostaCodaNero(stato, inAttesa);
+      const nuova = S.tracciaDaNero(stato, traccia, { ora: Date.now(), attesaMs: ATTESA_DOPO_CONFERMA_MS });
+      if (coda || nuova) cambiato();
+    },
     (s) => {
       if (s.stato === statoNero.stato && s.messaggio === statoNero.messaggio) return;
       statoNero = s;
