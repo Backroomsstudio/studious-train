@@ -12,17 +12,20 @@ async function conServer(opzioni, prova) {
   }
 }
 
-test("e2e: con lo slot «Rosa» e il regalo vuoto, regaloEvento Rosa crea una richiesta Drum (solo con il Drum in onda); con regalo «5655» conta per ID", () =>
+test("e2e: con il regalo vuoto nessun regalo salta la coda (lo slot «Rosa» è solo un testo; TikTok manda «Rose»); scelto un regalo, vale per nome o per ID e solo con il Drum in onda", () =>
   conServer({}, async (srv) => {
-    await srv.api("regaloEvento", { nome: "Rosa", utente: "prima" });
+    await srv.api("regaloEvento", { nome: "Rose", utente: "prima" });
     assert.equal((await srv.statoCorrente()).drum.richieste.coda.length, 0, "con un altro layout in onda non si accoda");
     await srv.api("layout", { nome: "drum" });
-    await srv.api("regaloEvento", { nome: "rosa", utente: "mario" });
+    for (const nome of ["Rosa", "Rose", "Leone"]) await srv.api("regaloEvento", { nome, utente: "mario" });
+    assert.equal((await srv.statoCorrente()).drum.richieste.coda.length, 0, "regalo non scelto: niente richieste, nemmeno per lo slot mostrato");
+    assert.equal((await srv.api("drumPriorita", { regalo: "rose" })).ok, true);
+    await srv.api("regaloEvento", { nome: "Rose", utente: "mario" });
     await srv.api("regaloEvento", { nome: "Leone", utente: "lucia" });
     let coda = (await srv.statoCorrente()).drum.richieste.coda;
-    assert.deepEqual(coda.map((r) => [r.utente, r.nome]), [["mario", "rosa"]]);
+    assert.deepEqual(coda.map((r) => [r.utente, r.nome]), [["mario", "Rose"]]);
     assert.equal((await srv.api("drumPriorita", { regalo: "5655" })).ok, true);
-    await srv.api("regaloEvento", { nome: "Rosa", utente: "anna" });
+    await srv.api("regaloEvento", { nome: "Rose", utente: "anna" });
     assert.equal((await srv.statoCorrente()).drum.richieste.coda.length, 1, "scelto per ID: il nome non basta più");
     await srv.api("regaloEvento", { nome: "Rose", id: 5655, utente: "anna" });
     coda = (await srv.statoCorrente()).drum.richieste.coda;

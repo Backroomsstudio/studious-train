@@ -334,9 +334,11 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn, 
     formato: "drum",
     conBrano: false,
     leggiRegalo: (s) => s.drum.priorita.regalo,
-    regaloEffettivo: (s) => s.drum.priorita.regalo.trim() || s.drum.priorita.slot,
+    regaloEffettivo: (s) => s.drum.priorita.regalo.trim(),
     mandaRegalo: (regalo) => invia("drumPriorita", { regalo }),
   });
+  const avvisoRegaloDrum = campoDrum("dr-regalo-avviso");
+  const mostraAvvisoRegalo = (s) => (avvisoRegaloDrum.hidden = Boolean(s.drum.priorita.regalo.trim()));
   function scriviStriscia(valore) {
     const giro = stato ? stimaGiroSecondi(vociStriscia(stato), valore) : 0;
     campoDrum("dr-striscia-vel-testo").textContent = `${valore} px/s · un giro ≈ ${giro} s`;
@@ -418,6 +420,7 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn, 
     }
     disegnaElenco(d);
     richiesteDrum.disegna(s);
+    mostraAvvisoRegalo(s);
     const velocita = campoDrum("dr-striscia-vel");
     if (velocita !== document.activeElement) velocita.value = d.striscia.velocita;
     scriviStriscia(Number(velocita.value));

@@ -40,7 +40,7 @@ export function creaGoal({ palco, chiave, statico = false }) {
       if (!statico && !primo && !eraVuoto) rilancia(riga.numero, "scatto");
     }
     riga.prefisso.textContent = parti.prefisso;
-    riga.unita.textContent = `${parti.unita} ${parti.suffisso}`;
+    riga.unita.textContent = [parti.unita, parti.suffisso].filter(Boolean).join(" ");
     // Un numero lungo (1.250.000) o un testo largo rimpicciolisce tutta la riga, mai oltre il 60%.
     riga.riga.style.setProperty("--gl-k", "1");
     const larghezza = riga.riga.clientWidth;

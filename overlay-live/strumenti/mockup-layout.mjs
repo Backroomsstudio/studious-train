@@ -600,7 +600,35 @@ async function provaSchedaAnimata() {
   console.log("ok scheda dal vivo: fissa, spot dall'alto e rientro della traccia, ricarica, spenta e riaccesa, a tempo");
 }
 
+// ----- Voti dei giudici nella regia (--regia-voti) -----
+// Un voto fuori dall'intervallo (3 con 4–10) deve dare l'avviso «Il voto deve essere tra 4 e 10» e non cambiare quello in onda.
+async function provaRegiaVoti() {
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const errori = [];
+  const punteggio = async () => (await fetch(`${base}/api/stato`).then((r) => r.json())).corrente?.punteggi?.beat;
+  await comando("traccia", { titolo: "Prova", artista: "Lince" });
+  const pagina = await browser.newPage({ viewport: { width: 1100, height: 2600 } });
+  await pagina.goto(`${base}/regia.html`);
+  const beat = pagina.locator('#voti input[data-cat="beat"]');
+  await beat.waitFor();
+  await beat.fill("7");
+  await pagina.waitForFunction(() => document.querySelector("#voti input[data-cat=beat]").value === "7");
+  await pagina.waitForTimeout(500);
+  if ((await punteggio()) !== 7) errori.push(`il voto 7 doveva andare in onda (c'è ${await punteggio()})`);
+  await beat.fill("3");
+  await pagina.locator("#avvisi .avviso.errore", { hasText: /tra 4 e 10/ }).first().waitFor({ timeout: 3000 }).catch(() => errori.push("un voto di 3 doveva mostrare l'avviso «Il voto deve essere tra 4 e 10»"));
+  if ((await punteggio()) !== 7) errori.push(`un voto di 3 non doveva cambiare quello in onda (c'è ${await punteggio()})`);
+  await browser.close();
+  if (errori.length) {
+    console.error(`Voti nella regia: problemi\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log("ok voti nella regia: 7 va in onda, 3 dà l'avviso e non cambia niente");
+}
+
 async function main() {
+  if (args.includes("--regia-voti")) return provaRegiaVoti();
   if (args.includes("--scheda-animata")) return provaSchedaAnimata();  if (args.includes("--regia-goal")) return provaRegiaGoal();
   if (controlli) return provaControlli();
   const tabella = GEOMETRIA[layout]?.verticale;

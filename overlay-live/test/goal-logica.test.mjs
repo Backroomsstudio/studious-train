@@ -30,7 +30,16 @@ test("testiGoal: gli stessi «mancano» di lib/goal.mjs (passo, obiettivo saltat
     assert.equal(numero, attesi === 0 ? 0 : attesi, `${totale}/${obiettivo}/${passo}`);
     assert.ok(obiettivoAttuale(totale, obiettivo, passo) >= totale);
   }
-  assert.equal(testiGoal(goal({ totale: 100, obiettivo: 100, passo: 0 })).like, "Mancano 0 like al nuovo obiettivo");
+  assert.equal(testiGoal(goal({ totale: 100, obiettivo: 100, passo: 0 })).like, "Obiettivo raggiunto!");
+});
+
+test("passo 0 e obiettivo raggiunto: la riga dice «Obiettivo raggiunto!» (like e follower), non «Mancano 0»", () => {
+  const g = goal({ totale: 20000, obiettivo: 15000, passo: 0 }, { totale: 900, obiettivo: 500, passo: 0 });
+  assert.deepEqual(testiGoal(g), { like: "Obiettivo raggiunto!", follower: "Obiettivo raggiunto!" });
+  const p = partiGoal(g).like;
+  assert.equal(p.raggiunto, true);
+  assert.equal([p.prefisso, p.numero].join(""), "", "nessun numero da mostrare");
+  assert.equal(testiGoal(goal({ totale: 100, obiettivo: 15000, passo: 0 })).like, "Mancano 14.900 like al nuovo obiettivo", "prima di raggiungerlo si conta come sempre");
 });
 
 test("chiaveGoal: podcast e reaction hanno la versione orizzontale", () => {

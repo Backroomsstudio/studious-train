@@ -670,9 +670,10 @@
 
           <h3>Regalo che salta la coda</h3>
           <form id="dr-regalo" class="modulo gl-azioni" autocomplete="off">
-            <label>Regalo <input name="regalo" maxlength="40" placeholder="nome o ID: vuoto = il regalo mostrato"></label>
+            <label>Regalo <input name="regalo" maxlength="40" placeholder="nome inglese (es. Rose) o ID"></label>
             <button>Salva</button>
           </form>
+          <p class="nota avviso" id="dr-regalo-avviso" hidden>Nessun regalo scelto: finché non ne scrivete uno, nessuno salta la coda. TikTok manda i nomi in inglese (la Rosa è «Rose»): copiate il nome dai «Regali visti» qui sotto, o usate l'ID.</p>
           <p class="nota">Quando arriva quel regalo compare qui sotto «Salta la coda: @nome (Rosa)»: quando avete fatto suonare il brano premete <b>Fatta</b>. Si accodano solo con il Drum in onda.</p>
           <div class="regali-visti" id="dr-visti"></div>
           <ol class="lista richieste" id="dr-coda"></ol>
@@ -898,7 +899,7 @@
 
           <h3>Richieste con regalo</h3>
           <form id="re-regalo" class="modulo gl-azioni" autocomplete="off">
-            <label>Regalo per la richiesta <input name="regalo" maxlength="40" placeholder="nome o ID (es. Rosa)"></label>
+            <label>Regalo per la richiesta <input name="regalo" maxlength="40" placeholder="nome inglese (es. Rose) o ID"></label>
             <label>in onda per <input name="durata" type="number" min="3" max="60" step="1" inputmode="numeric" aria-label="Secondi in onda"> s</label>
             <button>Salva</button>
           </form>

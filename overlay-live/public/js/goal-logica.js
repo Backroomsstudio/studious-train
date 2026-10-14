@@ -38,11 +38,13 @@ function mancano(totale, obiettivo, passo) {
 function parti(gruppo, unita) {
   const n = mancano(gruppo?.totale, gruppo?.obiettivo, gruppo?.passo);
   if (n === null) return null;
+  // Con passo 0 e l'obiettivo raggiunto non c'è un «prossimo»: la riga lo dice invece di «Mancano 0».
+  if (n === 0) return { prefisso: "", numero: "", unita: "Obiettivo", suffisso: "raggiunto!", raggiunto: true };
   return { prefisso: n === 1 ? "Manca" : "Mancano", numero: migliaia(n), unita, suffisso: "al nuovo obiettivo" };
 }
 export const partiGoal = (goal) => ({ like: parti(goal?.like, "like"), follower: parti(goal?.follower, "follower") });
 
-const frase = (p) => (p ? `${p.prefisso} ${p.numero} ${p.unita} ${p.suffisso}` : null);
+const frase = (p) => (p ? (p.raggiunto ? "Obiettivo raggiunto!" : `${p.prefisso} ${p.numero} ${p.unita} ${p.suffisso}`) : null);
 export function testiGoal(goal) {
   const p = partiGoal(goal);
   return { like: frase(p.like), follower: frase(p.follower) };

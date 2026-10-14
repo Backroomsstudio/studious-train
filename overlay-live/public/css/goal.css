@@ -30,6 +30,10 @@
   min-width: 0;
   overflow: hidden;
 }
+.gl-numero:empty,
+.gl-prefisso:empty {
+  display: none; /* «Obiettivo raggiunto!» (passo 0) non ha né numero né prefisso */
+}
 .gl-riga[hidden] {
   display: none;
 }

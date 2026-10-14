@@ -260,8 +260,9 @@ export function impostaPriorita(stato, dati) {
   stato.drum.priorita = priorita;
 }
 
-// Il regalo che fa saltare la coda: quello scelto, oppure (vuoto) lo slot mostrato nell'istruzione.
-export const regaloDelDrum = (drum) => drum.priorita.regalo.trim() || drum.priorita.slot;
+// Il regalo che fa saltare la coda: solo quello scelto in regia (nome inglese come lo manda TikTok, es. «Rose», oppure ID). Vuoto =
+// nessun regalo: lo slot dell'istruzione è un testo («Rosa») e non coincide con il nome che arriva da TikTok.
+export const regaloDelDrum = (drum) => drum.priorita.regalo.trim();
 
 // La striscia a scorrimento in alto: la velocità (40–160 px/s).
 export function impostaStriscia(stato, dati) {

@@ -642,9 +642,9 @@ test("striscia e richieste: partenza, velocità 40–160, stato salvato rotto, n
   assert.equal(D.drumNuovaSerata(s.drum).striscia.velocita, 160, "e tiene la striscia");
 });
 
-test("regalo del Drum: quello scelto, o lo slot se è vuoto", () => {
+test("regalo del Drum: quello scelto; vuoto resta vuoto (lo slot è solo il testo mostrato, TikTok manda i nomi inglesi)", () => {
   const d = D.drumIniziale();
-  assert.equal(D.regaloDelDrum(d), "Rosa", "regalo vuoto: lo slot");
+  assert.equal(D.regaloDelDrum(d), "", "regalo vuoto: nessuno");
   d.priorita.regalo = "5655";
   assert.equal(D.regaloDelDrum(d), "5655");
 });

@@ -361,10 +361,12 @@ function inviaVoto(input) {
   attese.delete(input);
   const testo = input.value.trim();
   const valore = testo === "" ? null : Number(testo);
-  const { min, max } = stato.votazione;
-  const valido = valore === null || (valore >= min && valore <= max);
-  input.classList.toggle("errato", !valido);
-  return valido ? invia("voto", { categoria: input.dataset.cat, valore }) : null;
+  // Il controllo dell'intervallo lo fa il server: un voto fuori (3 con 4–10) dà l'avviso «Il voto deve essere tra 4 e 10» e il
+  // campo, appena non è più in uso, torna al voto in onda. Il rosso resta finché non torna.
+  return invia("voto", { categoria: input.dataset.cat, valore }).then((esito) => {
+    input.classList.toggle("errato", !esito.ok);
+    return esito;
+  });
 }
 
 async function svuotaVoti() {
