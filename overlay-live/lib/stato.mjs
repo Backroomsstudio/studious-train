@@ -24,7 +24,7 @@ export const WIDGET = [
   "premio", "tabellone", "classifica", "timer", "banner", "barra", "scheda", "targa", "barraStudio", "comparse",
   "barreVita", "modalita", "timerBattle", "giudiciBattle", "popupBattle", "vittoriaBattle", "bracket", "albero", "goal",
   "drumCornice", "drumTraguardi", "drumBrano", "drumPriorita", "drumBarra",
-  "prTitolo", "prBarra", "reTitolo", "reBarra",
+  "prTitolo", "prBarra", "reTitolo", "reBarra", "reScaletta", "reRichiesta",
   "poTitolo", "poLinea", "poTematiche", "poBarra",
 ];
 // Partono spenti: il tabellone del battle, il tabellone ad albero della gara e i due moduli «a comando» del podcast (linea di

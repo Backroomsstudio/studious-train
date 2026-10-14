@@ -84,13 +84,13 @@ test("produzione: limiti e tempo reale", () => {
 test("reaction: partenza e limiti", () => {
   const r = F.reactionIniziale();
   assert.equal(r.titolo.testo, "REACTION RELEASE DELLA SETTIMANA");
-  assert.deepEqual(r, { titolo: { sopra: "Ogni giovedì · ore 01:00", testo: "REACTION RELEASE DELLA SETTIMANA", sotto: "" }, velocita: 80, testi: testiBase("reaction") });
+  assert.deepEqual(r, { titolo: { sopra: "Ogni giovedì · ore 01:00", testo: "REACTION RELEASE DELLA SETTIMANA", sotto: "" }, velocita: 80, testi: testiBase("reaction"), scaletta: { titolo: "In scaletta stasera", voci: [], modo: "fisso", ogniMinuti: 5, durataSecondi: 15 }, richieste: { regalo: "", coda: [] }, durataRichiesta: 10 });
   const s = nuovaReaction();
   F.impostaReaction(s, { titolo: { testo: "x".repeat(60) } });
   assert.equal(s.reaction.titolo.testo.length, 60);
   const prima = structuredClone(s.reaction);
   assert.throws(() => F.impostaReaction(s, { titolo: { testo: "x".repeat(61) } }), /60/);
-  assert.throws(() => F.impostaReaction(s, { titolo: { sopra: "x".repeat(41) } }), /40/);
+  assert.throws(() => F.impostaReaction(s, { titolo: { sopra: "x".repeat(49) } }), /48/);
   assert.throws(() => F.impostaReaction(s, { titolo: { sotto: "x".repeat(61) } }), /60/);
   assert.throws(() => F.impostaReaction(s, { titolo: { testo: " " } }), /vuoto/);
   assert.throws(() => F.impostaReaction(s, { velocita: 39 }), /40/);
@@ -100,8 +100,8 @@ test("reaction: partenza e limiti", () => {
   assert.deepEqual(s.reaction, prima, "un errore lascia lo stato com'era");
   F.impostaReaction(s, { titolo: { sopra: "" } });
   assert.equal(s.reaction.titolo.sopra, "", "il sopra si svuota");
-  F.impostaReaction(s, { titolo: { sopra: "y".repeat(40), sotto: "z".repeat(60) }, velocita: 100 });
-  assert.deepEqual([s.reaction.titolo.sopra.length, s.reaction.titolo.sotto.length, s.reaction.velocita], [40, 60, 100]);
+  F.impostaReaction(s, { titolo: { sopra: "y".repeat(48), sotto: "z".repeat(60) }, velocita: 100 });
+  assert.deepEqual([s.reaction.titolo.sopra.length, s.reaction.titolo.sotto.length, s.reaction.velocita], [48, 60, 100]);
   assert.deepEqual(Object.keys(s.reaction.titolo), ["sopra", "testo", "sotto"], "nessun preset");
 });
 

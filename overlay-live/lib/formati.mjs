@@ -1,6 +1,7 @@
 // Regole dei layout «Studio Production», «Reaction Release» e «Back Rooms Podcast».
 // Solo funzioni pure: i modificatori lavorano su `stato.<formato>`, come per lo studio e il battle.
-import { ICONE, corpo, oggetto, testo, velocitaFascia } from "./validazione.mjs";
+import { ICONE, corpo, numeroTra, oggetto, testo, velocitaFascia } from "./validazione.mjs";
+import { controllaRichieste, impostaMappatura, richiesteIniziali } from "./regali.mjs";
 import { controllaTesti, testiBase } from "./testi.mjs";
 
 // ---------- Titolo del layout (produzione, reaction e podcast) ----------
@@ -15,7 +16,7 @@ export const PRESET_TITOLI = {
 // Righe del titolo di ogni formato con il loro limite di caratteri (il titolo vero non può mancare).
 const LIMITI_TITOLO = {
   produzione: { sopra: 32, testo: 28, sotto: 48 },
-  reaction: { sopra: 40, testo: 60, sotto: 60 },
+  reaction: { sopra: 48, testo: 60, sotto: 60 },
   podcast: { testo: 32, sotto: 48 },
 };
 const NOMI_RIGHE = { sopra: "Riga sopra il titolo", testo: "Titolo", sotto: "Riga sotto il titolo" };
@@ -32,7 +33,34 @@ export function reactionIniziale() {
     titolo: { sopra: "Ogni giovedì · ore 01:00", testo: "REACTION RELEASE DELLA SETTIMANA", sotto: "" },
     velocita: 80,
     testi: testiBase("reaction"),
+    // Le tracce della serata (scritte dalla regia): sempre in onda, oppure a comparsa ogni `ogniMinuti` per `durataSecondi`.
+    scaletta: { titolo: "In scaletta stasera", voci: [], modo: "fisso", ogniMinuti: 5, durataSecondi: 15 },
+    // Richieste dei donatori: `regalo` è il regalo che le fa partire; la regia scrive a mano il brano di ognuna.
+    richieste: richiesteIniziali(),
+    durataRichiesta: 10, // secondi in cui una richiesta resta in vista quando va in onda
   };
+}
+
+export const MAX_VOCI_SCALETTA = 8;
+const MAX_VOCE = 60;
+
+// La scaletta con le modifiche date (anche un solo campo), controllate su una copia.
+function scalettaCon(attuale, modifiche) {
+  if (!oggetto(modifiche)) throw new Error("Scaletta: servono titolo, voci, modo, ogniMinuti o durataSecondi");
+  const nuova = { ...attuale, voci: [...attuale.voci] };
+  if (modifiche.titolo !== undefined) nuova.titolo = testo(modifiche.titolo, 32, "Titolo della scaletta");
+  if (modifiche.voci !== undefined) {
+    if (!Array.isArray(modifiche.voci)) throw new Error("Scaletta: serve l'elenco delle voci");
+    if (modifiche.voci.length > MAX_VOCI_SCALETTA) throw new Error(`Scaletta: al massimo ${MAX_VOCI_SCALETTA} voci`);
+    nuova.voci = modifiche.voci.map((v, i) => testo(v, MAX_VOCE, `Scaletta, voce ${i + 1}`, { obbligatorio: true }));
+  }
+  if (modifiche.modo !== undefined) {
+    if (!["fisso", "comparsa"].includes(modifiche.modo)) throw new Error("Modo della scaletta: fisso o comparsa");
+    nuova.modo = modifiche.modo;
+  }
+  if (modifiche.ogniMinuti !== undefined) nuova.ogniMinuti = numeroTra(modifiche.ogniMinuti, 1, 60, "Ogni quanti minuti compare la scaletta");
+  if (modifiche.durataSecondi !== undefined) nuova.durataSecondi = numeroTra(modifiche.durataSecondi, 5, 120, "Secondi in vista della scaletta");
+  return nuova;
 }
 
 // Il titolo con le modifiche date (anche una sola riga): ogni riga con il suo limite, le altre non entrano.
@@ -62,10 +90,13 @@ export function impostaProduzione(stato, dati) {
 
 // Come la produzione, con i limiti della reaction e senza preset: il titolo si scrive a mano.
 export function impostaReaction(stato, dati) {
-  const { titolo, velocita } = corpo(dati, "Reaction");
-  const nuova = { ...stato.reaction, titolo: { ...stato.reaction.titolo } };
+  const { titolo, velocita, scaletta, regalo, durataRichiesta } = corpo(dati, "Reaction");
+  const nuova = { ...stato.reaction, titolo: { ...stato.reaction.titolo }, richieste: structuredClone(stato.reaction.richieste) };
   if (titolo !== undefined) nuova.titolo = titoloCon(nuova.titolo, titolo, "reaction");
   if (velocita !== undefined) nuova.velocita = velocitaFascia(velocita);
+  if (scaletta !== undefined) nuova.scaletta = scalettaCon(nuova.scaletta, scaletta);
+  if (regalo !== undefined) impostaMappatura(nuova.richieste, regalo);
+  if (durataRichiesta !== undefined) nuova.durataRichiesta = numeroTra(durataRichiesta, 3, 60, "Secondi della richiesta in onda");
   stato.reaction = nuova;
 }
 
@@ -104,7 +135,16 @@ export function fondiProduzione(salvato) {
   return fondiFormato("produzione", iniziale, impostaProduzione, salvato);
 }
 
-export const fondiReaction = (salvato) => fondiFormato("reaction", reactionIniziale(), impostaReaction, salvato);
+// Scaletta e durata della richiesta si ritrovano campo per campo; la coda delle richieste passa dal controllo di regali.mjs.
+export function fondiReaction(salvato) {
+  const pezziDi = (s) => [
+    ...(oggetto(s.scaletta) ? ["titolo", "voci", "modo", "ogniMinuti", "durataSecondi"].filter((c) => s.scaletta[c] !== undefined).map((c) => ({ scaletta: { [c]: s.scaletta[c] } })) : []),
+    ...(s.durataRichiesta !== undefined ? [{ durataRichiesta: s.durataRichiesta }] : []),
+  ];
+  const reaction = fondiFormato("reaction", reactionIniziale(), impostaReaction, salvato, pezziDi);
+  if (oggetto(salvato)) reaction.richieste = controllaRichieste(salvato.richieste);
+  return reaction;
+}
 
 // ---------- Back Rooms Podcast ----------
 

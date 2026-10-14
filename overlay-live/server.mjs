@@ -15,7 +15,7 @@ import * as F from "./lib/formati.mjs";
 import { impostaTesti } from "./lib/testi.mjs";
 import { corpo, numeroTra, oggetto, siNo, testo, pulisciInstagram } from "./lib/validazione.mjs";
 import * as G from "./lib/goal.mjs";
-import { registraVisto, controllaVisti } from "./lib/regali.mjs";
+import { registraVisto, controllaVisti, aggiungiRichiesta, segnaRichiesta } from "./lib/regali.mjs";
 import { LimiteFrequenza, leggiAudio } from "./lib/audio.mjs";
 import { avviaTikTok, leggiVoto } from "./lib/chat.mjs";
 import { firmaValida, versoCoda, avviaNero } from "./lib/nero.mjs";
@@ -240,7 +240,10 @@ function registraLikeTikTok(dati) {
 
 // Un regalo (dalla live o da regaloEvento): finisce tra i «regali visti» (la regia sceglie da lì il regalo delle richieste).
 function registraRegalo(regalo) {
-  stato.regaliVisti = registraVisto(stato.regaliVisti, regalo, Date.now());
+  const ora = Date.now();
+  stato.regaliVisti = registraVisto(stato.regaliVisti, regalo, ora);
+  // Una richiesta si accoda solo per il layout in onda (le code degli altri non si riempiono di nascosto).
+  if (stato.layout === "reaction") aggiungiRichiesta(stato.reaction.richieste, regalo, ora);
   cambiato();
 }
 
@@ -615,6 +618,15 @@ const comandi = {
   reaction(args) {
     F.impostaReaction(stato, args);
   },
+  // Fa comparire la scaletta adesso (nel modo «a comparsa»).
+  scalettaMostra() {
+    emetti("scalettaMostra", { durataSecondi: stato.reaction.scaletta.durataSecondi });
+  },
+  // La regia mette in onda (con il brano scelto), chiude o scarta una richiesta: { formato, azione: inOnda|fatta|scarta, id, brano? }.
+  richiesta({ formato, azione, id, brano }) {
+    if (formato !== "reaction") throw new Error("Formato della richiesta: reaction");
+    segnaRichiesta(stato.reaction.richieste, { id, azione, brano });
+  },
   podcast(args) {
     F.impostaPodcast(stato, args);
   },
@@ -679,7 +691,7 @@ const comandi = {
       battle: B.battleNuovaSerata(battle),
       drum: D.drumNuovaSerata(drum),
       produzione,
-      reaction,
+      reaction: { ...reaction, richieste: { ...reaction.richieste, coda: [] } },
       podcast: F.podcastNuovaSerata(podcast),
     };
   },
