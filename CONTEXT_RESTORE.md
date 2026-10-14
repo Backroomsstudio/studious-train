@@ -25,7 +25,7 @@ Restyle + refactor di tutta la suite:
 
 Documenti: spec `overlay-live/docs/superpowers/specs/2026-10-08-restyling-grigi-goal-richieste-design.md` (18 sezioni), piano `overlay-live/docs/superpowers/plans/2026-10-08-restyling-grigi-goal-richieste.md` (27 task + Review Focus), ledger `.superpowers/sdd/2026-10-08-restyling-grigi-goal-richieste/progress.md` (git-ignored; contiene tutti i `Ruling:`).
 
-## 3. Cosa è FATTO (task 1–13, 345 test verdi)
+## 3. Cosa è FATTO (task 1–14, 356 test verdi; ultimo commit e36b03b, tutto pushato)
 
 | Task | Commit | Contenuto |
 |---|---|---|
@@ -42,6 +42,8 @@ Documenti: spec `overlay-live/docs/superpowers/specs/2026-10-08-restyling-grigi-
 | T11 | 502ba6a | `regaloTikTok`, `followTikTok`, ascoltatori GIFT/FOLLOW in `avviaTikTok` (opzione `creaConnessione`) |
 | T12 | 8705a89 | `lib/regali.mjs`: corrispondenza regalo, regali visti, coda richieste (max 30) |
 | T13 | 0fa0279 | `lib/goal.mjs`: obiettivi, passo, follower, posizioni, `istantaneaGoal` |
+| Ritocchi | e8e2961 | coda Nero reale («Traccia N di TOT · mancano X»), scheda/barra dorate con lo skip, testi più grandi |
+| T14 | e36b03b | stato `goal` e `regaliVisti`, comandi `goal`, `goalMostra`, `regaloEvento`, `followEvento`, collegamento TikTok, widget `goal` (acceso) |
 
 (T1–T3 sono i commit 55e90c1, 0b400d7, 423d913; spec/piano: f0a07ff, fe93049.)
 
@@ -67,7 +69,7 @@ Cella nomi troppo stretta dopo il cambio font; font-size inline che batteva il C
 - [x] Testi più grandi: classifica (titolo 32, artista 22, righe 60 px), nomi voci 26, giudici 24, invito del premio 30 (`CORPI` + CSS + `strumenti/mockup-layout.mjs`, `--controlli` verde).
 
 ### 6.2 Piano (T14–T27)
-- [ ] **T14** Server: `stato.goal` e `stato.regaliVisti` (fusi in `caricaStato`, mantenuti da `nuovaSerata`/`demo`); `collegaTikTok` passa `suRegalo` e `suFollow`; comandi `goal`, `goalMostra`, `regaloEvento {nome,id?,utente,quantita?}`, `followEvento {utente,totale?}`; `istantanea.goal`/`regaliVisti`; widget `goal` acceso di partenza; test `test/goal-server.test.mjs`. Commit "Goal: stato, comandi e collegamento di follow e regali [skip netlify]".
+- [x] (FATTO, commit e36b03b, 356 test verdi) **T14** Server: `stato.goal` e `stato.regaliVisti` (fusi in `caricaStato`, mantenuti da `nuovaSerata`/`demo`); `collegaTikTok` passa `suRegalo` e `suFollow`; comandi `goal`, `goalMostra`, `regaloEvento {nome,id?,utente,quantita?}`, `followEvento {utente,totale?}`; `istantanea.goal`/`regaliVisti`; widget `goal` acceso di partenza; test `test/goal-server.test.mjs`. Commit "Goal: stato, comandi e collegamento di follow e regali [skip netlify]".
 - [ ] **T15** Componente Goal (`public/js/goal.js`, `goal.css`) + 4 layout nuovi.
 - [ ] **T16** Goal su gara / senza premio / studio / Battle + regia `regia-goal.js`.
 - [ ] **T17** Stato Senza Premio, Instagram, Nero (coda reale → totale/mancanti).
