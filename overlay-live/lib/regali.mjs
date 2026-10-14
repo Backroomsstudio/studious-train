@@ -35,6 +35,20 @@ export function registraVisto(visti, regalo, ora) {
   return [nuovo, ...elenco.filter((v) => chiave(v) !== chiave(nuovo))].slice(0, MAX_VISTI);
 }
 
+// Elenco dei «regali visti» letto da uno stato salvato: solo voci con un nome o un ID, al massimo 12. Dà un elenco nuovo.
+export function controllaVisti(salvato) {
+  if (!Array.isArray(salvato)) return [];
+  const visti = [];
+  for (const v of salvato) {
+    if (!oggetto(v)) continue;
+    const nome = typeof v.nome === "string" ? v.nome.trim().slice(0, MAX_NOME) : "";
+    const id = Number.isSafeInteger(v.id) && v.id > 0 ? v.id : null;
+    if (!nome && id === null) continue;
+    visti.push({ nome, id, utente: typeof v.utente === "string" ? v.utente.trim().slice(0, MAX_UTENTE) : "", alle: Number.isFinite(v.alle) ? v.alle : 0 });
+  }
+  return visti.slice(0, MAX_VISTI);
+}
+
 export const richiesteIniziali = () => ({ regalo: "", coda: [] });
 
 // Il regalo che fa partire le richieste: un nome o un ID (fino a 40 caratteri), oppure vuoto (nessuna richiesta).

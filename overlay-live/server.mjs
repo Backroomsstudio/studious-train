@@ -13,7 +13,9 @@ import * as B from "./lib/battle.mjs";
 import * as D from "./lib/drum.mjs";
 import * as F from "./lib/formati.mjs";
 import { impostaTesti } from "./lib/testi.mjs";
-import { corpo, numeroTra, oggetto, siNo } from "./lib/validazione.mjs";
+import { corpo, numeroTra, oggetto, siNo, testo } from "./lib/validazione.mjs";
+import * as G from "./lib/goal.mjs";
+import { registraVisto, controllaVisti } from "./lib/regali.mjs";
 import { LimiteFrequenza, leggiAudio } from "./lib/audio.mjs";
 import { avviaTikTok, leggiVoto } from "./lib/chat.mjs";
 import { firmaValida, versoCoda, avviaNero } from "./lib/nero.mjs";
@@ -114,6 +116,9 @@ function caricaStato() {
     salvato.votazione = S.fondiVotazione(salvato.votazione, config);
     // Tabellone ad albero (aggiunto dopo): durata e scadenza buone anche da uno stato vecchio o rotto.
     salvato.albero = S.fondiAlbero(salvato.albero);
+    // Goal e regali visti (aggiunti dopo): impostazioni complete anche da uno stato vecchio o rotto.
+    salvato.goal = G.fondiGoal(salvato.goal);
+    salvato.regaliVisti = controllaVisti(salvato.regaliVisti);
     return salvato;
   } catch (e) {
     console.error(`Stato salvato illeggibile (${e.message}): riparto da una serata vuota.`);
@@ -233,6 +238,18 @@ function registraLikeTikTok(dati) {
   cambiato();
 }
 
+// Un regalo (dalla live o da regaloEvento): finisce tra i «regali visti» (la regia sceglie da lì il regalo delle richieste).
+function registraRegalo(regalo) {
+  stato.regaliVisti = registraVisto(stato.regaliVisti, regalo, Date.now());
+  cambiato();
+}
+
+// Un follow (dalla live o da followEvento): somma uno o prende il totale dei follower se è più alto di quello noto.
+function registraFollowTikTok(follow) {
+  G.registraFollow(stato, follow);
+  cambiato();
+}
+
 let fermaTikTok = () => {};
 function collegaTikTok() {
   fermaTikTok();
@@ -244,7 +261,7 @@ function collegaTikTok() {
       cambiato();
     },
     undefined,
-    { suLike: registraLikeTikTok, suNuovaConnessione: () => (primaLetturaDaTikTok = true) },
+    { suLike: registraLikeTikTok, suNuovaConnessione: () => (primaLetturaDaTikTok = true), suRegalo: registraRegalo, suFollow: registraFollowTikTok },
   );
 }
 
@@ -562,6 +579,28 @@ const comandi = {
       ...(conteggio !== undefined && { conteggio: numeroTra(conteggio, 1, 100_000, "Like (conteggio)") }),
     });
   },
+  // --- Goal Like e Follower ---
+  goal(args) {
+    G.impostaGoal(stato, args);
+  },
+  // Fa comparire il Goal adesso (nel modo «a comparsa»): le pagine lo mostrano per i secondi scelti.
+  goalMostra() {
+    emetti("goalMostra", { durataSecondi: stato.goal.durataSecondi });
+  },
+  // Simulano un regalo e un follow di TikTok (come likeEvento): per provare Goal e richieste senza una live.
+  regaloEvento({ nome, id, utente, quantita }) {
+    const regalo = {
+      utente: testo(utente ?? "prova", 40, "Utente"),
+      nome: testo(nome ?? "", 60, "Nome del regalo"),
+      id: id === undefined ? null : numeroTra(id, 1, Number.MAX_SAFE_INTEGER, "ID del regalo"),
+      quantita: quantita === undefined ? 1 : numeroTra(quantita, 1, 10_000, "Quantità"),
+    };
+    if (!regalo.nome && regalo.id === null) throw new Error("Regalo: serve il nome o l'ID");
+    registraRegalo(regalo);
+  },
+  followEvento({ utente, totale }) {
+    registraFollowTikTok({ utente: testo(utente ?? "", 40, "Utente"), totale: totale === undefined ? null : numeroTra(totale, 1, G.MAX_NUMERO, "Follower (totale)") });
+  },
   // --- Studio Production, Reaction Release e Back Rooms Podcast ---
   produzione(args) {
     F.impostaProduzione(stato, args);
@@ -587,8 +626,8 @@ const comandi = {
   },
   demo() {
     const ora = Date.now();
-    const { premio, invito, suoni, giudici, votazione, albero, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
-    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, votazione, albero: { ...albero, finoAlle: null }, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast };
+    const { premio, invito, suoni, giudici, votazione, albero, goal, regaliVisti, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
+    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, votazione, albero: { ...albero, finoAlle: null }, goal, regaliVisti, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast };
     const finti = [
       ["Specchi Neri", "Nove", 8.4],
       ["Fuori Orario", "Kappa 23", 7.9],
@@ -614,7 +653,7 @@ const comandi = {
   // La traccia che suona su Nero in quel momento torna sul tabellone al giro successivo. Drum e podcast ripartono
   // (Like da zero, prima tematica); produzione e reaction restano come sono.
   nuovaSerata() {
-    const { premio, invito, suoni, giudici, votazione, albero, tiktokUtente, neroAutomatico, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
+    const { premio, invito, suoni, giudici, votazione, albero, goal, regaliVisti, tiktokUtente, neroAutomatico, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
     stato = {
       ...S.statoIniziale(config),
       premio,
@@ -623,6 +662,8 @@ const comandi = {
       giudici,
       votazione,
       albero: { ...albero, finoAlle: null },
+      goal,
+      regaliVisti,
       tiktokUtente,
       neroAutomatico,
       layout,

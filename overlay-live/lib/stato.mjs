@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { ICONE, oggetto, testo, numeroTra, siNo, arrotonda, normalizzaVoto, pulisciInstagram, controllaComparse } from "./validazione.mjs";
 import { battleIniziale, istantaneaBattle } from "./battle.mjs";
 import { drumIniziale, istantaneaDrum } from "./drum.mjs";
+import { goalIniziale, istantaneaGoal } from "./goal.mjs";
 import { produzioneIniziale, reactionIniziale, podcastIniziale } from "./formati.mjs";
 import { costruisciAlbero } from "./albero.mjs";
 
@@ -21,7 +22,7 @@ export const CATEGORIE = ["beat", "voce", "mix"];
 // albero (il tabellone ad albero della gara, che si spegne da solo dopo la sua durata).
 export const WIDGET = [
   "premio", "tabellone", "classifica", "timer", "banner", "barra", "scheda", "targa", "barraStudio", "comparse",
-  "barreVita", "modalita", "timerBattle", "giudiciBattle", "popupBattle", "vittoriaBattle", "bracket", "albero",
+  "barreVita", "modalita", "timerBattle", "giudiciBattle", "popupBattle", "vittoriaBattle", "bracket", "albero", "goal",
   "drumCornice", "drumTraguardi", "drumBrano", "drumPriorita", "drumBarra",
   "prTitolo", "prBarra", "reTitolo", "reBarra",
   "poTitolo", "poLinea", "poTematiche", "poBarra",
@@ -68,6 +69,9 @@ export function statoIniziale(config) {
     giudici: { ...config.giudici },
     votazione: votazioneIniziale(config),
     albero: alberoIniziale(),
+    // Goal Like e Follower (lib/goal.mjs) e ultimi regali arrivati dalla live (lib/regali.mjs): la regia sceglie da lì il regalo delle richieste.
+    goal: goalIniziale(),
+    regaliVisti: [],
     nascondiVoti: false,
     // Il tabellone del battle (bracket) e i moduli a comando del podcast restano spenti finché la regia non li accende.
     visibili: { ...Object.fromEntries(WIDGET.map((w) => [w, true])), ...Object.fromEntries(WIDGET_SPENTI.map((w) => [w, false])) },
@@ -633,6 +637,8 @@ export function istantanea(stato, config, ora) {
     ora,
     giudici: stato.giudici,
     votazione: stato.votazione,
+    goal: istantaneaGoal(stato),
+    regaliVisti: stato.regaliVisti,
     albero: { durataSecondi: stato.albero.durataSecondi, finoAlle: stato.albero.finoAlle, disegno: costruisciAlbero(stato.risultati) },
     topN: config.topN,
     premio: stato.premio,
