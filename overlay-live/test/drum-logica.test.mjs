@@ -1,10 +1,10 @@
 // Parti pure della pagina del Drum: formato dei Like, finestra della colonna, testo della scaletta.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { formattaLike, etichettaLike, finestraScaletta, testoScaletta, titoloModulo, colonnaSblocco, titoloSlot, livelloVoce, interpolaBande, passoBarra, cappuccio, respiro, SBLOCCO } from "../public/js/drum-logica.js";
+import { formattaLike, etichettaLike, finestraScaletta, testoScaletta, titoloModulo, leggiLikeCampo, campiDaScaletta, numeroDiTappa, colonnaSblocco, titoloSlot, livelloVoce, interpolaBande, passoBarra, cappuccio, respiro, SBLOCCO } from "../public/js/drum-logica.js";
 import * as logica from "../public/js/drum-logica.js";
 import { posizioniGrani, STILI } from "../public/js/drum-clessidra.js";
-import { scalettaPredefinita, leggiScaletta } from "../lib/drum.mjs";
+import { scalettaPredefinita, leggiScaletta, leggiLike } from "../lib/drum.mjs";
 
 test("formattaLike: i punti delle migliaia anche sotto 10.000", () => {
   assert.deepEqual([0, 7, 999, 1000, 1234, 12480, 500000, 1000000].map(formattaLike), ["0", "7", "999", "1.000", "1.234", "12.480", "500.000", "1.000.000"]);
@@ -253,4 +253,26 @@ test("titoloModulo: il titolo anche a modulo chiuso; senza titolo «Da definire�
   assert.equal(titoloModulo({ like: 15000 }), "Da definire");
   assert.equal(titoloModulo(undefined), "Da definire");
   assert.equal(titoloModulo({ like: 1, titolo: "   " }), "Da definire");
+});
+
+test("leggiLikeCampo e leggiLike (lib/drum.mjs) danno lo stesso risultato", () => {
+  for (const testo of ["1000", "1.000", "5k", "5K", "0", "1,5k", "abc", "", "  ", "1.00", "12.345.678", "-5", "5 k", "1e3", "007"]) {
+    assert.equal(leggiLikeCampo(testo), leggiLike(testo.trim()), `«${testo}»`);
+  }
+  assert.equal(leggiLikeCampo("  15k "), 15000, "gli spazi ai lati non contano");
+  assert.equal(leggiLikeCampo(undefined), null);
+});
+
+test("campiDaScaletta rimette i Like in forma leggibile (e si rileggono uguali)", () => {
+  const tappe = [{ like: 1000, titolo: "Uno" }, { like: 15000, titolo: "" }, { like: 1000000, titolo: "x" }];
+  assert.deepEqual(campiDaScaletta(tappe), [{ like: "1.000", titolo: "Uno" }, { like: "15.000", titolo: "" }, { like: "1.000.000", titolo: "x" }]);
+  assert.deepEqual(campiDaScaletta(tappe).map((c) => leggiLikeCampo(c.like)), [1000, 15000, 1000000]);
+  assert.deepEqual(campiDaScaletta([]), []);
+});
+
+test("numeroDiTappa: dice quale riga ha sbagliato dall'errore del server", () => {
+  assert.equal(numeroDiTappa("Tappa 3: i like devono crescere (900 dopo 1000)"), 3);
+  assert.equal(numeroDiTappa("Riga 12: «mille» non è un numero"), 12);
+  assert.equal(numeroDiTappa("Scaletta: al massimo 80 tappe"), null);
+  assert.equal(numeroDiTappa(undefined), null);
 });

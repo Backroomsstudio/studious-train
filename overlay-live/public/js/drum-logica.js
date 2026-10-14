@@ -103,3 +103,22 @@ export const cappuccio = (attuale, valore, dt) => Math.max(valore, attuale - 0.6
 
 // Il «respiro» di una barra senza segnale: un'onda lenta e bassa tra 0,06 e 0,14, con una fase diversa per ogni barra.
 export const respiro = (t, i, n) => 0.1 + 0.04 * Math.sin(t * 1.2 + (i / n) * Math.PI * 3);
+
+// Il campo «Like» della tabella della scaletta: «15000», «15.000» o «15k»; stessi casi di lib/drum.mjs (test/drum-logica.test.mjs li tiene
+// uguali). Qualsiasi altra forma ridà null.
+export function leggiLikeCampo(testo) {
+  const grezzo = String(testo ?? "").trim();
+  const chilo = /^(\d+)[kK]$/.exec(grezzo);
+  if (chilo) return Number(chilo[1]) * 1000;
+  if (/^\d+$/.test(grezzo) || /^\d{1,3}(\.\d{3})+$/.test(grezzo)) return Number(grezzo.replaceAll(".", ""));
+  return null;
+}
+
+// Le tappe della scaletta come righe della tabella: i Like con i punti delle migliaia, il titolo com'è.
+export const campiDaScaletta = (tappe) => tappe.map((t) => ({ like: formattaLike(t.like), titolo: t.titolo }));
+
+// Il numero della riga che il server dice sbagliata («Tappa 3: …», «Riga 12: …»); null se l'errore non riguarda una riga.
+export function numeroDiTappa(errore) {
+  const m = /^(?:Tappa|Riga) (\d+):/.exec(String(errore ?? ""));
+  return m ? Number(m[1]) : null;
+}

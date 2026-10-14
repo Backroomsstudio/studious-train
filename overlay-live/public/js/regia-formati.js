@@ -8,8 +8,8 @@
 // trascinamento parte solo l'ultimo valore) e appena lo si lascia.
 // Le funzioni arrivano da regia.js (che le usa per tutte le sezioni): `$`, `el`, `invia`, `avviso`, `riempi`, `mostra`
 // e `conn` (la connessione, per l'audio di FL Studio).
-import { ETICHETTE_TESTI, NOMI_ICONE, NOMI_ICONE_REGALO, TITOLO_REACTION_PREDEFINITO, vociFascia, velocitaFascia } from "./formati-logica.js";
-import { formattaLike, etichettaLike, testoScaletta, titoloModulo } from "./drum-logica.js";
+import { ETICHETTE_TESTI, NOMI_ICONE, NOMI_ICONE_REGALO, TITOLO_REACTION_PREDEFINITO, vociFascia, velocitaFascia, vociStriscia } from "./formati-logica.js";
+import { formattaLike, etichettaLike, titoloModulo, leggiLikeCampo, campiDaScaletta, numeroDiTappa } from "./drum-logica.js";
 import { stimaGiroSecondi } from "./barra.js";
 import { avviaAscolto, elencaIngressi } from "./regia-audio.js";
 import { avviaRegiaPodcast } from "./regia-podcast.js";
@@ -150,7 +150,10 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn, 
   // ----- Drum: Like, scaletta, brano, «Dona un…», artista ospite, riempimento -----
   // I campi si riempiono dallo stato solo se non sono in uso (riempi); un comando rifiutato riporta il campo al valore vero.
   const campoDrum = (id) => $(`#${id}`);
-  const scaletta = campoDrum("dr-scaletta");
+  const tabella = campoDrum("dr-tabella");
+  const erroreScaletta = campoDrum("dr-scaletta-errore");
+  let bozzaScaletta = false; // la tabella ha modifiche non salvate: non segue più lo stato
+  let firmaTabella = "";
   const elencoScaletta = campoDrum("dr-scaletta-elenco");
   let firmaElenco = "";
   const icone = (select, nomi) => select.replaceChildren(...Object.entries(nomi).map(([valore, nome]) => el("option", { value: valore }, nome)));
@@ -180,18 +183,124 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn, 
     if (confirm("Ripartire da ora? Il contatore dei Like torna a zero e la scaletta riparte dalla prima tappa.")) comandoDrum("drumLike", { daOra: true });
   });
 
-  scaletta.addEventListener("input", () => (scaletta.dataset.modificato = "1"));
+  // ----- Scaletta a campi: una riga per tappa (Like | Titolo), con Su, Giù e Togli; si salva tutta insieme -----
+  function rigaTabella(campo) {
+    const riga = el("div", { class: "dr-riga" });
+    riga.append(
+      el("span", { class: "dr-riga-n" }),
+      el("input", { name: "like", inputmode: "numeric", autocomplete: "off", placeholder: "Like (es. 15k)", value: campo.like }),
+      el("input", { name: "titolo", maxlength: "60", autocomplete: "off", placeholder: "Titolo del brano (vuoto = Da definire)", value: campo.titolo }),
+      el("span", { class: "dr-riga-azioni" },
+        el("button", { type: "button", class: "piccolo", "data-riga": "su", title: "Sposta su" }, "↑"),
+        el("button", { type: "button", class: "piccolo", "data-riga": "giu", title: "Sposta giù" }, "↓"),
+        el("button", { type: "button", class: "piccolo", "data-riga": "togli", title: "Togli la tappa" }, "✕"),
+      ),
+    );
+    return riga;
+  }
+  const righeTabella = () => [...tabella.querySelectorAll(".dr-riga")];
+  function numeraTabella() {
+    righeTabella().forEach((riga, i) => {
+      riga.querySelector(".dr-riga-n").textContent = String(i + 1);
+      riga.querySelector("[name=like]").setAttribute("aria-label", `Like della tappa ${i + 1}`);
+      riga.querySelector("[name=titolo]").setAttribute("aria-label", `Titolo della tappa ${i + 1}`);
+    });
+  }
+  function scriviTabella(campi) {
+    tabella.replaceChildren(...campi.map(rigaTabella));
+    numeraTabella();
+  }
+  const leggiTabella = () => righeTabella().map((r) => ({ like: r.querySelector("[name=like]").value, titolo: r.querySelector("[name=titolo]").value }));
+  function segnaErrore(numero, testo) {
+    for (const r of righeTabella()) r.classList.remove("errore");
+    if (numero) righeTabella()[numero - 1]?.classList.add("errore");
+    erroreScaletta.hidden = !testo;
+    erroreScaletta.textContent = testo ?? "";
+  }
+
+  tabella.addEventListener("input", () => {
+    bozzaScaletta = true;
+    segnaErrore(null, null);
+  });
+  tabella.addEventListener("click", (e) => {
+    const bottone = e.target.closest("button[data-riga]");
+    if (!bottone) return;
+    const righe = righeTabella();
+    const riga = bottone.closest(".dr-riga");
+    const i = righe.indexOf(riga);
+    const azione = bottone.dataset.riga;
+    if (azione === "togli") {
+      if (righe.length === 1) for (const campo of riga.querySelectorAll("input")) campo.value = "";
+      else riga.remove();
+    } else {
+      const j = i + (azione === "su" ? -1 : 1);
+      if (j < 0 || j >= righe.length) return;
+      for (const nome of ["like", "titolo"]) {
+        const a = riga.querySelector(`[name=${nome}]`);
+        const b = righe[j].querySelector(`[name=${nome}]`);
+        [a.value, b.value] = [b.value, a.value];
+      }
+      righe[j].querySelector("button[data-riga]")?.blur();
+    }
+    bozzaScaletta = true;
+    numeraTabella();
+    segnaErrore(null, null);
+  });
+  campoDrum("dr-tappa-aggiungi").addEventListener("click", () => {
+    const campi = leggiTabella();
+    const ultimo = leggiLikeCampo(campi.at(-1)?.like ?? "");
+    const riga = rigaTabella({ like: ultimo ? formattaLike(ultimo + 1000) : "", titolo: "" });
+    tabella.append(riga);
+    bozzaScaletta = true;
+    numeraTabella();
+    riga.querySelector("[name=like]").focus();
+  });
   campoDrum("dr-scaletta-salva").addEventListener("click", async () => {
-    const esito = await comandoDrum("drumScaletta", { testo: scaletta.value });
-    if (esito.ok) delete scaletta.dataset.modificato; // da qui il campo torna a seguire lo stato (scritto in modo uniforme)
-    if (esito.ok && stato) disegnaDrum(stato);
+    const campi = leggiTabella();
+    const tappe = [];
+    for (const [i, campo] of campi.entries()) {
+      const like = leggiLikeCampo(campo.like);
+      if (like === null) {
+        const mostrato = campo.like.trim().length > 24 ? `${campo.like.trim().slice(0, 24)}…` : campo.like.trim();
+        const testo = `Riga ${i + 1}: «${mostrato}» non è un numero di like (es. 15000, 15.000 o 15k)`;
+        segnaErrore(i + 1, testo);
+        return avviso(testo, "errore");
+      }
+      tappe.push({ like, titolo: campo.titolo.trim() });
+    }
+    const esito = await comandoDrum("drumScaletta", { tappe });
+    if (!esito.ok) return segnaErrore(numeroDiTappa(esito.errore), esito.errore);
+    bozzaScaletta = false;
+    firmaTabella = "";
+    segnaErrore(null, null);
+    if (stato) disegnaDrum(stato);
   });
   campoDrum("dr-scaletta-predefinita").addEventListener("click", async () => {
     if (!confirm("Rimettere la scaletta predefinita di 37 tappe? I titoli delle tappe con gli stessi Like restano.")) return;
     const esito = await comandoDrum("drumScaletta", { predefinita: true });
-    if (esito.ok) delete scaletta.dataset.modificato;
-    if (esito.ok && stato) disegnaDrum(stato);
+    if (!esito.ok) return;
+    bozzaScaletta = false;
+    firmaTabella = "";
+    segnaErrore(null, null);
+    if (stato) disegnaDrum(stato);
   });
+
+  // La striscia a scorrimento: velocità (come quella della fascia social) e coda di chi salta la fila con il suo regalo.
+  const richiesteDrum = avviaRegiaRichieste({
+    $, el, invia, avviso, riempi, salvato,
+    prefisso: "dr",
+    formato: "drum",
+    conBrano: false,
+    leggiRegalo: (s) => s.drum.priorita.regalo,
+    regaloEffettivo: (s) => s.drum.priorita.regalo.trim() || s.drum.priorita.slot,
+    mandaRegalo: (regalo) => invia("drumPriorita", { regalo }),
+  });
+  function scriviStriscia(valore) {
+    const giro = stato ? stimaGiroSecondi(vociStriscia(stato), valore) : 0;
+    campoDrum("dr-striscia-vel-testo").textContent = `${valore} px/s · un giro ≈ ${giro} s`;
+  }
+  const cursoreStriscia = campoDrum("dr-striscia-vel");
+  collegaCursore(cursoreStriscia, "striscia", () => scriviStriscia(Number(cursoreStriscia.value)), () => invia("drumStriscia", { velocita: Number(cursoreStriscia.value) }));
 
   // Titolo e artista del brano vanno insieme con «Mostra»: finché non si preme (o il brano non cambia, da qui o da fuori) i due
   // campi restano come scritti, anche se nel frattempo lo stato cambia (i Like arrivano a raffica).
@@ -257,8 +366,19 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn, 
     branoVisto = firmaBrano;
     campoDrum("dr-like-grande").textContent = formattaLike(d.contati);
     campoDrum("dr-like-stato").textContent = { collegato: "Collegato a TikTok", attesa: "In attesa di TikTok" }[s.tiktok.stato] ?? "TikTok non collegato";
-    if (!scaletta.dataset.modificato) riempi(scaletta, testoScaletta(d.scaletta));
+    // La tabella segue la scaletta in onda solo se non ci sono modifiche in corso, e si ridisegna solo se la scaletta cambia davvero.
+    if (!bozzaScaletta) {
+      const firma = JSON.stringify(d.scaletta);
+      if (firma !== firmaTabella) {
+        firmaTabella = firma;
+        scriviTabella(campiDaScaletta(d.scaletta));
+      }
+    }
     disegnaElenco(d);
+    richiesteDrum.disegna(s);
+    const velocita = campoDrum("dr-striscia-vel");
+    if (velocita !== document.activeElement) velocita.value = d.striscia.velocita;
+    scriviStriscia(Number(velocita.value));
     riempi(campoDrum("dr-brano-titolo-in"), d.brano.titolo);
     riempi(campoDrum("dr-brano-artista-in"), d.brano.artista);
     riempi(campoDrum("dr-ospite-etichetta"), d.ospite.etichetta);

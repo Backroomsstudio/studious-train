@@ -921,32 +921,74 @@ async function provaRegiaDrum() {
   if ((await campo("dr-like-grande").textContent()).trim() !== "12.000") errori.push(`il contatore grande dice «${await campo("dr-like-grande").textContent()}», non 12.000`);
   if (!/TikTok non collegato/.test(await campo("dr-like-stato").textContent())) errori.push(`lo stato di TikTok dice «${await campo("dr-like-stato").textContent()}»: senza account doveva dire «TikTok non collegato»`);
 
-  // 2) scaletta: salvarla, un errore, «Suona ora»
-  await campo("dr-scaletta").fill("1000 | Uno\n2000 | Due");
+  // 2) scaletta a campi: aggiungi, togli, su, giù, salva, errore sulla riga 3, «Suona ora»
+  const riga = (n) => pagina.locator("#dr-tabella .dr-riga").nth(n);
+  const righeTab = () => pagina.locator("#dr-tabella .dr-riga").count();
+  const scriviRiga = async (n, like, titolo) => {
+    await riga(n).locator("[name=like]").fill(like);
+    await riga(n).locator("[name=titolo]").fill(titolo);
+  };
+  await pagina.waitForFunction(() => document.querySelectorAll("#dr-tabella .dr-riga").length === 37, null, { timeout: 3000 }).catch(() => errori.push("la tabella doveva avere le 37 tappe di partenza"));
+  // si ridisegna da 37 righe a 2: togli tutte tranne due e scrivile
+  while ((await righeTab()) > 2) await riga((await righeTab()) - 1).locator("[data-riga=togli]").click();
+  await scriviRiga(0, "1000", "Uno");
+  await scriviRiga(1, "2k", "Due");
+  await campo("dr-tappa-aggiungi").click();
+  if ((await righeTab()) !== 3) errori.push(`«Aggiungi tappa» doveva dare 3 righe, ne ha ${await righeTab()}`);
+  if ((await riga(2).locator("[name=like]").inputValue()) !== "3.000") errori.push(`la tappa aggiunta doveva partire da 3.000 (2k + 1.000), dice «${await riga(2).locator("[name=like]").inputValue()}»`);
+  await scriviRiga(2, "3.000", "Tre");
+  // giù e su: la riga 1 scende, poi risale
+  await riga(0).locator("[data-riga=giu]").click();
+  if ((await riga(1).locator("[name=titolo]").inputValue()) !== "Uno" || (await riga(0).locator("[name=titolo]").inputValue()) !== "Due") errori.push("«Giù» doveva scambiare le prime due righe");
+  await riga(1).locator("[data-riga=su]").click();
+  if ((await riga(0).locator("[name=titolo]").inputValue()) !== "Uno") errori.push("«Su» doveva riportare «Uno» in cima");
   await campo("dr-scaletta-salva").click();
-  await verifica("la scaletta di 2 tappe", (d) => d.scaletta.length === 2 && d.scaletta[1].titolo === "Due");
-  await campo("dr-scaletta").fill("mille | Uno\n2000 | Due");
-  await campo("dr-scaletta-salva").click();
-  await attesa(400);
-  const messaggi = await pagina.locator("#avvisi .avviso.errore").allTextContents();
-  if (!messaggi.some((m) => /Riga 1/.test(m))) errori.push(`una scaletta sbagliata doveva mostrare l'errore con il numero di riga (avvisi: ${JSON.stringify(messaggi)})`);
-  if ((await drum()).scaletta.length !== 2) errori.push("una scaletta sbagliata ha cambiato lo stato");
-  if ((await campo("dr-scaletta").inputValue()) !== "mille | Uno\n2000 | Due") errori.push("dopo un errore il testo scritto doveva restare nel campo");
-  await campo("dr-scaletta-salva").click(); // di nuovo l'errore: nessun danno
-  await campo("dr-scaletta").fill("1000 | Uno\n2000 | Due");
+  await verifica("la scaletta di 3 tappe (1000, 2000, 3000)", (d) => d.scaletta.length === 3 && d.scaletta[1].like === 2000 && d.scaletta[2].titolo === "Tre");
+  // errore: Like che non crescono alla riga 3 → il server dice «Tappa 3», la riga è segnata e la tabella resta com'è scritta
+  await scriviRiga(2, "1500", "Tre");
   await campo("dr-scaletta-salva").click();
   await attesa(500);
-  const righe = await pagina.locator("#dr-scaletta-elenco li").count();
-  if (righe !== 2) errori.push(`l'elenco della scaletta doveva avere 2 righe, ne ha ${righe}`);
-  // salvata la scaletta, il campo non ha più una bozza: segue lo stato anche se cambia da fuori
-  await comando("drumScaletta", { testo: "1000 | Uno\n2000 | Due\n3000 | Tre" });
-  await pagina.waitForFunction(() => document.querySelector("#dr-scaletta").value.split("\n").length === 3, null, { timeout: 3000 }).catch(() => errori.push("dopo il salvataggio il campo della scaletta doveva seguire lo stato (una scaletta cambiata da fuori non si è vista)"));
+  const messaggi = await pagina.locator("#avvisi .avviso.errore").allTextContents();
+  if (!messaggi.some((m) => /Tappa 3/.test(m))) errori.push(`una scaletta sbagliata doveva mostrare l'errore con il numero della tappa (avvisi: ${JSON.stringify(messaggi)})`);
+  if (!(await riga(2).evaluate((e) => e.classList.contains("errore")))) errori.push("la riga 3 doveva essere segnata come sbagliata");
+  if ((await drum()).scaletta.length !== 3 || (await drum()).scaletta[2].like !== 3000) errori.push("una scaletta sbagliata ha cambiato lo stato");
+  if ((await riga(2).locator("[name=like]").inputValue()) !== "1500") errori.push("dopo un errore i valori scritti dovevano restare nella tabella");
+  // un numero che non è un numero: errore subito, sulla riga giusta, senza chiamare il server
+  await scriviRiga(1, "mille", "Due");
+  await campo("dr-scaletta-salva").click();
+  await attesa(300);
+  if (!/Riga 2/.test((await campo("dr-scaletta-errore").textContent()) ?? "")) errori.push(`«mille» alla riga 2 doveva dare l'errore «Riga 2: …» (c'è «${await campo("dr-scaletta-errore").textContent()}»)`);
+  // si corregge e si salva: la bozza finisce e la tabella torna a seguire lo stato
+  await scriviRiga(1, "2000", "Due");
+  await scriviRiga(2, "3000", "Tre");
+  await campo("dr-scaletta-salva").click();
+  await attesa(500);
+  const elenco = await pagina.locator("#dr-scaletta-elenco li").count();
+  if (elenco !== 3) errori.push(`l'elenco della scaletta doveva avere 3 righe, ne ha ${elenco}`);
+  await comando("drumScaletta", { tappe: [{ like: 1000, titolo: "Uno" }, { like: 2000, titolo: "Due" }, { like: 3000, titolo: "Tre" }, { like: 4000, titolo: "Quattro" }] });
+  await pagina.waitForFunction(() => document.querySelectorAll("#dr-tabella .dr-riga").length === 4, null, { timeout: 3000 }).catch(() => errori.push("salvata la scaletta, la tabella doveva seguire lo stato (una scaletta cambiata da fuori non si è vista)"));
   await comando("drumScaletta", { testo: "1000 | Uno\n2000 | Due" });
-  await pagina.waitForFunction(() => document.querySelector("#dr-scaletta").value.split("\n").length === 2, null, { timeout: 3000 }).catch(() => errori.push("il campo della scaletta non è tornato a 2 righe"));
+  await pagina.waitForFunction(() => document.querySelectorAll("#dr-tabella .dr-riga").length === 2, null, { timeout: 3000 }).catch(() => errori.push("la tabella della scaletta non è tornata a 2 righe"));
   await pagina.locator("#dr-scaletta-elenco li").nth(1).getByRole("button", { name: /Suona ora/ }).click();
   await verifica("«Suona ora» sulla tappa 2 mette «Due» come brano", (d) => d.brano.titolo === "Due");
   // il campo del titolo segue lo stato (non c'è una bozza): quando lo mostra, la regia ha ricevuto il cambiamento
   await pagina.waitForFunction(() => document.querySelector("#dr-brano-titolo-in").value === "Due", null, { timeout: 3000 }).catch(() => errori.push("dopo «Suona ora» il campo del titolo doveva mostrare «Due»"));
+  // «Togli» l'ultima riga rimasta la svuota (resta una riga)
+  await riga(1).locator("[data-riga=togli]").click();
+  await riga(0).locator("[data-riga=togli]").click();
+  if ((await righeTab()) !== 1 || (await riga(0).locator("[name=like]").inputValue()) !== "") errori.push("togliendo tutte le tappe doveva restare una riga vuota");
+  await campo("dr-scaletta-salva").click(); // riga vuota: errore, niente cambia
+  await attesa(300);
+  if ((await drum()).scaletta.length !== 2) errori.push("una tabella con la riga vuota non doveva cambiare la scaletta");
+  await comando("drumScaletta", { predefinita: true }); // la bozza resta finché non si salva: la tabella non segue
+  await attesa(400);
+  if ((await righeTab()) !== 1) errori.push("con una bozza in corso la tabella non doveva essere riscritta dallo stato");
+  await campo("dr-scaletta-predefinita").click();
+  await pagina.waitForFunction(() => document.querySelectorAll("#dr-tabella .dr-riga").length === 37, null, { timeout: 3000 }).catch(() => errori.push("«Scaletta predefinita» doveva riportare le 37 tappe nella tabella"));
+  await comando("drumScaletta", { testo: "1000 | Uno\n2000 | Due" });
+  await pagina.waitForFunction(() => document.querySelectorAll("#dr-tabella .dr-riga").length === 2, null, { timeout: 3000 }).catch(() => errori.push("la tabella non è tornata a 2 righe"));
+  await pagina.locator("#dr-scaletta-elenco li").nth(1).getByRole("button", { name: /Suona ora/ }).click();
+  await verifica("«Suona ora» sulla tappa 2 (di nuovo)", (d) => d.brano.titolo === "Due");
 
   // 3) brano scritto a mano e tolto
   await campo("dr-brano-titolo-in").fill("Prova Titolo");
@@ -972,6 +1014,30 @@ async function provaRegiaDrum() {
   await verifica("«Dona un» con slot «Corolla» e icona corona", (d) => d.priorita.slot === "Corolla" && d.priorita.icona === "corona");
   await campo("dr-riempimento").selectOption("sabbia");
   await verifica("riempimento a sabbia", (d) => d.riempimento === "sabbia");
+  // striscia, regalo che salta la coda, regali visti e coda
+  await campo("dr-striscia-vel").fill("120");
+  await verifica("velocità della striscia 120", (d) => d.striscia.velocita === 120);
+  await campo("dr-regalo").locator("[name=regalo]").fill("5655");
+  await campo("dr-regalo").locator("button").click();
+  await verifica("regalo che salta la coda «5655»", (d) => d.priorita.regalo === "5655");
+  await comando("layout", { nome: "drum" });
+  await comando("regaloEvento", { nome: "Rosa", id: 5655, utente: "mario", quantita: 2 });
+  await comando("regaloEvento", { nome: "Leone", utente: "lucia" });
+  await attesa(600);
+  const visti = await pagina.locator("#dr-visti button[data-regalo]").allTextContents();
+  if (!visti.some((t) => /Rosa/i.test(t)) || !visti.some((t) => /Leone/i.test(t))) errori.push(`i regali visti dovevano mostrare Rosa e Leone (${JSON.stringify(visti)})`);
+  await pagina.locator("#dr-visti button[data-regalo=Leone]").click();
+  await verifica("un clic su «Leone» tra i regali visti lo sceglie", (d) => d.priorita.regalo === "Leone");
+  await comando("regaloEvento", { nome: "Leone", utente: "anna" });
+  await attesa(500);
+  const coda = await pagina.locator("#dr-coda li").allTextContents();
+  if (coda.length !== 2 || !/Salta la coda: @mario \(Rosa ×2\)/.test(coda[0]) || !/Salta la coda: @anna \(Leone\)/.test(coda[1])) errori.push(`la coda doveva dire «Salta la coda: @mario (Rosa ×2)» e «…@anna (Leone)» (${JSON.stringify(coda)})`);
+  await pagina.locator("#dr-coda li").first().locator("[data-azione=fatta]").click();
+  await pagina.locator("#dr-coda li").nth(1).locator("[data-azione=scarta]").click();
+  await verifica("«Fatta» chiude la prima e «Scarta» toglie la seconda", (d) => d.richieste.coda.length === 1 && d.richieste.coda[0].stato === "fatta");
+  await campo("dr-regalo").locator("[name=regalo]").fill("");
+  await campo("dr-regalo").locator("button").click();
+  await verifica("regalo vuoto: vale lo slot mostrato", (d) => d.priorita.regalo === "");
   await campo("dr-pri-slot-in").fill("   ");
   await campo("dr-pri-slot-in").press("Tab");
   await attesa(500);
@@ -992,11 +1058,11 @@ async function provaRegiaDrum() {
   // 6) un campo in uso non si riscrive: i Like cambiano mentre si scrive nel brano e nella scaletta
   await campo("dr-brano-titolo-in").focus();
   await campo("dr-brano-titolo-in").fill("sto scrivendo");
-  await campo("dr-scaletta").fill("5000 | Tre");
+  await riga(0).locator("[name=titolo]").fill("modifica non salvata");
   await comando("drumLike", { aggiungi: 1 });
   await attesa(500);
   if ((await campo("dr-brano-titolo-in").inputValue()) !== "sto scrivendo") errori.push("il campo del titolo, in uso, è stato riscritto dallo stato");
-  if ((await campo("dr-scaletta").inputValue()) !== "5000 | Tre") errori.push("il campo della scaletta, con una modifica non salvata, è stato riscritto dallo stato");
+  if ((await riga(0).locator("[name=titolo]").inputValue()) !== "modifica non salvata") errori.push("la tabella della scaletta, con una modifica non salvata, è stata riscritta dallo stato");
   // ... ma se il brano cambia da fuori (un'altra regia, «Suona ora») la bozza decade e il campo segue lo stato
   await comando("drumBrano", { titolo: "Cambiato da fuori" });
   await attesa(500);
@@ -1017,7 +1083,7 @@ async function provaRegiaDrum() {
   await campo("dr-scaletta-predefinita").click();
   await verifica("scaletta predefinita di 37 tappe", (d) => d.scaletta.length === 37);
   await attesa(400);
-  if ((await campo("dr-scaletta").inputValue()).split("\n").length !== 37) errori.push("dopo «Scaletta predefinita» il campo doveva mostrare le 37 tappe");
+  if ((await righeTab()) !== 37) errori.push("dopo «Scaletta predefinita» la tabella doveva mostrare le 37 tappe");
 
   // il mockup della sezione: Like a metà strada, scaletta con i titoli di prova, ospite
   await comando("drumDemo", { fase: "meta" });

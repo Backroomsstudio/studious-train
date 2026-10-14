@@ -1196,3 +1196,39 @@ textarea:focus-visible {
   width: 100%;
   box-sizing: border-box;
 }
+
+/* Scaletta del Drum a campi: una riga per tappa */
+.dr-tabella {
+  display: grid;
+  gap: 6px;
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.dr-riga {
+  display: grid;
+  grid-template-columns: 28px 112px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+.dr-riga-n {
+  font: 700 13px/1 var(--font-dati);
+  color: var(--testo-tenue);
+  text-align: right;
+}
+.dr-riga input {
+  min-width: 0;
+}
+.dr-riga-azioni {
+  display: flex;
+  gap: 4px;
+}
+.dr-riga-azioni button {
+  padding: 6px 9px;
+}
+.dr-riga.errore input {
+  outline: 2px solid #ff4d5e;
+}
+.dr-errore {
+  color: #ff8a96;
+}

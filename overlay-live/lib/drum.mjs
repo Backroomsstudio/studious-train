@@ -36,7 +36,7 @@ export function controllaScaletta(tappe) {
 }
 
 // «1000», «1.000» (punti da migliaia) o «5k»: solo interi. Qualsiasi altra forma ridà null.
-function leggiLike(grezzo) {
+export function leggiLike(grezzo) {
   const chilo = /^(\d+)[kK]$/.exec(grezzo);
   if (chilo) return Number(chilo[1]) * 1000;
   if (/^\d+$/.test(grezzo) || /^\d{1,3}(\.\d{3})+$/.test(grezzo)) return Number(grezzo.replaceAll(".", ""));
