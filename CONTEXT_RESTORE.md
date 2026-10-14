@@ -97,3 +97,11 @@ Cella nomi troppo stretta dopo il cambio font; font-size inline che batteva il C
 1. `git log --oneline | head` e leggere il ledger: i task con `Task N: complete` sono fatti.
 2. Strumenti dei test server: script `con-server.sh <comando…>` (server di prova su 4799) nella scratchpad della sessione; Playwright per gli screenshot (`strumenti/`).
 3. Script del flusso di esecuzione: `task-start PLAN N`, `task-done PLAN N BASE -- node --test` (skill `executing-plans`).
+
+
+## Stato finale (14 ottobre)
+
+- Piano «restyling grigi, Goal e richieste»: tutti i 27 task completati, revisione finale fatta, un giro di correzioni (Goal a passo 0, regalo del Drum, voto fuori intervallo in regia), 403 test verdi. Ultimo commit del branch: «Revisione finale: Goal a passo 0, regalo del Drum, voto fuori intervallo in regia».
+- Registro completo delle decisioni (Ruling) e dei minori rimandati: `docs/superpowers/registro-decisioni-restyling.md`.
+- Consegnati: zip verificato in cartella pulita (npm ci + node --test) e video per telefono (sequenza di schermate con didascalie).
+- Restano: nessuna PR nuova (la PR 1 esiste già); nessun merge/pubblicazione senza il via dell'utente; da calibrare `stimaGiroSecondi` con una misura vera; campo Instagram di Nero e `queueCount` da verificare con una traccia vera; regali e follower da provare con una live vera.
