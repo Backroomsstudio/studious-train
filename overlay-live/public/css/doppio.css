@@ -34,6 +34,141 @@
   height: 160px;
 }
 
+/* ---------- Reaction: richiesta in onda e scaletta ---------- */
+/* Verticale: la richiesta sta sotto la targa (y 524, 72 px), la scaletta sotto la richiesta (y 608; 56 px di titolo e 50 a voce, fino a
+   8 voci: finisce a 1064, sopra il Goal). Orizzontale: la scaletta a destra sopra lo schermo B, la richiesta in basso sullo schermo B. */
+.rc-richiesta,
+.rc-scaletta {
+  position: absolute;
+  box-sizing: border-box;
+  left: 116px;
+  width: 848px;
+  border-radius: 20px;
+  z-index: 6;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.rc-richiesta {
+  top: 524px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  background: linear-gradient(135deg, #fff1b8 0%, #f2b52a 55%, #c98a0c 100%);
+  border: 2px solid #fff6c8;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 40px rgba(255, 196, 50, 0.55);
+}
+.rc-richiesta-testo {
+  min-width: 0;
+  width: 100%;
+  height: 44px;
+  box-sizing: border-box;
+  font: 900 36px/44px var(--font-dati);
+  color: #0a0a0a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rc-scaletta {
+  top: 608px;
+  height: calc(56px + var(--n, 0) * 50px);
+  padding: 0 20px;
+  background: rgba(12, 12, 12, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.rc-sc-titolo {
+  box-sizing: border-box;
+  height: 56px;
+  margin: 0;
+  padding-top: 4px;
+  font: 900 30px/52px var(--font-dati);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffd863;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rc-sc-voci {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rc-sc-voci li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 50px;
+}
+.rc-sc-voci b {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font: 900 22px/1 var(--font-dati);
+  color: #0a0a0a;
+  background: linear-gradient(160deg, #ffffff, #bdbdbd);
+}
+.rc-sc-voci span {
+  min-width: 0;
+  flex: 1;
+  height: 40px;
+  box-sizing: border-box;
+  font: 800 30px/40px var(--font-dati);
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rc-richiesta[hidden],
+.rc-scaletta[hidden] {
+  display: none;
+}
+.rc-richiesta.fuori,
+.rc-scaletta.fuori {
+  opacity: 0 !important;
+  transform: translateY(-18px);
+  pointer-events: none;
+}
+.fm.reaction.orizzontale .rc-scaletta {
+  left: 1392px;
+  top: 208px;
+  width: 480px;
+  height: calc(52px + var(--n, 0) * 44px);
+}
+.fm.reaction.orizzontale .rc-sc-titolo {
+  height: 52px;
+  font-size: 26px;
+  line-height: 48px;
+}
+.fm.reaction.orizzontale .rc-sc-voci li {
+  height: 44px;
+}
+.fm.reaction.orizzontale .rc-sc-voci b {
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+}
+.fm.reaction.orizzontale .rc-sc-voci span {
+  font-size: 26px;
+  line-height: 36px;
+  height: 36px;
+}
+.fm.reaction.orizzontale .rc-richiesta {
+  left: 672px;
+  top: 820px;
+  width: 1200px;
+  height: 64px;
+}
+.fm.reaction.orizzontale .rc-richiesta-testo {
+  height: 40px;
+  font-size: 32px;
+  line-height: 40px;
+}
+
 /* ---------- Solo reaction in orizzontale ---------- */
 .dp-solo-orizzontale {
   display: none;

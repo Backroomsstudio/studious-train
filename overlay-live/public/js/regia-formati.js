@@ -13,6 +13,7 @@ import { formattaLike, etichettaLike, testoScaletta, titoloBrano } from "./drum-
 import { stimaGiroSecondi } from "./barra.js";
 import { avviaAscolto, elencaIngressi } from "./regia-audio.js";
 import { avviaRegiaPodcast } from "./regia-podcast.js";
+import { avviaRegiaRichieste } from "./regia-richieste.js";
 
 const SEZIONI = { drum: "#dr-regia", produzione: "#pr-regia", podcast: "#po-regia", reaction: "#re-regia" };
 // «Social del brand» è la lista che alimenta tutte le barre che scorrono.
@@ -23,7 +24,7 @@ const CHIAVE_SORGENTE = "drum-audio-sorgente";
 const CHIAVE_INGRESSO = "drum-audio-ingresso";
 const PROVA_MS = 4000; // la «Prova» dell'equalizzatore dura 4 s, a 30 Hz
 
-export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn }) {
+export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn, salvato }) {
   let stato = null;
   const invii = {};
 
@@ -118,6 +119,29 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn }
       for (const [riga, campo] of Object.entries(campiTitolo(formato))) riempi(campo, s[formato].titolo[riga]);
     }
     for (const chip of document.querySelectorAll("button[data-preset]")) chip.classList.toggle("attivo", chip.dataset.preset === s.produzione.titolo.preset);
+  }
+
+  // ----- Reaction: scaletta della serata e richieste con regalo -----
+  const richiesteReaction = avviaRegiaRichieste({ $, el, invia, avviso, riempi, salvato, prefisso: "re", formato: "reaction", conBrano: true, durata: true });
+  const fScaletta = $("#re-f-scaletta");
+  fScaletta.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const voci = fScaletta.elements.voci.value.split("\n").map((v) => v.trim()).filter(Boolean);
+    const esito = await invia("reaction", { scaletta: { titolo: fScaletta.elements.titolo.value, voci, modo: fScaletta.elements.modo.value, ogniMinuti: fScaletta.elements.ogniMinuti.value, durataSecondi: fScaletta.elements.durataSecondi.value } });
+    if (esito.ok) {
+      salvato(fScaletta);
+      avviso("Scaletta aggiornata", "ok");
+    }
+  });
+  $("#re-scaletta-mostra").addEventListener("click", () => invia("scalettaMostra"));
+  function disegnaScaletta(s) {
+    const sc = s.reaction.scaletta;
+    riempi(fScaletta.elements.titolo, sc.titolo);
+    riempi(fScaletta.elements.voci, sc.voci.join("\n"));
+    riempi(fScaletta.elements.ogniMinuti, sc.ogniMinuti);
+    riempi(fScaletta.elements.durataSecondi, sc.durataSecondi);
+    if (document.activeElement !== fScaletta.elements.modo) fScaletta.elements.modo.value = sc.modo;
+    $("#re-scaletta-nota").textContent = sc.voci.length ? `${sc.voci.length} ${sc.voci.length === 1 ? "voce" : "voci"} in scaletta${s.visibili.reScaletta === false ? " · spenta in «In onda»" : ""}.` : "La scaletta è vuota: non compare finché non scrivete almeno una voce.";
   }
 
   // ----- Back Rooms Podcast: moduli a comando, tematiche, ospiti e scorciatoie -----
@@ -411,6 +435,8 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn }
       stato = s;
       disegnaDrum(s);
       disegnaTitoli(s);
+      disegnaScaletta(s);
+      richiesteReaction.disegna(s);
       podcast.disegna(s);
       const eq = s.drum.eq;
       if (sensibilita !== document.activeElement) sensibilita.value = eq.sensibilita;

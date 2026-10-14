@@ -105,7 +105,7 @@ const scegli = (sel, fn) =>
   });
 
 // Drum, produzione, podcast e reaction: sezioni, scheda «Social del brand», testi, velocità e anteprime (regia-formati.js).
-const formati = avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn });
+const formati = avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn, salvato });
 // Serata → Voti della gara: pesi, voti ammessi e nomi delle quattro voci (regia-voti.js).
 const votazione = avviaRegiaVoti({ $, invia, avviso, riempi, salvato });
 

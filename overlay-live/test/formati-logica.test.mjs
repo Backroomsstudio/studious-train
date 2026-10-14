@@ -1,7 +1,7 @@
 // Parti pure delle pagine dei quattro layout nuovi (voci della fascia social, simboli, dimensione dei testi).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { vociFascia, velocitaFascia, ETICHETTE_TESTI, scalaTesto, NOMI_ICONE, NOMI_ICONE_REGALO, STILE_PRESET, stileTitolo, TITOLO_REACTION_PREDEFINITO, statiTematiche } from "../public/js/formati-logica.js";
+import { vociFascia, velocitaFascia, ETICHETTE_TESTI, scalaTesto, NOMI_ICONE, NOMI_ICONE_REGALO, STILE_PRESET, stileTitolo, TITOLO_REACTION_PREDEFINITO, statiTematiche, vociScaletta, testoRichiesta } from "../public/js/formati-logica.js";
 import { ID_SIMBOLI, svgSimboli } from "../public/js/simboli.js";
 import { senzaPremioIniziale } from "../lib/stato.mjs";
 import { ICONE } from "../lib/validazione.mjs";
@@ -116,4 +116,15 @@ test("statiTematiche: le precedenti sono fatte, l'attiva è una sola, le altre s
   assert.deepEqual(statiTematiche(1, 0), ["attiva"]);
   assert.deepEqual(statiTematiche(0, 0), [], "senza voci non c'è niente da segnare");
   assert.deepEqual(statiTematiche(undefined, 0), [], "un elenco che manca vale come vuoto");
+});
+
+test("vociScaletta toglie le righe vuote e taglia a 8; testoRichiesta con e senza artista", () => {
+  assert.deepEqual(vociScaletta({ scaletta: { voci: ["Uno", "  ", "Due ", ""] } }), ["Uno", "Due"]);
+  assert.equal(vociScaletta({ scaletta: { voci: Array.from({ length: 12 }, (_, i) => `B${i}`) } }).length, 8);
+  assert.deepEqual(vociScaletta({}), []);
+  assert.deepEqual(vociScaletta(null), []);
+  assert.equal(testoRichiesta({ utente: "mario", brano: { titolo: "Satellite", artista: "Mira" } }), "Richiesta di @mario: Satellite — Mira");
+  assert.equal(testoRichiesta({ utente: "@mario", brano: { titolo: "Satellite", artista: "" } }), "Richiesta di @mario: Satellite");
+  assert.equal(testoRichiesta({ utente: "", brano: { titolo: "Satellite", artista: "Mira" } }), "Richiesta: Satellite — Mira");
+  assert.equal(testoRichiesta({ utente: "mario", brano: null }), "");
 });

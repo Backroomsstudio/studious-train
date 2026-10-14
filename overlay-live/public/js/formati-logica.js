@@ -72,3 +72,19 @@ export function vociFascia(s, layout) {
   }
   return primo ? [primo, ...ospiti, ...resto] : ospiti;
 }
+
+// Le voci della scaletta della Reaction: senza righe vuote e al massimo 8 (lo stato le controlla già: qui per uno stato vecchio).
+export const vociScaletta = (reaction) =>
+  (Array.isArray(reaction?.scaletta?.voci) ? reaction.scaletta.voci : [])
+    .filter((v) => typeof v === "string" && v.trim())
+    .map((v) => v.trim())
+    .slice(0, 8);
+
+// «Richiesta di @mario: Titolo — Artista» (senza artista solo il titolo; senza brano niente).
+export function testoRichiesta(richiesta) {
+  const titolo = richiesta?.brano?.titolo?.trim();
+  if (!titolo) return "";
+  const artista = richiesta.brano.artista?.trim();
+  const utente = (richiesta.utente ?? "").trim().replace(/^@+/, "");
+  return `${utente ? `Richiesta di @${utente}` : "Richiesta"}: ${titolo}${artista ? ` — ${artista}` : ""}`;
+}

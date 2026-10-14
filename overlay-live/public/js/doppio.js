@@ -11,6 +11,7 @@ import { creaTarga } from "./targa.js";
 import { creaFascia } from "./fascia.js";
 import { creaGoal } from "./goal.js";
 import { chiaveGoal } from "./goal-logica.js";
+import { creaPannelliReaction } from "./reaction-pannelli.js";
 import { vociFascia, velocitaFascia, stileTitolo } from "./formati-logica.js";
 
 const FORMATO = document.body.dataset.formato; // "produzione" | "reaction"
@@ -31,6 +32,8 @@ const fascia = creaFascia({
 
 const goal = creaGoal({ palco, chiave: chiaveGoal(FORMATO, orizzontale), statico: STATICO });
 
+const pannelli = FORMATO === "reaction" ? creaPannelliReaction({ orizzontale, statico: STATICO }) : null;
+
 collega({
   suStato(s, eventi) {
     fascia.radice.classList.toggle("fuori", !s.visibili[BARRA]);
@@ -38,6 +41,7 @@ collega({
     applicaTesti(palco, s[FORMATO].testi);
     disegnaTitolo(s);
     goal.aggiorna(s, eventi);
+    pannelli?.aggiorna(s, eventi);
     primoDisegno = false;
   },
 });
@@ -70,6 +74,7 @@ function disegnaTitolo(s) {
 function rimisura() {
   fascia.rimisura();
   titolo.rimisura();
+  pannelli?.rimisura();
 }
 document.fonts?.ready.then(rimisura);
 document.fonts?.addEventListener?.("loadingdone", rimisura);

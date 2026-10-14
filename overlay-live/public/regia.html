@@ -847,8 +847,37 @@
           <label class="sp-riga">Riga sopra <input id="re-sopra" autocomplete="off"></label>
           <label class="sp-riga">Titolo <input id="re-testo" autocomplete="off"></label>
           <label class="sp-riga">Riga sotto <input id="re-sotto" autocomplete="off"></label>
-          <p class="nota">Al massimo 40, 60 e 60 caratteri (oltre, compare un avviso e resta in onda il testo di prima); le righe sopra e sotto si possono lasciare vuote. Il titolo non può restare vuoto: mentre lo riscrivete resta in onda quello di prima.</p>
+          <p class="nota">Al massimo 48, 60 e 60 caratteri (oltre, compare un avviso e resta in onda il testo di prima); le righe sopra e sotto si possono lasciare vuote. Il titolo non può restare vuoto: mentre lo riscrivete resta in onda quello di prima.</p>
           <div class="azioni"><button type="button" class="piccolo" id="re-ripristina" title="Rimanda «REACTION RELEASE DELLA SETTIMANA» con la riga sopra di partenza">Ripristina titolo predefinito</button></div>
+        </div>
+
+        <div class="sp-colonna" id="re-col-richieste">
+          <h3>Scaletta della serata</h3>
+          <form id="re-f-scaletta" class="modulo" autocomplete="off">
+            <label class="sp-riga">Titolo <input name="titolo" maxlength="32" placeholder="In scaletta stasera"></label>
+            <textarea name="voci" rows="6" placeholder="Una voce per riga (fino a 8, 60 caratteri ciascuna)" aria-label="Voci della scaletta"></textarea>
+            <div class="gl-azioni">
+              <label>Compare <select name="modo"><option value="fisso">sempre</option><option value="comparsa">a comparsa</option></select></label>
+              <label>ogni <input name="ogniMinuti" type="number" min="1" max="60" step="1" inputmode="numeric" aria-label="Ogni quanti minuti"> min</label>
+              <label>per <input name="durataSecondi" type="number" min="5" max="120" step="1" inputmode="numeric" aria-label="Secondi in vista"> s</label>
+            </div>
+            <div class="azioni">
+              <button class="primario">Salva scaletta</button>
+              <button type="button" id="re-scaletta-mostra" title="Con «a comparsa»: la fa comparire adesso">Mostra ora</button>
+            </div>
+          </form>
+          <p class="nota" id="re-scaletta-nota"></p>
+
+          <h3>Richieste con regalo</h3>
+          <form id="re-regalo" class="modulo gl-azioni" autocomplete="off">
+            <label>Regalo per la richiesta <input name="regalo" maxlength="40" placeholder="nome o ID (es. Rosa)"></label>
+            <label>in onda per <input name="durata" type="number" min="3" max="60" step="1" inputmode="numeric" aria-label="Secondi in onda"> s</label>
+            <button>Salva</button>
+          </form>
+          <p class="nota">Quando arriva quel regalo, la richiesta compare qui sotto: scrivete il brano e premete <b>In onda</b> (compare «Richiesta di @nome: Titolo — Artista»). Vuoto = richieste spente. Si accodano solo con la Reaction in onda.</p>
+          <div class="regali-visti" id="re-visti"></div>
+          <ol class="lista richieste" id="re-coda"></ol>
+          <p class="nota" id="re-coda-vuota">Nessuna richiesta in coda.</p>
         </div>
 
         <div class="sp-colonna" id="re-col2">
@@ -864,6 +893,8 @@
           <div class="interruttori">
             <label class="interruttore"><input type="checkbox" data-widget="reTitolo"> Titolo</label>
             <label class="interruttore"><input type="checkbox" data-widget="reBarra"> Fascia social</label>
+            <label class="interruttore"><input type="checkbox" data-widget="reScaletta"> Scaletta</label>
+            <label class="interruttore"><input type="checkbox" data-widget="reRichiesta"> Richiesta in onda</label>
           </div>
         </div>
 

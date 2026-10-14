@@ -1149,3 +1149,50 @@ button.primario.attivo {
   opacity: 0.35;
   cursor: default;
 }
+
+/* Richieste con regalo (Reaction, Drum): regali visti e coda */
+.regali-visti {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+.regali-visti .chip.attivo {
+  outline: 2px solid #ffd863;
+}
+.lista.richieste li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.lista.richieste .richiesta-chi {
+  flex: 1 1 100%;
+  font-weight: 700;
+}
+.lista.richieste input {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+.lista.richieste .richiesta.inOnda {
+  box-shadow: inset 3px 0 0 #ffd863;
+}
+.lista.richieste .richiesta.fatta {
+  opacity: 0.6;
+}
+textarea {
+  font: inherit;
+  color: inherit;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.55);
+}
+textarea:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+#re-f-scaletta textarea {
+  width: 100%;
+  box-sizing: border-box;
+}

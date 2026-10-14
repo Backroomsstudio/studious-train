@@ -73,10 +73,12 @@ export const GEOMETRIA = {
     verticale: { titolo: p(116, 282, 848, 204, true), goal: p(116, 1076, 400, 120, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
   },
   reaction: {
-    verticale: { titolo: p(116, 282, 848, 204, true), goal: p(116, 1076, 400, 120, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
+    verticale: { titolo: p(116, 282, 848, 204, true), richiesta: p(116, 524, 848, 72, true), scaletta: p(116, 608, 848, 306, true), goal: p(116, 1076, 400, 120, true), fascia: p(0, 1212, 1080, 92), "finto:A": p(0, 0, 1080, 1212), "finto:B": p(0, 1304, 1080, 616) },
     orizzontale: {
       titolo: p(360, 28, 1200, 160),
       goal: p(1584, 40, 300, 90),
+      richiesta: p(672, 820, 1200, 64), // in basso sullo schermo B (con una richiesta in onda)
+      scaletta: p(1392, 208, 480, 272), // sopra lo schermo B: 52 px di titolo e 44 a voce, 5 voci di prova
       finestraA: p(24, 192, 576, 702),
       finestraB: p(648, 192, 1248, 702),
       divisore: p(600, 192, 48, 702),
@@ -120,7 +122,11 @@ export const PRESENTI = {
     },
   },
   produzione: { verticale: stati("produzione", "verticale", ["base"]) },
-  reaction: { verticale: stati("reaction", "verticale", ["base"]), orizzontale: stati("reaction", "orizzontale", ["base"]) },
+  // scaletta: con la scaletta di prova (5 voci) e una richiesta in onda; base: senza
+  reaction: {
+    verticale: { base: senza("reaction", "verticale", "scaletta", "richiesta"), scaletta: tutti("reaction", "verticale") },
+    orizzontale: { base: senza("reaction", "orizzontale", "scaletta", "richiesta"), scaletta: tutti("reaction", "orizzontale") },
+  },
   // completo: linea e pannello Tematiche accesi; base: spenti (nascosti)
   podcast: {
     verticale: { completo: tutti("podcast", "verticale"), base: senza("podcast", "verticale", "linea", "tematiche") },
@@ -155,6 +161,7 @@ const equalizzatore = args.includes("--eq");
 const audio = args.includes("--audio");
 const regiaDrum = args.includes("--regia-drum");
 const regiaDoppio = args.includes("--regia-doppio");
+const regiaReaction = args.includes("--regia-reaction");
 const regiaPodcast = args.includes("--regia-podcast");
 
 function caricaPlaywright() {
@@ -187,7 +194,14 @@ async function preparaStato(fase = stato) {
   }
   if (layout === "produzione" || layout === "reaction") await comando("formatoTesti", { formato: layout, azzera: true });
   if (layout === "produzione") await comando("produzione", { preset: "cooking" });
-  if (layout === "reaction") await comando("reaction", { titolo: { sopra: "Ogni giovedì · ore 01:00", testo: "REACTION RELEASE DELLA SETTIMANA", sotto: "" } });
+  if (layout === "reaction") await comando("reaction", { titolo: { sopra: "Ogni giovedì · ore 01:00", testo: "REACTION RELEASE DELLA SETTIMANA", sotto: "" }, scaletta: { titolo: "In scaletta stasera", voci: [], modo: "fisso" } });
+  if (layout === "reaction" && stato === "scaletta") {
+    // cinque brani in scaletta e una richiesta di Mario in onda (il regalo «Rosa» la fa partire, la regia scrive il brano)
+    await comando("reaction", { scaletta: { voci: ["Specchi Neri · Nove", "Fuori Orario · Kappa 23", "Satellite · Mira", "Cromo · Vale B", "Notti a Vicenza · Lince"] }, regalo: "Rosa", durataRichiesta: 60 });
+    await comando("regaloEvento", { nome: "Rosa", utente: "mario" });
+    const { reaction } = await statoServer();
+    await comando("richiesta", { formato: "reaction", azione: "inOnda", id: reaction.richieste.coda[0].id, brano: { titolo: "Asfalto", artista: "Dama" } });
+  }
   if (layout === "podcast") {
     await comando("formatoTesti", { formato: "podcast", azzera: true });
     await comando("podcast", { titolo: { testo: "Back Rooms Podcast", sotto: "Puntata 12" }, ospiti: [OSPITE], tematiche: { titolo: "Tematiche di oggi", elenco: TEMATICHE, attiva: 1, lato: "sx" } });
@@ -1014,6 +1028,92 @@ async function provaRegiaDrum() {
     process.exit(1);
   }
   console.log("ok regia-drum: Like, scaletta (con l'errore e «Suona ora»), brano, ospite, «Dona un…», richiamo con F2, riempimento, campi in uso; mockup/regia-drum.jpg");
+}
+
+// La regia della Reaction: scaletta (una voce per riga), regalo delle richieste con «Regali visti», coda con In onda, Fatta e Scarta.
+async function provaRegiaReaction() {
+  await comando("nuovaSerata");
+  await comando("layout", { nome: "reaction" });
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const pagina = await browser.newPage({ viewport: { width: 1500, height: 2600 } });
+  const errori = [];
+  pagina.on("pageerror", (e) => errori.push(`regia: ${e.message}`));
+  await pagina.goto(`${base}/regia.html`);
+  await pagina.evaluate(() => document.fonts?.ready);
+  const attesa = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  await attesa(1200);
+  const ric = async () => (await statoServer()).reaction;
+  const dice = (cosa, vero) => vero || errori.push(cosa);
+
+  // scaletta: tre voci e una riga vuota in mezzo (si toglie), titolo nuovo
+  await pagina.fill("#re-f-scaletta [name=titolo]", "Stasera in reaction");
+  await pagina.fill("#re-f-scaletta [name=voci]", "Specchi Neri · Nove\n\nSatellite · Mira\nCromo · Vale B");
+  await pagina.click("#re-f-scaletta button.primario");
+  await attesa(400);
+  let r = await ric();
+  dice(`scaletta: ${JSON.stringify(r.scaletta.voci)}, attese 3 voci senza la riga vuota`, r.scaletta.voci.length === 3 && r.scaletta.voci[1] === "Satellite · Mira" && r.scaletta.titolo === "Stasera in reaction");
+  await pagina.fill("#re-f-scaletta [name=voci]", Array.from({ length: 9 }, (_, i) => `Voce ${i + 1}`).join("\n"));
+  await pagina.click("#re-f-scaletta button.primario");
+  await attesa(400);
+  dice("9 voci: doveva comparire un avviso di errore", (await pagina.locator("#avvisi .avviso.errore").count()) >= 1);
+  dice("9 voci: la scaletta in onda non doveva cambiare", (await ric()).scaletta.voci.length === 3);
+  // «Mostra ora» arriva al server senza errori (l'evento lo prova la pagina)
+  await pagina.click("#re-scaletta-mostra");
+
+  // un regalo che arriva dalla live compare tra i «Regali visti»; un clic lo sceglie
+  await comando("regaloEvento", { nome: "Rosa", id: 5655, utente: "mario" });
+  await attesa(500);
+  await pagina.waitForSelector("#re-visti button[data-regalo=Rosa]", { timeout: 3000 }).catch(() => errori.push("il regalo «Rosa» doveva comparire tra i regali visti"));
+  await pagina.click("#re-visti button[data-regalo=Rosa]");
+  await attesa(400);
+  dice("un clic sul regalo visto doveva sceglierlo", (await ric()).richieste.regalo === "Rosa");
+  await comando("regaloEvento", { nome: "Rosa", utente: "lucia", quantita: 3 });
+  await attesa(500);
+  r = await ric();
+  dice(`una richiesta attesa in coda (lucia: il regalo di mario è arrivato prima di sceglierlo), trovate ${r.richieste.coda.length}`, r.richieste.coda.length === 1);
+  await comando("regaloEvento", { nome: "Rosa", utente: "anna" });
+  await attesa(500);
+  dice("la coda doveva avere 2 richieste (lucia e anna)", (await ric()).richieste.coda.length === 2);
+  const righe = pagina.locator("#re-coda li");
+  dice(`la coda in regia doveva avere 2 righe, ne ha ${await righe.count()}`, (await righe.count()) === 2);
+  dice("la prima riga doveva dire «@lucia · Rosa ×3»", /@lucia · Rosa ×3/.test((await righe.first().textContent()) ?? ""));
+
+  // In onda senza titolo: errore e niente cambia; con il titolo va in onda
+  await righe.first().locator("button[data-azione=inOnda]").click();
+  await attesa(400);
+  dice("In onda senza titolo: doveva dare un avviso", (await pagina.locator("#avvisi .avviso.errore").count()) >= 2);
+  await righe.first().locator("[name=titolo]").fill("Asfalto");
+  await righe.first().locator("[name=artista]").fill("Dama");
+  await righe.first().locator("button[data-azione=inOnda]").click();
+  await attesa(500);
+  r = await ric();
+  dice(`la richiesta doveva essere in onda con «Asfalto — Dama» (${JSON.stringify(r.richieste.coda[0])})`, r.richieste.coda[0].stato === "inOnda" && r.richieste.coda[0].brano.titolo === "Asfalto" && r.richieste.coda[0].brano.artista === "Dama");
+  // pagina della reaction: la fascia dice «Richiesta di @lucia: Asfalto — Dama»
+  const overlay = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
+  await overlay.goto(`${base}/reaction.html?anteprima=1&statico=1`);
+  await attesa(1200);
+  const testo = (await overlay.locator("#rc-richiesta-testo").textContent())?.trim();
+  dice(`la fascia doveva dire «Richiesta di @lucia: Asfalto — Dama» (dice «${testo}»)`, testo === "Richiesta di @lucia: Asfalto — Dama");
+  dice("la fascia doveva essere in vista", (await overlay.locator("#rc-richiesta:not(.fuori):not([hidden])").count()) === 1);
+  await righe.first().locator("button[data-azione=fatta]").click();
+  await attesa(500);
+  dice("«Fatta» doveva chiudere la richiesta", (await ric()).richieste.coda[0].stato === "fatta");
+  await pagina.locator("#re-coda li").last().locator("button[data-azione=scarta]").click();
+  await attesa(500);
+  dice("«Scarta» doveva toglierla dalla coda", (await ric()).richieste.coda.length === 1);
+  // regalo vuoto = richieste spente
+  await pagina.fill("#re-regalo [name=regalo]", "");
+  await pagina.click("#re-regalo button");
+  await attesa(400);
+  dice("regalo vuoto: doveva spegnere le richieste", (await ric()).richieste.regalo === "");
+  await pagina.locator("#re-regia").screenshot({ path: join(CARTELLA, "mockup", "regia-reaction.jpg"), type: "jpeg", quality: 85 });
+  await browser.close();
+  if (errori.length) {
+    console.error(`Problemi nella regia della reaction:\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log("ok regia-reaction: scaletta, regali visti, coda (In onda, Fatta, Scarta), fascia sulla pagina; mockup/regia-reaction.jpg");
 }
 
 // I titoli di Studio Production e Reaction Release nella pagina di regia.
@@ -2134,6 +2234,7 @@ async function main() {
   if (audio) return provaAudio();
   if (regiaDrum) return provaRegiaDrum();
   if (regiaDoppio) return provaRegiaDoppio();
+  if (regiaReaction) return provaRegiaReaction();
   if (regiaPodcast) return provaRegiaPodcast();
   if (testiLunghi) return layout === "drum" ? provaTestiLunghi() : layout === "podcast" ? provaTestiLunghiPodcast() : provaTestiLunghiTitolo();
   if (regia) return provaRegia();
