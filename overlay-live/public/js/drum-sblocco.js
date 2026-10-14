@@ -3,7 +3,7 @@
 // si fa verde e il titolo si rivela con le lettere che girano. Dopo 1 s compare il banner (per 3,2 s); a 1,8 s la colonna scorre
 // di un posto: il primo modulo esce in alto, il nuovo entra in basso. Un secondo sblocco durante la sequenza si accoda e
 // resta solo l'ultimo. La pagina disegna la colonna e il banner: qui si dice cosa mostrare (voci) e quando rifare il disegno.
-import { SBLOCCO, colonnaSblocco, titoloSlot, titoloBrano } from "./drum-logica.js";
+import { SBLOCCO, colonnaSblocco, titoloSlot, titoloModulo } from "./drum-logica.js";
 import { STILI } from "./drum-clessidra.js";
 
 const PASSO = 164; // distanza tra due moduli (come in drum.css)
@@ -90,7 +90,7 @@ export function creaSblocco({ moduli, nuovoModulo, riempi, rifai, leggi, colonna
     const dove = misure(modulo);
     onda(dove);
     raffica(dove);
-    rivela(modulo, titoloBrano(dati.titolo));
+    rivela(modulo, titoloModulo(dati));
   }
 
   // Toglie dalla pagina quello che la sequenza ha aggiunto: classe, lampi, effetti rimasti, modulo che entrava.

@@ -23,7 +23,7 @@ export const CATEGORIE = ["beat", "voce", "mix"];
 export const WIDGET = [
   "premio", "tabellone", "classifica", "timer", "banner", "barra", "scheda", "targa", "barraStudio", "comparse",
   "barreVita", "modalita", "timerBattle", "giudiciBattle", "popupBattle", "vittoriaBattle", "bracket", "albero", "goal",
-  "drumCornice", "drumTraguardi", "drumBrano", "drumPriorita", "drumBarra",
+  "drumCornice", "drumTraguardi", "drumBrano", "drumPriorita", "drumBarra", "drumStriscia",
   "prTitolo", "prBarra", "reTitolo", "reBarra", "reScaletta", "reRichiesta",
   "poTitolo", "poLinea", "poTematiche", "poBarra",
 ];

@@ -2,6 +2,7 @@
 // Solo funzioni pure: i modificatori lavorano su `stato.drum`, le funzioni di lettura prendono il `drum`.
 import { ICONE, corpo, numeroTra, oggetto, siNo, testo, velocitaFascia } from "./validazione.mjs";
 import { controllaTesti, testiBase } from "./testi.mjs";
+import { controllaRichieste, richiesteIniziali } from "./regali.mjs";
 
 // Le prime 16 tappe le ha scelte la regia, le altre 21 (fino a 500k) sono la scaletta di partenza, modificabile.
 export const PASSI_FISSI = [1000, 2000, 3000, 5000, 7000, 9000, 10000, 12000, 15000, 17000, 20000, 22000, 25000, 27000, 29000, 30000];
@@ -70,7 +71,11 @@ export const drumIniziale = () => ({
   scaletta: scalettaPredefinita(),
   brano: { titolo: "", artista: "" },
   ospite: { etichetta: "Artista ospite", handle: "", icona: "instagram" },
-  priorita: { prefisso: "Dona un", slot: "Rosa", sopra: "Salta la coda · scegli tu il brano", icona: "rosa" },
+  // L'istruzione su una riga «Dona una Rosa per saltare la fila e scegliere il brano»; `regalo` (nome o ID) è quello che fa saltare la
+  // coda (vuoto = lo slot mostrato).
+  priorita: { prefisso: "Dona una", slot: "Rosa", dopo: "per saltare la fila e scegliere il brano", regalo: "", icona: "rosa" },
+  striscia: { velocita: 80 }, // la striscia a scorrimento in alto (px/s)
+  richieste: richiesteIniziali(), // la coda di chi ha donato il regalo (la regia la segna fatta o la scarta)
   eq: { sensibilita: 100, stile: "barre", senzaSegnale: true },
   riempimento: "perline",
   velocita: 80,
@@ -151,19 +156,35 @@ export function impostaLike(stato, dati, { inLettura = false } = {}) {
   if (inLettura || drum.like.tiktokTotale === null) drum.like.voluti = contati(drum);
 }
 
-// Dalla regia: il testo del campo oppure `predefinita: true` (scaletta di partenza, tenendo i titoli delle tappe con lo
+// Le tappe come elenco di { like, titolo } (la tabella della regia): le stesse regole del testo, con «Tappa N: » negli errori.
+export function leggiTappe(tappe) {
+  if (!Array.isArray(tappe)) throw new Error("Scaletta: serve l'elenco delle tappe");
+  if (!tappe.length) throw new Error("Scaletta: serve almeno una tappa");
+  if (tappe.length > MAX_TAPPE) throw new Error(`Scaletta: al massimo ${MAX_TAPPE} tappe`);
+  let precedente = 0;
+  return tappe.map((t, i) => {
+    const dove = `Tappa ${i + 1}: `;
+    if (!oggetto(t) || typeof t.titolo !== "string") throw new Error(`${dove}servono i like e il titolo`);
+    const tappa = controllaTappa(t.like, t.titolo.trim(), precedente, dove);
+    precedente = tappa.like;
+    return tappa;
+  });
+}
+
+// Dalla regia: il testo del campo, le tappe oppure `predefinita: true` (scaletta di partenza, tenendo i titoli delle tappe con lo
 // stesso numero di like). Le tappe già raggiunte restano annunciate: nessun sblocco per un cambio di scaletta.
 export function impostaScaletta(stato, modifiche) {
   if (!oggetto(modifiche)) throw new Error("Scaletta: forma non valida");
-  const { testo: grezzo, predefinita } = modifiche;
+  const { testo: grezzo, predefinita, tappe } = modifiche;
   const ripristina = predefinita === true;
-  if ((grezzo !== undefined) === ripristina) throw new Error("Scaletta: serve il testo o predefinita (uno solo)");
+  if ([grezzo !== undefined, ripristina, tappe !== undefined].filter(Boolean).length !== 1) throw new Error("Scaletta: serve il testo, le tappe o predefinita (uno solo)");
   const drum = stato.drum;
   let scaletta;
   if (ripristina) {
     const titoli = new Map(drum.scaletta.map((t) => [t.like, t.titolo]));
     scaletta = scalettaPredefinita().map((t) => ({ like: t.like, titolo: titoli.get(t.like) ?? "" }));
-  } else scaletta = leggiScaletta(grezzo);
+  } else if (tappe !== undefined) scaletta = leggiTappe(tappe);
+  else scaletta = leggiScaletta(grezzo);
   drum.scaletta = scaletta;
   drum.annunciati = tappeRaggiunte(drum);
 }
@@ -223,18 +244,31 @@ export function impostaOspite(stato, dati) {
   stato.drum.ospite = ospite;
 }
 
-// Il widget «Dona un…»: prefisso e riga sopra possono mancare, il regalo (slot) no.
+// L'istruzione «Dona una Rosa per saltare la fila…»: prefisso, parte dopo e regalo che salta la coda possono mancare, lo slot no.
+// «sopra» (il vecchio nome della riga) vale come «dopo».
 export function impostaPriorita(stato, dati) {
-  const { prefisso, slot, sopra, icona } = corpo(dati, "Dona un…");
+  const { prefisso, slot, dopo, sopra, regalo, icona } = corpo(dati, "Dona una…");
   const priorita = { ...stato.drum.priorita };
-  if (prefisso !== undefined) priorita.prefisso = testo(prefisso, 16, "Prefisso di «Dona un…»");
-  if (slot !== undefined) priorita.slot = testo(slot, 20, "Regalo di «Dona un…»", { obbligatorio: true });
-  if (sopra !== undefined) priorita.sopra = testo(sopra, 40, "Riga sopra di «Dona un…»");
+  if (prefisso !== undefined) priorita.prefisso = testo(prefisso, 16, "Prefisso di «Dona una…»");
+  if (slot !== undefined) priorita.slot = testo(slot, 20, "Regalo mostrato in «Dona una…»", { obbligatorio: true });
+  if (dopo !== undefined || sopra !== undefined) priorita.dopo = testo(dopo ?? sopra, 48, "Parte dopo il regalo di «Dona una…»");
+  if (regalo !== undefined) priorita.regalo = testo(regalo, 40, "Regalo che salta la coda");
   if (icona !== undefined) {
     if (!ICONE_REGALO.includes(icona)) throw new Error("Icona sconosciuta");
     priorita.icona = icona;
   }
   stato.drum.priorita = priorita;
+}
+
+// Il regalo che fa saltare la coda: quello scelto, oppure (vuoto) lo slot mostrato nell'istruzione.
+export const regaloDelDrum = (drum) => drum.priorita.regalo.trim() || drum.priorita.slot;
+
+// La striscia a scorrimento in alto: la velocità (40–160 px/s).
+export function impostaStriscia(stato, dati) {
+  const { velocita } = corpo(dati, "Striscia");
+  const striscia = { ...stato.drum.striscia };
+  if (velocita !== undefined) striscia.velocita = velocitaFascia(velocita);
+  stato.drum.striscia = striscia;
 }
 
 // Equalizzatore: quanto reagisce (50–300 %), barre o onda, e il «respiro» quando non arriva audio.
@@ -283,6 +317,29 @@ function fondiGruppo(drum, chiave, imposta, salvato) {
   }
 }
 
+// «Dona una…» da uno stato salvato, un campo alla volta (uno rotto non butta via gli altri). Dalla versione precedente: la riga
+// «sopra» personalizzata diventa «dopo» (quella predefinita di allora lascia il nuovo testo) e il prefisso predefinito di allora
+// («Dona un») diventa «Dona una».
+const VECCHIO_PREFISSO = "Dona un";
+const VECCHIA_RIGA_SOPRA = "Salta la coda · scegli tu il brano";
+function fondiPriorita(drum, salvato) {
+  if (!oggetto(salvato)) return;
+  const campi = { ...salvato };
+  if (campi.prefisso === VECCHIO_PREFISSO) campi.prefisso = drumIniziale().priorita.prefisso;
+  if (campi.dopo === undefined && campi.sopra !== undefined && campi.sopra !== VECCHIA_RIGA_SOPRA) campi.dopo = campi.sopra;
+  delete campi.sopra;
+  for (const campo of ["prefisso", "slot", "dopo", "regalo", "icona"]) {
+    if (campi[campo] === undefined) continue;
+    const prova = { drum: { ...drum, priorita: { ...drum.priorita } } };
+    try {
+      impostaPriorita(prova, { [campo]: campi[campo] });
+      drum.priorita = prova.drum.priorita;
+    } catch {
+      // valore non valido: resta quello di partenza
+    }
+  }
+}
+
 // Stato salvato da una versione senza Drum, o con valori rotti: partenza completa, i valori buoni restano gruppo per
 // gruppo. Gli annunci non superano le tappe raggiunte (nessuno sblocco ripetuto dopo un riavvio). Mai eccezioni.
 export function fondiDrum(salvato) {
@@ -296,7 +353,15 @@ export function fondiDrum(salvato) {
   }
   if (oggetto(salvato.brano)) fondiGruppo(drum, "brano", impostaBrano, { titolo: salvato.brano.titolo, artista: salvato.brano.artista });
   fondiGruppo(drum, "ospite", impostaOspite, salvato.ospite);
-  fondiGruppo(drum, "priorita", impostaPriorita, salvato.priorita);
+  fondiPriorita(drum, salvato.priorita);
+  if (oggetto(salvato.striscia)) {
+    try {
+      drum.striscia = { velocita: velocitaFascia(salvato.striscia.velocita) };
+    } catch {
+      // velocità non valida: resta quella di partenza
+    }
+  }
+  drum.richieste = controllaRichieste(salvato.richieste);
   fondiGruppo(drum, "eq", impostaEq, salvato.eq);
   if (RIEMPIMENTI.includes(salvato.riempimento)) drum.riempimento = salvato.riempimento;
   try {
@@ -323,6 +388,7 @@ export function drumNuovaSerata(drum) {
     like: { tiktokTotale: drum.like.tiktokTotale, offset: drum.like.tiktokTotale ?? 0, extra: 0 },
     annunciati: 0,
     brano: { titolo: "", artista: "" },
+    richieste: { ...structuredClone(drum.richieste), coda: [] },
   };
 }
 

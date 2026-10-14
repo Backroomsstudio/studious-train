@@ -9,7 +9,7 @@
 // Le funzioni arrivano da regia.js (che le usa per tutte le sezioni): `$`, `el`, `invia`, `avviso`, `riempi`, `mostra`
 // e `conn` (la connessione, per l'audio di FL Studio).
 import { ETICHETTE_TESTI, NOMI_ICONE, NOMI_ICONE_REGALO, TITOLO_REACTION_PREDEFINITO, vociFascia, velocitaFascia } from "./formati-logica.js";
-import { formattaLike, etichettaLike, testoScaletta, titoloBrano } from "./drum-logica.js";
+import { formattaLike, etichettaLike, testoScaletta, titoloModulo } from "./drum-logica.js";
 import { stimaGiroSecondi } from "./barra.js";
 import { avviaAscolto, elencaIngressi } from "./regia-audio.js";
 import { avviaRegiaPodcast } from "./regia-podcast.js";
@@ -219,7 +219,7 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn, 
   alCambio("dr-ospite-icona", "drumOspite", "icona");
   alCambio("dr-pri-prefisso-in", "drumPriorita", "prefisso");
   alCambio("dr-pri-slot-in", "drumPriorita", "slot");
-  alCambio("dr-pri-sopra-in", "drumPriorita", "sopra");
+  alCambio("dr-pri-sopra-in", "drumPriorita", "dopo");
   alCambio("dr-pri-icona-in", "drumPriorita", "icona");
   alCambio("dr-riempimento", "drumRiempimento", "stile");
   const richiamo = () => comandoDrum("drumPriorita", { richiamo: true });
@@ -241,7 +241,7 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn, 
           "li",
           { class: stato },
           el("span", { class: "dr-t-like" }, etichettaLike(tappa.like)),
-          el("span", { class: `dr-t-titolo${tappa.titolo ? "" : " vuoto"}` }, titoloBrano(tappa.titolo)),
+          el("span", { class: `dr-t-titolo${tappa.titolo ? "" : " vuoto"}` }, titoloModulo(tappa)),
           el("span", { class: "dr-t-stato", title: { sbloccata: "Sbloccata", attiva: "Prossima: i Like la stanno riempiendo", chiusa: "Ancora chiusa" }[stato] }, { sbloccata: "✓", attiva: "▶", chiusa: "" }[stato]),
           sbloccata ? suona : el("span"),
         );
@@ -266,7 +266,7 @@ export function avviaRegiaFormati({ $, el, invia, avviso, riempi, mostra, conn, 
     riempi(campoDrum("dr-ospite-icona"), d.ospite.icona);
     riempi(campoDrum("dr-pri-prefisso-in"), d.priorita.prefisso);
     riempi(campoDrum("dr-pri-slot-in"), d.priorita.slot);
-    riempi(campoDrum("dr-pri-sopra-in"), d.priorita.sopra);
+    riempi(campoDrum("dr-pri-sopra-in"), d.priorita.dopo);
     riempi(campoDrum("dr-pri-icona-in"), d.priorita.icona);
     riempi(campoDrum("dr-riempimento"), d.riempimento);
   }

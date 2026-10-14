@@ -15,7 +15,7 @@ import { creaFascia } from "./fascia.js";
 import { creaGoal } from "./goal.js";
 import { chiaveGoal } from "./goal-logica.js";
 import { vociFascia, velocitaFascia } from "./formati-logica.js";
-import { formattaLike, etichettaLike, finestraScaletta, livelloVoce, titoloBrano } from "./drum-logica.js";
+import { formattaLike, etichettaLike, finestraScaletta, livelloVoce, titoloModulo } from "./drum-logica.js";
 import { creaClessidra } from "./drum-clessidra.js";
 import { creaSblocco } from "./drum-sblocco.js";
 import { creaEqualizzatore } from "./drum-eq.js";
@@ -188,7 +188,7 @@ function riempiModulo(m, voce, d, cresce = false) {
   m.tappa = voce.indice;
   m.like.textContent = etichettaLike(voce.like);
   m.icona.querySelector("use").setAttribute("href", sbloccata ? "#ic-spunta" : "#ic-lucchetto");
-  m.titolo.textContent = sbloccata ? titoloBrano(voce.titolo) : "Brano segreto";
+  m.titolo.textContent = titoloModulo(voce);
   m.riga.hidden = voce.stato !== "attiva";
   if (voce.stato === "attiva") {
     m.manca.textContent = `mancano ${formattaLike(Math.max(0, voce.like - d.contati))}`;
@@ -226,12 +226,12 @@ function disegnaPriorita(d) {
   const sopra = $("#dr-pri-sopra");
   const prefisso = $("#dr-pri-prefisso");
   const slot = $("#dr-pri-slot");
-  sopra.textContent = p.sopra;
-  sopra.hidden = !p.sopra;
+  sopra.textContent = p.dopo;
+  sopra.hidden = !p.dopo;
   prefisso.textContent = p.prefisso;
   slot.textContent = p.slot;
   const scala = ts(d.testi, "priorita");
-  if (p.sopra) adattaTesto(sopra, 24 * scala, 16);
+  if (p.dopo) adattaTesto(sopra, 24 * scala, 16);
   adattaTesto(prefisso, 38 * scala, 20);
   adattaTesto(slot, 56 * scala, 24);
 }
@@ -249,7 +249,7 @@ function mostraBanner(tappa) {
   clearTimeout(uscitaBanner);
   const scala = ts(stato.drum.testi, "sblocco");
   const titolo = $("#dr-sblocco-titolo");
-  titolo.textContent = titoloBrano(tappa.titolo);
+  titolo.textContent = titoloModulo(tappa);
   bannerEl.classList.remove("esce");
   bannerEl.hidden = false; // visibile prima di misurare i testi
   adattaTesto($(".dr-sblocco-etichetta"), 28 * scala, 16);

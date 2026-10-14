@@ -1,7 +1,8 @@
 // Parti pure della pagina del Drum: formato dei Like, finestra della colonna, testo della scaletta.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { formattaLike, etichettaLike, finestraScaletta, testoScaletta, titoloBrano, colonnaSblocco, titoloSlot, livelloVoce, interpolaBande, passoBarra, cappuccio, respiro, SBLOCCO } from "../public/js/drum-logica.js";
+import { formattaLike, etichettaLike, finestraScaletta, testoScaletta, titoloModulo, colonnaSblocco, titoloSlot, livelloVoce, interpolaBande, passoBarra, cappuccio, respiro, SBLOCCO } from "../public/js/drum-logica.js";
+import * as logica from "../public/js/drum-logica.js";
 import { posizioniGrani, STILI } from "../public/js/drum-clessidra.js";
 import { scalettaPredefinita, leggiScaletta } from "../lib/drum.mjs";
 
@@ -60,10 +61,8 @@ test("testoScaletta: una riga per tappa e il giro con leggiScaletta", () => {
   assert.deepEqual(leggiScaletta(testoScaletta(scalettaPredefinita())), scalettaPredefinita());
 });
 
-test("titoloBrano: senza titolo è un brano a sorpresa", () => {
-  assert.equal(titoloBrano(""), "Brano a sorpresa");
-  assert.equal(titoloBrano(undefined), "Brano a sorpresa");
-  assert.equal(titoloBrano("Billie Jean"), "Billie Jean");
+test("titoloBrano non esiste più: «Brano a sorpresa» è sparito", () => {
+  assert.equal(typeof logica.titoloBrano, "undefined");
 });
 
 test("SBLOCCO: i tempi della sequenza stanno insieme", () => {
@@ -246,4 +245,12 @@ test("eq: matematica", () => {
   assert.ok(minimo >= 0.06 - 1e-9 && massimo <= 0.14 + 1e-9, `respiro tra ${minimo} e ${massimo}`);
   assert.ok(massimo - minimo > 0.06, "il respiro si muove davvero");
   assert.notEqual(respiro(1, 0, 40), respiro(1, 20, 40), "ogni barra ha la sua fase");
+});
+
+test("titoloModulo: il titolo anche a modulo chiuso; senza titolo «Da definire»", () => {
+  assert.equal(titoloModulo({ like: 15000, titolo: "Back in Black" }), "Back in Black");
+  assert.equal(titoloModulo({ like: 15000, titolo: "" }), "Da definire");
+  assert.equal(titoloModulo({ like: 15000 }), "Da definire");
+  assert.equal(titoloModulo(undefined), "Da definire");
+  assert.equal(titoloModulo({ like: 1, titolo: "   " }), "Da definire");
 });

@@ -41,7 +41,9 @@ test("partenza: forma del Drum", () => {
     scaletta: D.scalettaPredefinita(),
     brano: { titolo: "", artista: "" },
     ospite: { etichetta: "Artista ospite", handle: "", icona: "instagram" },
-    priorita: { prefisso: "Dona un", slot: "Rosa", sopra: "Salta la coda · scegli tu il brano", icona: "rosa" },
+    priorita: { prefisso: "Dona una", slot: "Rosa", dopo: "per saltare la fila e scegliere il brano", regalo: "", icona: "rosa" },
+    striscia: { velocita: 80 },
+    richieste: { regalo: "", coda: [] },
     eq: { sensibilita: 100, stile: "barre", senzaSegnale: true },
     riempimento: "perline",
     velocita: 80,
@@ -362,8 +364,8 @@ test("impostaScaletta", () => {
   const prima = structuredClone(s.drum);
   assert.throws(() => D.impostaScaletta(s, { testo: "1000\n500" }), /Riga 2/);
   assert.deepEqual(s.drum, prima, "un errore non cambia nulla");
-  assert.throws(() => D.impostaScaletta(s, {}), /testo o predefinita/);
-  assert.throws(() => D.impostaScaletta(s, { testo: "1000", predefinita: true }), /testo o predefinita/);
+  assert.throws(() => D.impostaScaletta(s, {}), /testo, le tappe o predefinita/);
+  assert.throws(() => D.impostaScaletta(s, { testo: "1000", predefinita: true }), /testo, le tappe o predefinita/);
   assert.throws(() => D.impostaScaletta(s, null), /Scaletta/);
   assert.throws(() => D.impostaScaletta(s, { testo: 5 }), /serve un testo/);
   assert.deepEqual(s.drum, prima);
@@ -416,17 +418,22 @@ test("ospite, priorità, eq, riempimento, velocità", () => {
   assert.deepEqual(s.drum.ospite, ospite, "un errore non lascia metà modifica");
 
   assert.deepEqual(D.ICONE_REGALO, ["rosa", "corona", "cuore", "regalo", "stella", "diamante", "logo"]);
-  D.impostaPriorita(s, { prefisso: "Regala una", slot: "Corona", sopra: "Vai in cima", icona: "corona" });
-  assert.deepEqual(s.drum.priorita, { prefisso: "Regala una", slot: "Corona", sopra: "Vai in cima", icona: "corona" });
-  D.impostaPriorita(s, { prefisso: "", sopra: "" });
-  assert.deepEqual([s.drum.priorita.prefisso, s.drum.priorita.sopra, s.drum.priorita.slot], ["", "", "Corona"], "prefisso e riga sopra possono mancare");
+  D.impostaPriorita(s, { prefisso: "Regala una", slot: "Corona", dopo: "per andare in cima", regalo: "5655", icona: "corona" });
+  assert.deepEqual(s.drum.priorita, { prefisso: "Regala una", slot: "Corona", dopo: "per andare in cima", regalo: "5655", icona: "corona" });
+  D.impostaPriorita(s, { prefisso: "", dopo: "", regalo: "" });
+  assert.deepEqual([s.drum.priorita.prefisso, s.drum.priorita.dopo, s.drum.priorita.regalo, s.drum.priorita.slot], ["", "", "", "Corona"], "prefisso, dopo e regalo possono mancare");
+  D.impostaPriorita(s, { sopra: "alias vecchio" });
+  assert.equal(s.drum.priorita.dopo, "alias vecchio", "«sopra» (vecchio nome) vale come «dopo»");
+  D.impostaPriorita(s, { dopo: "x".repeat(48), regalo: "y".repeat(40) });
+  assert.deepEqual([s.drum.priorita.dopo.length, s.drum.priorita.regalo.length], [48, 40], "i limiti ai bordi");
   const priorita = structuredClone(s.drum.priorita);
   assert.throws(() => D.impostaPriorita(s, { slot: " " }), /vuoto/);
   assert.throws(() => D.impostaPriorita(s, { icona: "instagram" }), /icona/i);
   assert.throws(() => D.impostaPriorita(s, { prefisso: "x".repeat(17) }), /16/);
   assert.throws(() => D.impostaPriorita(s, { slot: "x".repeat(21) }), /20/);
-  assert.throws(() => D.impostaPriorita(s, { sopra: "x".repeat(41) }), /40/);
-  assert.throws(() => D.impostaPriorita(s, { sopra: "ok", slot: "" }));
+  assert.throws(() => D.impostaPriorita(s, { dopo: "x".repeat(49) }), /48/);
+  assert.throws(() => D.impostaPriorita(s, { regalo: "x".repeat(41) }), /40/);
+  assert.throws(() => D.impostaPriorita(s, { dopo: "ok", slot: "" }));
   assert.deepEqual(s.drum.priorita, priorita);
 
   D.impostaEq(s, { sensibilita: 150, stile: "onda", senzaSegnale: false });
@@ -602,4 +609,60 @@ test("drumDemo", () => {
   D.drumDemo(corta, "finale");
   assert.equal(corta.drum.annunciati, 2, "con una scaletta più corta gli annunci seguono le tappe che ci sono");
   assert.equal(corta.drum.scaletta[1].titolo, "Seven Nation Army");
+});
+
+test("stato vecchio: «sopra» personalizzato passa a «dopo», quello predefinito e «Dona un» diventano i nuovi testi", () => {
+  const vecchioPredefinito = { prefisso: "Dona un", slot: "Rosa", sopra: "Salta la coda · scegli tu il brano", icona: "rosa" };
+  const a = D.fondiDrum({ priorita: vecchioPredefinito });
+  assert.deepEqual(a.priorita, D.drumIniziale().priorita, "tutto di partenza: i nuovi predefiniti");
+  const b = D.fondiDrum({ priorita: { ...vecchioPredefinito, sopra: "Vai in cima alla fila", slot: "Corona" } });
+  assert.deepEqual([b.priorita.dopo, b.priorita.slot, b.priorita.prefisso], ["Vai in cima alla fila", "Corona", "Dona una"]);
+  const c = D.fondiDrum({ priorita: { prefisso: "Regala un", slot: "Rosa", sopra: "x".repeat(60) } });
+  assert.equal(c.priorita.dopo, D.drumIniziale().priorita.dopo, "una riga troppo lunga per il nuovo limite: resta il predefinito");
+  assert.equal(c.priorita.prefisso, "Regala un", "un prefisso scelto dalla regia resta");
+  const d = D.fondiDrum({ priorita: { prefisso: "Dona una", slot: "Rosa", dopo: "per saltare", regalo: "5655", icona: "cuore" } });
+  assert.deepEqual(d.priorita, { prefisso: "Dona una", slot: "Rosa", dopo: "per saltare", regalo: "5655", icona: "cuore" });
+});
+
+test("striscia e richieste: partenza, velocità 40–160, stato salvato rotto, nuova serata svuota la coda", () => {
+  const s = { drum: D.drumIniziale() };
+  assert.deepEqual([s.drum.striscia, s.drum.richieste], [{ velocita: 80 }, { regalo: "", coda: [] }]);
+  D.impostaStriscia(s, { velocita: 40 });
+  D.impostaStriscia(s, { velocita: 160 });
+  assert.equal(s.drum.striscia.velocita, 160);
+  assert.throws(() => D.impostaStriscia(s, { velocita: 39 }), /40/);
+  assert.throws(() => D.impostaStriscia(s, { velocita: 161 }), /160/);
+  assert.throws(() => D.impostaStriscia(s, []), /Striscia/);
+  assert.equal(s.drum.striscia.velocita, 160, "un errore non cambia niente");
+  assert.deepEqual(D.fondiDrum({ striscia: { velocita: 5000 }, richieste: "no" }).striscia, { velocita: 80 });
+  assert.equal(D.fondiDrum({ striscia: { velocita: 100 } }).striscia.velocita, 100);
+  assert.deepEqual(D.fondiDrum({ richieste: { regalo: "x", coda: [{ id: "a", utente: "mario", stato: "attesa" }, 7] } }).richieste.coda.map((r) => r.id), ["a"]);
+  s.drum.richieste.coda.push({ id: "z", utente: "m", nome: "Rosa", quantita: 1, alle: 0, stato: "attesa", brano: null });
+  assert.equal(D.drumNuovaSerata(s.drum).richieste.coda.length, 0, "nuova serata svuota la coda");
+  assert.equal(D.drumNuovaSerata(s.drum).striscia.velocita, 160, "e tiene la striscia");
+});
+
+test("regalo del Drum: quello scelto, o lo slot se è vuoto", () => {
+  const d = D.drumIniziale();
+  assert.equal(D.regaloDelDrum(d), "Rosa", "regalo vuoto: lo slot");
+  d.priorita.regalo = "5655";
+  assert.equal(D.regaloDelDrum(d), "5655");
+});
+
+test("impostaScaletta { tappe }: come il testo equivalente; errori con il numero della tappa", () => {
+  const s1 = { drum: D.drumIniziale() };
+  const s2 = { drum: D.drumIniziale() };
+  D.impostaScaletta(s1, { tappe: [{ like: 1000, titolo: "Uno" }, { like: 5000, titolo: "" }, { like: 15000, titolo: "x".repeat(60) }] });
+  D.impostaScaletta(s2, { testo: `1000 | Uno\n5k |\n15.000 | ${"x".repeat(60)}` });
+  assert.deepEqual(s1.drum.scaletta, s2.drum.scaletta);
+  const prima = structuredClone(s1.drum.scaletta);
+  assert.throws(() => D.impostaScaletta(s1, { tappe: [{ like: 1000, titolo: "A" }, { like: 900, titolo: "B" }] }), /Tappa 2.*crescere/);
+  assert.throws(() => D.impostaScaletta(s1, { tappe: [{ like: 1000, titolo: "x".repeat(61) }] }), /Tappa 1.*60/);
+  assert.throws(() => D.impostaScaletta(s1, { tappe: [{ like: 0, titolo: "" }] }), /Tappa 1/);
+  assert.throws(() => D.impostaScaletta(s1, { tappe: [] }), /almeno una/);
+  assert.throws(() => D.impostaScaletta(s1, { tappe: "no" }), /elenco/);
+  assert.throws(() => D.impostaScaletta(s1, { tappe: [{ like: 1000 }] }), /Tappa 1/);
+  assert.throws(() => D.impostaScaletta(s1, { tappe: [{ like: 1000, titolo: "A" }], testo: "1000 | A" }), /uno solo/);
+  assert.throws(() => D.impostaScaletta(s1, { tappe: Array.from({ length: 81 }, (_, i) => ({ like: i + 1, titolo: "" })) }), /80/);
+  assert.deepEqual(s1.drum.scaletta, prima, "un errore non cambia la scaletta");
 });

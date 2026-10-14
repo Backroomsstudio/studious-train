@@ -236,7 +236,7 @@ async function controllaDrum(pagina, errori) {
   if (contatore !== CONTATORE_DRUM[stato]) errori.push(`contatore: «${contatore}» invece di «${CONTATORE_DRUM[stato]}»`);
   if (stato === "meta" && trovati.length === 4) {
     if (trovati[0].titolo !== "Another One Bites the Dust") errori.push(`modulo sbloccato: «${trovati[0].titolo}»`);
-    if (trovati[1].titolo !== "Brano segreto") errori.push(`modulo attivo: «${trovati[1].titolo}»`);
+    if (trovati[1].titolo !== "Livin' on a Prayer") errori.push(`modulo attivo: «${trovati[1].titolo}» (il titolo si vede anche a modulo chiuso)`);
     if (!trovati[1].manca.includes("600")) errori.push(`modulo attivo: «${trovati[1].manca}» non dice che mancano 600`);
     if (trovati[1].perc !== "70%") errori.push(`modulo attivo: percentuale «${trovati[1].perc}»`);
     const brano = await pagina.evaluate(() => document.querySelector("#dr-brano-titolo")?.textContent);

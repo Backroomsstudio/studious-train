@@ -244,6 +244,8 @@ function registraRegalo(regalo) {
   stato.regaliVisti = registraVisto(stato.regaliVisti, regalo, ora);
   // Una richiesta si accoda solo per il layout in onda (le code degli altri non si riempiono di nascosto).
   if (stato.layout === "reaction") aggiungiRichiesta(stato.reaction.richieste, regalo, ora);
+  // Nel Drum il regalo è quello scelto in «Dona una…» (o lo slot mostrato): la richiesta è «salta la coda».
+  if (stato.layout === "drum") aggiungiRichiesta({ regalo: D.regaloDelDrum(stato.drum), coda: stato.drum.richieste.coda }, regalo, ora);
   cambiato();
 }
 
@@ -568,6 +570,10 @@ const comandi = {
     D.impostaPriorita(stato, campi);
     if (richiamo === true) emetti("richiamoDrum", {});
   },
+  // Velocità della striscia a scorrimento in alto (40–160 px/s).
+  drumStriscia(args) {
+    D.impostaStriscia(stato, args);
+  },
   drumEq(args) {
     D.impostaEq(stato, args);
   },
@@ -624,8 +630,9 @@ const comandi = {
   },
   // La regia mette in onda (con il brano scelto), chiude o scarta una richiesta: { formato, azione: inOnda|fatta|scarta, id, brano? }.
   richiesta({ formato, azione, id, brano }) {
-    if (formato !== "reaction") throw new Error("Formato della richiesta: reaction");
-    segnaRichiesta(stato.reaction.richieste, { id, azione, brano });
+    if (formato !== "reaction" && formato !== "drum") throw new Error("Formato della richiesta: reaction o drum");
+    // Nel Drum la richiesta è «salta la coda»: la regia la segna fatta o la scarta (il brano non serve).
+    segnaRichiesta(stato[formato].richieste, { id, azione, brano });
   },
   podcast(args) {
     F.impostaPodcast(stato, args);

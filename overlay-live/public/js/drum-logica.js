@@ -28,8 +28,8 @@ export function finestraScaletta(scaletta, raggiunte, quante = 4) {
 // Il campo della regia: una riga «like | titolo» per tappa (titolo vuoto → «like |»). leggiScaletta (lib/drum.mjs) lo rilegge.
 export const testoScaletta = (scaletta) => scaletta.map((t) => (t.titolo ? `${t.like} | ${t.titolo}` : `${t.like} |`)).join("\n");
 
-// Una tappa raggiunta senza titolo si legge «Brano a sorpresa».
-export const titoloBrano = (titolo) => titolo || "Brano a sorpresa";
+// Il titolo di un modulo della colonna: sempre il suo, aperto o chiuso (niente più «Brano segreto»); senza titolo «Da definire».
+export const titoloModulo = (voce) => (typeof voce?.titolo === "string" && voce.titolo.trim()) || "Da definire";
 
 // La sequenza di sblocco (ms dall'inizio): urto e lampo, titolo che si rivela, banner (dopo 1 s, per 3,2 s), la colonna
 // che scorre di un posto (a 1,8 s, per 0,7 s). Tutto finito a 2,6 s; il banner resta fino a 4,2 s.
