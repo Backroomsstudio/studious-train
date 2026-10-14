@@ -1,0 +1,84 @@
+/* Stile comune Backrooms: nero profondo, cromo liquido, accenti neutri. */
+:root {
+  --nero: #050506;
+  --pannello: rgba(7, 7, 9, 0.9);
+  --testo: #eef0f3;
+  --testo-tenue: #939393;
+  --argento: #d6dae0;
+  --linea: rgba(255, 255, 255, 0.12);
+  --rosso-live: #ff3046;
+
+  /* Accenti neutri (erano viola e neon); restano il verde e il rosso, che hanno un significato */
+  --accento: #7d7d7d;
+  --accento-chiaro: #bdbdbd;
+  --verde: #45ffa8;
+  --rosso: #ff2d4b;
+
+  /* Podio: oro, argento e bronzo (toni chiari, così il testo scuro sopra si legge bene) */
+  --podio-oro: linear-gradient(160deg, #fff4c2 0%, #ffd863 26%, #f2b52a 52%, #ffd863 74%, #fff0b0 100%);
+  --podio-argento: linear-gradient(160deg, #ffffff 0%, #e4e8ee 26%, #bcbcbc 52%, #e4e8ee 74%, #ffffff 100%);
+  --podio-bronzo: linear-gradient(160deg, #ffe1c4 0%, #f3ab70 26%, #d47c3c 52%, #f3ab70 74%, #ffd9b5 100%);
+  --oro-testo: linear-gradient(180deg, #fffbe6 0%, #ffe27a 30%, #f5b72a 55%, #c98a0c 70%, #ffe58f 100%);
+  --argento-testo: linear-gradient(180deg, #ffffff 0%, #e6e6e6 30%, #b4b4b4 55%, #8c8c8c 70%, #ececec 100%);
+
+  /* San Francisco dove c'è (Mac, iPhone, o installato a mano); altrimenti Inter, quasi identico e gratuito (caricato da Google Fonts). */
+  --font-sistema: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "San Francisco", Inter, "Segoe UI", system-ui, sans-serif;
+  --font-dati: var(--font-sistema);
+  --font-gotico: var(--font-sistema);
+  /* Solo premio e classifica della gara: oggi uguale al resto; si cambia qui per un font decorativo solo lì. */
+  --font-premio: var(--font-sistema);
+
+  /* Il cromo del logo: bianco, grigio, una banda scura al centro, poi di nuovo luce. */
+  --cromo: linear-gradient(180deg, #ffffff 0%, #eef1f4 24%, #a9a9a9 46%, #404040 53%, #cccccc 66%, #ffffff 84%, #a3a3a3 100%);
+  --cromo-orizzontale: linear-gradient(90deg, #727272 0%, #f4f6f8 18%, #929292 38%, #ffffff 55%, #616161 76%, #e9ecef 100%);
+  --bordo-cromo: linear-gradient(135deg, #ffffff 0%, #646464 22%, #f3f5f7 46%, #434343 70%, #e3e6ea 100%);
+}
+
+.cromo {
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, transparent 62%) no-repeat,
+    var(--cromo);
+  background-size: 260% 100%, 100% 100%;
+  background-position: 160% 0, 0 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.85)) drop-shadow(0 0 14px rgba(255, 255, 255, 0.14));
+}
+
+.cromo.luccica {
+  animation: luccichio 7s ease-in-out infinite;
+}
+
+@keyframes luccichio {
+  0%, 62% { background-position: 160% 0, 0 0; }
+  100% { background-position: -60% 0, 0 0; }
+}
+
+/* Bordo cromato sottile, disegnato con una maschera così il fondo resta scuro. */
+.bordo-cromo {
+  position: relative;
+}
+.bordo-cromo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: var(--bordo-cromo);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.etichetta {
+  font: 600 15px/1 var(--font-dati);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--testo-tenue);
+}
+
+.punta {
+  fill: url(#g-cromo);
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.45));
+}

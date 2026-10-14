@@ -1,0 +1,90 @@
+/* Widget Goal (public/js/goal.js): vetro neutro 400×120 con due righe, numero grande a sinistra e il testo a destra.
+   La posizione (left/top) e la scala (--gl-scala) le scrive la pagina; si ridimensiona dall'angolo in alto a sinistra. */
+.gl {
+  position: absolute;
+  z-index: 7;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(34, 34, 34, 0.9), rgba(12, 12, 12, 0.92));
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  transform-origin: 0 0;
+  transform: scale(var(--gl-scala, 1));
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  font-family: var(--font-dati);
+}
+.gl.fuori {
+  opacity: 0 !important;
+  transform: scale(var(--gl-scala, 1)) translateY(-18px) !important;
+}
+.gl-riga {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 46px;
+  min-width: 0;
+  overflow: hidden;
+}
+.gl-numero:empty,
+.gl-prefisso:empty {
+  display: none; /* «Obiettivo raggiunto!» (passo 0) non ha né numero né prefisso */
+}
+.gl-riga[hidden] {
+  display: none;
+}
+.gl-numero {
+  flex: none;
+  min-width: 0;
+  font: 900 calc(42px * var(--gl-k, 1))/1 var(--font-dati);
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-align: left;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+}
+.gl-riga.like .gl-numero {
+  color: #ffd863; /* oro: i like */
+}
+.gl-riga.follower .gl-numero {
+  color: #fff;
+}
+.gl-testi {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.gl-prefisso {
+  font: 800 calc(16px * var(--gl-k, 1))/1.1 var(--font-dati);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #bbb;
+}
+.gl-unita {
+  font: 700 calc(20px * var(--gl-k, 1))/1.1 var(--font-dati);
+  color: #f0f0f0;
+  white-space: nowrap;
+}
+.gl-numero.scatto {
+  animation: gl-scatto 0.5s ease-out;
+}
+@keyframes gl-scatto {
+  0% { transform: scale(1.22); filter: brightness(1.8); }
+  100% { transform: none; filter: none; }
+}
+.schermo-pieno .gl,
+.con-albero .gl,
+.bt-tabellone:not([hidden]) ~ .gl,
+.bt-conto:not([hidden]) ~ .gl,
+.bt-vittoria:not([hidden]) ~ .gl {
+  opacity: 0 !important;
+}
+.statico .gl,
+.statico .gl-numero {
+  animation: none;
+  transition: none;
+}

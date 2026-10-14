@@ -1,0 +1,183 @@
+/* Tabellone ad albero della gara (public/js/albero.js): sta sopra a tutto il resto (premio, classifica, timer, notifiche e blocco
+   voti) mentre è acceso. In verticale occupa da y 282 (il premio) a y 1196 (il fondo della barra «Vota in chat»). */
+.albero {
+  z-index: 6;
+  /* opaco: copre del tutto premio, classifica, timer, notifiche e blocco voti */
+  background: radial-gradient(120% 90% at 0% 0%, rgba(125, 125, 125, 0.3), transparent 55%), linear-gradient(180deg, #151515, #08060f);
+}
+.verticale .albero {
+  left: var(--x);
+  top: var(--y-premio);
+  width: var(--largo);
+  height: calc(var(--y-chat) + var(--h-chat) - var(--y-premio));
+}
+/* In orizzontale (1920×1080) copre quasi tutta la tela, premio compreso (che sta a y 28) */
+.orizzontale .albero {
+  left: 24px;
+  top: 16px;
+  width: 1872px;
+  height: 1048px;
+}
+
+.alb-testa {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  top: 14px;
+  height: 46px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.alb-nome-turno {
+  position: absolute;
+  box-sizing: border-box;
+  text-align: center;
+  font: 800 14px/28px var(--font-dati);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accento-chiaro);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.alb-corpo {
+  position: absolute;
+}
+.alb-rami {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.alb-ramo {
+  fill: none;
+  stroke: rgba(189, 189, 189, 0.55);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+/* Una partita: due righe, una per lato, nella casella scura della classifica; chi passa il turno è in oro. */
+.alb-partita {
+  position: absolute;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #0f0f0f;
+  border: 2px solid rgba(189, 189, 189, 0.4);
+  color: #fff;
+}
+.alb-lato {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  min-height: 0;
+  padding: 0 8px;
+  background: linear-gradient(90deg, rgba(125, 125, 125, 0.28), rgba(125, 125, 125, 0.08));
+}
+.alb-lato + .alb-lato {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+.alb-lato.vince {
+  background: var(--podio-oro);
+  color: #2a1700;
+}
+.alb-lato.vuoto {
+  display: flex;
+  justify-content: center;
+  background: transparent;
+  opacity: 0.45;
+}
+.alb-testi {
+  min-width: 0;
+}
+.alb-titolo,
+.alb-artista {
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.alb-titolo {
+  font: 800 16px/1.3 var(--font-premio);
+}
+.alb-artista {
+  font: 600 12px/1.3 var(--font-premio);
+  opacity: 0.8;
+}
+.alb-punti {
+  font: 900 19px/1 var(--font-premio);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dopo la finale: il trofeo e chi ha vinto */
+.alb-campione {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+}
+.alb-trofeo {
+  width: 76px;
+  height: 76px;
+  filter: drop-shadow(0 0 16px rgba(255, 196, 60, 0.6));
+}
+.alb-campione-titolo {
+  box-sizing: border-box;
+  max-width: 100%;
+  height: 26px;
+  font: 900 20px/26px var(--font-premio);
+  color: #ffd35c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.alb-campione-punti {
+  font: 900 22px/1 var(--font-premio);
+  font-variant-numeric: tabular-nums;
+}
+.alb-piede {
+  position: absolute;
+  right: 24px;
+  bottom: 10px;
+  font: 700 18px/1 var(--font-dati);
+  letter-spacing: 0.06em;
+  color: var(--accento-chiaro);
+}
+.alb-vuoto-nota {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  margin: 0;
+  text-align: center;
+  font: 700 28px/1.2 var(--font-dati);
+  color: var(--accento-chiaro);
+}
+
+/* Entrata a fasi: un turno dopo l'altro, 0,5 s ciascuno (con ?statico=1 compare tutto subito) */
+.alb-anima .alb-partita,
+.alb-anima .alb-nome-turno,
+.alb-anima .alb-campione {
+  animation: alb-entra 0.5s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  animation-delay: calc(var(--turno) * 0.5s);
+}
+.alb-anima .alb-ramo {
+  animation: alb-ramo 0.5s ease both;
+  animation-delay: calc(var(--turno) * 0.5s);
+}
+@keyframes alb-entra {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes alb-ramo {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
