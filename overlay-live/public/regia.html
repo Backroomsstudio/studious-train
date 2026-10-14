@@ -63,6 +63,7 @@
       <form id="f-traccia" class="modulo" autocomplete="off">
         <input name="titolo" placeholder="Titolo traccia" maxlength="120">
         <input name="artista" placeholder="Artista" maxlength="120">
+        <input name="instagram" placeholder="Instagram dell'artista (@nome, o - per toglierlo)" maxlength="60" aria-label="Instagram dell'artista">
         <div class="azioni">
           <button class="primario" value="ascolta">In ascolto ora</button>
           <button value="coda">Metti in coda</button>
@@ -359,13 +360,21 @@
           <p class="nota">Il richiamo automatico è muto; quello a mano fa la campanella.</p>
 
           <h3>Scheda «Ora in ascolto»</h3>
-          <p class="nota">Sale dalla barra quando su Nero parte una traccia. Chi paga resta di più (secondi):</p>
+          <label class="interruttore"><input type="checkbox" id="sp-scheda-fissa"> Scheda fissa: resta finché suona la traccia</label>
+          <p class="nota">Con la scheda fissa lo spot dello studio scende dall'alto, poi torna la traccia. Spenta, la scheda sale quando su Nero parte una traccia e resta per i secondi del suo tipo: chi paga resta di più (secondi):</p>
           <div class="sp-durate" id="sp-durate">
             <label>Gratis <input type="number" min="4" max="20" data-tier="standard"></label>
             <label>Skip <input type="number" min="4" max="20" data-tier="skip"></label>
             <label>Super Skip <input type="number" min="4" max="20" data-tier="superskip"></label>
             <label>Throne <input type="number" min="4" max="20" data-tier="throne"></label>
           </div>
+          <h3>Diciture</h3>
+          <form id="f-sp-etichette" class="modulo sp-campi" autocomplete="off">
+            <label>Sopra la traccia <input name="inAscolto" maxlength="40"></label>
+            <label>Voce della barra <input name="ascoltate" maxlength="40"></label>
+            <label>Unità («N tracce») <input name="tracce" maxlength="40"></label>
+            <button>Salva diciture</button>
+          </form>
           <label class="sp-riga">Suono quando parte una traccia
             <select id="sp-suono-traccia">
               <option value="delicato">delicato (non copre la musica)</option>

@@ -4,6 +4,7 @@ import * as S from "../lib/stato.mjs";
 import { suoniSenzaPremio, richiesteScheda, suonaIn, suoniTraccia, PAUSA_MIN_TRACCIA_MS } from "../public/js/eventi-sonori.js";
 import { vociBarra, breve, stimaGiroSecondi, avanzamentoCoda, MIN_ASCOLTATE } from "../public/js/barra.js";
 import { inAttesaInCoda } from "../lib/nero.mjs";
+import { prossimaScheda, creaSchedaVuota } from "../public/js/scheda-logica.js";
 
 const config = { giudici: { beat: "A", voce: "B", mix: "C" }, pesi: { beat: 1, voce: 1, mix: 1, chat: 1 }, topN: 3, premio: "Mix" };
 const foto = (stato, ora = 0) => structuredClone(S.istantanea(stato, config, ora));
@@ -409,4 +410,105 @@ test("Instagram della traccia in ascolto: vuoto di partenza, in istantanea; una 
   assert.deepEqual([stato.corrente.titolo, stato.corrente.instagram], ["Cromo", "vale.b"], "la traccia nuova da Nero porta il suo Instagram (non quello di prima)");
   S.tracciaDaNero(stato, { neroId: "n3", titolo: "Asfalto", artista: "Dama", tier: "standard" }, { ora: 2e9, attesaMs: 0 });
   assert.equal(stato.corrente.instagram, "", "senza Instagram da Nero resta vuoto: quello scritto a mano non passa alla traccia dopo");
+});
+
+// ---------- Scheda «Ora in ascolto»: la macchina a stati (public/js/scheda-logica.js) ----------
+const OPZ = { schedaFissa: true, durate: { standard: 8, skip: 10, superskip: 12, throne: 15 }, durataSpotMs: 10_000, uscitaMs: 500 };
+const tr = (id, tier = null, extra = {}) => ({ id, tier, titolo: `Titolo ${id}`, artista: `Artista ${id}`, instagram: "", ...extra });
+const vuota = () => creaSchedaVuota();
+const passo = (stato, evento, ora = 0, opz = OPZ) => prossimaScheda(stato, evento, ora, opz);
+const tipi = (azioni) => azioni.map((a) => a.tipo);
+
+test("scheda fissa: dopo una traccia nessuna scadenza; una traccia nuova cambia la scheda; la stessa (nomi corretti) la aggiorna", () => {
+  let { stato, azioni } = passo(vuota(), { tipo: "traccia", traccia: tr("a", "skip") });
+  assert.deepEqual(tipi(azioni), ["entra-ascolto"], "nessun «programma»: non scade");
+  assert.equal(azioni[0].traccia.id, "a");
+  ({ stato, azioni } = passo(stato, { tipo: "traccia", traccia: tr("b") }, 5000));
+  assert.deepEqual(tipi(azioni), ["entra-ascolto"]);
+  assert.equal(azioni[0].cambia, true, "con la scheda già su è un cambio, non un'entrata");
+  ({ stato, azioni } = passo(stato, { tipo: "traccia", traccia: tr("b", null, { artista: "Corretto" }) }, 6000));
+  assert.deepEqual(tipi(azioni), ["aggiorna-ascolto"]);
+  assert.equal(azioni[0].traccia.artista, "Corretto");
+  ({ stato, azioni } = passo(stato, { tipo: "traccia", traccia: tr("b", null, { titolo: "" }) }, 7000));
+  assert.deepEqual(tipi(azioni), ["esce"], "la regia ha svuotato il titolo: la scheda scende");
+});
+
+test("scheda a tempo: scade dopo 8, 10, 12, 15 secondi per tipo", () => {
+  const aTempo = { ...OPZ, schedaFissa: false };
+  for (const [tier, secondi] of [[null, 8], ["standard", 8], ["skip", 10], ["superskip", 12], ["throne", 15]]) {
+    let { stato, azioni } = passo(vuota(), { tipo: "traccia", traccia: tr("a", tier) }, 1000, aTempo);
+    const programma = azioni.find((a) => a.tipo === "programma");
+    assert.equal(programma.quando, 1000 + secondi * 1000, String(tier));
+    ({ stato, azioni } = passo(stato, { tipo: "scadenza", token: programma.token }, programma.quando, aTempo));
+    assert.deepEqual(tipi(azioni), ["esce"]);
+    assert.equal(stato.aperta, null);
+  }
+  // un timer vecchio (token superato da una traccia più nuova) non chiude la scheda
+  let { stato, azioni } = passo(vuota(), { tipo: "traccia", traccia: tr("a") }, 0, aTempo);
+  const vecchio = azioni.find((a) => a.tipo === "programma");
+  ({ stato } = passo(stato, { tipo: "traccia", traccia: tr("b") }, 3000, aTempo));
+  ({ azioni } = passo(stato, { tipo: "scadenza", token: vecchio.token }, 8000, aTempo));
+  assert.deepEqual(azioni, [], "timer vecchio: ignorato");
+});
+
+test("spot con scheda fissa: esce la traccia, entra lo spot per 10 secondi, poi rientra la traccia più recente", () => {
+  let { stato } = passo(vuota(), { tipo: "traccia", traccia: tr("a", "throne") }, 0);
+  let r = passo(stato, { tipo: "spot" }, 20_000);
+  assert.deepEqual(tipi(r.azioni), ["esce", "programma"], "prima scende la traccia");
+  const uscita = r.azioni.find((a) => a.tipo === "programma");
+  assert.equal(uscita.quando, 20_500);
+  r = passo(r.stato, { tipo: "uscita-finita", token: uscita.token }, 20_500);
+  assert.deepEqual(tipi(r.azioni), ["entra-spot", "programma"]);
+  const fineSpot = r.azioni.find((a) => a.tipo === "programma");
+  assert.equal(fineSpot.quando, 30_500, "lo spot resta 10 secondi");
+  r = passo(r.stato, { tipo: "scadenza", token: fineSpot.token }, 30_500);
+  assert.deepEqual(tipi(r.azioni), ["esce", "programma"]);
+  const rientro = r.azioni.find((a) => a.tipo === "programma");
+  r = passo(r.stato, { tipo: "uscita-finita", token: rientro.token }, 31_000);
+  assert.deepEqual(tipi(r.azioni), ["entra-ascolto"]);
+  assert.equal(r.azioni[0].traccia.id, "a");
+});
+
+test("traccia nuova durante lo spot: dopo lo spot rientra la nuova, e lo spot non si interrompe", () => {
+  let { stato } = passo(vuota(), { tipo: "traccia", traccia: tr("a") }, 0);
+  let r = passo(stato, { tipo: "spot" }, 1000);
+  r = passo(r.stato, { tipo: "uscita-finita", token: r.azioni.find((a) => a.tipo === "programma").token }, 1500);
+  const fineSpot = r.azioni.find((a) => a.tipo === "programma");
+  r = passo(r.stato, { tipo: "traccia", traccia: tr("b", "skip") }, 5000);
+  assert.deepEqual(r.azioni, [], "durante lo spot non succede niente");
+  r = passo(r.stato, { tipo: "scadenza", token: fineSpot.token }, 11_500);
+  r = passo(r.stato, { tipo: "uscita-finita", token: r.azioni.find((a) => a.tipo === "programma").token }, 12_000);
+  assert.equal(r.azioni[0].traccia.id, "b");
+});
+
+test("scheda nascosta dalla regia: nessuna entrata; riaccesa, rientra l'ultima traccia", () => {
+  let { stato } = passo(vuota(), { tipo: "traccia", traccia: tr("a") }, 0);
+  let r = passo(stato, { tipo: "nascondi" }, 1000);
+  assert.deepEqual(tipi(r.azioni), ["esce"]);
+  r = passo(r.stato, { tipo: "traccia", traccia: tr("b") }, 2000);
+  assert.deepEqual(r.azioni, [], "nascosta: nessuna entrata");
+  assert.deepEqual(passo(r.stato, { tipo: "spot" }, 2500).azioni, [], "nemmeno lo spot");
+  r = passo(r.stato, { tipo: "mostra" }, 3000);
+  assert.deepEqual(tipi(r.azioni), ["entra-ascolto"]);
+  assert.equal(r.azioni[0].traccia.id, "b", "l'ultima traccia");
+  assert.deepEqual(passo(passo(vuota(), { tipo: "nascondi" }, 0).stato, { tipo: "mostra" }, 1).azioni, [], "riaccesa senza traccia: niente");
+});
+
+test("spot senza una traccia in scheda: entra subito e poi la scheda resta chiusa; due spot di fila non si sommano", () => {
+  let r = passo(vuota(), { tipo: "spot" }, 0);
+  assert.deepEqual(tipi(r.azioni), ["entra-spot", "programma"], "subito, senza far scendere niente");
+  assert.deepEqual(passo(r.stato, { tipo: "spot" }, 1000).azioni, [], "già su: il secondo non si somma");
+  const fine = r.azioni.find((a) => a.tipo === "programma");
+  r = passo(r.stato, { tipo: "scadenza", token: fine.token }, 10_000);
+  r = passo(r.stato, { tipo: "uscita-finita", token: r.azioni.find((a) => a.tipo === "programma").token }, 10_500);
+  assert.deepEqual(r.azioni, []);
+  assert.equal(r.stato.aperta, null);
+});
+
+test("barra: le diciture scelte in regia sostituiscono «Oggi abbiamo ascoltato» e «tracce»", () => {
+  const stato = statoSenzaPremio();
+  for (let i = 0; i < MIN_ASCOLTATE; i++) stato.ascoltate.push({ id: `a${i}`, titolo: `T${i}`, artista: "A", alle: 0 });
+  S.impostaSenzaPremio(stato, { etichette: { ascoltate: "Stasera sono passati", tracce: "brani" } });
+  const voce = vociBarra(foto(stato)).find((v) => v.tipo === "ascoltate");
+  assert.deepEqual([voce.etichetta, voce.testo], ["Stasera sono passati", `${MIN_ASCOLTATE} brani`]);
 });

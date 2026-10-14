@@ -300,8 +300,9 @@ const IMPOSTA_VELOCITA = {
 };
 
 const comandi = {
-  traccia({ titolo, artista, tier = null }) {
-    stato.corrente = S.tracciaVuota({ titolo: pulisci(titolo), artista: pulisci(artista), tier });
+  traccia({ titolo, artista, tier = null, instagram }) {
+    const nome = instagram === undefined || instagram === "" ? "" : pulisciInstagram(instagram);
+    stato.corrente = S.tracciaVuota({ titolo: pulisci(titolo), artista: pulisci(artista), tier, instagram: nome });
   },
   correggiTraccia({ titolo, artista, instagram }) {
     const nome = instagram === undefined ? undefined : pulisciInstagram(instagram); // controllato prima: un errore non cambia niente

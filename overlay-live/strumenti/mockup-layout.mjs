@@ -40,24 +40,43 @@ export const GEOMETRIA = {
       albero: p(116, 282, 848, 914, true), // il tabellone ad albero: dal premio al fondo della barra, sopra a tutto (solo stati albero)
     },
   },
+  senzaPremio: {
+    verticale: {
+      banner: p(116, 284, 848, 330, true),
+      goal: p(116, 650, 400, 120, true), // sul bordo alto della camera (un buco della pagina), sotto il banner
+      scheda: p(116, 1064, 848, 190), // sale da dietro la barra: finisce a 1254, sotto il mento di chi parla
+      barra: p(0, 1266, 1080, 92),
+    },
+  },
 };
 
 // Come si trova ogni pezzo nella pagina: un selettore proprio, altrimenti il suo data-parte.
-const SELETTORI = { gara: { premio: ".premio", classifica: ".classifica", timer: ".timer", notifica: ".notifica", tabellone: ".tabellone", chat: ".chat-cta", goal: ".gl", albero: "#albero" } };
-const PAGINE = { gara: "overlay.html" };
+const SELETTORI = { senzaPremio: { banner: ".sp-banner", scheda: "#sp-scheda", barra: ".sp-barra", goal: ".gl" }, gara: { premio: ".premio", classifica: ".classifica", timer: ".timer", notifica: ".notifica", tabellone: ".tabellone", chat: ".chat-cta", goal: ".gl", albero: "#albero" } };
+const PAGINE = { gara: "overlay.html", senzaPremio: "senza-premio.html" };
+const SCHEDE = ["standard", "skip", "superskip", "throne", "studio"]; // --layout senzaPremio --scheda <tipo>
 // Per ogni layout e stato: i pezzi che devono esserci (e non essere nascosti). Negli ultimi minuti la barra «Vota in chat» è chiusa
 // (la conferma chiude il voto) e quindi spenta: la notifica del nuovo primo posto prende il suo posto tra i pezzi da controllare.
 const PRESENTI = {
+  senzaPremio: {
+    base: ["banner", "barra", "goal"],
+    standard: ["banner", "scheda", "barra", "goal"],
+    skip: ["banner", "scheda", "barra", "goal"],
+    superskip: ["banner", "scheda", "barra", "goal"],
+    throne: ["banner", "scheda", "barra", "goal"],
+    studio: ["banner", "scheda", "barra", "goal"],
+  },
   gara: {
     base: ["premio", "classifica", "timer", "tabellone", "chat", "goal"],
     "ultimi-minuti": ["premio", "classifica", "timer", "tabellone", "notifica", "goal"],
+    // la traccia in ascolto ha un Instagram: sta sulla riga dell'artista, dentro il tabellone
+    instagram: ["premio", "classifica", "timer", "tabellone", "chat", "goal"],
     // con l'albero acceso gli altri pezzi ci sono ancora ma coperti: si guarda solo lui
     albero: ["albero"],
     "albero-6": ["albero"],
   },
 };
-const STATO_PREDEFINITO = { gara: "base" };
-const NOMI_FILE = { gara: { base: "verticale", "ultimi-minuti": "ultimi-minuti", albero: "gara-albero", "albero-6": "gara-albero-6" } };
+const STATO_PREDEFINITO = { gara: "base", senzaPremio: "base" };
+const NOMI_FILE = { senzaPremio: { base: "senza-premio", standard: "senza-premio-gratis", skip: "senza-premio-skip", superskip: "senza-premio-superskip", throne: "senza-premio-throne", studio: "senza-premio-spot" }, gara: { base: "verticale", "ultimi-minuti": "ultimi-minuti", instagram: "gara-instagram", albero: "gara-albero", "albero-6": "gara-albero-6" } };
 
 // I testi che la pagina della gara adatta al riquadro: il selettore, il pezzo in cui stanno, il corpo di partenza (massimo) e il
 // più piccolo accettabile (minimo). La chiave è quella di CORPI in public/js/overlay.js.
@@ -69,6 +88,7 @@ export const CORPI_GARA = {
   rigaTraccia: { selettore: ".cl-traccia-testo", pezzo: "classifica", base: 32, minimo: 18 },
   rigaArtista: { selettore: ".cl-artista", pezzo: "classifica", base: 22, minimo: 14 },
   etichettaTimer: { selettore: ".timer-etichetta", pezzo: "timer", base: 22, minimo: 12 },
+  instagram: { selettore: "#t-ig-testo", pezzo: "tabellone", base: 24, minimo: 14 },
 };
 // Testi che non si adattano (corpo fisso) ma devono comunque restare nel riquadro e senza lettere tagliate.
 const TESTI_FISSI_GARA = [
@@ -118,7 +138,7 @@ const opzione = (nome, predefinito) => {
 };
 const base = opzione("base", "http://127.0.0.1:4747");
 const layout = opzione("layout", "gara");
-const stato = opzione("stato", STATO_PREDEFINITO[layout]);
+const stato = opzione("scheda", opzione("stato", STATO_PREDEFINITO[layout]));
 const guida = args.includes("--guida");
 const controlli = args.includes("--controlli");
 
@@ -159,6 +179,7 @@ async function preparaStato() {
   }
   if (layout === "gara") await comando("demo"); // classifica, traccia con voti, voto della chat aperto e countdown
   if (layout === "gara" && stato === "ultimi-minuti") await comando("countdown", { azione: "avvia", minuti: 4 }); // timer rosso
+  if (layout === "gara" && stato === "instagram") await comando("correggiTraccia", { instagram: "https://instagram.com/lince.music/" });
 }
 
 // Un nuovo primo in classifica mentre la pagina è aperta: dopo il ritardo della classifica compare la notifica.
@@ -202,6 +223,8 @@ const contaPixelDiversi = async ([a64, b64]) => {
 // nemmeno al corpo minimo) si saltano: lì il testo che sporge è proprio quello che i puntini nascondono (le giudica `controllaTesti`).
 async function inchiostroTagliato(pagina, selettori) {
   const tagliate = [];
+  // Le cifre del countdown cambiano ogni secondo e starebbero nella zona fotografata accanto all'etichetta: si nascondono per la misura.
+  const stileTimer = await pagina.addStyleTag({ content: ".timer *:not(.timer-etichetta) { visibility: hidden !important; }" });
   const vista = pagina.viewportSize();
   for (const sel of selettori) {
     const luoghi = await pagina.locator(sel).all();
@@ -230,6 +253,7 @@ async function inchiostroTagliato(pagina, selettori) {
       if (diversi > 2) tagliate.push({ sel, indice, testo: testo.slice(0, 24), pixel: diversi, corpo });
     }
   }
+  await stileTimer.evaluate((e) => e.remove());
   return tagliate;
 }
 const descriviTagliate = (tagliate, contesto) => tagliate.map((t) => `${t.sel}${t.indice ? `[${t.indice}]` : ""} («${t.testo}…», ${Math.round(t.corpo)} px, ${contesto}): le lettere sporgono dalla riga e vengono tagliate (${t.pixel} pixel)`);
@@ -265,6 +289,7 @@ async function preparaTestiGara(lunghi) {
   await comando("giudici", lunghi ? { beat: lungo(40), voce: lungo(40), mix: lungo(40) } : { beat: "Dan", voce: "Lu", mix: "Mia" });
   await confermaRisultati(5, lunghi);
   await comando("traccia", { titolo: lunghi ? lungo(60) : "Sole", artista: lunghi ? lungo(40) : "Lince", tier: "throne" });
+  await comando("correggiTraccia", { instagram: lunghi ? "lunghissimo.handle.instagram.x" : "lince.music" }); // 30 caratteri: il massimo
   for (const [categoria, valore] of [["beat", 8.5], ["voce", 7.5], ["mix", 9]]) await comando("voto", { categoria, valore });
   await comando("apriChat", { secondi: 60 });
   await comando("simulaChat", { quanti: lunghi ? 137 : 7 });
@@ -403,8 +428,131 @@ async function provaRegiaGoal() {
   console.log("ok regia del Goal: obiettivi, follower di adesso, posizione, ripristino e «Mostra ora»; mockup in mockup/regia-goal.jpg");
 }
 
+// Instagram dell'artista nel tabellone della gara: con `corrente.instagram` impostato (comando correggiTraccia) compare «@nome» con
+// l'icona sulla riga dell'artista, dentro il riquadro del tabellone e senza lettere tagliate; senza, la riga non c'è.
+async function controllaInstagram(pagina, atteso, errori) {
+  const f = await pagina.evaluate(() => {
+    const ig = document.querySelector("#t-ig");
+    const t = document.querySelector(".tabellone").getBoundingClientRect();
+    const r = ig.getBoundingClientRect();
+    const testo = document.querySelector("#t-ig-testo");
+    const artista = document.querySelector("#t-artista").getBoundingClientRect();
+    return { visibile: !ig.hidden && r.width > 0, testo: testo.textContent, dentro: r.x >= t.x && r.right <= t.right && r.y >= t.y && r.bottom <= t.bottom, tagliato: testo.scrollWidth > testo.clientWidth + 1, adestra: r.x >= artista.right - 1, icona: ig.querySelector("svg").getBoundingClientRect().width };
+  });
+  if (!atteso) {
+    if (f.visibile) errori.push("Instagram: la riga c'è ma la traccia non ha un Instagram");
+    return;
+  }
+  if (!f.visibile || f.testo !== "@lince.music") errori.push(`Instagram: «${f.testo}» (visibile ${f.visibile}), doveva esserci «@lince.music»`);
+  if (!f.dentro) errori.push("Instagram: esce dal riquadro del tabellone");
+  if (f.tagliato) errori.push("Instagram: il testo finisce con i puntini");
+  if (!f.adestra) errori.push("Instagram: non sta a destra dell'artista");
+  if (f.icona < 10) errori.push("Instagram: l'icona non si vede");
+  if ((await inchiostroTagliato(pagina, ["#t-ig-testo"])).length) errori.push("Instagram: lettere tagliate dalla riga");
+}
+
+// ----- Scheda «Ora in ascolto» del layout senza premio (--layout senzaPremio --scheda <tipo>) -----
+// Colori (scheda grigia con testo bianco per chi non paga; dorata con testo nero per Skip, Super Skip e Throne; stessa cosa per
+// banner e barra), testi interi (niente puntini con i dati di prova), Instagram con l'icona e nessun testo tagliato dalla sua riga.
+async function controllaScheda(pagina, errori) {
+  const pagato = ["skip", "superskip", "throne"].includes(stato);
+  const f = await pagina.evaluate(() => {
+    const colore = (sel) => getComputedStyle(document.querySelector(sel)).color;
+    const sfondo = (sel) => getComputedStyle(document.querySelector(sel)).backgroundImage;
+    const tronca = (sel) => {
+      const e = document.querySelector(sel);
+      return e && !e.hidden && e.scrollWidth > e.clientWidth + 1;
+    };
+    return {
+      pagata: document.querySelector(".palco").classList.contains("pagata"),
+      artista: colore("#sp-scheda-artista"),
+      titolo: colore("#sp-scheda-titolo"),
+      sfondoScheda: sfondo("#sp-scheda"),
+      sfondoBanner: sfondo(".sp-banner"),
+      sfondoBarra: sfondo(".sp-barra"),
+      bannerTitolo: colore("#sp-titolo"),
+      ig: !document.querySelector("#sp-scheda-ig").hidden,
+      testoIg: document.querySelector("#sp-scheda-ig-testo").textContent,
+      tagliati: ["#sp-scheda-artista", "#sp-scheda-titolo", "#sp-scheda-ig-testo", "#sp-sopra", "#sp-titolo", "#sp-link"].filter(tronca),
+      etichetta: document.querySelector("#sp-scheda-sopra").textContent,
+    };
+  });
+  const NERO = "rgb(10, 10, 10)";
+  const BIANCO = "rgb(255, 255, 255)";
+  const oro = (sfondo) => /rgb\(242, 181, 42\)|rgb\(255, 241, 184\)/.test(sfondo);
+  if (stato === "studio") return;
+  if (f.pagata !== pagato) errori.push(`palco: la classe «pagata» è ${f.pagata}, doveva essere ${pagato}`);
+  if (f.artista !== (pagato ? NERO : BIANCO)) errori.push(`nome dell'artista: colore ${f.artista}, doveva essere ${pagato ? "nero" : "bianco"}`);
+  if (oro(f.sfondoScheda) !== pagato) errori.push(`scheda: ${pagato ? "doveva essere dorata" : "non doveva essere dorata"} (${f.sfondoScheda.slice(0, 60)})`);
+  if (oro(f.sfondoBanner) !== pagato) errori.push(`banner: ${pagato ? "doveva essere dorato" : "non doveva essere dorato"}`);
+  if (f.bannerTitolo !== (pagato ? NERO : BIANCO)) errori.push(`banner, «La tua musica!»: colore ${f.bannerTitolo}, doveva essere ${pagato ? "nero" : "bianco"}`);
+  if (!f.ig || f.testoIg !== "@lince.music") errori.push(`Instagram: «${f.testoIg}» (visibile ${f.ig}), doveva esserci «@lince.music»`);
+  if (f.tagliati.length) errori.push(`testi con i puntini o tagliati: ${f.tagliati.join(", ")}`);
+}
+
+// ----- Scheda dal vivo (--scheda-animata) -----
+// Il layout senza premio con la pagina non statica: la scheda sale con la traccia e RESTA (scheda fissa), con lo spot esce la
+// traccia e lo spot scende dall'alto per 10 s, poi rientra la traccia; ricaricando la pagina la scheda c'è subito; «scheda» spenta in
+// «In onda» la fa scendere e nessuna traccia la rialza finché non si riaccende. Con «scheda fissa» spenta scade da sola.
+async function provaSchedaAnimata() {
+  const { chromium } = caricaPlaywright();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+  const errori = [];
+  const dice = (cosa, vero) => vero || errori.push(cosa);
+  await comando("layout", { nome: "senzaPremio" });
+  await comando("senzaPremio", { schedaFissa: true, durate: { standard: 4 } });
+  await comando("widget", { nome: "scheda", visibile: true });
+  const pagina = await browser.newPage({ viewport: VISTA });
+  pagina.on("pageerror", (e) => errori.push(`pagina: ${e.message}`));
+  await pagina.goto(`${base}/senza-premio.html?anteprima=1&muto=1`);
+  await attendi(800);
+  const su = () => pagina.evaluate(() => ({ su: document.querySelector("#sp-scheda").classList.contains("su"), spot: document.querySelector("#sp-scheda").classList.contains("studio"), artista: document.querySelector("#sp-scheda-artista").textContent }));
+  dice("senza traccia la scheda non doveva esserci", !(await su()).su);
+  await comando("traccia", { titolo: "Notti a Vicenza", artista: "Lince", tier: "skip" });
+  await attendi(1200);
+  let f = await su();
+  dice(`la traccia doveva comparire (su ${f.su}, artista «${f.artista}»)`, f.su && f.artista === "Lince" && !f.spot);
+  await attendi(5000);
+  dice("scheda fissa: dopo 5 secondi (durata 4) la scheda doveva esserci ancora", (await su()).su);
+  await comando("spotStudio");
+  await attendi(300);
+  dice("con lo spot la traccia doveva scendere", !(await su()).su);
+  await attendi(900);
+  f = await su();
+  dice(`lo spot doveva essere su (su ${f.su}, spot ${f.spot})`, f.su && f.spot);
+  await attendi(10_500);
+  await attendi(1500);
+  f = await su();
+  dice(`dopo lo spot doveva rientrare la traccia (su ${f.su}, spot ${f.spot}, artista «${f.artista}»)`, f.su && !f.spot && f.artista === "Lince");
+  await pagina.reload();
+  await attendi(1200);
+  dice("ricaricando, la scheda della traccia in onda doveva esserci subito", (await su()).su);
+  await comando("widget", { nome: "scheda", visibile: false });
+  await attendi(1200);
+  dice("con la scheda spenta doveva scendere", !(await su()).su);
+  await comando("traccia", { titolo: "Altra", artista: "Mira" });
+  await attendi(1200);
+  dice("spenta, una traccia nuova non doveva rialzarla", !(await su()).su);
+  await comando("widget", { nome: "scheda", visibile: true });
+  await attendi(1200);
+  f = await su();
+  dice(`riaccesa, doveva rientrare l'ultima traccia (su ${f.su}, «${f.artista}»)`, f.su && f.artista === "Mira");
+  await comando("senzaPremio", { schedaFissa: false });
+  await comando("traccia", { titolo: "A tempo", artista: "Vale B" });
+  await attendi(1200);
+  dice("a tempo: la traccia doveva comparire", (await su()).su);
+  await attendi(4300 + 900);
+  dice("a tempo: dopo i 4 secondi della durata doveva scendere", !(await su()).su);
+  await browser.close();
+  if (errori.length) {
+    console.error(`Problemi nella scheda dal vivo:\n - ${errori.join("\n - ")}`);
+    process.exit(1);
+  }
+  console.log("ok scheda dal vivo: fissa, spot dall'alto e rientro della traccia, ricarica, spenta e riaccesa, a tempo");
+}
+
 async function main() {
-  if (args.includes("--regia-goal")) return provaRegiaGoal();
+  if (args.includes("--scheda-animata")) return provaSchedaAnimata();  if (args.includes("--regia-goal")) return provaRegiaGoal();
   if (controlli) return provaControlli();
   const tabella = GEOMETRIA[layout]?.verticale;
   const pezziAttesi = PRESENTI[layout]?.[stato];
@@ -416,7 +564,7 @@ async function main() {
   await preparaStato();
   const { chromium } = caricaPlaywright();
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-  const pagina = await apriPagina(browser);
+  const pagina = await apriPagina(browser, layout === "senzaPremio" && SCHEDE.includes(stato) ? `&scheda=${stato}` : "");
   const errori = [];
   if (layout === "gara" && stato === "ultimi-minuti") await nuovoPrimo();
 
@@ -444,6 +592,8 @@ async function main() {
       errori.push(`${chiave}: esce dalla zona libera (x ${X_MIN}…${X_MAX}, y ${Y_MIN}…${Y_MAX})`);
     }
   }
+  if (layout === "senzaPremio" && SCHEDE.includes(stato)) await controllaScheda(pagina, errori);
+  if (layout === "gara") await controllaInstagram(pagina, stato === "instagram", errori);
   // La notifica fuori dal suo stato è spenta (trasparente): non conta per le sovrapposizioni.
   errori.push(...sovrapposizioni(Object.fromEntries(pezziAttesi.map((chiave) => [chiave, tabella[chiave]]))));
 

@@ -744,7 +744,44 @@ body.anteprima {
   color: #fff;
   text-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), 0 0 24px rgba(189, 189, 189, 0.35);
 }
+.tab-artista-riga {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 34px;
+}
+.tab-ig {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 46%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #bdbdbd;
+}
+.tab-ig[hidden] {
+  display: none;
+}
+.tab-ig-icona {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tab-ig > span {
+  min-width: 0;
+  font: 700 24px/30px var(--font-dati);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .tab-artista {
+  flex: 0 1 auto;
+  min-width: 0;
   box-sizing: border-box;
   height: 34px;
   margin: 0;

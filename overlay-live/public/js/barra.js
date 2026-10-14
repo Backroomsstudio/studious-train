@@ -39,9 +39,9 @@ export function vociBarra(s) {
   const avanzamento = avanzamentoCoda(s);
   const ascoltate =
     sp.ascoltateNellaBarra && avanzamento
-      ? { tipo: "ascoltate", chiave: `coda|${avanzamento.numero}|${avanzamento.totale}`, icone: ["cuffie"], etichetta: "In ascolto", testo: avanzamento.testo }
+      ? { tipo: "ascoltate", chiave: `coda|${avanzamento.numero}|${avanzamento.totale}`, icone: ["cuffie"], etichetta: sp.etichette?.inAscolto ?? "Ora in ascolto", testo: avanzamento.testo }
       : sp.ascoltateNellaBarra && s.ascoltate >= MIN_ASCOLTATE
-      ? { tipo: "ascoltate", chiave: `ascoltate|${s.ascoltate}`, icone: ["cuffie"], etichetta: "Oggi abbiamo ascoltato", testo: `${s.ascoltate} tracce` }
+      ? { tipo: "ascoltate", chiave: `ascoltate|${s.ascoltate}`, icone: ["cuffie"], etichetta: sp.etichette?.ascoltate ?? "Oggi abbiamo ascoltato", testo: `${s.ascoltate} ${sp.etichette?.tracce ?? "tracce"}` }
       : null;
   const [primo, ...resto] = social;
   const ultimo = resto.length ? resto.pop() : null;

@@ -168,6 +168,8 @@ const tab = {
   radice: $(".tabellone"),
   titolo: $("#t-titolo"),
   artista: $("#t-artista"),
+  ig: $("#t-ig"),
+  igTesto: $("#t-ig-testo"),
   tier: $("#t-tier"),
   chatVoti: $("#chat-voti"),
   chatCta: $("#chat-cta"),
@@ -198,6 +200,7 @@ const CORPI = {
   rigaTraccia: [32, 18], // titolo di una riga della classifica
   rigaArtista: [22, 14], // artista di una riga della classifica
   etichettaTimer: [22, 12], // «Il vincitore si decide tra»
+  instagram: [24, 14], // @instagram dell'artista, accanto all'artista
 };
 const adatta = (nodo, chiave) => adattaTesto(nodo, ...CORPI[chiave]);
 // Scrive un testo e, se è cambiato, lo riadatta al riquadro.
@@ -224,6 +227,16 @@ function disegnaTabellone(s) {
     if (!primoDisegno) rilancia(tab.radice, "nuova");
   }
   scrivi(tab.titolo, t.titolo || "In attesa della traccia", "titolo");
+  // L'Instagram dell'artista (se c'è) sta sulla riga dell'artista, a destra: si scrive prima, perché toglie larghezza al nome
+  const igPrima = tab.igFirma;
+  tab.igFirma = t.instagram ?? "";
+  tab.ig.hidden = !t.instagram;
+  if (t.instagram) scrivi(tab.igTesto, `@${t.instagram}`, "instagram");
+  if (igPrima !== tab.igFirma) tab.artista.dataset.adattato = ""; // il nome si riadatta alla larghezza che resta
+  if (tab.artista.dataset.adattato === "") {
+    delete tab.artista.dataset.adattato;
+    tab.artista.textContent = "";
+  }
   scrivi(tab.artista, t.artista, "artista");
   tab.tier.hidden = !TIER[t.tier];
   tab.tier.textContent = TIER[t.tier] ?? "";

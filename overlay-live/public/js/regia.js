@@ -164,7 +164,7 @@ function disegna(s) {
 function disegnaTraccia(s) {
   const t = s.corrente;
   $("#c-titolo").textContent = t.titolo || "Nessuna traccia impostata";
-  $("#c-artista").textContent = t.artista;
+  $("#c-artista").textContent = t.instagram ? `${t.artista} · @${t.instagram}` : t.artista;
   $("#c-tier").hidden = !t.tier;
   $("#c-tier").textContent = TIER[t.tier] ?? "";
   $("#c-tier").className = `tier-badge ${t.tier ?? ""}`;
@@ -401,6 +401,7 @@ $("#f-traccia").addEventListener("submit", async (e) => {
   const azione = e.submitter?.value ?? "ascolta";
   // "Correggi" cambia solo i campi compilati.
   const dati = Object.fromEntries([...new FormData(e.target)].filter(([, v]) => azione !== "correggi" || v.trim()));
+  if (dati.instagram?.trim() === "-") dati.instagram = ""; // «-» toglie l'Instagram
   const t = stato?.corrente;
   if (azione === "ascolta" && t && haVoti(t) && !t.confermato && !confirm("La traccia attuale ha voti non confermati. Sostituirla?")) return;
   const comando = { ascolta: "traccia", coda: "inCoda", correggi: "correggiTraccia" }[azione];
@@ -413,6 +414,7 @@ $(".corrente").addEventListener("click", () => {
   const f = $("#f-traccia");
   f.titolo.value = stato?.corrente.titolo ?? "";
   f.artista.value = stato?.corrente.artista ?? "";
+  f.instagram.value = stato?.corrente.instagram ? `@${stato.corrente.instagram}` : "";
   f.titolo.focus();
 });
 
@@ -536,6 +538,8 @@ function disegnaSenzaPremio(s) {
   scriviVelocita(Number($("#sp-velocita").value));
   $("#sp-in-ascolto").checked = sp.inAscoltoNellaBarra;
   $("#sp-ascoltate").checked = sp.ascoltateNellaBarra;
+  $("#sp-scheda-fissa").checked = sp.schedaFissa;
+  for (const campo of ["inAscolto", "ascoltate", "tracce"]) riempi($("#f-sp-etichette")[campo], sp.etichette[campo]);
   $("#sp-loghi").checked = sp.loghiBarra;
   $("#sp-filo").checked = sp.filoCamera;
   disegnaVoci(s);
@@ -649,7 +653,13 @@ $("#sp-velocita").addEventListener("change", (e) => {
   e.target.blur();
   senzaPremio({ velocita: Number(e.target.value) });
 });
-for (const [id, chiave] of [["#sp-in-ascolto", "inAscoltoNellaBarra"], ["#sp-ascoltate", "ascoltateNellaBarra"], ["#sp-loghi", "loghiBarra"], ["#sp-filo", "filoCamera"]]) {
+$("#f-sp-etichette").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const esito = await senzaPremio({ etichette: { inAscolto: f.inAscolto.value, ascoltate: f.ascoltate.value, tracce: f.tracce.value } }, "Diciture aggiornate");
+  if (esito.ok) salvato(f);
+});
+for (const [id, chiave] of [["#sp-scheda-fissa", "schedaFissa"], ["#sp-in-ascolto", "inAscoltoNellaBarra"], ["#sp-ascoltate", "ascoltateNellaBarra"], ["#sp-loghi", "loghiBarra"], ["#sp-filo", "filoCamera"]]) {
   $(id).addEventListener("change", (e) => senzaPremio({ [chiave]: e.target.checked }));
 }
 $("#sp-voci").addEventListener("change", () => salvaVoci());

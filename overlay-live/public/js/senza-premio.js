@@ -5,10 +5,11 @@
 // ?w=banner,barra,scheda (parti da includere).
 import { collega } from "./connessione.js";
 import { suona, volume } from "./suoni.js";
-import { suoniSenzaPremio, richiesteScheda, suonaIn, SALITA_SCHEDA_MS, USCITA_SCHEDA_MS, DURATA_SPOT_MS, RICHIAMO_MS } from "./eventi-sonori.js";
+import { suoniSenzaPremio, suonaIn, SALITA_SCHEDA_MS, USCITA_SCHEDA_MS, DURATA_SPOT_MS, RICHIAMO_MS } from "./eventi-sonori.js";
 import { vociBarra, ETICHETTE_TIER } from "./barra.js";
 import { creaGoal } from "./goal.js";
 import { chiaveGoal } from "./goal-logica.js";
+import { prossimaScheda, creaSchedaVuota } from "./scheda-logica.js";
 
 const LARGHEZZA = 1080;
 const ALTEZZA = 1920;
@@ -103,9 +104,8 @@ collega({
 
     disegnaBanner(s);
     disegnaBarra(s);
-    if (!s.visibili.scheda) chiudiScheda(true);
-    for (const r of richiesteScheda(prima, s, eventi)) mostraScheda(r, r.daCorrente ? s.corrente.id : null);
-    correggiSchedaAperta(s);
+    palco.classList.toggle("pagata", Boolean(s.corrente.titolo.trim() && ETICHETTE_TIER[s.corrente.tier])); // banner e barra dorati con uno skip pagato in onda
+    if (!SCHEDA_FISSA) disegnaScheda(prima, s, eventi);
     if (eventi.some((e) => e.nome === "richiamo")) richiamo();
     if (primoDisegno && SCHEDA_FISSA) schedaPerMockup(s);
     primoDisegno = false;
@@ -138,24 +138,24 @@ function disegnaBanner(s) {
   banner.sopraRiga.hidden = !sp.sopra;
   if (banner.sopra.textContent !== sp.sopra) {
     banner.sopra.textContent = sp.sopra;
-    adattaTesto(banner.sopra, 38, 28);
+    adattaTesto(banner.sopra, 54, 30);
   }
   if (banner.titolo.textContent !== sp.titolo) {
     banner.titolo.textContent = sp.titolo;
-    adattaTesto(banner.titolo, 112, 52);
+    adattaTesto(banner.titolo, 128, 52);
   }
   banner.pillola.textContent = sp.pillola;
   banner.pillola.hidden = !sp.pillola;
   if (banner.link.textContent !== sp.link) {
     banner.link.textContent = sp.link;
-    adattaTesto(banner.link, 62, 28);
+    adattaTesto(banner.link, 50, 28);
   }
 }
 
 function adattaBanner() {
-  if (banner.sopra.textContent) adattaTesto(banner.sopra, 38, 28);
-  if (banner.titolo.textContent) adattaTesto(banner.titolo, 112, 52);
-  if (banner.link.textContent) adattaTesto(banner.link, 62, 28);
+  if (banner.sopra.textContent) adattaTesto(banner.sopra, 54, 30);
+  if (banner.titolo.textContent) adattaTesto(banner.titolo, 128, 52);
+  if (banner.link.textContent) adattaTesto(banner.link, 50, 28);
 }
 
 // Il link «chiama»: bordo d'oro, link che pulsa, loghi che girano come monete, punte d'oro dai lati.
@@ -277,7 +277,6 @@ function disegnaBarra(s) {
   const sp = s.senzaPremio;
   barra.radice.classList.toggle("fuori", !s.visibili.barra);
   barra.radice.classList.toggle("senza-loghi", !sp.loghiBarra);
-  barra.radice.classList.toggle("pagata", Boolean(s.corrente.titolo.trim() && ETICHETTE_TIER[s.corrente.tier]));
   barra.filoCamera.classList.toggle("fuori", !(sp.filoCamera && s.visibili.barra));
 
   const nuova = vociBarra(s);
@@ -324,35 +323,121 @@ function passo(t) {
 if (!STATICO && CON_BARRA) requestAnimationFrame(passo);
 
 // ---------- Scheda «Ora in ascolto» e spot dello studio ----------
+// Quello che succede lo decide la macchina a stati di scheda-logica.js (traccia fissa o a tempo, spot dall'alto, scheda nascosta
+// dalla regia); qui si eseguono le sue azioni (animazioni CSS e timer).
 const scheda = {
+  zona: $(".sp-scheda-zona"),
   el: $("#sp-scheda"),
   sopra: $("#sp-scheda-sopra"),
   titolo: $("#sp-scheda-titolo"),
   artista: $("#sp-scheda-artista"),
+  ig: $("#sp-scheda-ig"),
+  igTesto: $("#sp-scheda-ig-testo"),
   tier: $("#sp-scheda-tier"),
   scintille: $("#sp-scintille"),
-  aperta: null, // "ascolto" | "studio" | null
-  idCorrente: null, // la scheda mostra la traccia in ascolto (si aggiorna se la regia corregge i nomi)
-  chiude: false,
-  timer: null,
-  inAttesa: null, // spot arrivato mentre c'era una traccia
+  aperta: null, // "ascolto" | "studio" | null: cosa c'è scritto adesso (per riadattare i corpi)
 };
+let macchina = creaSchedaVuota();
+let schedaVisibile = true;
+
+const opzioniScheda = () => {
+  const sp = stato.senzaPremio;
+  return { schedaFissa: sp.schedaFissa, durate: sp.durate, durataSpotMs: DURATA_SPOT_MS, uscitaMs: USCITA_SCHEDA_MS + 100 };
+};
+
+function mandaScheda(evento) {
+  const { stato: nuovo, azioni } = prossimaScheda(macchina, evento, performance.now(), opzioniScheda());
+  macchina = nuovo;
+  for (const azione of azioni) eseguiAzioneScheda(azione);
+}
+
+function eseguiAzioneScheda(a) {
+  if (a.tipo === "entra-ascolto") {
+    riempiScheda({ tipo: "ascolto", traccia: a.traccia });
+    saliScheda({ cambia: a.cambia });
+    if (a.traccia.tier === "throne" && !STATICO) puntePerIlTrono();
+  } else if (a.tipo === "aggiorna-ascolto") {
+    riempiScheda({ tipo: "ascolto", traccia: a.traccia });
+  } else if (a.tipo === "entra-spot") {
+    riempiScheda({ tipo: "studio" });
+    saliScheda({ cambia: false });
+  } else if (a.tipo === "esce") {
+    scheda.el.classList.remove("su");
+  } else if (a.tipo === "programma") {
+    setTimeout(() => mandaScheda({ tipo: a.evento, token: a.token }), Math.max(0, a.quando - performance.now()));
+  }
+}
+
+function saliScheda({ cambia }) {
+  if (cambia && scheda.el.classList.contains("su")) {
+    // «arriva» e «cambia» usano la stessa animazione: tolta la prima, la seconda riparte davvero
+    scheda.el.classList.remove("arriva");
+    rilancia(scheda.el, "cambia");
+    return;
+  }
+  scheda.el.classList.remove("cambia");
+  scheda.el.classList.add("su");
+  rilancia(scheda.el, "arriva");
+  if (!STATICO) setTimeout(() => rilancia(barra.filoOro, "lampo-oro"), SALITA_SCHEDA_MS);
+}
+
+// Cosa deve fare la scheda a ogni stato: nascondi/mostra dalla regia, la traccia che cambia (o i cui nomi sono corretti), le prove
+// e lo spot dello studio.
+function disegnaScheda(prima, s, eventi) {
+  const visibile = s.visibili.scheda !== false;
+  if (visibile !== schedaVisibile) {
+    schedaVisibile = visibile;
+    mandaScheda({ tipo: visibile ? "mostra" : "nascondi" });
+  }
+  const t = s.corrente;
+  const p = prima?.corrente;
+  const cambiata = !p || t.id !== p.id || t.titolo !== p.titolo || t.artista !== p.artista || t.tier !== p.tier || t.instagram !== p.instagram;
+  if (cambiata) mandaScheda({ tipo: "traccia", traccia: { id: t.id, tier: t.tier, titolo: t.titolo, artista: t.artista, instagram: t.instagram } });
+  if (!prima) return;
+  for (const e of eventi) {
+    if (e.nome === "scheda" && e.dati?.traccia) provaScheda(e.dati.traccia);
+    if (e.nome === "studio") mandaScheda({ tipo: "spot" });
+  }
+}
+
+// Una prova dalla regia: la scheda mostra la traccia di prova per i secondi del suo tipo, poi torna quella in onda.
+function provaScheda(traccia) {
+  mandaScheda({ tipo: "traccia", traccia: { id: `prova-${performance.now()}`, tier: traccia.tier ?? null, titolo: traccia.titolo, artista: traccia.artista ?? "", instagram: traccia.instagram ?? "" } });
+  const secondi = stato.senzaPremio.durate[traccia.tier] ?? stato.senzaPremio.durate.standard;
+  setTimeout(() => {
+    const t = stato.corrente;
+    mandaScheda({ tipo: "traccia", traccia: { id: t.id, tier: t.tier, titolo: t.titolo, artista: t.artista, instagram: t.instagram } });
+  }, secondi * 1000);
+}
 
 function riempiScheda(r) {
   const studio = r.tipo === "studio";
-  scheda.el.classList.toggle("studio", studio);
+  const cambiaModo = scheda.el.classList.contains("studio") !== studio;
+  if (cambiaModo) {
+    // la scheda dello spot sta sopra lo schermo e quella della traccia sotto la barra: il cambio di posto non si deve vedere
+    scheda.el.style.transition = "none";
+    scheda.el.classList.toggle("studio", studio);
+    scheda.zona.classList.toggle("spot", studio);
+    void scheda.el.offsetWidth;
+    scheda.el.style.transition = "";
+  }
   for (const t of Object.keys(ETICHETTE_TIER)) scheda.el.classList.toggle(`tier-${t}`, !studio && r.traccia.tier === t);
+  scheda.el.classList.toggle("tier-gratis", !studio && !ETICHETTE_TIER[r.traccia.tier]);
+  scheda.aperta = r.tipo === "studio" ? "studio" : "ascolto";
   if (studio) {
     const spot = stato.senzaPremio.spot;
     scheda.sopra.textContent = spot.sopra;
     scheda.titolo.textContent = spot.titolo;
     scriviConLink(scheda.artista, spot.sotto);
     scheda.tier.hidden = true;
+    scheda.ig.hidden = true;
   } else {
     const t = r.traccia;
-    scheda.sopra.textContent = "Ora in ascolto";
-    scheda.titolo.textContent = t.titolo;
+    scheda.sopra.textContent = stato.senzaPremio.etichette.inAscolto;
     scheda.artista.textContent = t.artista ?? "";
+    scheda.titolo.textContent = t.titolo;
+    scheda.ig.hidden = !t.instagram;
+    scheda.igTesto.textContent = t.instagram ? `@${t.instagram}` : "";
     scheda.tier.hidden = !ETICHETTE_TIER[t.tier];
     scheda.tier.textContent = ETICHETTE_TIER[t.tier] ?? "";
     scheda.tier.className = `tier ${t.tier ?? ""}`;
@@ -363,70 +448,13 @@ function riempiScheda(r) {
 // Corpi della scheda: ogni riga si restringe fino al suo minimo (poi i puntini).
 function adattaScheda(tipo) {
   if (tipo === "studio") {
-    adattaTesto(scheda.titolo, 52, 34); // gotico
+    adattaTesto(scheda.titolo, 52, 34);
     adattaTesto(scheda.artista, 30, 24);
   } else {
-    adattaTesto(scheda.titolo, 54, 32);
-    adattaTesto(scheda.artista, 36, 34); // gotico
+    adattaTesto(scheda.artista, 58, 30); // il nome dell'artista è la riga principale
+    adattaTesto(scheda.titolo, 34, 20);
+    adattaTesto(scheda.igTesto, 26, 18);
   }
-}
-
-const durataScheda = (r) =>
-  r.tipo === "studio" ? DURATA_SPOT_MS : (stato.senzaPremio.durate[r.traccia.tier] ?? stato.senzaPremio.durate.standard) * 1000;
-
-function mostraScheda(r, idCorrente = null, { fissa = false } = {}) {
-  if (!stato.visibili.scheda) return;
-  // Uno spot non interrompe una traccia: aspetta che la scheda scenda.
-  if (r.tipo === "studio" && scheda.aperta === "ascolto" && !scheda.chiude) {
-    scheda.inAttesa = r;
-    return;
-  }
-  if (r.tipo === "studio") scheda.inAttesa = null; // lo spot sale adesso: niente secondo spot in coda
-  const giaSu = scheda.aperta !== null && !scheda.chiude;
-  clearTimeout(scheda.timer);
-  riempiScheda(r);
-  scheda.aperta = r.tipo;
-  scheda.idCorrente = idCorrente;
-  scheda.chiude = false;
-  if (giaSu) {
-    // «arriva» e «cambia» usano la stessa animazione: tolta la prima, la seconda riparte davvero
-    scheda.el.classList.remove("arriva");
-    rilancia(scheda.el, "cambia");
-  }
-  else {
-    scheda.el.classList.remove("cambia");
-    scheda.el.classList.add("su");
-    rilancia(scheda.el, "arriva");
-    if (!STATICO) setTimeout(() => rilancia(barra.filoOro, "lampo-oro"), SALITA_SCHEDA_MS);
-  }
-  if (r.tipo === "ascolto" && r.traccia.tier === "throne" && !STATICO) puntePerIlTrono();
-  if (!fissa) scheda.timer = setTimeout(() => chiudiScheda(), durataScheda(r));
-}
-
-function chiudiScheda(subito = false) {
-  if (!scheda.aperta) return;
-  if (subito) scheda.inAttesa = null;
-  if (scheda.chiude) return; // sta già scendendo
-  clearTimeout(scheda.timer);
-  scheda.el.classList.remove("su");
-  scheda.chiude = true;
-  scheda.timer = setTimeout(() => {
-    scheda.aperta = null;
-    scheda.idCorrente = null;
-    scheda.chiude = false;
-    const dopo = scheda.inAttesa;
-    scheda.inAttesa = null;
-    if (dopo) mostraScheda(dopo);
-  }, USCITA_SCHEDA_MS + 100);
-}
-
-// La regia corregge il nome della traccia in ascolto (stesso id): la scheda aperta si aggiorna senza rientrare.
-function correggiSchedaAperta(s) {
-  if (scheda.aperta !== "ascolto" || scheda.idCorrente !== s.corrente.id) return;
-  const t = s.corrente;
-  if (scheda.titolo.textContent === t.titolo && scheda.artista.textContent === t.artista) return;
-  if (!t.titolo) return chiudiScheda();
-  riempiScheda({ tipo: "ascolto", traccia: { titolo: t.titolo, artista: t.artista, tier: t.tier } });
 }
 
 // Throne: otto punte d'oro salgono dalla barra mentre la scheda arriva.
@@ -443,11 +471,16 @@ function puntePerIlTrono() {
   setTimeout(() => scheda.scintille.replaceChildren(), 2200);
 }
 
-// ?scheda=ascolto (traccia in ascolto, o una di prova) oppure ?scheda=studio: scheda ferma, per i mockup.
+// ?scheda=ascolto|standard|skip|superskip|throne|studio: scheda ferma, per i mockup (con la traccia in ascolto, o una di prova).
 function schedaPerMockup(s) {
-  if (SCHEDA_FISSA === "studio") return mostraScheda({ tipo: "studio" }, null, { fissa: true });
-  const t = s.corrente.titolo ? s.corrente : { titolo: "Notti a Vicenza", artista: "Lince", tier: SCHEDA_FISSA === "ascolto" ? "throne" : SCHEDA_FISSA };
-  mostraScheda({ tipo: "ascolto", traccia: { titolo: t.titolo, artista: t.artista, tier: t.tier } }, s.corrente.titolo ? s.corrente.id : null, { fissa: true });
+  if (SCHEDA_FISSA === "studio") {
+    riempiScheda({ tipo: "studio" });
+  } else {
+    const t = s.corrente.titolo ? s.corrente : { titolo: "Notti a Vicenza (feat. Kappa 23)", artista: "Lince", tier: SCHEDA_FISSA === "ascolto" ? "throne" : SCHEDA_FISSA === "standard" ? null : SCHEDA_FISSA, instagram: "lince.music" };
+    riempiScheda({ tipo: "ascolto", traccia: { titolo: t.titolo, artista: t.artista, tier: t.tier, instagram: t.instagram || "lince.music" } });
+    palco.classList.toggle("pagata", Boolean(ETICHETTE_TIER[t.tier]));
+  }
+  scheda.el.classList.add("su");
 }
 
 // Con i font caricati le larghezze cambiano: si riadattano i testi e si rimisura il nastro.

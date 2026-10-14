@@ -31,6 +31,7 @@
         <stop offset="0.8" stop-color="#ffd659"/>
         <stop offset="1" stop-color="#b87808"/>
       </linearGradient>
+      <symbol id="ic-instagram" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.2" fill="currentColor" stroke="none"/></symbol>
       <symbol id="punta" viewBox="0 0 100 100">
         <path d="M50 0C53 35 65 47 100 50 65 53 53 65 50 100 47 65 35 53 0 50 35 47 47 35 50 0Z"/>
       </symbol>
@@ -96,7 +97,10 @@
             <span class="tier" id="t-tier" hidden></span>
           </header>
           <h1 class="tab-titolo" id="t-titolo">In attesa della traccia</h1>
-          <p class="tab-artista" id="t-artista"></p>
+          <div class="tab-artista-riga">
+            <p class="tab-artista" id="t-artista"></p>
+            <span class="tab-ig" id="t-ig" hidden><svg class="tab-ig-icona"><use href="#ic-instagram"/></svg><span id="t-ig-testo"></span></span>
+          </div>
         </div>
         <div class="totale">
           <div class="totale-stato" id="totale-stato">Totale</div>
