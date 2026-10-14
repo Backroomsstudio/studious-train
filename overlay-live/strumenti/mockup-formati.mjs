@@ -26,8 +26,8 @@
 //   che entrano ed escono con la loro animazione (anche spenti e riaccesi subito) e la prima apertura senza animazioni.
 //   --testi-lunghi --layout podcast [--formato orizzontale]: targa e otto tematiche al massimo dei caratteri e poi cortissime, con i
 //   testi al 200%: niente esce dal suo riquadro e niente sparisce.
-//   --testi-lunghi --layout produzione|reaction [--formato orizzontale]: le tre righe del titolo al massimo dei caratteri (produzione 32/28/48,
-//   reaction 40/60/60) con i testi al 200%: ogni riga resta nella sua scatola e dentro la targa, senza coprire le altre.
+//   --testi-lunghi --layout produzione|reaction [--formato orizzontale]: le tre righe del titolo al massimo dei caratteri (produzione 40/36/60,
+//   reaction 48/60/60) con i testi al 200%: ogni riga resta nella sua scatola e dentro la targa, senza coprire le altre.
 //   --regia-doppio: i titoli di Studio Production e Reaction Release nella regia: i chip dei preset, le tre righe che vanno in onda
 //   mentre si scrive (invio ritardato di 150 ms, il campo in uso non si riscrive, un errore mostra l'avviso e rimette il valore
 //   in onda), «Ripristina titolo predefinito» e l'anteprima verticale/orizzontale della reaction.
@@ -359,7 +359,7 @@ async function provaRegia() {
   await attendi("visibili.poLinea acceso", (st) => st.visibili.poLinea === true);
   await interruttore.uncheck();
   await attendi("visibili.poLinea spento", (st) => st.visibili.poLinea === false);
-  for (const [sigla, widget] of [["dr", ["drumCornice", "drumTraguardi", "drumBrano", "drumPriorita", "drumBarra"]], ["pr", ["prTitolo", "prBarra"]], ["po", ["poTitolo", "poLinea", "poTematiche", "poBarra"]], ["re", ["reTitolo", "reBarra"]]]) {
+  for (const [sigla, widget] of [["dr", ["drumCornice", "drumTraguardi", "drumBrano", "drumStriscia", "drumPriorita", "drumBarra"]], ["pr", ["prTitolo", "prBarra"]], ["po", ["poTitolo", "poLinea", "poTematiche", "poBarra"]], ["re", ["reTitolo", "reBarra", "reScaletta", "reRichiesta"]]]) {
     const trovati = await pagina.$$eval(`#${sigla}-regia [data-widget]`, (c) => c.map((x) => x.dataset.widget));
     if (trovati.join() !== widget.join()) errori.push(`#${sigla}-regia: spunte «In onda» ${trovati.join(", ")} invece di ${widget.join(", ")}`);
   }
@@ -1315,11 +1315,9 @@ async function provaRegiaDoppio() {
   await entro("il titolo salvato «Puntata A»", (st) => st.produzione.salvati.length === 1 && st.produzione.salvati[0].nome === "Puntata A", 3000);
   await pagina.waitForFunction(() => document.querySelectorAll("#pr-salvati li").length === 1, null, { timeout: 3000 }).catch(() => errori.push("la lista dei titoli salvati doveva avere una riga"));
   if ((await campo("pr-salva-nome").inputValue()) !== "") errori.push("dopo il salvataggio il campo del nome doveva svuotarsi");
-  const prima7 = await avvisi();
   await campo("pr-salva-nome").fill("puntata a");
   await campo("pr-salva").click();
-  await attesa(400);
-  if ((await avvisi()) <= prima7) errori.push("un nome già usato doveva mostrare un avviso");
+  await pagina.locator("#avvisi .avviso.errore", { hasText: /già/ }).first().waitFor({ timeout: 3000 }).catch(() => errori.push("un nome già usato doveva mostrare un avviso"));
   await campo("pr-salva-nome").fill("");
   await campo("pr-salva").click();
   await attesa(400);
@@ -1333,6 +1331,7 @@ async function provaRegiaDoppio() {
     await campo("pr-salva-nome").fill(`Puntata ${i}`);
     await campo("pr-salva").click();
     await entro(`il titolo salvato ${i}`, (st) => st.produzione.salvati.length === i, 3000);
+    await campoVale("pr-salva-nome", ""); // il campo si svuota a risposta arrivata: scrivere prima lo cancellerebbe
   }
   await pagina.waitForFunction(() => document.querySelector("#pr-salva").disabled, null, { timeout: 3000 }).catch(() => errori.push("con 6 titoli salvati il bottone «Salva questo titolo» doveva spegnersi"));
   await pagina.locator("#pr-salvati button[data-togli]").first().click();

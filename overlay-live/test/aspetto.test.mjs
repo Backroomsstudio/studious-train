@@ -169,3 +169,34 @@ test("il badge delle barre del Battle dice «Voto Chat»", () => {
   assert.ok(!/chat votes/i.test(readme), "il README non deve più dire «CHAT VOTES»");
   assert.ok(readme.includes("«VOTO CHAT»"), "il README descrive il badge come «VOTO CHAT»");
 });
+
+// ---------- La documentazione dice quello che c'è ----------
+const RADICE = join(PUBLIC, "..");
+const leggi = (nome) => readFileSync(join(RADICE, nome), "utf8");
+
+test("il README cita i comandi, i widget e il font di sistema nuovi e non quelli vecchi", () => {
+  const readme = leggi("README.md");
+  for (const parola of ["votazione", "goal", "goalMostra", "albero", "scalettaMostra", "richiesta", "drumStriscia", "regaloEvento", "followEvento", "codaNero", "Regali visti", "San Francisco", "Goal"]) {
+    assert.ok(readme.includes(parola), `il README non cita «${parola}»`);
+  }
+  for (const widget of ["goal", "reScaletta", "reRichiesta", "drumStriscia"]) assert.ok(readme.includes(`"${widget}"`), `la tabella del comando widget non ha «${widget}»`);
+  for (const vecchio of ["Barlow", "Grenze", "vetro viola", "Brano segreto"]) assert.ok(!readme.includes(vecchio), `il README parla ancora di «${vecchio}»`);
+});
+
+test("ogni comando di server.mjs compare nella tabella dell'API del README", () => {
+  const server = leggi("server.mjs");
+  const blocco = server.slice(server.indexOf("const comandi = {"));
+  const corpo = blocco.slice(0, blocco.search(/^\};/m));
+  const comandi = [...corpo.matchAll(/^  ([a-zA-Z]+)[(:]/gm)].map((m) => m[1]);
+  assert.ok(comandi.length > 80, "i comandi non sono stati letti");
+  const api = leggi("README.md").split("## API")[1] ?? "";
+  const mancanti = comandi.filter((c) => !api.includes(`\`${c}\``));
+  assert.deepEqual(mancanti, [], `comandi senza riga nella tabella dell'API: ${mancanti.join(", ")}`);
+});
+
+test("la guida e la regia non caricano più i font con nome proprio e non parlano di «Brano segreto»", () => {
+  for (const nome of ["GUIDA.html", "public/regia.html"]) {
+    const testo = leggi(nome);
+    for (const vecchio of ["Barlow", "Grenze", "Brano segreto"]) assert.ok(!testo.includes(vecchio), `${nome} parla ancora di «${vecchio}»`);
+  }
+});

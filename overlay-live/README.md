@@ -8,7 +8,7 @@ C'è anche il layout **Live session in studio** (`/studio.html`): split screen d
 
 Per gli scontri tra due rapper c'è il layout **Battle** (`/battle.html`): barre della vita in stile Tekken che seguono il voto della chat, camera al centro divisa da un fulmine con il VS, modalità e timer con il gong, tre giudici (Luca, Freya, Daniele), tabellone a torneo o a punti e pop-up social (vedi [Battle](#battle)).
 
-Per le dirette con la camera a tutto schermo ci sono altri quattro layout, con la stessa grafica (vetro viola, cromo, monete BR, neon): **Drum Challenge Live** (`/drum.html`: i Like della live sbloccano una scaletta di brani, con equalizzatore dall'audio di FL Studio), **Studio Production** (`/produzione.html`: webcam e DAW con una targa per il titolo), **Back Rooms Podcast** (`/podcast.html`: targa, linea di divisione e pannello Tematiche, anche in 16:9) e **Reaction Release** (`/reaction.html`: webcam e schermo condiviso, anche in 16:9). Vedi [I quattro layout nuovi](#i-quattro-layout-nuovi).
+Per le dirette con la camera a tutto schermo ci sono altri quattro layout, con la stessa grafica (vetro grigio, cromo, monete BR, accenti oro, rosso e verde smeraldo): **Drum Challenge Live** (`/drum.html`: i Like della live sbloccano una scaletta di brani, con equalizzatore dall'audio di FL Studio), **Studio Production** (`/produzione.html`: webcam e DAW con una targa per il titolo), **Back Rooms Podcast** (`/podcast.html`: targa, linea di divisione e pannello Tematiche, anche in 16:9) e **Reaction Release** (`/reaction.html`: webcam e schermo condiviso, anche in 16:9). Vedi [I quattro layout nuovi](#i-quattro-layout-nuovi).
 
 ```
 Nero.fan ─webhook─▶ ┐                                        ┌──▶ /overlay.html       (gara con premio, sorgente Link)
@@ -152,9 +152,19 @@ Giudici e barra della chat stanno nella zona dei commenti di TikTok (1200–1700
 
 Per rifare i mockup e controllare che ogni pezzo stia dove dice la tabella (serve Playwright installato a parte, non fa parte di `npm test`): `node strumenti/mockup-battle.mjs --base http://127.0.0.1:4747 --fase battle` (fasi: `attesa`, `countdown`, `battle`, `voto`, `risultato`, `pari`, `torneo`, `punti`; opzioni `--guida`, `--secondi N`, `--conto N`, `--popup`, e `--fase risultato --vittoria` per la schermata del vincitore, con il controllo che stia nella zona libera), per provare la regia `--regia`, e `--controlli` per verificare che i nomi lunghi entrino nei riquadri e che «VIA!» resti visibile. **Usatelo su una porta di prova, non durante la diretta**: i dati di prova azzerano torneo e punti. I dati di prova li mette il comando `battleDemo`.
 
+## Aspetto, Goal e richieste
+
+- **Font e palette**: gli overlay usano il **font di sistema** (San Francisco su Mac e iPhone; su Windows il font di sistema, Segoe UI): nessun font scaricato da Internet. I colori sono **grigi** con tre accenti: **oro** (premi, tracce che pagano), **rosso** (urgenza, ultimi minuti) e **verde smeraldo** (conferme). Un controllo automatico (`test/aspetto.test.mjs`) impedisce font con nome proprio e colori fuori palette.
+- **Voto della chat e votazione**: i voti vanno da 4 a 10 (si cambia con il comando `votazione`, insieme ai pesi e alle diciture di Beat, Voce, Mix e Chat). Il blocco dei voti sta sopra i commenti. Nel Battle la modalità «Voto Chat» fa decidere il round al pubblico.
+- **Tabellone ad albero** (comando `albero`, widget `albero`): i confronti della gara come albero, in onda per i secondi scelti.
+- **Goal Like e Follower** (comando `goal`, widget `goal`): un obiettivo a tacche (i *Like* arrivano da TikTok, i *Follower* da un follow o si impostano a mano) mostrato in gara, senza premio, studio, Drum, Studio Production, Reaction, Podcast e Battle (non nel formato orizzontale della gara). Modo *fisso* o *a comparsa* (ogni N minuti per N secondi, o con `goalMostra`); la posizione si regola per layout.
+- **Richieste con regalo e *Regali visti***: in Reaction e Drum un regalo scelto in regia (nome o ID) aggiunge una richiesta di un donatore in coda (al massimo 30). Nella Reaction la regia scrive il brano e lo mette in onda; nel Drum la richiesta «salta la coda». La regia elenca i *Regali visti* nella live, così si copia il nome giusto. Le richieste arrivano solo al layout in onda e si svuotano con *Nuova serata*.
+- **Senza premio**: la scheda «Ora in ascolto» resta fissa, mostra «Traccia N di TOT» con le tracce in attesa su Nero (`codaNero`, oppure il totale vero di Nero) e l'Instagram dell'artista; chi paga lo skip fa comparire il banner oro. **Live session in studio**: la linguetta e la barra dicono «In studio ora» (la dicitura si cambia).
+- **Limiti noti**: il nome del campo Instagram nella traccia di Nero e il significato di `queueCount` non sono verificati con una traccia vera; regali e follower non sono stati provati con una live vera (solo `regaloEvento` e `followEvento`); il carico sul PC non è stato misurato.
+
 ## I quattro layout nuovi
 
-**Drum Challenge Live**, **Studio Production**, **Back Rooms Podcast** e **Reaction Release** hanno la stessa grafica (vetro viola, cromo, monete BR, neon ciano, magenta e oro; Barlow Condensed e Grenze Gotisch) e funzionano allo stesso modo: la camera (o le camere) sta **sotto**, in LIVE Studio o OBS, e sopra va **una sola** sorgente **Link** su sfondo trasparente. Nella regia, in alto, in *In onda* si sceglie il layout; ognuno ha la sua sezione, con un'anteprima che si aggiorna dal vivo e il link «Apri grande, con le zone».
+**Drum Challenge Live**, **Studio Production**, **Back Rooms Podcast** e **Reaction Release** hanno la stessa grafica (vetro grigio, cromo, monete BR; solo grigi con accenti oro, rosso e verde smeraldo; font di sistema, vedi [Aspetto, Goal e richieste](#aspetto-goal-e-richieste)) e funzionano allo stesso modo: la camera (o le camere) sta **sotto**, in LIVE Studio o OBS, e sopra va **una sola** sorgente **Link** su sfondo trasparente. Nella regia, in alto, in *In onda* si sceglie il layout; ognuno ha la sua sezione, con un'anteprima che si aggiorna dal vivo e il link «Apri grande, con le zone».
 
 | Layout | Indirizzo | Formato | Suoni |
 |---|---|---|---|
@@ -178,7 +188,7 @@ Il server li stampa all'avvio, insieme agli altri. Quello che hanno in comune:
 
 Per la sfida alla batteria: i **Like** della live sbloccano, uno dopo l'altro, i brani di una scaletta, e mentre si suona la cornice e l'equalizzatore seguono l'audio di FL Studio. La camera del batterista va **sotto**, a tutto schermo; sopra va una sorgente **Link** `http://127.0.0.1:4747/drum.html`, 1080×1920, stesa su tutta la tela (sfondo trasparente). Nella regia, in alto: **In onda → Drum Challenge Live**.
 
-- **Colonna dei traguardi** (a destra) e **contatore dei Like** sopra di lei. La colonna mostra quattro moduli: l'ultimo sbloccato, quello che si sta riempiendo e i due dopo. Ogni modulo ha i Like della tappa e il titolo del brano (finché la tappa è chiusa «Brano segreto»; sbloccata senza titolo «Brano a sorpresa»); quello che si sta riempiendo mostra quanti Like mancano e la percentuale, con una clessidra che si riempie di **perline** o di **sabbia** (si sceglie in regia, *Riempimento dei moduli*).
+- **Colonna dei traguardi** (a destra) e **contatore dei Like** sopra di lei. La colonna mostra quattro moduli: l'ultimo sbloccato, quello che si sta riempiendo e i due dopo. Ogni modulo ha i Like della tappa e il titolo del brano (finché la tappa è chiusa il titolo resta nascosto; sbloccata senza titolo «Brano a sorpresa»); quello che si sta riempiendo mostra quanti Like mancano e la percentuale, con una clessidra che si riempie di **perline** o di **sabbia** (si sceglie in regia, *Riempimento dei moduli*).
 - **Scaletta**: di partenza 37 tappe, da 1.000 a 500.000 Like (1k, 2k, 3k, 5k, 7k, 9k, 10k, 12k, 15k, 17k, 20k, 22k, 25k, 27k, 29k, 30k, 32k, 35k, 37k, 40k, 45k, 50k, 60k, 70k, 80k, 90k, 100k, 125k, 150k, 175k, 200k, 250k, 300k, 350k, 400k, 450k, 500k), senza titoli. In regia (*Scaletta*) si scrive una tappa per riga, «Like | Titolo del brano»: i Like si scrivono `15000`, `15.000` o `15k` e devono crescere; massimo 80 tappe, titoli fino a 60 caratteri. Un errore dice il numero della riga e non cambia niente. *Scaletta predefinita* rimette le 37 tappe tenendo i titoli di quelle con gli stessi Like. Cambiare la scaletta non sblocca nessun brano.
 - **Like**: arrivano da soli dagli eventi «like» della chat TikTok (serve la chat collegata: *Serata → Collega chat*; la regia mostra «Collegato a TikTok», «In attesa di TikTok» o «TikTok non collegato»). Il totale della live non scende mai. In regia si correggono a mano: *Imposta*, *+100*, *+1.000* e *Riparti da ora* (contatore a zero e scaletta dalla prima tappa: per una live già iniziata). Una correzione fatta prima che arrivi il primo evento «like» (regia appena avviata o chat appena ricollegata) vale per quel primo evento: il totale della live non si somma al numero impostato e *Riparti da ora* non sblocca le tappe che c'erano già.
 - **Sblocco**: quando i Like raggiungono una tappa parte una sequenza di circa 2,6 secondi: un colpo sul modulo (onda di luce, raffica di perline, lampo), il banner **«Brano sbloccato»** con il titolo in verde neon (per circa 3 secondi), la colonna che scorre di un posto e il suono `sblocco`. Se i Like saltano più tappe in una volta si annuncia solo la più alta; due sblocchi di fila non si accavallano (parte l'ultimo). Ricaricare la pagina non rifà la sequenza.
@@ -220,8 +230,9 @@ Si cambiano in cima a `public/css/drum.css`. Parametri: i comuni (vedi sopra) e 
 Per le live in cui si lavora a un beat o a un mix: la **webcam** in alto e lo **schermo della DAW** (FL Studio) in basso, la fascia social tra le due e, nella parte alta della webcam, una targa con il titolo della live. In LIVE Studio le due camere vanno **sotto**: webcam da y 0 a 1212, schermo della DAW da y 1304 a 1920. Sopra va una sorgente **Link** `http://127.0.0.1:4747/produzione.html`, 1080×1920, stesa su tutta la tela (sfondo trasparente). Nella regia, in alto: **In onda → Studio Production**. Solo verticale, nessun suono.
 
 - **Targa del titolo**: placca cromata in 3D con le monete BR ai lati e il punto REC, su tre righe: una riga sopra, il titolo grande in cromo luccicante e una riga sotto. Il colore d'accento e l'icona dipendono dal **preset**: *Cooking Beats* (oro, cappello da cuoco, «Backrooms Studio · Live» / «Un beat da zero, in diretta»), *Sessione Beat* (magenta, cuffie, «In studio con il producer») e *Mix & Master* (ciano, manopole, «Mix e master in diretta»). Scelto il preset si può cambiare ogni riga.
-- **Titolo in tempo reale**: le tre righe (sopra fino a 32 caratteri, titolo 28, sotto 48) vanno in onda **mentre si scrive**, 150 ms dopo l'ultimo tasto, con un breve effetto flip (non al primo caricamento). Il titolo non può restare vuoto: mentre lo riscrivete resta in onda quello di prima; un testo troppo lungo dà un avviso e il campo torna al testo in onda.
+- **Titolo in tempo reale**: le tre righe (sopra fino a 40 caratteri, titolo 36, sotto 60) vanno in onda **mentre si scrive**, 150 ms dopo l'ultimo tasto, con un breve effetto flip (non al primo caricamento). Il titolo non può restare vuoto: mentre lo riscrivete resta in onda quello di prima; un testo troppo lungo dà un avviso e il campo torna al testo in onda.
 - **Fascia social** (la barra che scorre) tra la webcam e lo schermo.
+- **Titoli salvati**: in regia si salva il titolo scritto con un nome (fino a 24 caratteri, al massimo 6, nomi diversi): *Usa* rimette in onda le sue tre righe (il colore della targa non cambia), *Togli* lo cancella.
 - In regia, *In onda*: titolo e fascia social.
 
 ### Posizioni Studio Production e Reaction Release, verticale (pixel della tela 1080×1920)
@@ -229,7 +240,7 @@ Per le live in cui si lavora a un beat o a un mix: la **webcam** in alto e lo **
 | Pezzo | x | y | larghezza × altezza |
 |---|---|---|---|
 | Webcam (A) | 0 | 0 | 1080 × 1212 (l'app copre fino a ~270) |
-| Titolo (targa) | 116 | 282 | 848 × 204 |
+| Titolo (targa) | 116 | 282 | 848 × 230 |
 | Fascia social | 0 | 1212 | 1080 × 92 |
 | Schermo (B: DAW o video) | 0 | 1304 | 1080 × 616 |
 
@@ -239,10 +250,10 @@ Si cambiano in cima a `public/css/doppio.css` (e il punto della fascia in `forma
 
 Per il podcast sul divano: la **camera** (host e ospiti) a tutto schermo, **sotto**; sopra va una sorgente **Link** `http://127.0.0.1:4747/podcast.html` (1080×1920) oppure `http://127.0.0.1:4747/podcast.html?formato=orizzontale` (1920×1080), stesa su tutta la tela (sfondo trasparente). Nella regia, in alto: **In onda → Back Rooms Podcast**. Nessun suono.
 
-- **Targa**: «Back Rooms Podcast» con sotto la riga dell'episodio (di partenza vuota), su una placca cromata con le monete BR (accento ciano). Il titolo (fino a 32 caratteri) e la riga dell'episodio (48) vanno in onda mentre si scrive, come in Studio Production.
+- **Targa**: «Back Rooms Podcast» con sotto la riga dell'episodio (di partenza vuota), su una placca cromata con le monete BR (accento ciano). Il titolo (fino a 40 caratteri) e la riga dell'episodio (60) vanno in onda mentre si scrive, come in Studio Production.
 - **Linea di divisione** (spenta all'inizio): un filo neon cromato che separa i due lati del divano («intervista doppia»). Quando si accende si disegna dal centro verso gli estremi in 0,7 secondi, quando si spegne si ritira.
 - **Pannello Tematiche** (spento all'inizio): un pannello di vetro con l'intestazione («Tematiche di oggi») e fino a 8 tematiche da 48 caratteri. La tematica **attiva** ha il bordo oro e la freccia, le precedenti sono attenuate con la spunta, le seguenti hanno un cerchietto; cambiando tematica il bordo scorre da una voce all'altra. Entra e esce con una dissolvenza che scorre. In orizzontale sta a sinistra oppure a destra (*Pannello a*: Sinistra o Destra); in verticale sta sempre al centro, davanti alla linea (che si intravede attenuata dietro il vetro).
-- **Fascia social** con gli **ospiti** (fino a 4: nome, contatto e icona) dopo la prima voce, come «Ospite · Nome · @contatto».
+- **Fascia social** con gli **ospiti** (fino a 4: nome, contatto e icona) dopo la prima voce, come «Ospite · Nome · @contatto» (la parola «Ospite» si cambia in regia, *Diciture*).
 - **Dalla regia**: quattro grandi pulsanti On/Off (*Linea di divisione*, *Pannello Tematiche*, *Targa*, *Fascia social*), la lista delle tematiche in onda (un clic la rende attiva; *Indietro* e *Avanti*), l'elenco da scrivere (una tematica per riga, con il titolo del pannello, e *Salva tematiche*), gli ospiti (si salvano uscendo dal campo; una riga senza nome non va in onda) e il titolo.
 - **Scorciatoie** (solo con il Podcast in onda): `F2` tematica avanti, `F3` indietro, `F4` mostra o nasconde il pannello Tematiche. Stream Deck: `POST /api/podcastTematica` con `{ "avanti": true }`, `{ "indietro": true }` o `{ "indice": 2 }`, e `POST /api/widget` con `{ "nome": "poTematiche", "visibile": true }`.
 - *Nuova serata* riporta la tematica attiva alla prima; elenco, ospiti e titolo restano. All'avvio linea e pannello sono spenti.
@@ -251,8 +262,8 @@ Per il podcast sul divano: la **camera** (host e ospiti) a tutto schermo, **sott
 
 | Pezzo | Verticale 1080×1920 | Orizzontale 1920×1080 |
 |---|---|---|
-| Targa | x 116, y 282, 848 × 128 | x 48, y 36, 512 × 128 |
-| Pannello Tematiche | x 116, y 424, 848 × 480 (8 righe da 48) | x 48 (1360 con «Destra»), y 176, 512 × 570 (8 righe da 58) |
+| Targa | x 116, y 282, 848 × 140 | x 48, y 36, 512 × 136 |
+| Pannello Tematiche | x 116, y 432, 848 × 472 (8 righe da 48) | x 48 (1360 con «Destra»), y 176, 512 × 570 (8 righe da 58) |
 | Linea di divisione | x 538, y 240, 4 × 860 | x 958, y 0, 4 × 968 (arriva alla fascia) |
 | Fascia social | x 0, y 1108, 1080 × 92 | x 0, y 968, 1920 × 92 |
 
@@ -316,7 +327,9 @@ La chat accetta `8`, `7.5`, `7,5`, `9/10`, `!voto 8`. Un voto per utente (vale l
 | Campo | Cosa fa |
 |---|---|
 | `giudici` | Giudice di ogni categoria: `{ "beat": "...", "voce": "...", "mix": "..." }` (modificabile anche dalla regia) |
-| `pesi` | Peso di ogni voce nel totale (default uguali: chat al 25%) |
+| `pesi` | Peso di ogni voce nel totale: `{ "beat": 3, "voce": 3, "mix": 3, "chat": 1 }` (0–100, almeno uno sopra zero; di partenza la chat pesa il 10%) |
+| `votoMin`, `votoMax` | Intervallo dei voti (di partenza 4 e 10; il minimo sotto il massimo) |
+| `etichette` | Diciture delle voci nel tabellone: `{ "beat": "Beat", "voce": "Voce", "mix": "Mix", "chat": "Chat" }` (si cambiano anche dalla regia, comando `votazione`) |
 | `topN` | Posizioni in classifica |
 | `premio` | Premio iniziale (si cambia dalla regia) |
 | `invito` | Frasi iniziali sotto il premio, separate da `\|` (si cambiano dalla regia) |
@@ -361,19 +374,24 @@ Il tunnel espone solo la porta del webhook, non la regia.
 
 | Comando | Corpo JSON |
 |---|---|
-| `traccia` | `{ "titolo", "artista" }`: nuova traccia in ascolto |
-| `correggiTraccia` | `{ "titolo"?, "artista"? }`: corregge senza azzerare i voti |
+| `traccia` | `{ "titolo", "artista", "instagram"? }`: nuova traccia in ascolto |
+| `correggiTraccia` | `{ "titolo"?, "artista"?, "instagram"? }`: corregge senza azzerare i voti |
 | `inCoda`, `daCoda`, `togliCoda` | `{ "titolo", "artista" }` / `{ "id" }` |
+| `votazione` | `{ "pesi"?: { "beat", "voce", "mix", "chat" }, "min"?: 4, "max"?: 10, "etichette"?: { "beat": "Strumentale" } }`: pesi (0–100), intervallo dei voti (0–10, il minimo sotto il massimo) e diciture delle voci; vale da subito |
 | `voto` | `{ "categoria": "beat"\|"voce"\|"mix", "valore": 8.5 }` |
 | `giudici` | `{ "beat"?, "voce"?, "mix"? }` |
 | `apriChat`, `chiudiChat`, `azzeraChat` | `{ "secondi": 60 }` / `{}` |
 | `messaggioChat` | `{ "piattaforma", "utente", "testo" }`: per inoltrare commenti da altri tool |
+| `simulaChat` | `{ "quanti"?: 10 }`: voti di prova della chat (con il voto aperto) |
 | `tiktok` | `{ "utente": "@account" }` (vuoto per scollegare) |
 | `conferma`, `prossima` | `{}` |
+| `neroAutomatico` | `{ "attivo": true }`: la traccia automatica da Nero |
+| `codaNero` | `{ "inAttesa": 12 }` (tracce ancora in attesa su Nero; `null` per tornare alla lista) |
 | `countdown` | `{ "azione": "avvia"\|"pausa"\|"riprendi"\|"aggiungi"\|"azzera", "minuti"? }` |
 | `proclama` | `{}` chiude la gara (spareggio se c'è pari merito) · `{ "id" }` sceglie il vincitore |
 | `nascondiVincitore` | `{}`: chiude la schermata finale |
-| `widget` | `{ "nome": "premio"\|"tabellone"\|"classifica"\|"timer"\|"banner"\|"barra"\|"scheda"\|"targa"\|"barraStudio"\|"comparse"\|"barreVita"\|"modalita"\|"timerBattle"\|"giudiciBattle"\|"popupBattle"\|"vittoriaBattle"\|"bracket"\|"drumCornice"\|"drumTraguardi"\|"drumBrano"\|"drumPriorita"\|"drumBarra"\|"prTitolo"\|"prBarra"\|"reTitolo"\|"reBarra"\|"poTitolo"\|"poLinea"\|"poTematiche"\|"poBarra", "visibile": true }` (la linea e il pannello del podcast e il tabellone del battle partono spenti) |
+| `widget` | `{ "nome": "premio"\|"tabellone"\|"classifica"\|"timer"\|"banner"\|"barra"\|"scheda"\|"targa"\|"barraStudio"\|"comparse"\|"barreVita"\|"modalita"\|"timerBattle"\|"giudiciBattle"\|"popupBattle"\|"vittoriaBattle"\|"bracket"\|"albero"\|"goal"\|"drumCornice"\|"drumTraguardi"\|"drumBrano"\|"drumPriorita"\|"drumBarra"\|"drumStriscia"\|"prTitolo"\|"prBarra"\|"reTitolo"\|"reBarra"\|"reScaletta"\|"reRichiesta"\|"poTitolo"\|"poLinea"\|"poTematiche"\|"poBarra", "visibile": true }` (la linea e il pannello del podcast, il tabellone del battle e l'albero della gara partono spenti) |
+| `albero` | `{ "durataSecondi"?: 20, "mostra"?: true }`: il tabellone ad albero dei confronti (con `mostra: false` si cambia solo la durata e si nasconde) |
 | `nascondiVoti` | `{ "attivo": true }`: l'overlay mostra "?" fino alla conferma |
 | `premio` | `{ "testo": "Mix + Master" }` |
 | `invito` | `{ "testo": "La traccia più votata vince \| Manda la tua traccia su nero.fan/backrooms" }` |
@@ -407,14 +425,21 @@ Il tunnel espone solo la porta del webhook, non la regia.
 | `drumScaletta` | `{ "testo": "1000 \| Primo brano\n15k \| Secondo" }` (una tappa per riga, «Like \| Titolo», massimo 80) oppure `{ "predefinita": true }` |
 | `drumBrano` | `{ "titolo"?, "artista"?, "daIndice"?, "svuota"? }`: brano in esecuzione (`daIndice` lo prende da una tappa già sbloccata) |
 | `drumOspite` | `{ "etichetta"?, "handle"?, "icona"? }`: artista ospite sulla fascia (icone come per le voci social) |
-| `drumPriorita` | `{ "prefisso"?, "slot"?, "sopra"?, "icona"?: "rosa"\|"corona"\|"cuore"\|"regalo"\|"stella"\|"diamante"\|"logo", "richiamo"?: true }`: «Dona un…»; con `richiamo` il widget pulsa (solo se è acceso) |
+| `drumPriorita` | `{ "prefisso"?, "slot"?, "dopo"?, "regalo"?, "icona"?: "rosa"\|"corona"\|"cuore"\|"regalo"\|"stella"\|"diamante"\|"logo", "richiamo"?: true }`: «Dona un…»; con `richiamo` il widget pulsa (solo se è acceso) |
 | `drumEq` | `{ "sensibilita"?: 100, "stile"?: "barre"\|"onda", "senzaSegnale"?: true }`: equalizzatore (sensibilità 50–300) |
 | `drumRiempimento` | `{ "stile": "perline"\|"sabbia" }` |
 | `drumDemo` | `{ "fase": "vuoto"\|"meta"\|"sblocco"\|"finale" }`: dati di prova (Like, titoli delle prime 12 tappe, ospite, brano) |
+| `drumStriscia` | `{ "velocita": 80 }`: la striscia a scorrimento in alto (40–160 px/s) |
 | `likeEvento` | `{ "totale"?: 11400, "conteggio"?: 25 }`: simula un evento «like» di TikTok (per provare il Drum senza una live) |
-| `produzione` | `{ "preset"?: "cooking"\|"sessione"\|"mix", "titolo"?: { "sopra"?, "testo"?, "sotto"? }, "velocita"? }` (limiti 32, 28 e 48 caratteri) |
-| `reaction` | `{ "titolo"?: { "sopra"?, "testo"?, "sotto"? }, "velocita"? }` (limiti 40, 60 e 60 caratteri) |
-| `podcast` | `{ "titolo"?: { "testo"?, "sotto"? }, "ospiti"?: [{ "nome", "handle", "icona" }], "tematiche"?: { "titolo"?, "elenco"?: ["…"], "attiva"?, "lato"?: "sx"\|"dx" }, "velocita"? }` (titolo 32 e riga 48 caratteri; massimo 4 ospiti; 8 tematiche da 48) |
+| `goal` | `{ "like"?: { "obiettivo", "passo" }, "follower"?: { "obiettivo", "passo", "imposta", "aggiungi" }, "modo"?: "fisso"\|"comparsa", "ogniMinuti"?, "durataSecondi"?, "posizione"?: { "layout", "x", "y", "scala", "ripristina" } }`: l'obiettivo Like e Follower |
+| `goalMostra` | `{}`: fa comparire il Goal adesso (modo «a comparsa») |
+| `regaloEvento` | `{ "nome"?, "id"?, "utente"?, "quantita"? }`: simula un regalo di TikTok (per provare Goal e richieste) |
+| `followEvento` | `{ "utente", "totale"? }`: simula un follow di TikTok |
+| `scalettaMostra` | `{}`: fa comparire la scaletta della Reaction adesso |
+| `richiesta` | `{ "formato": "reaction"\|"drum", "azione": "inOnda"\|"fatta"\|"scarta", "id", "brano"? }`: una richiesta di un donatore (nella Reaction va in onda col brano scritto dalla regia) |
+| `produzione` | `{ "preset"?: "cooking"\|"sessione"\|"mix", "titolo"?: { "sopra"?, "testo"?, "sotto"? }, "velocita"?, "salva"?: { "nome" }, "usa"?: "id", "togli"?: "id" }` (limiti 40, 36 e 60 caratteri; titoli salvati: al massimo 6) |
+| `reaction` | `{ "titolo"?: { "sopra"?, "testo"?, "sotto"? }, "velocita"?, "scaletta"?: { "titolo", "voci", "modo", "ogniMinuti", "durataSecondi" }, "regalo"?, "durataRichiesta"? }` (limiti 48, 60 e 60 caratteri; scaletta fino a 8 voci) |
+| `podcast` | `{ "titolo"?: { "testo"?, "sotto"? }, "ospiti"?: [{ "nome", "handle", "icona" }], "etichette"?: { "ospite": "Ospite" }, "tematiche"?: { "titolo"?, "elenco"?: ["…"], "attiva"?, "lato"?: "sx"\|"dx" }, "velocita"? }` (titolo 40 e riga 60 caratteri; dicitura 40; massimo 4 ospiti; 8 tematiche da 48) |
 | `podcastTematica` | `{ "avanti": true }` · `{ "indietro": true }` · `{ "indice": 2 }`: sposta la tematica attiva (senza giri) |
 | `formatoTesti` | `{ "formato": "drum"\|"produzione"\|"reaction"\|"podcast", "valori": { "contatore": 140 } }` percento 60–200 per gruppo (Drum `contatore`, `traguardi`, `brano`, `priorita`, `sblocco`; produzione e reaction `sopra`, `titolo`, `sotto`; podcast `targa`, `tematiche`) · `{ "formato", "azzera": true }` torna al 100% |
 | `formatoVelocita` | `{ "formato": "drum"\|"produzione"\|"reaction"\|"podcast", "velocita": 80 }`: velocità della fascia social (40–160 px/s) |
