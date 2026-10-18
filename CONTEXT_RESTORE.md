@@ -105,3 +105,26 @@ Cella nomi troppo stretta dopo il cambio font; font-size inline che batteva il C
 - Registro completo delle decisioni (Ruling) e dei minori rimandati: `docs/superpowers/registro-decisioni-restyling.md`.
 - Consegnati: zip verificato in cartella pulita (npm ci + node --test) e video per telefono (sequenza di schermate con didascalie).
 - Restano: nessuna PR nuova (la PR 1 esiste già); nessun merge/pubblicazione senza il via dell'utente; da calibrare `stimaGiroSecondi` con una misura vera; campo Instagram di Nero e `queueCount` da verificare con una traccia vera; regali e follower da provare con una live vera.
+
+## PROBLEMA URGENTE: TikTok limita le nostre live (18 ottobre)
+
+**Situazione.** Lo studio (Backrooms Studio, 3 liberi professionisti, obiettivo 10.000 €/mese; gran parte del fatturato arriva dalle live) usa gli overlay di `overlay-live` in TikTok LIVE Studio (sorgenti Link). Dopo i nuovi overlay TikTok ha limitato di nuovo la live e il punteggio dell'account continua a scendere. Non sappiamo il motivo vero: serve l'avviso dell'account (Stato account / Centro LIVE su TikTok).
+
+**Ipotesi dell'utente:** le grafiche 3D che si muovono sempre vengono scambiate per «registrazione». Valutazione di Claude: poco probabile (le fonti parlano di video preregistrati, loop, schermo fermo o nero, non di overlay sopra una webcam vera).
+
+**Ipotesi più probabili (fonti secondarie, non il testo ufficiale di TikTok):**
+1. Indirizzi, account e nomi di altre piattaforme sullo schermo (nero.fan/backrooms, backroomsstudio.it, Twitch, Kick, WhatsApp, Instagram degli artisti): i competitor scrivono «link in bio». ← già affrontato dalla Modalità sicura.
+2. Musica con diritti riprodotta in live (tracce degli artisti, audio di FL Studio): TikTok riconosce l'audio protetto.
+3. Contenuti non originali (reaction, schermo condiviso di video altrui).
+4. Pagamenti esterni mostrati sullo schermo (Skip, Super Skip, Throne su Nero.fan): segnale debole.
+
+**Già fatto nel codice (commit «Modalità sicura TikTok», branch `claude/practical-cannon-6wegnn`):** sezione «Sicurezza TikTok» in cima alla regia con tre interruttori (comando API `sicurezza`): modalità sicura (indirizzi → «link in bio», account tolti, voci di altre piattaforme tolte dalla barra), movimento ridotto (animazioni infinite ferme dopo il primo giro), nascondi pagamenti. Filtro in `public/js/sicurezza.js`, stato in `lib/sicurezza.mjs`, test in `test/sicurezza.test.mjs`.
+
+**Da fare, con accesso al PC e a Chrome:**
+- Aprire TikTok (web) → Stato account / violazioni: leggere l'avviso esatto, scadenza e se si può fare ricorso; fare ricorso spiegando cosa è stato tolto.
+- Controllare su TikTok LIVE Studio cosa si vede davvero sullo schermo in onda (link, account, QR, musica) e cosa mostrano i competitor che non vengono limitati.
+- Provare una variabile alla volta nelle live (modalità sicura → movimento ridotto → pagamenti nascosti) e annotare l'esito.
+- Verificare il testo ufficiale delle regole LIVE di TikTok (musica, link, contenuti non originali) e il regalo/musica usati.
+- Decidere con l'utente se rinunciare a parte della grafica per tenere la live viva: l'obiettivo è il fatturato, non la grafica.
+
+**Regole di lavoro.** Italiano. L'utente lavora dal telefono. Nessun merge/pubblicazione senza il suo via. Test con `node --test` dalla cartella `overlay-live`. Il registro completo delle decisioni è in `docs/superpowers/registro-decisioni-restyling.md`.
