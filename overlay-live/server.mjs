@@ -15,6 +15,7 @@ import * as F from "./lib/formati.mjs";
 import { impostaTesti } from "./lib/testi.mjs";
 import { corpo, numeroTra, oggetto, siNo, testo, pulisciInstagram } from "./lib/validazione.mjs";
 import * as G from "./lib/goal.mjs";
+import * as Z from "./lib/sicurezza.mjs";
 import { registraVisto, controllaVisti, aggiungiRichiesta, segnaRichiesta } from "./lib/regali.mjs";
 import { LimiteFrequenza, leggiAudio } from "./lib/audio.mjs";
 import { avviaTikTok, leggiVoto } from "./lib/chat.mjs";
@@ -118,6 +119,7 @@ function caricaStato() {
     salvato.albero = S.fondiAlbero(salvato.albero);
     // Goal e regali visti (aggiunti dopo): impostazioni complete anche da uno stato vecchio o rotto.
     salvato.goal = G.fondiGoal(salvato.goal);
+    salvato.sicurezza = Z.fondiSicurezza(salvato.sicurezza);
     salvato.regaliVisti = controllaVisti(salvato.regaliVisti);
     return salvato;
   } catch (e) {
@@ -600,6 +602,9 @@ const comandi = {
     G.impostaGoal(stato, args);
   },
   // Fa comparire il Goal adesso (nel modo «a comparsa»): le pagine lo mostrano per i secondi scelti.
+  sicurezza(args) {
+    Z.impostaSicurezza(stato, args);
+  },
   goalMostra() {
     emetti("goalMostra", { durataSecondi: stato.goal.durataSecondi });
   },
@@ -652,8 +657,8 @@ const comandi = {
   },
   demo() {
     const ora = Date.now();
-    const { premio, invito, suoni, giudici, votazione, albero, goal, regaliVisti, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
-    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, votazione, albero: { ...albero, finoAlle: null }, goal, regaliVisti, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast };
+    const { premio, invito, suoni, giudici, votazione, albero, goal, sicurezza, regaliVisti, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
+    stato = { ...S.statoIniziale(config), premio, invito, suoni, giudici, votazione, albero: { ...albero, finoAlle: null }, goal, sicurezza, regaliVisti, tiktokUtente, neroAutomatico, neroUltimo, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast };
     const finti = [
       ["Specchi Neri", "Nove", 8.4],
       ["Fuori Orario", "Kappa 23", 7.9],
@@ -679,7 +684,7 @@ const comandi = {
   // La traccia che suona su Nero in quel momento torna sul tabellone al giro successivo. Drum e podcast ripartono
   // (Like da zero, prima tematica); produzione e reaction restano come sono.
   nuovaSerata() {
-    const { premio, invito, suoni, giudici, votazione, albero, goal, regaliVisti, tiktokUtente, neroAutomatico, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
+    const { premio, invito, suoni, giudici, votazione, albero, goal, sicurezza, regaliVisti, tiktokUtente, neroAutomatico, layout, senzaPremio, studio, battle, drum, produzione, reaction, podcast } = stato;
     stato = {
       ...S.statoIniziale(config),
       premio,
@@ -689,6 +694,7 @@ const comandi = {
       votazione,
       albero: { ...albero, finoAlle: null },
       goal,
+      sicurezza,
       regaliVisti,
       tiktokUtente,
       neroAutomatico,

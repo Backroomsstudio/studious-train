@@ -5,6 +5,7 @@ import { ICONE, oggetto, testo, numeroTra, siNo, arrotonda, normalizzaVoto, puli
 import { battleIniziale, istantaneaBattle } from "./battle.mjs";
 import { drumIniziale, istantaneaDrum } from "./drum.mjs";
 import { goalIniziale, istantaneaGoal } from "./goal.mjs";
+import { sicurezzaIniziale } from "./sicurezza.mjs";
 import { produzioneIniziale, reactionIniziale, podcastIniziale } from "./formati.mjs";
 import { costruisciAlbero } from "./albero.mjs";
 
@@ -71,6 +72,8 @@ export function statoIniziale(config) {
     albero: alberoIniziale(),
     // Goal Like e Follower (lib/goal.mjs) e ultimi regali arrivati dalla live (lib/regali.mjs): la regia sceglie da lì il regalo delle richieste.
     goal: goalIniziale(),
+    // Modalità sicura TikTok (lib/sicurezza.mjs): vale per ogni layout e resta con «nuova serata».
+    sicurezza: sicurezzaIniziale(),
     regaliVisti: [],
     nascondiVoti: false,
     // Il tabellone del battle (bracket) e i moduli a comando del podcast restano spenti finché la regia non li accende.
@@ -664,6 +667,7 @@ export function istantanea(stato, config, ora) {
     giudici: stato.giudici,
     votazione: stato.votazione,
     goal: istantaneaGoal(stato),
+    sicurezza: stato.sicurezza,
     regaliVisti: stato.regaliVisti,
     albero: { durataSecondi: stato.albero.durataSecondi, finoAlle: stato.albero.finoAlle, disegno: costruisciAlbero(stato.risultati) },
     topN: config.topN,

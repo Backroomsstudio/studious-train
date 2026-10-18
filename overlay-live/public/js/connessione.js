@@ -1,6 +1,10 @@
 // Connessione WebSocket al server locale, con riconnessione automatica.
 // Usata sia dall'overlay (solo ascolto) sia dalla regia (invia comandi e, per il Drum, i livelli audio di FL Studio).
-export function collega({ suStato, suConnessione = () => {}, pin = () => "", suAudio = () => {} }) {
+import { applicaSicurezza } from "./sicurezza.js";
+
+// `grezzo`: la regia vuole lo stato com'è (ci scrive i veri indirizzi). Le pagine degli overlay passano dalla modalità sicura TikTok
+// (public/js/sicurezza.js) e, con «movimento ridotto», le animazioni che si ripetono si fermano dopo il primo giro (classe «calmo»).
+export function collega({ suStato, suConnessione = () => {}, pin = () => "", suAudio = () => {}, grezzo = false }) {
   const indirizzo = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`;
   const inAttesa = new Map();
   let ws;
@@ -18,7 +22,8 @@ export function collega({ suStato, suConnessione = () => {}, pin = () => "", suA
       const msg = JSON.parse(e.data);
       if (msg.tipo === "stato") {
         scarto = msg.stato.ora - Date.now();
-        suStato(msg.stato, msg.eventi ?? []);
+        if (!grezzo && typeof document !== "undefined") document.body.classList.toggle("calmo", msg.stato.sicurezza?.calmo === true);
+        suStato(grezzo ? msg.stato : applicaSicurezza(msg.stato), msg.eventi ?? []);
       } else if (msg.tipo === "esito") {
         inAttesa.get(msg.id)?.(msg);
         inAttesa.delete(msg.id);

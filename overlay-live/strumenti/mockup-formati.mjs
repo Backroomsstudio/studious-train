@@ -2024,7 +2024,9 @@ async function controllaPodcast(pagina, errori) {
   const t = await leggiPodcast(pagina);
   if (t.targa !== "Back Rooms Podcast") errori.push(`targa: «${t.targa}» invece di «Back Rooms Podcast»`);
   if (t.sotto !== "Puntata 12") errori.push(`targa, riga episodio: «${t.sotto}» invece di «Puntata 12»`);
-  if (!t.fascia.includes("Lince · @lince.music")) errori.push(`la fascia doveva contenere l'ospite «Lince · @lince.music»: «${t.fascia.replace(/\s+/g, " ").slice(0, 120)}»`);
+  // Con la modalità sicura TikTok (di partenza) l'account dell'ospite non va in onda: resta il nome.
+  if (!t.fascia.includes("Lince") || t.fascia.includes("@lince.music")) errori.push(`la fascia doveva contenere l'ospite «Lince» senza il suo account: «${t.fascia.replace(/\s+/g, " ").slice(0, 120)}»`);
+  if (/nero\.fan|backroomsstudio\.it|@backrooms/i.test(t.fascia)) errori.push(`la fascia mostra ancora un indirizzo o un account: «${t.fascia.replace(/\s+/g, " ").slice(0, 120)}»`);
   if (stato === "completo") {
     if (t.titoloTematiche !== "Tematiche di oggi") errori.push(`pannello Tematiche: intestazione «${t.titoloTematiche}»`);
     const atteso = STATI_TEMI(1, 5);

@@ -23,6 +23,7 @@ let stato = null;
 let primoDisegno = true;
 
 const conn = collega({
+  grezzo: true, // la regia vede gli indirizzi veri; le pagine in onda passano dalla modalità sicura
   suStato(s, eventi) {
     const prima = stato;
     stato = s;
@@ -146,6 +147,7 @@ function suoniRegia(prima, dopo, eventi) {
 
 // ---------- Disegno ----------
 function disegna(s) {
+  disegnaSicurezza(s);
   disegnaTraccia(s);
   disegnaCoda(s);
   disegnaVoti(s);
@@ -393,6 +395,17 @@ $("#voti").addEventListener("keydown", (e) => {
 });
 
 $("#nascondi").addEventListener("change", (e) => invia("nascondiVoti", { attivo: e.target.checked }));
+
+// ---------- Sicurezza TikTok ----------
+function disegnaSicurezza(s) {
+  for (const box of document.querySelectorAll("[data-sicurezza]")) if (box !== document.activeElement) box.checked = Boolean(s.sicurezza?.[box.dataset.sicurezza]);
+}
+for (const box of document.querySelectorAll("[data-sicurezza]")) {
+  box.addEventListener("change", async () => {
+    const esito = await invia("sicurezza", { [box.dataset.sicurezza]: box.checked });
+    if (!esito.ok && stato) box.checked = Boolean(stato.sicurezza?.[box.dataset.sicurezza]);
+  });
+}
 
 for (const box of document.querySelectorAll("[data-widget]")) {
   box.addEventListener("change", () => invia("widget", { nome: box.dataset.widget, visibile: box.checked }));

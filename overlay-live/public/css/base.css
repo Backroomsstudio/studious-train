@@ -82,3 +82,10 @@
   fill: url(#g-cromo);
   filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.45));
 }
+
+/* «Movimento ridotto» (regia, Sicurezza TikTok): le animazioni che si ripetono all'infinito girano una volta sola e si fermano. */
+.calmo *,
+.calmo *::before,
+.calmo *::after {
+  animation-iteration-count: 1 !important;
+}
