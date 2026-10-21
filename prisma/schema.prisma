@@ -1,0 +1,393 @@
+// Backrooms Beat Store · schema PostgreSQL
+//
+// Principi:
+// - Il saldo crediti (`User.creditBalance`) è una cache: la fonte di verità è il libro mastro
+//   append-only `CreditTransaction`. Ogni movimento aggiorna entrambi nella stessa transazione,
+//   con un UPDATE condizionato (`creditBalance >= costo`) che rende impossibile il saldo negativo.
+// - Ogni effetto di un webhook Stripe è idempotente: `StripeEvent` registra gli eventi già
+//   elaborati e `CreditTransaction.idempotencyKey` impedisce doppi accrediti.
+// - I file audio non sono mai pubblici: nel DB ci sono solo le chiavi degli oggetti su R2,
+//   firmate al volo dopo il controllo della licenza.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/* ------------------------------------------------------------------ */
+/* Identità (tabelle standard Auth.js)                                 */
+/* ------------------------------------------------------------------ */
+
+enum UserRole {
+  ARTIST
+  PRODUCER
+  ADMIN
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name             String?
+  email            String?   @unique
+  emailVerified    DateTime?
+  image            String?
+  artistName       String?
+  role             UserRole  @default(ARTIST)
+  stripeCustomerId String?   @unique
+  /// Cache del saldo: aggiornata solo insieme a una riga di CreditTransaction.
+  creditBalance    Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  subscriptions Subscription[]
+  transactions  CreditTransaction[]
+  licenses      License[]
+  downloads     Download[]
+  projects      Project[]
+  producer      Producer?
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+/* ------------------------------------------------------------------ */
+/* Abbonamenti e crediti                                               */
+/* ------------------------------------------------------------------ */
+
+enum PlanTier {
+  STARTER
+  PRO
+  ELITE
+}
+
+enum SubscriptionStatus {
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  UNPAID
+  PAUSED
+  CANCELED
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String
+  stripeSubscriptionId String             @unique
+  stripePriceId        String
+  tier                 PlanTier
+  status               SubscriptionStatus
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean            @default(false)
+  canceledAt           DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions CreditTransaction[]
+
+  @@index([userId, status])
+}
+
+enum CreditTransactionType {
+  /// Accredito mensile al pagamento della fattura.
+  SUBSCRIPTION_GRANT
+  /// Crediti oltre il tetto di rollover, azzerati prima del nuovo accredito.
+  ROLLOVER_EXPIRY
+  /// Crediti residui azzerati alla fine dell'abbonamento.
+  SUBSCRIPTION_END_EXPIRY
+  /// Spesa per sbloccare una licenza.
+  UNLOCK
+  /// Restituzione (licenza revocata, errore).
+  REFUND
+  /// Correzione manuale dello staff.
+  ADJUSTMENT
+  /// Omaggio (promozioni, sessioni in studio, referral).
+  BONUS
+}
+
+model CreditTransaction {
+  id             String                @id @default(cuid())
+  userId         String
+  type           CreditTransactionType
+  /// Positivo = accredito, negativo = addebito.
+  amount         Int
+  balanceAfter   Int
+  description    String?
+  /// Chiave unica per gli effetti esterni (es. `grant:<invoiceId>`): rende idempotenti i webhook.
+  idempotencyKey String?               @unique
+  subscriptionId String?
+  stripeInvoiceId String?
+  licenseId      String?               @unique
+  createdAt      DateTime              @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  license      License?      @relation(fields: [licenseId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+/// Eventi Stripe già elaborati (idempotenza dei webhook).
+model StripeEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+}
+
+/* ------------------------------------------------------------------ */
+/* Catalogo                                                            */
+/* ------------------------------------------------------------------ */
+
+model Producer {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  bio         String?
+  avatarUrl   String?
+  instagram   String?
+  /// Produttore resident dello studio (filtro "Resident Producers").
+  isResident  Boolean  @default(false)
+  /// Colore d'accento per i tag del produttore (es. `#0066FF`).
+  accentColor String?
+  userId      String?  @unique
+  createdAt   DateTime @default(now())
+
+  user  User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  beats BeatProducer[]
+}
+
+enum BeatStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum KeyMode {
+  MAJOR
+  MINOR
+}
+
+model Beat {
+  id                 String     @id @default(cuid())
+  slug               String     @unique
+  title              String
+  description        String?
+  status             BeatStatus @default(DRAFT)
+  bpm                Int
+  /// Tonica come pitch class: 0 = C, 1 = C#/Db … 11 = B. La notazione Camelot è derivata.
+  keyRoot            Int
+  keyMode            KeyMode
+  durationSec        Int
+  moods              String[]
+  coverUrl           String?
+  /// Picchi della forma d'onda pre-calcolati all'upload (0..1, ~160 valori).
+  waveformPeaks      Json
+  /// Anteprima a basso bitrate con tag audio (unico file servito senza licenza).
+  previewObjectKey   String
+  mp3ObjectKey       String
+  wavObjectKey       String
+  stemsObjectKey     String?
+  exclusiveAvailable Boolean    @default(true)
+  exclusiveSoldAt    DateTime?
+  playCount          Int        @default(0)
+  downloadCount      Int        @default(0)
+  /// Titolo + produttori + generi + type beat + mood: alimenta la ricerca full-text e fuzzy.
+  searchDocument     String     @default("")
+  /// Colonna generata da `searchDocument` (vedi migrazione): indice GIN full-text.
+  searchVector       Unsupported("tsvector")? @default(dbgenerated("to_tsvector('simple'::regconfig, COALESCE(\"searchDocument\", ''::text))"))
+  releasedAt         DateTime   @default(now())
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  producers BeatProducer[]
+  genres    Genre[]
+  typeTags  TypeTag[]
+  licenses  License[]
+  deals     DailyDeal[]
+  projects  Project[]
+
+  @@index([status, releasedAt(sort: Desc)])
+  @@index([bpm])
+  @@index([keyRoot, keyMode])
+  @@index([searchVector], type: Gin)
+  @@index([searchDocument(ops: raw("gin_trgm_ops"))], type: Gin, map: "Beat_searchDocument_trgm_idx")
+}
+
+enum ProducerRole {
+  MAIN
+  CO_PRODUCER
+}
+
+model BeatProducer {
+  beatId     String
+  producerId String
+  role       ProducerRole @default(MAIN)
+  /// Quota dei ricavi del beat (0-100) per la ripartizione tra i produttori.
+  splitPct   Int          @default(100)
+
+  beat     Beat     @relation(fields: [beatId], references: [id], onDelete: Cascade)
+  producer Producer @relation(fields: [producerId], references: [id], onDelete: Cascade)
+
+  @@id([beatId, producerId])
+  @@index([producerId])
+}
+
+/// Tassonomia ad albero: Trap → Plugg, Drill → UK Drill …
+model Genre {
+  id       String  @id @default(cuid())
+  slug     String  @unique
+  name     String
+  parentId String?
+
+  parent   Genre?  @relation("GenreTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Genre[] @relation("GenreTree")
+  beats    Beat[]
+}
+
+/// "Type beat": riferimento artistico (Travis Scott Type, Drake Type …).
+model TypeTag {
+  id    String @id @default(cuid())
+  slug  String @unique
+  name  String
+  beats Beat[]
+}
+
+/// Beat del giorno: sconto a tempo su tutte le licenze.
+model DailyDeal {
+  id          String   @id @default(cuid())
+  beatId      String
+  discountPct Int
+  startsAt    DateTime
+  endsAt      DateTime
+
+  beat Beat @relation(fields: [beatId], references: [id], onDelete: Cascade)
+
+  @@index([startsAt, endsAt])
+}
+
+/* ------------------------------------------------------------------ */
+/* Licenze e download                                                  */
+/* ------------------------------------------------------------------ */
+
+enum LicenseType {
+  MP3_LEASE
+  WAV_LEASE
+  TRACKOUT
+  UNLIMITED
+}
+
+enum LicenseStatus {
+  ACTIVE
+  REVOKED
+}
+
+model License {
+  id           String        @id @default(cuid())
+  userId       String
+  beatId       String
+  type         LicenseType
+  status       LicenseStatus @default(ACTIVE)
+  creditsSpent Int
+  /// Copia dei termini al momento dell'acquisto (stream massimi, copie, ecc.).
+  terms        Json
+  createdAt    DateTime      @default(now())
+
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  beat        Beat               @relation(fields: [beatId], references: [id], onDelete: Restrict)
+  transaction CreditTransaction?
+  downloads   Download[]
+
+  @@unique([userId, beatId, type])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+enum DownloadAsset {
+  MP3
+  WAV
+  STEMS
+}
+
+model Download {
+  id        String        @id @default(cuid())
+  userId    String
+  licenseId String
+  asset     DownloadAsset
+  ipHash    String?
+  userAgent String?
+  createdAt DateTime      @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  license License @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+/* ------------------------------------------------------------------ */
+/* Progetti in studio (ponte tra beat store e servizi dello studio)    */
+/* ------------------------------------------------------------------ */
+
+enum ProjectStatus {
+  DRAFT
+  IN_STUDIO
+  DELIVERED
+}
+
+model Project {
+  id        String        @id @default(cuid())
+  userId    String
+  beatId    String?
+  title     String
+  summary   String
+  status    ProjectStatus @default(DRAFT)
+  dueAt     DateTime?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  beat Beat? @relation(fields: [beatId], references: [id], onDelete: SetNull)
+
+  @@index([userId, updatedAt(sort: Desc)])
+}

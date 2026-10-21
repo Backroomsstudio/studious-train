@@ -1,0 +1,87 @@
+"use client";
+
+import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, type ReactNode } from "react";
+import { create } from "zustand";
+import type { LicenseType } from "@/lib/beats/licenses";
+import type { ApiError, BeatSummary, UnlockResponse, Viewer } from "@/lib/beats/types";
+
+/**
+ * Stato server lato client con TanStack Query.
+ * Il saldo crediti NON è duplicato in uno store Zustand: è dato del server, quindi vive nella cache
+ * di Query (["viewer"]) e si aggiorna con la risposta dello sblocco. Una sola fonte di verità,
+ * nessuna desincronizzazione tra schede o dopo un errore. Zustand resta per lo stato puramente client
+ * (player audio, modale di sblocco).
+ */
+
+export class ApiRequestError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+export async function api<T>(input: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(input, { ...init, headers: { "Content-Type": "application/json", ...init?.headers } });
+  const body = (await res.json().catch(() => null)) as T | ApiError | null;
+  if (!res.ok) {
+    const err = (body as ApiError | null)?.error;
+    throw new ApiRequestError(res.status, err?.code ?? "INTERNAL", err?.message ?? "Errore di rete, riprova.");
+  }
+  return body as T;
+}
+
+export function BeatsProviders({ viewer, children }: { viewer: Viewer | null; children: ReactNode }) {
+  const [client] = useState(() => {
+    const qc = new QueryClient({
+      defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false, retry: 1 } },
+    });
+    qc.setQueryData(["viewer"], viewer);
+    return qc;
+  });
+  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+}
+
+export function useViewer() {
+  return useQuery({
+    queryKey: ["viewer"],
+    queryFn: async () => (await api<{ viewer: Viewer | null }>("/api/me")).viewer,
+    staleTime: 60_000,
+  });
+}
+
+export function useUnlock() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ beatId, license }: { beatId: string; license: LicenseType }) =>
+      api<UnlockResponse>(`/api/beats/${encodeURIComponent(beatId)}/unlock`, {
+        method: "POST",
+        body: JSON.stringify({ license }),
+      }),
+    onSuccess(result) {
+      qc.setQueryData<Viewer | null>(["viewer"], (viewer) => {
+        if (!viewer) return viewer;
+        const owned = { ...viewer.owned };
+        const list = owned[result.license.beatId] ?? [];
+        owned[result.license.beatId] = list.includes(result.license.type) ? list : [...list, result.license.type];
+        return { ...viewer, creditBalance: result.balance, owned };
+      });
+    },
+  });
+}
+
+interface UnlockDialogState {
+  beat: BeatSummary | null;
+  open: (beat: BeatSummary) => void;
+  close: () => void;
+}
+
+/** Un'unica modale di sblocco per tutta l'app, aperta da qualsiasi riga o scheda. */
+export const useUnlockDialog = create<UnlockDialogState>((set) => ({
+  beat: null,
+  open: (beat) => set({ beat }),
+  close: () => set({ beat: null }),
+}));

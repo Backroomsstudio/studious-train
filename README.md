@@ -82,3 +82,40 @@ lib/                    dati, contenuti, SEO, utilità
 Consigliato Vercel (zero config): importa il repository, imposta `NEXT_PUBLIC_SITE_URL` e collega il dominio.
 Dopo il deploy: verifica il sito in Google Search Console, invia `/sitemap.xml` e controlla i dati strutturati con
 il [Rich Results Test](https://search.google.com/test/rich-results).
+
+## Backrooms Beat Store (`/beats`)
+
+Marketplace in abbonamento sul modello Splice: l'artista paga un piano mensile, riceve crediti e li spende per
+sbloccare beat, WAV, stems e licenze dei produttori resident. Vive nello stesso progetto ma in un gruppo di route
+separato (`app/(store)`), con un suo root layout e tema chiaro "Apple Chrome + Electric Blue".
+
+**Stack aggiunto:** PostgreSQL + Prisma 7 · Auth.js v5 · Stripe Billing · Cloudflare R2 · Zustand · TanStack Query v5 ·
+Radix UI · zod
+
+```bash
+npm run dev                      # senza DATABASE_URL → modalità demo su http://localhost:3000/beats
+npm run db:migrate && npm run db:seed   # con DATABASE_URL: schema + catalogo dimostrativo
+TEST_DATABASE_URL=… npm run test:beats  # regole, firme, filtri e mastro crediti su Postgres reale
+```
+
+| Dove | Cosa |
+| --- | --- |
+| `lib/beats/plans.ts` | Piani (prezzo, crediti/mese, tetto di rollover, licenze incluse, vantaggi) |
+| `lib/beats/licenses.ts` | Licenze: costo in crediti, file inclusi, termini |
+| `prisma/schema.prisma` | Schema: utenti, abbonamenti, mastro crediti, beat, produttori, generi, type beat, licenze, download, progetti |
+| `lib/beats/server/ledger.ts` | Sblocco atomico e accrediti idempotenti (lock di riga, UPDATE condizionato, vincoli unici) |
+| `lib/beats/server/billing.ts` | Checkout, portale clienti e webhook Stripe |
+| `app/api/` | `beats` (ricerca), `beats/[id]/preview`, `beats/[id]/unlock`, `downloads`, `me`, `billing/*`, `webhooks/stripe` |
+| `components/beats/` | Design system (`ui/`), player persistente (`player/`), catalogo e filtri (`marketplace/`), home, modale di sblocco |
+
+**Flusso dei crediti:** `invoice.payment_succeeded` → l'eccedenza oltre il tetto di rollover scade → accredito del mese.
+Upgrade a metà periodo: si accredita solo la differenza. `customer.subscription.deleted` → i crediti residui scadono.
+Sblocco: `POST /api/beats/:id/unlock` addebita, crea la licenza e la riga del mastro in un'unica transazione e restituisce
+link di download firmati (HMAC, 15 minuti); `/api/downloads` ricontrolla sessione e licenza e reindirizza a un URL R2
+valido 60 secondi.
+
+**File su R2:** `beats/<slug>/preview.mp3` (anteprima a basso bitrate con tag vocale), `master.mp3`, `master.wav`, `stems.zip`.
+Il bucket resta privato.
+
+**Prima del lancio:** sostituire il catalogo dimostrativo con i beat reali, verificare prezzi/crediti/vantaggi in
+`plans.ts`, configurare su Stripe i 3 prezzi e il webhook, scrivere il contratto di licenza.
