@@ -725,3 +725,234 @@
   box-shadow: 0 0 16px rgba(212, 160, 23, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 /* Fine blocco Swipe, confronto, wrapped, stanza, badge */
+
+/* ================================================================== */
+/* Esperienza: copertine, pulsazione, scheletri, comparsa              */
+/* Variabili impostate dal client (components/beats/experience):        */
+/*   --beat 0..1 a ogni battito del beat in riproduzione                */
+/*   --beat-accent colore del produttore · --sy scrollY in px           */
+/* ================================================================== */
+
+/* ---- Copertine: mentre suonano brillano e respirano a tempo ---- */
+[data-beat-cover] {
+  transition: box-shadow 0.3s var(--ease-apple);
+}
+[data-beat-cover][data-playing] {
+  box-shadow:
+    0 0 calc(14px + var(--beat, 0) * 26px) color-mix(in srgb, var(--cover-glow, #0066ff) calc(45% + var(--beat, 0) * 40%), transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: scale(calc(1 + var(--beat, 0) * 0.06));
+}
+
+/* ---- Pulsazione su header, player e tasto play ---- */
+:root[data-beat-playing] .beat-header {
+  box-shadow: 0 calc(var(--beat, 0) * 8px) calc(var(--beat, 0) * 30px) -14px color-mix(in srgb, var(--beat-accent, #0066ff) 70%, transparent);
+}
+:root[data-beat-playing] .beat-dock {
+  box-shadow:
+    var(--shadow-chrome),
+    var(--shadow-highlight),
+    0 0 calc(var(--beat, 0) * 42px) color-mix(in srgb, var(--beat-accent, #0066ff) calc(var(--beat, 0) * 55%), transparent);
+}
+:root[data-beat-playing] .beat-btn {
+  box-shadow: 0 0 calc(10px + var(--beat, 0) * 20px) color-mix(in srgb, var(--beat-accent, #0066ff) calc(35% + var(--beat, 0) * 50%), transparent);
+  transform: scale(calc(1 + var(--beat, 0) * 0.05));
+}
+
+/* ---- Logo 3D: strati in profondità, riflesso che segue il puntatore ---- */
+.logo3d {
+  --rx: 0deg;
+  --ry: 0deg;
+  --sway: 16deg;
+  position: relative;
+  display: block;
+  flex: none;
+  aspect-ratio: 640 / 497;
+  perspective: 600px;
+  cursor: pointer;
+  transform: scale(calc(1 + var(--beat, 0) * 0.06));
+}
+.logo3d .l3 {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 0.35s var(--ease-apple);
+}
+.logo3d .l3-float {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: logo-sway 9s ease-in-out infinite;
+}
+.logo3d i {
+  position: absolute;
+  inset: 0;
+  background: var(--logo) center / contain no-repeat;
+  transform: translateZ(calc(var(--z) * 1px));
+  filter: brightness(calc(0.45 + var(--b) * 0.6)) saturate(0.6);
+}
+.logo3d i.front {
+  filter: drop-shadow(0 1px 1.5px rgba(17, 24, 39, 0.35))
+    drop-shadow(0 0 calc(3px + var(--beat, 0) * 10px) color-mix(in srgb, var(--beat-accent, #0066ff) 60%, transparent)) brightness(1.04);
+}
+.logo3d i.front::after,
+.logo3d i.glint {
+  -webkit-mask: var(--logo) center / contain no-repeat;
+  mask: var(--logo) center / contain no-repeat;
+  mix-blend-mode: screen;
+}
+.logo3d i.front::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.95) 45%, rgba(160, 220, 255, 0.6) 50%, transparent 62%) 0 0 / 250% 100% no-repeat;
+  animation: logo-shine 5.5s ease-in-out infinite;
+}
+.logo3d i.glint {
+  filter: none;
+  background: radial-gradient(38% 46% at var(--gx, 35%) var(--gy, 30%), rgba(255, 255, 255, 0.95), rgba(150, 215, 255, 0.35) 42%, transparent 72%);
+  opacity: 0.8;
+}
+.logo3d.spin .l3-float {
+  animation: logo-spin 1s var(--ease-spring);
+}
+body.gyro .logo3d .l3-float {
+  animation: none;
+}
+@keyframes logo-sway {
+  0%, 100% { transform: rotateY(calc(var(--sway) * -1)) translateY(0); }
+  50% { transform: rotateY(var(--sway)) translateY(-4%); }
+}
+@keyframes logo-shine {
+  0%, 30% { background-position: 120% 0; }
+  70%, 100% { background-position: -120% 0; }
+}
+@keyframes logo-spin {
+  from { transform: rotateY(0); }
+  to { transform: rotateY(360deg); }
+}
+
+/* ---- Parallasse dei loghi negli hero ---- */
+[data-parallax] {
+  translate: 0 calc(var(--sy, 0px) * var(--parallax, 0.12));
+}
+
+/* ---- Interruttori del foglio Impostazioni ---- */
+.settings-toggle {
+  position: relative;
+  flex: none;
+  width: 48px;
+  height: 29px;
+  border-radius: 999px;
+  background: var(--color-chrome-300);
+  box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.06);
+  transition: background-color 0.25s, box-shadow 0.25s;
+}
+.settings-toggle::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
+  transition: transform 0.35s var(--ease-spring);
+}
+.settings-toggle[data-on] {
+  background: var(--color-electric);
+  box-shadow: var(--shadow-glow-sm);
+}
+.settings-toggle[data-on]::after {
+  transform: translateX(19px);
+}
+
+/* ---- Scheletri cromati (loading.tsx) ---- */
+@layer components {
+  .skel {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ffffff, #eef1f5 45%, #d9dee6 55%, #ffffff);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(17, 24, 39, 0.05);
+  }
+  .skel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.85) 45%, rgba(170, 215, 255, 0.45) 55%, transparent 80%);
+    animation: skel-shine 1.35s var(--ease-apple) infinite;
+  }
+  .skel-dark {
+    background: linear-gradient(180deg, #2a303b, #12151b);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  }
+  .skel-dark::after {
+    background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.16) 45%, rgba(0, 240, 255, 0.16) 55%, transparent 80%);
+  }
+  /* Appare dopo un istante: sulle navigazioni veloci non lampeggia. */
+  .skel-page {
+    animation: fade-in 0.3s ease 0.12s both;
+  }
+}
+@keyframes skel-shine {
+  to { transform: translateX(100%); }
+}
+
+/* ---- Comparsa allo scorrimento (Reveal / RevealList) ---- */
+/* Fuori dai layer: deve vincere sulle transizioni delle utility finché dura la comparsa. */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px) scale(0.985);
+  transition:
+    opacity 0.7s var(--ease-apple),
+    transform 0.9s var(--ease-spring);
+}
+.reveal.reveal-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- Movimento ridotto: tutto fermo, nulla di nascosto ---- */
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; }
+  .skel::after,
+  .logo3d .l3-float,
+  .logo3d i.front::after { animation: none; }
+  .logo3d,
+  [data-beat-cover][data-playing],
+  :root[data-beat-playing] .beat-btn { transform: none; }
+  [data-parallax] { translate: none; }
+}
+
+/* ---- Modalità leggera: niente sfocature, animazioni né transizioni ---- */
+body.lite *,
+body.lite *::before,
+body.lite *::after {
+  animation: none !important;
+  transition: none !important;
+}
+body.lite [class*="backdrop-blur"],
+body.lite .glass {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+body.lite .glass {
+  background: linear-gradient(180deg, #ffffff, #f3f4f6);
+}
+body.lite .beat-header {
+  background: #f8f9fa;
+}
+body.lite [class*="blur-3xl"],
+body.lite [class*="blur-2xl"] {
+  display: none;
+}
+body.lite .reveal { opacity: 1; transform: none; }
+body.lite .logo3d,
+body.lite [data-beat-cover][data-playing],
+body.lite .beat-btn { transform: none; }
+body.lite [data-parallax] { translate: none; }

@@ -5,11 +5,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { PLANS } from "@/lib/beats/plans";
+import { Logo3D } from "../experience/logo-3d";
 import { useViewer } from "../providers";
+import { SettingsButton } from "../settings/settings-sheet";
 import { GlowBadge } from "../ui/glow-badge";
 import { NAV_ITEMS } from "./nav-items";
 
-/** Barra superiore: avatar, badge del piano, saldo crediti (sempre visibile) e navigazione desktop. */
+/**
+ * Barra superiore: logo 3D, avatar, badge del piano, saldo crediti (sempre visibile), impostazioni
+ * e navigazione desktop. Respira a tempo col beat in riproduzione (classe `beat-header`).
+ */
 export function StoreHeader({ demo }: { demo: boolean }) {
   const { data: viewer } = useViewer();
   const pathname = usePathname();
@@ -17,8 +22,11 @@ export function StoreHeader({ demo }: { demo: boolean }) {
   const initial = (viewer?.artistName ?? viewer?.name ?? "?").charAt(0).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/60 bg-white/55 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150">
+    <header className="beat-header sticky top-0 z-30 border-b border-white/60 bg-white/55 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 lg:h-[72px] lg:px-6">
+        <Link href="/beats" aria-label="Backrooms Beat Store, home" className="-my-1 shrink-0 rounded-xl p-0.5">
+          <Logo3D width={46} />
+        </Link>
         {viewer ? (
           <Link href="/beats/libreria" className="flex min-w-0 items-center gap-3" aria-label="Il tuo account">
             <span className="chrome-surface relative grid size-11 shrink-0 place-items-center rounded-full font-display text-lg font-bold text-graphite ring-2 ring-electric/40 shadow-glow-sm">
@@ -61,7 +69,13 @@ export function StoreHeader({ demo }: { demo: boolean }) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          {demo && <GlowBadge tone="chrome" className="hidden sm:inline-flex">Demo</GlowBadge>}
+          {/* Il wrapper nasconde il badge su mobile: su GlowBadge `hidden` perderebbe contro `inline-flex`. */}
+          {demo && (
+            <span className="hidden sm:inline-flex">
+              <GlowBadge tone="chrome">Demo</GlowBadge>
+            </span>
+          )}
+          <SettingsButton />
           {viewer ? (
             <Link
               href="/beats/piani"

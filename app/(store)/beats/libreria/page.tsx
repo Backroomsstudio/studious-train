@@ -7,6 +7,7 @@ import { BillingButton } from "@/components/beats/library/billing-button";
 import { BeatCover } from "@/components/beats/ui/beat-cover";
 import { ChromeLink } from "@/components/beats/ui/chrome-button";
 import { GlowBadge } from "@/components/beats/ui/glow-badge";
+import { RevealList } from "@/components/beats/ui/reveal";
 import { cn } from "@/lib/cn";
 import { formatDay, formatRelativeDay } from "@/lib/beats/format";
 import { CUSTOMIZATION_OPTIONS, CUSTOMIZATION_STATUS } from "@/lib/beats/customizations";
@@ -61,7 +62,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
   const plan = viewer.plan ? PLANS[viewer.plan.tier] : null;
 
   return (
-    <div className="space-y-6">
+    <RevealList className="space-y-6">
       <div className="flex items-end justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Libreria di</p>
@@ -299,6 +300,6 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
           {!ledger.length && <li className="py-3 text-sm text-chrome-500">Nessun movimento.</li>}
         </ul>
       </section>
-    </div>
+    </RevealList>
   );
 }

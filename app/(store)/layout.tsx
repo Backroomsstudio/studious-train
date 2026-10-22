@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { CustomizeDialog } from "@/components/beats/customize/customize-dialog";
+import { ExperienceEffects } from "@/components/beats/experience/experience-effects";
 import { StoreHeader } from "@/components/beats/home/store-header";
 import { TabBar } from "@/components/beats/home/tab-bar";
 import { PlayerDock } from "@/components/beats/player/player-dock";
@@ -18,6 +19,10 @@ export const metadata: Metadata = {
   applicationName: "Backrooms Beat Store",
   // Finché il catalogo è dimostrativo il negozio non va indicizzato.
   robots: storeEnv.demoMode ? { index: false, follow: false } : { index: true, follow: true },
+  // App installabile con scope /beats (il manifest di app/manifest.ts resta quello della landing).
+  manifest: "/beats/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "Backrooms Beats", statusBarStyle: "default" },
+  icons: { icon: [{ url: "/brand/beats-icon-192.png", sizes: "192x192", type: "image/png" }], apple: "/brand/beats-icon-180.png" },
 };
 
 export const viewport: Viewport = {
@@ -53,6 +58,7 @@ export default async function StoreLayout({ children }: Readonly<{ children: Rea
           <TabBar />
           <UnlockDialog />
           <CustomizeDialog />
+          <ExperienceEffects />
         </BeatsProviders>
       </body>
     </html>

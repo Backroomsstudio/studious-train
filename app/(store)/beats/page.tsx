@@ -7,6 +7,7 @@ import { ResumeCard } from "@/components/beats/home/resume-card";
 import { daysUntilNextDrop } from "@/lib/beats/drops";
 import { Marketplace } from "@/components/beats/marketplace/marketplace";
 import { ChromeLink } from "@/components/beats/ui/chrome-button";
+import { Parallax, RevealList } from "@/components/beats/ui/reveal";
 import { parseFilters } from "@/lib/beats/filters";
 import { PLANS } from "@/lib/beats/plans";
 import { getBackend } from "@/lib/beats/server/backend";
@@ -34,16 +35,18 @@ export default async function BeatsHomePage({ searchParams }: { searchParams: Pr
   const firstName = viewer?.artistName ?? viewer?.name.split(" ")[0];
 
   return (
-    <div className="space-y-6 lg:space-y-8">
+    <RevealList className="space-y-6 lg:space-y-8">
       <section className="flex items-center gap-4" aria-labelledby="home-title">
-        <Image
-          src="/brand/logo-br-120.webp"
-          alt="Backrooms Studio"
-          width={72}
-          height={72}
-          priority
-          className="obsidian size-16 shrink-0 rounded-2xl object-contain p-1.5 sm:size-[72px]"
-        />
+        <Parallax className="shrink-0">
+          <Image
+            src="/brand/logo-br-120.webp"
+            alt="Backrooms Studio"
+            width={72}
+            height={72}
+            priority
+            className="obsidian size-16 shrink-0 rounded-2xl object-contain p-1.5 sm:size-[72px]"
+          />
+        </Parallax>
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Backrooms · Beat Store</p>
           {viewer ? (
@@ -98,6 +101,6 @@ export default async function BeatsHomePage({ searchParams }: { searchParams: Pr
         </div>
         <Marketplace initialFilters={filters} initialResult={result} facets={facets} />
       </section>
-    </div>
+    </RevealList>
   );
 }

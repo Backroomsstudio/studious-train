@@ -1,4 +1,5 @@
 import { AuctionCard } from "@/components/beats/commerce/auction-card";
+import { RevealList } from "@/components/beats/ui/reveal";
 import { AUCTION } from "@/lib/beats/offers";
 import { formatEuro } from "@/lib/beats/plans";
 import { getBackend } from "@/lib/beats/server/backend";
@@ -14,7 +15,7 @@ export default async function AuctionsPage() {
   const closed = auctions.filter((a) => a.status !== "OPEN");
 
   return (
-    <div className="space-y-8">
+    <RevealList className="space-y-8" items="li, article, [data-reveal], section > a">
       <div className="max-w-2xl">
         <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Esclusive</p>
         <h1 className="chrome-text mt-1 font-display text-4xl font-black tracking-tight sm:text-5xl">Aste dei beat</h1>
@@ -49,6 +50,6 @@ export default async function AuctionsPage() {
         </section>
       )}
       {!auctions.length && <p className="glass rounded-2xl p-5 text-sm text-chrome-500">Nessuna asta in programma: seguici su TikTok per la prossima.</p>}
-    </div>
+    </RevealList>
   );
 }

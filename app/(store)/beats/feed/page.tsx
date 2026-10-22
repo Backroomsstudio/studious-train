@@ -1,5 +1,6 @@
 import { NewArrivals } from "@/components/beats/home/new-arrivals";
 import { TrackList } from "@/components/beats/marketplace/track-row";
+import { RevealList } from "@/components/beats/ui/reveal";
 import { daysUntilNextDrop, isNewRelease, releaseWeekLabel } from "@/lib/beats/drops";
 import { DEFAULT_FILTERS } from "@/lib/beats/filters";
 import { groupByGenre } from "@/lib/beats/genres";
@@ -26,7 +27,7 @@ export default async function FeedPage() {
   }
 
   return (
-    <div className="space-y-10">
+    <RevealList className="space-y-10">
       <div>
         <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Feed</p>
         <h1 className="chrome-text mt-1 font-display text-4xl font-black tracking-tight">Nuove uscite</h1>
@@ -62,6 +63,6 @@ export default async function FeedPage() {
           <TrackList beats={beats} />
         </section>
       ))}
-    </div>
+    </RevealList>
   );
 }

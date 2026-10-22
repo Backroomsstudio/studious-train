@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { CREDIT_PACKS, GIFT_CARDS, packCredits } from "@/lib/beats/offers";
 import { formatEuro, PLAN_ORDER, PLANS, YEARLY_PRICES, yearlySavingCents, type PlanInterval, type PlanTier } from "@/lib/beats/plans";
 import type { Viewer } from "@/lib/beats/types";
+import { feedback } from "@/lib/beats/ui-feedback";
 import { BillingButton } from "../library/billing-button";
 import { api, ApiRequestError, usePurchase, useViewer } from "../providers";
 import { ChromeButton } from "../ui/chrome-button";
@@ -208,10 +209,12 @@ export function RedeemGift() {
     try {
       const res = await api<{ credits: number; balance: number }>("/api/gift/redeem", { method: "POST", body: JSON.stringify({ code }) });
       qc.setQueryData<Viewer | null>(["viewer"], (v) => (v ? { ...v, creditBalance: res.balance } : v));
+      feedback("coin");
       setState({ ok: `+${res.credits} crediti nel tuo portafoglio.` });
       setCode("");
       router.refresh();
     } catch (error) {
+      feedback("error");
       setState({ error: error instanceof ApiRequestError ? error.message : "Errore di rete, riprova." });
     }
   };
