@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { trackListening } from "@/lib/beats/listening-log";
 import type { BeatSummary } from "@/lib/beats/types";
 import { getEngine } from "./audio-engine";
 
@@ -218,4 +219,6 @@ export function bindEngineToStore() {
     usePlayer.setState(patch);
   });
   engine.onEnded(() => usePlayer.getState().next());
+  // Registro locale degli ascolti (Wrapped, badge, stanza).
+  trackListening(usePlayer);
 }
