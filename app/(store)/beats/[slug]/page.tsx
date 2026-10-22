@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BeatHero } from "@/components/beats/marketplace/beat-hero";
 import { TrackList } from "@/components/beats/marketplace/track-row";
+import { StemMixerButton } from "@/components/beats/mixer/stem-mixer";
 import { BeatCover } from "@/components/beats/ui/beat-cover";
 import { GlowBadge, ProducerTag } from "@/components/beats/ui/glow-badge";
 import { formatTime } from "@/lib/beats/format";
@@ -59,6 +60,12 @@ export default async function BeatPage({ params }: Props) {
             </div>
           </div>
           <BeatHero beat={beat} />
+          {beat.hasStems && (
+            <div className="flex flex-wrap items-center gap-3">
+              <StemMixerButton beat={beat} />
+              <p className="text-sm text-chrome-500">Batteria, 808, accordi e FX separati: prova il beat parte per parte.</p>
+            </div>
+          )}
           <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {facts.map(([label, value]) => (
               <div key={label} className="chrome-surface rounded-2xl px-4 py-3">

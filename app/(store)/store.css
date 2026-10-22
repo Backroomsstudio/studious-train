@@ -179,3 +179,319 @@
     }
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Master e mixer                                                      */
+/* Master A/B (/beats/master) e mixer degli stems della pagina beat.   */
+/* In @layer components: le utility Tailwind possono ancora vincere.   */
+/* ------------------------------------------------------------------ */
+@layer components {
+  /* Palco in ossidiana con micro-righe verticali */
+  .mst-stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.5;
+    background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 4px);
+  }
+
+  /* Skeleton cromato scuro con riflesso che scorre */
+  .mst-skel {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #1d222c, #0b0d11);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  }
+  .mst-skel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.16) 45%, rgba(0, 229, 255, 0.16) 55%, transparent 80%);
+    animation: mst-shimmer 1.35s var(--ease-apple) infinite;
+  }
+  @keyframes mst-shimmer {
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  /* Interruttore PRIMA / DOPO */
+  .mst-ab {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 5px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .mst-ab button {
+    height: 56px;
+    border-radius: 999px;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 19px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #c9ced6;
+    transition: background-color 0.2s var(--ease-apple), box-shadow 0.2s var(--ease-apple), color 0.2s;
+  }
+  .mst-ab button[aria-pressed="true"] {
+    background: #fff;
+    color: #05070a;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+  }
+  .mst-ab button.after[aria-pressed="true"] {
+    background: linear-gradient(180deg, #3b82f6, #0066ff);
+    color: #fff;
+    box-shadow: var(--shadow-glow);
+  }
+
+  .mst-spec {
+    display: block;
+    width: 100%;
+    height: 120px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.35);
+  }
+
+  .mst-wave {
+    position: relative;
+    height: 70px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    touch-action: none;
+  }
+  .mst-head {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    margin-left: -1px;
+    background: var(--color-electric-cyan);
+    box-shadow: 0 0 10px var(--color-electric-cyan);
+    pointer-events: none;
+  }
+
+  .mst-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .mst-stats > div {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 2px;
+    padding: 12px 8px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.06);
+    text-align: center;
+  }
+  @media (max-width: 479px) {
+    .mst-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .mst-stats > div:first-child {
+      grid-column: 1 / -1;
+    }
+  }
+  .mst-stats dd {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(15px, 4vw, 20px);
+    font-variant-numeric: tabular-nums;
+  }
+  .mst-stats dt {
+    font-size: 11px;
+    font-weight: 600;
+    color: #9aa2ae;
+  }
+
+  .mst-chip {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #e9ecef;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    transition: background-color 0.2s, box-shadow 0.2s;
+  }
+  .mst-chip:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .mst-chip[aria-pressed="true"] {
+    background: linear-gradient(180deg, #3b82f6, #0066ff);
+    color: #fff;
+    box-shadow: var(--shadow-glow-sm);
+  }
+
+  .mst-toggle {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .mst-switch {
+    position: relative;
+    flex-shrink: 0;
+    width: 46px;
+    height: 28px;
+    margin-left: auto;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    transition: background-color 0.2s;
+  }
+  .mst-switch::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: #fff;
+    transition: transform 0.2s var(--ease-spring);
+  }
+  .mst-toggle[aria-checked="true"] .mst-switch {
+    background: var(--color-electric);
+  }
+  .mst-toggle[aria-checked="true"] .mst-switch::after {
+    transform: translateX(18px);
+  }
+
+  .mst-source {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 0;
+    padding: 16px;
+    border-radius: 22px;
+    text-align: left;
+    color: #f8f9fa;
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    transition: box-shadow 0.2s, background-color 0.2s;
+  }
+  .mst-source > svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--color-electric-cyan);
+  }
+  .mst-source b {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 15px;
+  }
+  .mst-source small {
+    display: block;
+    font-size: 13px;
+    color: #9aa2ae;
+  }
+  button.mst-source:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .mst-source-main {
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.35), rgba(0, 102, 255, 0.25));
+    box-shadow: inset 0 0 0 1px rgba(0, 240, 255, 0.35), var(--shadow-glow-sm);
+  }
+  .mst-source-main small {
+    color: #c9d8f2;
+  }
+
+  /* Mixer degli stems: quattro canali con fader verticale e meter */
+  .mxr-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .mxr-strip {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 12px 4px;
+    border-radius: 20px;
+    transition: opacity 0.2s;
+  }
+  .mxr-strip.is-off {
+    opacity: 0.45;
+  }
+  .mxr-fader-wrap {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    width: 44px;
+    height: 150px;
+  }
+  .mxr-fader {
+    writing-mode: vertical-lr;
+    direction: rtl;
+    width: 26px;
+    height: 150px;
+    accent-color: var(--sc, var(--color-electric));
+    cursor: pointer;
+  }
+  .mxr-meter {
+    position: relative;
+    width: 6px;
+    height: 150px;
+    overflow: hidden;
+    border-radius: 9px;
+    background: var(--color-chrome-200);
+  }
+  .mxr-meter i {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0;
+    border-radius: 9px;
+    background: linear-gradient(0deg, var(--sc, #30d158), #ffd60a 80%, #ff3b30);
+  }
+  .mxr-btn {
+    width: 30px;
+    height: 32px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--color-graphite-700);
+    background: linear-gradient(180deg, #ffffff 0%, #f1f3f5 45%, #dfe3e8 55%, #ffffff 100%);
+    box-shadow: 0 1px 2px rgba(17, 24, 39, 0.08), var(--shadow-highlight);
+  }
+  .mxr-btn[aria-pressed="true"] {
+    background: var(--color-graphite);
+    color: #fff;
+  }
+  .mxr-solo[aria-pressed="true"] {
+    background: #ffd60a;
+    color: #1a1400;
+  }
+  .mxr-progress {
+    position: relative;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--color-chrome-200);
+    cursor: pointer;
+    touch-action: none;
+  }
+  .mxr-progress > span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-electric), var(--color-electric-cyan));
+  }
+}

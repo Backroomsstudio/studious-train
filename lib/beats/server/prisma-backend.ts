@@ -370,5 +370,20 @@ export function createPrismaBackend(): StoreBackend {
       void db.beat.update({ where: { id: beatId }, data: { playCount: { increment: 1 } } }).catch(() => undefined);
       return { kind: "r2", objectKey: beat.previewObjectKey, contentType: "audio/mpeg", filename: `${beat.slug}-preview.mp3` };
     },
+
+    async stemPreview(beatId, stem) {
+      const beat = await db.beat.findFirst({
+        where: { id: beatId, status: "PUBLISHED" },
+        select: { slug: true, stemsObjectKey: true, stemPreviewPrefix: true },
+      });
+      // Anteprime degli stems generate all'upload in `${prefix}/${stem}.mp3`, accanto all'anteprima.
+      if (!beat?.stemsObjectKey || !beat.stemPreviewPrefix) return null;
+      return {
+        kind: "r2",
+        objectKey: `${beat.stemPreviewPrefix}/${stem}.mp3`,
+        contentType: "audio/mpeg",
+        filename: `${beat.slug}-${stem}.mp3`,
+      };
+    },
   };
 }
