@@ -1,4 +1,5 @@
 import { ProductGrid } from "@/components/beats/commerce/product-grid";
+import { RevealList } from "@/components/beats/ui/reveal";
 import { getBackend } from "@/lib/beats/server/backend";
 import { getViewer } from "@/lib/beats/server/queries";
 
@@ -11,7 +12,7 @@ export default async function KitPage({ searchParams }: { searchParams: Promise<
   const products = await (await getBackend()).products(viewer?.id ?? null);
 
   return (
-    <div className="space-y-6">
+    <RevealList className="space-y-6">
       <div className="max-w-2xl">
         <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Suoni Backrooms</p>
         <h1 className="chrome-text mt-1 font-display text-4xl font-black tracking-tight sm:text-5xl">Kit, sample e preset</h1>
@@ -26,6 +27,6 @@ export default async function KitPage({ searchParams }: { searchParams: Promise<
         </p>
       )}
       <ProductGrid products={products} />
-    </div>
+    </RevealList>
   );
 }

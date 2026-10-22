@@ -183,7 +183,7 @@ export function PlayerDock() {
           role="region"
           aria-label="Player"
         >
-          <div className={cn("glass mx-auto max-w-6xl rounded-[26px] bg-white/80 px-3 py-2.5 lg:px-5 lg:py-3", playing && "ring-1 ring-electric/25")}>
+          <div className={cn("beat-dock glass mx-auto max-w-6xl rounded-[26px] bg-white/80 px-3 py-2.5 lg:px-5 lg:py-3", playing && "ring-1 ring-electric/25")}>
             <div className="flex items-center gap-3">
               <Link href={`/beats/${current.slug}`} className="shrink-0" aria-label={`Apri ${current.title}`}>
                 <BeatCover beat={current} size="sm" playing={playing} />
@@ -204,7 +204,7 @@ export function PlayerDock() {
                   type="button"
                   onClick={() => toggle()}
                   aria-label={playing ? "Pausa" : "Riproduci"}
-                  className="grid size-11 place-items-center rounded-full bg-graphite text-white shadow-glow-sm transition active:scale-95"
+                  className="beat-btn grid size-11 place-items-center rounded-full bg-graphite text-white shadow-glow-sm transition active:scale-95"
                 >
                   {waiting ? (
                     <Loader2 className="size-5 animate-spin" />

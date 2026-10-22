@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { AUCTION } from "@/lib/beats/offers";
 import { formatEuro } from "@/lib/beats/plans";
 import type { AuctionSummary } from "@/lib/beats/types";
+import { feedback } from "@/lib/beats/ui-feedback";
 import { usePlayer } from "../player/player-store";
 import { api, ApiRequestError, usePurchase, useViewer } from "../providers";
 import { BeatCover } from "../ui/beat-cover";
@@ -48,9 +49,11 @@ export function AuctionRoom({ initial }: { initial: AuctionSummary }) {
       });
       qc.setQueryData(key, res.auction);
       setAmount(null);
+      feedback("pop", "select");
     } catch (e) {
       if (e instanceof ApiRequestError && e.code === "UNAUTHENTICATED") window.location.assign("/beats/accedi");
       setError((e as Error).message);
+      feedback("error", "warning");
       void qc.invalidateQueries({ queryKey: key });
     } finally {
       setPending(false);

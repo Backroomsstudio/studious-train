@@ -7,6 +7,7 @@ import { create } from "zustand";
 import type { LicenseType } from "@/lib/beats/licenses";
 import type { CustomizationOption } from "@/lib/beats/customizations";
 import type { ApiError, BeatSummary, CustomizationResponse, PurchaseResponse, UnlockResponse, Viewer } from "@/lib/beats/types";
+import { feedback } from "@/lib/beats/ui-feedback";
 
 /**
  * Stato server lato client con TanStack Query.
@@ -69,6 +70,8 @@ export function useUnlock() {
         body: JSON.stringify({ license }),
       }),
     onSuccess(result) {
+      // Colpo di 808 + vibrazione: il beat è tuo.
+      feedback("unlock");
       qc.setQueryData<Viewer | null>(["viewer"], (viewer) => {
         if (!viewer) return viewer;
         const owned = { ...viewer.owned };
@@ -77,6 +80,7 @@ export function useUnlock() {
         return { ...viewer, creditBalance: result.balance, owned };
       });
     },
+    onError: () => feedback("error"),
   });
 }
 
@@ -99,8 +103,10 @@ export function useCustomize() {
     mutationFn: ({ beatId, ...body }: { beatId: string; options: CustomizationOption[]; express: boolean; notes: string; referenceUrl?: string }) =>
       api<CustomizationResponse>(`/api/beats/${encodeURIComponent(beatId)}/customize`, { method: "POST", body: JSON.stringify(body) }),
     onSuccess(result) {
+      feedback("win");
       qc.setQueryData<Viewer | null>(["viewer"], (viewer) => (viewer ? { ...viewer, creditBalance: result.balance } : viewer));
     },
+    onError: () => feedback("error"),
   });
 }
 
@@ -126,11 +132,14 @@ export function usePurchase() {
         window.location.assign(result.url);
         return;
       }
+      // Pagato in crediti: suono di monete.
+      feedback("coin");
       qc.setQueryData<Viewer | null>(["viewer"], (viewer) => (viewer ? { ...viewer, creditBalance: result.balance } : viewer));
       router.refresh();
     },
     onError(error) {
-      if (error instanceof ApiRequestError && error.code === "UNAUTHENTICATED") window.location.assign("/beats/accedi?nuovo=1");
+      if (error instanceof ApiRequestError && error.code === "UNAUTHENTICATED") return window.location.assign("/beats/accedi?nuovo=1");
+      feedback("error");
     },
   });
 }
