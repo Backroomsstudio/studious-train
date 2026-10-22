@@ -1,7 +1,9 @@
 import Image from "next/image";
 import { BeatOfTheDay } from "@/components/beats/home/beat-of-the-day";
 import { ProjectsCard } from "@/components/beats/home/projects-card";
+import { NewArrivals } from "@/components/beats/home/new-arrivals";
 import { ResumeCard } from "@/components/beats/home/resume-card";
+import { daysUntilNextDrop } from "@/lib/beats/drops";
 import { Marketplace } from "@/components/beats/marketplace/marketplace";
 import { ChromeLink } from "@/components/beats/ui/chrome-button";
 import { parseFilters } from "@/lib/beats/filters";
@@ -17,12 +19,13 @@ export default async function BeatsHomePage({ searchParams }: { searchParams: Pr
   const filters = parseFilters(params);
   const backend = await getBackend();
   const viewer = await getViewer();
-  const [facets, result, beatOfTheDay, projects, library] = await Promise.all([
+  const [facets, result, beatOfTheDay, projects, library, arrivals] = await Promise.all([
     getFacets(),
     backend.search(filters),
     backend.beatOfTheDay(),
     viewer ? backend.projects(viewer.id) : [],
     viewer ? backend.library(viewer.id) : [],
+    backend.newArrivals(),
   ]);
   const last = library[0];
   const firstName = viewer?.artistName ?? viewer?.name.split(" ")[0];
@@ -79,6 +82,8 @@ export default async function BeatsHomePage({ searchParams }: { searchParams: Pr
         </div>
         {beatOfTheDay && <BeatOfTheDay beat={beatOfTheDay} />}
       </div>
+
+      <NewArrivals beats={arrivals} daysToNextDrop={daysUntilNextDrop()} />
 
       <section aria-labelledby="catalogo-title" className="space-y-3">
         <div className="flex items-end justify-between">

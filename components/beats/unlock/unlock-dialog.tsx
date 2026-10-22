@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, CircleCheck, Download, Loader2, Lock, Zap } from "lucide-react";
+import { ArrowRight, Check, CircleCheck, Download, Loader2, Lock, Wand2, Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
@@ -12,7 +12,7 @@ import { camelotCode, keyName } from "@/lib/beats/music";
 import { cheapestPlanFor } from "@/lib/beats/plans";
 import type { UnlockResponse } from "@/lib/beats/types";
 import { usePlayer } from "../player/player-store";
-import { ApiRequestError, useUnlock, useUnlockDialog, useViewer } from "../providers";
+import { ApiRequestError, useCustomizeDialog, useUnlock, useUnlockDialog, useViewer } from "../providers";
 import { BeatCover } from "../ui/beat-cover";
 import { ChromeButton, ChromeLink } from "../ui/chrome-button";
 import { Dialog } from "../ui/dialog";
@@ -32,6 +32,7 @@ export function UnlockDialog() {
   const [selected, setSelected] = useState<LicenseType>("WAV_LEASE");
   const [result, setResult] = useState<UnlockResponse | null>(null);
   const toggle = usePlayer((s) => s.toggle);
+  const openCustomize = useCustomizeDialog((s) => s.open);
 
   useEffect(() => {
     if (!beat) return;
@@ -171,6 +172,22 @@ export function UnlockDialog() {
                 })}
               </div>
             </fieldset>
+
+            <button
+              type="button"
+              onClick={() => {
+                close();
+                openCustomize(beat);
+              }}
+              className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-dashed border-electric/40 bg-electric-50/60 p-3 text-left transition hover:border-electric hover:shadow-glow-sm"
+            >
+              <Wand2 className="size-5 text-electric" />
+              <span className="flex-1">
+                <span className="block text-sm font-semibold">Personalizza questo beat</span>
+                <span className="block text-xs text-chrome-500">Tonalità, BPM, struttura o suoni su misura per te</span>
+              </span>
+              <ArrowRight className="size-4 text-chrome-400" />
+            </button>
 
             <div className="obsidian mt-4 grid grid-cols-3 items-center rounded-2xl p-4 text-center">
               <div>

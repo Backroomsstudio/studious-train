@@ -4,7 +4,8 @@ import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient
 import { useEffect, useState, type ReactNode } from "react";
 import { create } from "zustand";
 import type { LicenseType } from "@/lib/beats/licenses";
-import type { ApiError, BeatSummary, UnlockResponse, Viewer } from "@/lib/beats/types";
+import type { CustomizationOption } from "@/lib/beats/customizations";
+import type { ApiError, BeatSummary, CustomizationResponse, UnlockResponse, Viewer } from "@/lib/beats/types";
 
 /**
  * Stato server lato client con TanStack Query.
@@ -86,6 +87,24 @@ interface UnlockDialogState {
 
 /** Un'unica modale di sblocco per tutta l'app, aperta da qualsiasi riga o scheda. */
 export const useUnlockDialog = create<UnlockDialogState>((set) => ({
+  beat: null,
+  open: (beat) => set({ beat }),
+  close: () => set({ beat: null }),
+}));
+
+export function useCustomize() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ beatId, ...body }: { beatId: string; options: CustomizationOption[]; express: boolean; notes: string; referenceUrl?: string }) =>
+      api<CustomizationResponse>(`/api/beats/${encodeURIComponent(beatId)}/customize`, { method: "POST", body: JSON.stringify(body) }),
+    onSuccess(result) {
+      qc.setQueryData<Viewer | null>(["viewer"], (viewer) => (viewer ? { ...viewer, creditBalance: result.balance } : viewer));
+    },
+  });
+}
+
+/** Modale "Personalizza questo beat", aperta dalla modale di sblocco o dalla pagina del beat. */
+export const useCustomizeDialog = create<UnlockDialogState>((set) => ({
   beat: null,
   open: (beat) => set({ beat }),
   close: () => set({ beat: null }),

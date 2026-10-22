@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { CustomizeDialog } from "@/components/beats/customize/customize-dialog";
 import { StoreHeader } from "@/components/beats/home/store-header";
 import { TabBar } from "@/components/beats/home/tab-bar";
 import { PlayerDock } from "@/components/beats/player/player-dock";
@@ -51,6 +52,7 @@ export default async function StoreLayout({ children }: Readonly<{ children: Rea
           <PlayerDock />
           <TabBar />
           <UnlockDialog />
+          <CustomizeDialog />
         </BeatsProviders>
       </body>
     </html>

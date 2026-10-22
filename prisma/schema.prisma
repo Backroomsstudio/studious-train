@@ -18,9 +18,15 @@ datasource db {
   provider = "postgresql"
 }
 
-/* ------------------------------------------------------------------ */
-/* Identità (tabelle standard Auth.js)                                 */
-/* ------------------------------------------------------------------ */
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Identità (tabelle standard Auth.js)
+ */
+/**
+ * ------------------------------------------------------------------
+ */
 
 enum UserRole {
   ARTIST
@@ -44,14 +50,15 @@ model User {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  subscriptions Subscription[]
-  transactions  CreditTransaction[]
-  licenses      License[]
-  downloads     Download[]
-  projects      Project[]
-  producer      Producer?
+  accounts       Account[]
+  sessions       Session[]
+  subscriptions  Subscription[]
+  transactions   CreditTransaction[]
+  licenses       License[]
+  downloads      Download[]
+  projects       Project[]
+  customizations CustomizationRequest[]
+  producer       Producer?
 }
 
 model Account {
@@ -92,9 +99,15 @@ model VerificationToken {
   @@id([identifier, token])
 }
 
-/* ------------------------------------------------------------------ */
-/* Abbonamenti e crediti                                               */
-/* ------------------------------------------------------------------ */
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Abbonamenti e crediti
+ */
+/**
+ * ------------------------------------------------------------------
+ */
 
 enum PlanTier {
   STARTER
@@ -148,26 +161,30 @@ enum CreditTransactionType {
   ADJUSTMENT
   /// Omaggio (promozioni, sessioni in studio, referral).
   BONUS
+  /// Spesa per una personalizzazione su richiesta.
+  CUSTOMIZATION
 }
 
 model CreditTransaction {
-  id             String                @id @default(cuid())
-  userId         String
-  type           CreditTransactionType
+  id              String                @id @default(cuid())
+  userId          String
+  type            CreditTransactionType
   /// Positivo = accredito, negativo = addebito.
-  amount         Int
-  balanceAfter   Int
-  description    String?
+  amount          Int
+  balanceAfter    Int
+  description     String?
   /// Chiave unica per gli effetti esterni (es. `grant:<invoiceId>`): rende idempotenti i webhook.
-  idempotencyKey String?               @unique
-  subscriptionId String?
+  idempotencyKey  String?               @unique
+  subscriptionId  String?
   stripeInvoiceId String?
-  licenseId      String?               @unique
-  createdAt      DateTime              @default(now())
+  licenseId       String?               @unique
+  customizationId String?               @unique
+  createdAt       DateTime              @default(now())
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
-  license      License?      @relation(fields: [licenseId], references: [id], onDelete: SetNull)
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription  Subscription?         @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  license       License?              @relation(fields: [licenseId], references: [id], onDelete: SetNull)
+  customization CustomizationRequest? @relation(fields: [customizationId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt(sort: Desc)])
 }
@@ -179,9 +196,15 @@ model StripeEvent {
   processedAt DateTime @default(now())
 }
 
-/* ------------------------------------------------------------------ */
-/* Catalogo                                                            */
-/* ------------------------------------------------------------------ */
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Catalogo
+ */
+/**
+ * ------------------------------------------------------------------
+ */
 
 model Producer {
   id          String   @id @default(cuid())
@@ -213,11 +236,11 @@ enum KeyMode {
 }
 
 model Beat {
-  id                 String     @id @default(cuid())
-  slug               String     @unique
+  id                 String                   @id @default(cuid())
+  slug               String                   @unique
   title              String
   description        String?
-  status             BeatStatus @default(DRAFT)
+  status             BeatStatus               @default(DRAFT)
   bpm                Int
   /// Tonica come pitch class: 0 = C, 1 = C#/Db … 11 = B. La notazione Camelot è derivata.
   keyRoot            Int
@@ -232,24 +255,25 @@ model Beat {
   mp3ObjectKey       String
   wavObjectKey       String
   stemsObjectKey     String?
-  exclusiveAvailable Boolean    @default(true)
+  exclusiveAvailable Boolean                  @default(true)
   exclusiveSoldAt    DateTime?
-  playCount          Int        @default(0)
-  downloadCount      Int        @default(0)
+  playCount          Int                      @default(0)
+  downloadCount      Int                      @default(0)
   /// Titolo + produttori + generi + type beat + mood: alimenta la ricerca full-text e fuzzy.
-  searchDocument     String     @default("")
+  searchDocument     String                   @default("")
   /// Colonna generata da `searchDocument` (vedi migrazione): indice GIN full-text.
   searchVector       Unsupported("tsvector")? @default(dbgenerated("to_tsvector('simple'::regconfig, COALESCE(\"searchDocument\", ''::text))"))
-  releasedAt         DateTime   @default(now())
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
+  releasedAt         DateTime                 @default(now())
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
 
-  producers BeatProducer[]
-  genres    Genre[]
-  typeTags  TypeTag[]
-  licenses  License[]
-  deals     DailyDeal[]
-  projects  Project[]
+  producers      BeatProducer[]
+  genres         Genre[]
+  typeTags       TypeTag[]
+  licenses       License[]
+  deals          DailyDeal[]
+  projects       Project[]
+  customizations CustomizationRequest[]
 
   @@index([status, releasedAt(sort: Desc)])
   @@index([bpm])
@@ -310,9 +334,15 @@ model DailyDeal {
   @@index([startsAt, endsAt])
 }
 
-/* ------------------------------------------------------------------ */
-/* Licenze e download                                                  */
-/* ------------------------------------------------------------------ */
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Licenze e download
+ */
+/**
+ * ------------------------------------------------------------------
+ */
 
 enum LicenseType {
   MP3_LEASE
@@ -367,9 +397,15 @@ model Download {
   @@index([userId, createdAt(sort: Desc)])
 }
 
-/* ------------------------------------------------------------------ */
-/* Progetti in studio (ponte tra beat store e servizi dello studio)    */
-/* ------------------------------------------------------------------ */
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Progetti in studio (ponte tra beat store e servizi dello studio)
+ */
+/**
+ * ------------------------------------------------------------------
+ */
 
 enum ProjectStatus {
   DRAFT
@@ -392,4 +428,48 @@ model Project {
   beat Beat? @relation(fields: [beatId], references: [id], onDelete: SetNull)
 
   @@index([userId, updatedAt(sort: Desc)])
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Personalizzazioni su richiesta
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+enum CustomizationStatus {
+  REQUESTED
+  IN_PROGRESS
+  DELIVERED
+  REFUNDED
+}
+
+/// Richiesta di personalizzare un beat del catalogo (tonalità, BPM, struttura, suoni…), pagata in crediti.
+model CustomizationRequest {
+  id                String              @id @default(cuid())
+  userId            String
+  beatId            String
+  /// Voci scelte (vedi lib/beats/customizations.ts).
+  options           String[]
+  express           Boolean             @default(false)
+  notes             String
+  referenceUrl      String?
+  creditsSpent      Int
+  status            CustomizationStatus @default(REQUESTED)
+  dueAt             DateTime
+  deliveredAt       DateTime?
+  /// File consegnato su R2 (versione personalizzata).
+  deliveryObjectKey String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  beat        Beat               @relation(fields: [beatId], references: [id], onDelete: Restrict)
+  transaction CreditTransaction?
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status, dueAt])
 }

@@ -7,7 +7,17 @@
 import "server-only";
 import type { BeatFilters } from "../filters";
 import type { DownloadAsset, LicenseType } from "../licenses";
-import type { BeatDetail, BeatSummary, Facets, OwnedLicense, ProjectSummary, SearchResult, Viewer } from "../types";
+import type { CustomizationOption } from "../customizations";
+import type {
+  BeatDetail,
+  BeatSummary,
+  CustomizationSummary,
+  Facets,
+  OwnedLicense,
+  ProjectSummary,
+  SearchResult,
+  Viewer,
+} from "../types";
 import { storeEnv } from "./env";
 
 export interface LibraryEntry {
@@ -46,6 +56,14 @@ export interface StoreBackend {
     meta: { ipHash?: string; userAgent?: string },
   ): Promise<FileTarget>;
   preview(beatId: string): Promise<FileTarget | null>;
+  /** Beat usciti negli ultimi 7 giorni (drop settimanale), dal più recente. */
+  newArrivals(limit?: number): Promise<BeatSummary[]>;
+  customize(
+    userId: string,
+    beatId: string,
+    input: { options: CustomizationOption[]; express: boolean; notes: string; referenceUrl?: string },
+  ): Promise<{ request: CustomizationSummary; balance: number }>;
+  customizations(userId: string): Promise<CustomizationSummary[]>;
 }
 
 let backend: Promise<StoreBackend> | null = null;

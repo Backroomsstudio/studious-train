@@ -92,3 +92,18 @@ test("password: hash con sale, verifica e rifiuto", async () => {
   assert.equal(await verifyPassword("Studio2026", null), false);
   assert.equal(await verifyPassword("Studio2026", "scrypt$rotto"), false);
 });
+
+test("personalizzazione: costo, consegna in giorni lavorativi e drop settimanale", async () => {
+  const { customizationCost, customizationDueDate } = await import("../../lib/beats/customizations");
+  const { isNewRelease, nextDrop } = await import("../../lib/beats/drops");
+  assert.equal(customizationCost(["KEY", "TEMPO"], false), 12);
+  assert.equal(customizationCost(["KEY"], true), 13);
+  const friday = new Date(2026, 9, 23, 12);
+  assert.equal(customizationDueDate(friday, true).getDay(), 2, "venerdì + 2 lavorativi = martedì");
+  assert.equal(customizationDueDate(friday, false).getDate(), 30, "venerdì + 5 lavorativi = venerdì dopo");
+  const wednesday = new Date(2026, 9, 21, 15);
+  assert.equal(nextDrop(wednesday).getDay(), 1);
+  assert.equal(nextDrop(wednesday).getDate(), 26);
+  assert.equal(isNewRelease(new Date(2026, 9, 15, 16), wednesday), true);
+  assert.equal(isNewRelease(new Date(2026, 9, 13), wednesday), false);
+});

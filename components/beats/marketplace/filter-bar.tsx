@@ -98,10 +98,6 @@ export function FilterBar({
   useEffect(() => setBpm([filters.bpmMin, filters.bpmMax]), [filters.bpmMin, filters.bpmMax]);
 
   const active = activeFilterCount(filters);
-  const parents = facets.genres.filter((g) => !g.parent);
-  const visibleChildren = facets.genres.filter(
-    (g) => g.parent && (filters.genres.includes(g.parent) || filters.genres.includes(g.slug)),
-  );
   const typeTags = useMemo(() => {
     const q = typeQuery.trim().toLowerCase();
     const list = q ? facets.typeTags.filter((t) => t.name.toLowerCase().includes(q)) : facets.typeTags;
@@ -218,30 +214,6 @@ export function FilterBar({
               Solo produzioni singole
             </Chip>
           </div>
-        </Section>
-
-        <Section title="Generi" className="lg:col-span-2">
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Generi">
-            {parents.map((g) => (
-              <Chip key={g.slug} active={filters.genres.includes(g.slug)} onClick={() => onChange({ genres: toggle(filters.genres, g.slug) })}>
-                {g.name}
-              </Chip>
-            ))}
-          </div>
-          {visibleChildren.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2 border-l-2 border-electric/30 pl-3" role="group" aria-label="Sottogeneri">
-              {visibleChildren.map((g) => (
-                <Chip
-                  key={g.slug}
-                  active={filters.genres.includes(g.slug)}
-                  onClick={() => onChange({ genres: toggle(filters.genres, g.slug) })}
-                  className="h-8 px-3 text-xs"
-                >
-                  ↳ {g.name}
-                </Chip>
-              ))}
-            </div>
-          )}
         </Section>
 
         <Section title="Type beat" className="lg:col-span-2">

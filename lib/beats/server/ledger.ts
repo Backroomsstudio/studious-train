@@ -10,6 +10,12 @@
  * - Niente doppi accrediti: le righe generate dai webhook hanno un `idempotencyKey` unico.
  */
 import { Prisma, type PlanTier, type LicenseType } from "@/lib/generated/prisma/client";
+import {
+  CUSTOMIZATION_MAX_OPEN,
+  customizationCost,
+  customizationDueDate,
+  type CustomizationOption,
+} from "../customizations";
 import { LICENSES } from "../licenses";
 import { checkUnlock, planCycleGrant, type CycleReason } from "../ledger-rules";
 import { StoreError } from "./errors";
@@ -220,4 +226,68 @@ export async function expireCreditsAtSubscriptionEnd(
   } catch (error) {
     if (!isUniqueViolation(error)) throw error;
   }
+}
+
+export interface CustomizationInput {
+  userId: string;
+  beatId: string;
+  options: CustomizationOption[];
+  express: boolean;
+  notes: string;
+  referenceUrl?: string;
+  now?: Date;
+}
+
+/**
+ * Richiesta di personalizzazione: addebito, richiesta e riga del mastro nella stessa transazione,
+ * con lo stesso UPDATE condizionato dello sblocco (mai saldo negativo). Le richieste aperte per
+ * artista sono limitate, così i produttori non vanno in sovraccarico.
+ */
+export async function requestCustomization(db: Db, input: CustomizationInput) {
+  const now = input.now ?? new Date();
+  const cost = customizationCost(input.options, input.express);
+  return db.$transaction(async (tx) => {
+    const beat = await tx.beat.findFirst({ where: { id: input.beatId, status: "PUBLISHED" }, select: { id: true, title: true } });
+    if (!beat) throw new StoreError("NOT_FOUND", "Beat non disponibile.");
+    if (!(await activeTier(tx, input.userId, now))) throw new StoreError("PLAN_REQUIRED", "Serve un abbonamento attivo per le personalizzazioni.");
+
+    const balance = await lockBalance(tx, input.userId);
+    const open = await tx.customizationRequest.count({
+      where: { userId: input.userId, status: { in: ["REQUESTED", "IN_PROGRESS"] } },
+    });
+    if (open >= CUSTOMIZATION_MAX_OPEN) {
+      throw new StoreError("BAD_REQUEST", `Hai già ${open} personalizzazioni in corso: aspetta la consegna di una.`);
+    }
+    if (balance < cost) throw new StoreError("INSUFFICIENT_CREDITS");
+
+    const debited = await tx.user.updateMany({
+      where: { id: input.userId, creditBalance: { gte: cost } },
+      data: { creditBalance: { decrement: cost } },
+    });
+    if (debited.count !== 1) throw new StoreError("INSUFFICIENT_CREDITS");
+
+    const request = await tx.customizationRequest.create({
+      data: {
+        userId: input.userId,
+        beatId: beat.id,
+        options: [...new Set(input.options)],
+        express: input.express,
+        notes: input.notes,
+        referenceUrl: input.referenceUrl,
+        creditsSpent: cost,
+        dueAt: customizationDueDate(now, input.express),
+      },
+    });
+    await tx.creditTransaction.create({
+      data: {
+        userId: input.userId,
+        type: "CUSTOMIZATION",
+        amount: -cost,
+        balanceAfter: balance - cost,
+        description: `Personalizzazione · ${beat.title}`,
+        customizationId: request.id,
+      },
+    });
+    return { request, balance: balance - cost };
+  });
 }

@@ -30,7 +30,8 @@ export interface BeatSummary {
   coverUrl: string | null;
   peaks: number[];
   producers: ProducerRef[];
-  genres: TagRef[];
+  /** `parent` = genere principale (Plugg → trap): serve per colore e raggruppamento. */
+  genres: Array<TagRef & { parent?: string | null }>;
   typeTags: TagRef[];
   moods: string[];
   releasedAt: string;
@@ -89,6 +90,23 @@ export interface UnlockResponse {
   balance: number;
   alreadyOwned: boolean;
   downloads: Array<{ asset: "MP3" | "WAV" | "STEMS"; url: string }>;
+}
+
+export interface CustomizationSummary {
+  id: string;
+  beat: Pick<BeatSummary, "id" | "slug" | "title" | "producers" | "coverUrl">;
+  options: string[];
+  express: boolean;
+  notes: string;
+  creditsSpent: number;
+  status: "REQUESTED" | "IN_PROGRESS" | "DELIVERED" | "REFUNDED";
+  dueAt: string;
+  createdAt: string;
+}
+
+export interface CustomizationResponse {
+  request: CustomizationSummary;
+  balance: number;
 }
 
 export interface ApiError {

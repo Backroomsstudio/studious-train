@@ -7,7 +7,7 @@ import { after, before, test } from "node:test";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../lib/generated/prisma/client";
 import { StoreError } from "../../lib/beats/server/errors";
-import { expireCreditsAtSubscriptionEnd, grantCycleCredits, unlockWithCredits } from "../../lib/beats/server/ledger";
+import { expireCreditsAtSubscriptionEnd, grantCycleCredits, requestCustomization, unlockWithCredits } from "../../lib/beats/server/ledger";
 
 const url = process.env.TEST_DATABASE_URL;
 const skip = url ? false : "TEST_DATABASE_URL non impostato";
@@ -105,4 +105,20 @@ test("il saldo in cache coincide con l'ultima riga del mastro", { skip }, async 
   const last = await db.creditTransaction.findFirstOrThrow({ where: { userId }, orderBy: { createdAt: "desc" } });
   // Le righe "manuali" dei test sopra aggiornano il saldo senza mastro: qui controlliamo solo l'ultima operazione.
   assert.equal(last.balanceAfter, await balance());
+});
+
+test("personalizzazioni: addebito atomico, limite di richieste aperte e saldo insufficiente", { skip }, async () => {
+  await db.subscription.update({ where: { id: subscriptionId }, data: { status: "ACTIVE", currentPeriodEnd: new Date(Date.now() + 86_400_000) } });
+  await db.user.update({ where: { id: userId }, data: { creditBalance: 30 } });
+  const input = { userId, beatId, options: ["KEY" as const, "KEY" as const], express: false, notes: "Abbassalo di un tono" };
+  const results = await Promise.all([1, 2, 3].map(() => requestCustomization(db, input)));
+  assert.deepEqual(results.map((r) => r.request.creditsSpent), [9, 9, 9], "opzioni duplicate contate una volta");
+  assert.equal(await balance(), 3);
+  await db.user.update({ where: { id: userId }, data: { creditBalance: 50 } });
+  await assert.rejects(requestCustomization(db, input), (e: unknown) => e instanceof StoreError && e.code === "BAD_REQUEST");
+  await db.customizationRequest.updateMany({ where: { userId }, data: { status: "DELIVERED" } });
+  await db.user.update({ where: { id: userId }, data: { creditBalance: 5 } });
+  await assert.rejects(requestCustomization(db, input), (e: unknown) => e instanceof StoreError && e.code === "INSUFFICIENT_CREDITS");
+  assert.equal(await balance(), 5);
+  assert.equal(await db.creditTransaction.count({ where: { userId, type: "CUSTOMIZATION" } }), 3);
 });

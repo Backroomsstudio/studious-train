@@ -7,6 +7,7 @@ import { ChromeLink } from "@/components/beats/ui/chrome-button";
 import { GlowBadge } from "@/components/beats/ui/glow-badge";
 import { cn } from "@/lib/cn";
 import { formatDay, formatRelativeDay } from "@/lib/beats/format";
+import { CUSTOMIZATION_OPTIONS, CUSTOMIZATION_STATUS } from "@/lib/beats/customizations";
 import { LICENSES } from "@/lib/beats/licenses";
 import { PLANS } from "@/lib/beats/plans";
 import { SIGN_IN_PATH, signOut } from "@/lib/beats/server/auth";
@@ -22,6 +23,7 @@ const LEDGER_LABELS: Record<string, string> = {
   ROLLOVER_EXPIRY: "Scadenza rollover",
   SUBSCRIPTION_END_EXPIRY: "Fine abbonamento",
   UNLOCK: "Sblocco",
+  CUSTOMIZATION: "Personalizzazione",
   REFUND: "Rimborso",
   ADJUSTMENT: "Correzione",
   BONUS: "Bonus",
@@ -31,7 +33,11 @@ export default async function LibraryPage() {
   const viewer = await getViewer();
   if (!viewer) redirect(SIGN_IN_PATH);
   const backend = await getBackend();
-  const [library, ledger] = await Promise.all([backend.library(viewer.id), backend.ledger(viewer.id, 15)]);
+  const [library, ledger, customizations] = await Promise.all([
+    backend.library(viewer.id),
+    backend.ledger(viewer.id, 15),
+    backend.customizations(viewer.id),
+  ]);
   const plan = viewer.plan ? PLANS[viewer.plan.tier] : null;
 
   return (
@@ -82,6 +88,38 @@ export default async function LibraryPage() {
           )}
         </div>
       </section>
+
+      {customizations.length > 0 && (
+        <section aria-labelledby="custom-title" className="space-y-3">
+          <h2 id="custom-title" className="font-display text-xl font-bold">
+            Le tue personalizzazioni <span className="text-chrome-400">· {customizations.length}</span>
+          </h2>
+          <ul className="space-y-2">
+            {customizations.map((c) => (
+              <li key={c.id} className="glass flex flex-col gap-3 rounded-2xl p-3 sm:flex-row sm:items-center">
+                <Link href={`/beats/${c.beat.slug}`} className="flex min-w-0 flex-1 items-center gap-3">
+                  <BeatCover beat={c.beat} />
+                  <span className="min-w-0">
+                    <span className="block truncate font-display font-semibold">{c.beat.title} · su misura</span>
+                    <span className="block truncate text-[13px] text-chrome-500">
+                      {c.options.map((o) => CUSTOMIZATION_OPTIONS.find((d) => d.id === o)?.name ?? o).join(", ")}
+                      {c.express ? " · express" : ""}
+                    </span>
+                  </span>
+                </Link>
+                <div className="flex items-center gap-2 text-right">
+                  <span className="text-xs text-chrome-500">
+                    {c.status === "DELIVERED" ? "Consegnata" : `Consegna entro il ${formatDay(c.dueAt)}`}
+                  </span>
+                  <GlowBadge tone={c.status === "DELIVERED" ? "ok" : c.status === "REFUNDED" ? "chrome" : "studio"}>
+                    {CUSTOMIZATION_STATUS[c.status]}
+                  </GlowBadge>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section aria-labelledby="licenze-title" className="space-y-3">
         <h2 id="licenze-title" className="font-display text-xl font-bold">

@@ -4,7 +4,9 @@ import { Check, ListPlus, Pause, Play } from "lucide-react";
 import Link from "next/link";
 import { memo } from "react";
 import { cn } from "@/lib/cn";
+import { isNewRelease } from "@/lib/beats/drops";
 import { formatTime } from "@/lib/beats/format";
+import { beatColor } from "@/lib/beats/genres";
 import { creditCost, LICENSE_ORDER } from "@/lib/beats/licenses";
 import { camelotCode, keyName } from "@/lib/beats/music";
 import type { BeatSummary } from "@/lib/beats/types";
@@ -82,6 +84,11 @@ export const TrackRow = memo(function TrackRow({ beat, queue }: { beat: BeatSumm
             {beat.title}
           </Link>
           {beat.deal && <GlowBadge tone="deal">-{beat.deal.discountPct}%</GlowBadge>}
+          {isNewRelease(beat.releasedAt) && !beat.deal && (
+            <GlowBadge tone="electric" className="bg-electric text-white">
+              Nuovo
+            </GlowBadge>
+          )}
         </div>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
           {main.map((p) => (
@@ -93,7 +100,10 @@ export const TrackRow = memo(function TrackRow({ beat, queue }: { beat: BeatSumm
         </div>
         {/* Meta su mobile: sotto il titolo */}
         <p className="mt-1 truncate text-xs text-chrome-500 lg:hidden">
-          {beat.bpm} BPM · {keyName(beat.key)} ({camelotCode(beat.key)}) · {beat.genres.map((g) => g.name).join(", ")}
+          <span className="font-semibold" style={{ color: beatColor(beat) }}>
+            ● {beat.genres.map((g) => g.name).join(", ")}
+          </span>{" "}
+          · {beat.bpm} BPM · {keyName(beat.key)} ({camelotCode(beat.key)})
         </p>
       </div>
 
@@ -111,6 +121,9 @@ export const TrackRow = memo(function TrackRow({ beat, queue }: { beat: BeatSumm
           onSeek={isCurrent && duration ? (r) => seek(r * duration) : undefined}
         />
         <div className="mt-1 flex gap-1.5 overflow-hidden">
+          <span className="shrink-0 text-[11px] font-bold" style={{ color: beatColor(beat) }}>
+            ● {beat.genres.map((g) => g.name).join(" · ")}
+          </span>
           {beat.typeTags.slice(0, 2).map((t) => (
             <span key={t.slug} className="truncate text-[11px] font-medium text-chrome-500">
               #{t.name.replace(/\s+/g, "")}Type

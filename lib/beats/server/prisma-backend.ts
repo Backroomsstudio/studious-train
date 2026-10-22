@@ -3,16 +3,17 @@ import { isSimilar, keysForFilter, paginate, sortBeats } from "../catalog-utils"
 import { BPM_RANGE, PAGE_SIZE, type BeatFilters } from "../filters";
 import { LICENSES, licenseIncludesAsset, type DownloadAsset, type LicenseType } from "../licenses";
 import { compatibleKeys } from "../music";
-import type { BeatDetail, BeatSummary, Facets, ProjectSummary, Viewer } from "../types";
+import type { BeatDetail, BeatSummary, CustomizationSummary, Facets, ProjectSummary, Viewer } from "../types";
+import { NEW_WINDOW_DAYS } from "../drops";
 import type { FileTarget, StoreBackend } from "./backend";
 import { StoreError } from "./errors";
-import { activeTier, unlockWithCredits } from "./ledger";
+import { activeTier, requestCustomization, unlockWithCredits } from "./ledger";
 import { getDb } from "./prisma";
 
 const beatInclude = (now: Date) =>
   ({
     producers: { include: { producer: true }, orderBy: { role: "asc" } },
-    genres: true,
+    genres: { include: { parent: { select: { slug: true } } } },
     typeTags: true,
     deals: { where: { startsAt: { lte: now }, endsAt: { gt: now } }, orderBy: { endsAt: "asc" }, take: 1 },
   }) satisfies Prisma.BeatInclude;
@@ -36,7 +37,7 @@ function toSummary(row: BeatRow): BeatSummary {
       role: p.role,
       accentColor: p.producer.accentColor,
     })),
-    genres: row.genres.map((g) => ({ slug: g.slug, name: g.name })),
+    genres: row.genres.map((g) => ({ slug: g.slug, name: g.name, parent: g.parent?.slug ?? null })),
     typeTags: row.typeTags.map((t) => ({ slug: t.slug, name: t.name })),
     moods: row.moods,
     releasedAt: row.releasedAt.toISOString(),
@@ -93,6 +94,37 @@ const ASSET_COLUMNS = { MP3: "mp3ObjectKey", WAV: "wavObjectKey", STEMS: "stemsO
 
 const CONTENT_TYPES: Record<DownloadAsset, string> = { MP3: "audio/mpeg", WAV: "audio/wav", STEMS: "application/zip" };
 const EXTENSIONS: Record<DownloadAsset, string> = { MP3: "mp3", WAV: "wav", STEMS: "zip" };
+
+type CustomizationRow = Prisma.CustomizationRequestGetPayload<{
+  include: { beat: { include: { producers: { include: { producer: true } } } } };
+}>;
+
+function toCustomization(row: CustomizationRow): CustomizationSummary {
+  return {
+    id: row.id,
+    beat: {
+      id: row.beat.id,
+      slug: row.beat.slug,
+      title: row.beat.title,
+      coverUrl: row.beat.coverUrl,
+      producers: row.beat.producers.map((p) => ({
+        slug: p.producer.slug,
+        name: p.producer.name,
+        role: p.role,
+        accentColor: p.producer.accentColor,
+      })),
+    },
+    options: row.options,
+    express: row.express,
+    notes: row.notes,
+    creditsSpent: row.creditsSpent,
+    status: row.status,
+    dueAt: row.dueAt.toISOString(),
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+const customizationInclude = { beat: { include: { producers: { include: { producer: true } } } } } as const;
 
 export function createPrismaBackend(): StoreBackend {
   const db = getDb();
@@ -288,6 +320,33 @@ export function createPrismaBackend(): StoreBackend {
         contentType: CONTENT_TYPES[asset],
         filename: `${license.beat.title} - Backrooms (${LICENSES[license.type].name}).${EXTENSIONS[asset]}`,
       };
+    },
+
+    async newArrivals(limit = 12) {
+      const now = new Date();
+      const rows = await db.beat.findMany({
+        where: { status: "PUBLISHED", releasedAt: { gte: new Date(now.getTime() - NEW_WINDOW_DAYS * 86_400_000), lte: now } },
+        include: beatInclude(now),
+        orderBy: { releasedAt: "desc" },
+        take: limit,
+      });
+      return rows.map(toSummary);
+    },
+
+    async customize(userId, beatId, input) {
+      const { request, balance } = await requestCustomization(db, { userId, beatId, ...input });
+      const row = await db.customizationRequest.findUniqueOrThrow({ where: { id: request.id }, include: customizationInclude });
+      return { request: toCustomization(row), balance };
+    },
+
+    async customizations(userId) {
+      const rows = await db.customizationRequest.findMany({
+        where: { userId },
+        include: customizationInclude,
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      });
+      return rows.map(toCustomization);
     },
 
     async preview(beatId) {

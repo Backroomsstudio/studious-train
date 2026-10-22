@@ -18,7 +18,13 @@ import { checkUnlock, planCycleGrant } from "../ledger-rules";
 import { LICENSES, licenseIncludesAsset, type LicenseType } from "../licenses";
 import { keyId } from "../music";
 import type { PlanTier } from "../plans";
-import type { BeatDetail, BeatSummary, Facets, OwnedLicense, ProjectSummary } from "../types";
+import {
+  CUSTOMIZATION_MAX_OPEN,
+  customizationCost,
+  customizationDueDate,
+} from "../customizations";
+import { NEW_WINDOW_DAYS } from "../drops";
+import type { BeatDetail, BeatSummary, CustomizationSummary, Facets, OwnedLicense, ProjectSummary } from "../types";
 import type { LedgerEntry, StoreBackend } from "./backend";
 import { StoreError } from "./errors";
 
@@ -30,6 +36,7 @@ interface DemoState {
   balance: number;
   licenses: Array<OwnedLicense & { creditsSpent: number }>;
   ledger: LedgerEntry[];
+  customizations: CustomizationSummary[];
 }
 
 const globalForDemo = globalThis as unknown as { beatsDemoState?: DemoState };
@@ -41,6 +48,7 @@ function state(): DemoState {
   const grant = planCycleGrant({ tier: DEMO_TIER, balance: 14, reason: "renewal", grantedThisPeriod: 0 });
   const spent = LICENSES.WAV_LEASE.credits;
   const initial: DemoState = {
+    customizations: [],
     balance: grant.balanceAfter - spent,
     licenses: [
       {
@@ -82,7 +90,8 @@ function nextMidnight(now: Date): Date {
 
 function toSummary(beat: DemoBeat, now = new Date()): BeatSummary {
   const released = new Date(now.getTime() - beat.daysAgo * DAY);
-  released.setHours(10, 0, 0, 0);
+  // Uscita a inizio giornata: un beat "di oggi" non risulta mai nel futuro.
+  released.setHours(0, 1, 0, 0);
   return {
     id: beat.id,
     slug: beat.slug,
@@ -96,7 +105,10 @@ function toSummary(beat: DemoBeat, now = new Date()): BeatSummary {
       const producer = DEMO_PRODUCERS.find((d) => d.slug === p.slug)!;
       return { slug: p.slug, name: producer.name, role: p.role, accentColor: producer.accentColor };
     }),
-    genres: beat.genres.map((slug) => ({ slug, name: DEMO_GENRES.find((g) => g.slug === slug)?.name ?? slug })),
+    genres: beat.genres.map((slug) => {
+      const g = DEMO_GENRES.find((d) => d.slug === slug);
+      return { slug, name: g?.name ?? slug, parent: g?.parent ?? null };
+    }),
     typeTags: beat.typeTags.map((slug) => ({ slug, name: DEMO_TYPE_TAGS.find((t) => t.slug === slug)?.name ?? slug })),
     moods: beat.moods,
     releasedAt: released.toISOString(),
@@ -277,6 +289,54 @@ export function createDemoBackend(): StoreBackend {
       if (!licenseIncludesAsset(license.type, asset)) throw new StoreError("PLAN_REQUIRED", "File non incluso nella licenza.");
       const beat = findBeat(license.beatId)!;
       return { kind: "demo", beatId: beat.id, filename: `${beat.title} (DEMO ${asset}).wav` };
+    },
+
+    async newArrivals(limit = 12) {
+      return DEMO_BEATS.filter((b) => b.daysAgo < NEW_WINDOW_DAYS)
+        .sort((a, b) => a.daysAgo - b.daysAgo)
+        .slice(0, limit)
+        .map((b) => toSummary(b));
+    },
+
+    async customize(userId, beatId, input) {
+      if (userId !== DEMO_USER_ID) throw new StoreError("UNAUTHENTICATED");
+      const s = state();
+      const beat = findBeat(beatId);
+      if (!beat) throw new StoreError("NOT_FOUND", "Beat non disponibile.");
+      const open = s.customizations.filter((c) => c.status === "REQUESTED" || c.status === "IN_PROGRESS").length;
+      if (open >= CUSTOMIZATION_MAX_OPEN) {
+        throw new StoreError("BAD_REQUEST", `Hai già ${open} personalizzazioni in corso: aspetta la consegna di una.`);
+      }
+      const cost = customizationCost(input.options, input.express);
+      if (s.balance < cost) throw new StoreError("INSUFFICIENT_CREDITS");
+      s.balance -= cost;
+      const summary = toSummary(beat);
+      const now = new Date();
+      const request: CustomizationSummary = {
+        id: `demo-cust-${s.customizations.length + 1}`,
+        beat: { id: beat.id, slug: beat.slug, title: beat.title, coverUrl: null, producers: summary.producers },
+        options: [...new Set(input.options)],
+        express: input.express,
+        notes: input.notes,
+        creditsSpent: cost,
+        status: "REQUESTED",
+        dueAt: customizationDueDate(now, input.express).toISOString(),
+        createdAt: now.toISOString(),
+      };
+      s.customizations.unshift(request);
+      s.ledger.unshift({
+        id: `demo-tx-${s.ledger.length + 1}`,
+        type: "CUSTOMIZATION",
+        amount: -cost,
+        balanceAfter: s.balance,
+        description: `Personalizzazione · ${beat.title}`,
+        createdAt: request.createdAt,
+      });
+      return { request, balance: s.balance };
+    },
+
+    async customizations(userId) {
+      return userId === DEMO_USER_ID ? state().customizations : [];
     },
 
     async preview(beatId) {
