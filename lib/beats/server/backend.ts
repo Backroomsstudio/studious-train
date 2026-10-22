@@ -9,6 +9,7 @@ import type { BeatFilters } from "../filters";
 import type { DownloadAsset, LicenseType } from "../licenses";
 import type { CustomizationOption } from "../customizations";
 import type { PaidWith, ServiceKind } from "../offers";
+import type { StemName } from "../stems";
 import type {
   AuctionSummary,
   BeatDetail,
@@ -79,6 +80,8 @@ export interface StoreBackend {
     meta: { ipHash?: string; userAgent?: string },
   ): Promise<FileTarget>;
   preview(beatId: string): Promise<FileTarget | null>;
+  /** Anteprima di uno stem per il mixer (con watermark come l'anteprima); null se il beat non ha stems. */
+  stemPreview(beatId: string, stem: StemName): Promise<FileTarget | null>;
   /** Beat usciti negli ultimi 7 giorni (drop settimanale), dal più recente. */
   newArrivals(limit?: number): Promise<BeatSummary[]>;
   customize(

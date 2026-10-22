@@ -296,6 +296,8 @@ model Beat {
   mp3ObjectKey       String
   wavObjectKey       String
   stemsObjectKey     String?
+  /// Cartella R2 con le anteprime degli stems per il mixer: `${prefix}/drums.mp3`, bass, keys, fx.
+  stemPreviewPrefix  String?
   exclusiveAvailable Boolean                  @default(true)
   exclusiveSoldAt    DateTime?
   playCount          Int                      @default(0)

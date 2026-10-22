@@ -377,6 +377,11 @@ export function createDemoBackend(): StoreBackend {
       const beat = findBeat(beatId);
       return beat ? { kind: "demo", beatId, filename: `${beat.slug}-preview.wav` } : null;
     },
+
+    async stemPreview(beatId, stem) {
+      const beat = findBeat(beatId);
+      return beat?.hasStems ? { kind: "demo", beatId, filename: `${beat.slug}-${stem}.wav` } : null;
+    },
   };
 }
 
