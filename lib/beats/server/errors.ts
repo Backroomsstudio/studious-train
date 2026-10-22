@@ -7,6 +7,8 @@ export const STORE_ERRORS = {
   NOT_FOUND: { status: 404, message: "Risorsa non trovata." },
   BAD_REQUEST: { status: 400, message: "Richiesta non valida." },
   NOT_CONFIGURED: { status: 503, message: "Servizio non ancora configurato." },
+  FORBIDDEN: { status: 403, message: "Non puoi farlo con questo account." },
+  RATE_LIMITED: { status: 429, message: "Stai andando troppo veloce: riprova tra poco." },
 } as const;
 
 export type StoreErrorCode = keyof typeof STORE_ERRORS;

@@ -10,12 +10,17 @@ import type { DownloadAsset, LicenseType } from "../licenses";
 import type { CustomizationOption } from "../customizations";
 import type { PaidWith, ServiceKind } from "../offers";
 import type { StemName } from "../stems";
+import type { FeatFilters, FeatPostInput, FeatReportInput } from "../feat";
 import type {
   AuctionSummary,
   BeatDetail,
   BeatSummary,
   CustomizationSummary,
   Facets,
+  FeatInbox,
+  FeatMessageItem,
+  FeatPostSummary,
+  FeatThreadDetail,
   GiftCardSummary,
   LiveOverlay,
   OwnedLicense,
@@ -105,6 +110,21 @@ export interface StoreBackend {
   bid(userId: string, auctionId: string, amountCents: number): Promise<AuctionSummary>;
   liveOverlay(): Promise<LiveOverlay>;
   pause(userId: string, resume: boolean): Promise<{ pausedUntil: string | null }>;
+
+  /* Cerco feat: bacheca delle collaborazioni e chat private (lib/beats/feat.ts) */
+  /** Annunci aperti dal più recente (più quelli dell'artista collegato, anche chiusi). */
+  featPosts(viewerId: string | null, filters?: FeatFilters): Promise<FeatPostSummary[]>;
+  createFeatPost(userId: string, input: FeatPostInput): Promise<FeatPostSummary>;
+  /** Solo l'autore chiude il suo annuncio. */
+  closeFeatPost(userId: string, postId: string): Promise<FeatPostSummary>;
+  /** Apre (o ritrova) la chat tra chi risponde (l'artista collegato) e l'autore dell'annuncio. */
+  openFeatThread(userId: string, postId: string): Promise<FeatThreadDetail>;
+  /** Messaggi della chat, solo per i due partecipanti; segna come letti quelli ricevuti. */
+  featThread(userId: string, threadId: string): Promise<FeatThreadDetail>;
+  sendFeatMessage(userId: string, threadId: string, body: string): Promise<FeatMessageItem>;
+  /** Chat con almeno un messaggio (come autore o come chi ha risposto) e totale non letti. */
+  featInbox(userId: string): Promise<FeatInbox>;
+  reportFeat(userId: string, input: FeatReportInput): Promise<void>;
 }
 
 let backend: Promise<StoreBackend> | null = null;
