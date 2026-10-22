@@ -76,6 +76,10 @@ model User {
   auctionsWon    Auction[]              @relation("AuctionWinner")
   giftsBought    GiftCard[]             @relation("GiftPurchaser")
   giftsRedeemed  GiftCard[]             @relation("GiftRedeemer")
+  featPosts      FeatPost[]
+  featThreads    FeatThread[]
+  featMessages   FeatMessage[]
+  featReports    FeatReport[]
 }
 
 model Account {
@@ -317,6 +321,7 @@ model Beat {
   customizations CustomizationRequest[]
   orders         ServiceOrder[]
   auctions       Auction[]
+  featPosts      FeatPost[]
 
   @@index([status, releasedAt(sort: Desc)])
   @@index([bpm])
@@ -720,4 +725,96 @@ model GiftCard {
 
   purchaser  User? @relation("GiftPurchaser", fields: [purchaserId], references: [id], onDelete: SetNull)
   redeemedBy User? @relation("GiftRedeemer", fields: [redeemedById], references: [id], onDelete: SetNull)
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Cerco feat: bacheca delle collaborazioni con chat privata
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+enum FeatPostStatus {
+  OPEN
+  CLOSED
+}
+
+/// Annuncio in bacheca. `role` viene da un elenco fisso (lib/beats/feat.ts) validato dall'app.
+model FeatPost {
+  id        String         @id @default(cuid())
+  authorId  String
+  role      String
+  /// Testo dell'annuncio (massimo 280 caratteri).
+  text      String         @db.VarChar(280)
+  beatId    String?
+  /// Slug del genere principale (trap, drill, rnb…).
+  genre     String?
+  city      String?        @db.VarChar(40)
+  status    FeatPostStatus @default(OPEN)
+  createdAt DateTime       @default(now())
+  /// Dopo 30 giorni l'annuncio esce dalla bacheca.
+  expiresAt DateTime
+  closedAt  DateTime?
+
+  author  User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  beat    Beat?        @relation(fields: [beatId], references: [id], onDelete: SetNull)
+  threads FeatThread[]
+  reports FeatReport[]
+
+  @@index([status, expiresAt, createdAt(sort: Desc)])
+  @@index([authorId, createdAt(sort: Desc)])
+}
+
+/// Chat privata tra autore dell'annuncio e chi risponde: una sola per coppia annuncio + artista.
+model FeatThread {
+  id          String   @id @default(cuid())
+  postId      String
+  applicantId String
+  createdAt   DateTime @default(now())
+  /// Momento dell'ultimo messaggio: ordina la casella "I tuoi messaggi".
+  updatedAt   DateTime @default(now())
+
+  post      FeatPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  applicant User          @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  messages  FeatMessage[]
+
+  @@unique([postId, applicantId])
+  @@index([applicantId, updatedAt(sort: Desc)])
+}
+
+model FeatMessage {
+  id        String    @id @default(cuid())
+  threadId  String
+  senderId  String
+  /// Testo del messaggio (massimo 1000 caratteri).
+  body      String    @db.VarChar(1000)
+  createdAt DateTime  @default(now())
+  /// Letto dall'altro partecipante.
+  readAt    DateTime?
+
+  thread  FeatThread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender  User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  reports FeatReport[]
+
+  @@index([threadId, createdAt])
+  @@index([senderId, createdAt(sort: Desc)])
+}
+
+/// Segnalazione di un annuncio o di un messaggio, controllata a mano dallo staff.
+model FeatReport {
+  id         String   @id @default(cuid())
+  reporterId String
+  postId     String?
+  messageId  String?
+  reason     String   @db.VarChar(300)
+  createdAt  DateTime @default(now())
+
+  reporter User         @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  post     FeatPost?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  message  FeatMessage? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt(sort: Desc)])
 }

@@ -27,6 +27,7 @@ import { NEW_WINDOW_DAYS } from "../drops";
 import { levelInfo } from "../offers";
 import type { BeatDetail, BeatSummary, CustomizationSummary, Facets, OwnedLicense, ProjectSummary } from "../types";
 import { createDemoCommerce, type DemoCommerceState, initialCommerceState } from "./demo-commerce";
+import { createDemoFeat } from "./demo-feat";
 import type { LedgerEntry, StoreBackend } from "./backend";
 import { StoreError } from "./errors";
 
@@ -171,6 +172,7 @@ const plays = (b: BeatSummary) => findBeat(b.id)?.plays ?? 0;
 export function createDemoBackend(): StoreBackend {
   return {
     ...createDemoCommerce(),
+    ...createDemoFeat(),
 
     async search(filters) {
       let pool = DEMO_BEATS.filter((b) => matches(b, filters)).map((b) => ({ beat: b, score: 1 }));

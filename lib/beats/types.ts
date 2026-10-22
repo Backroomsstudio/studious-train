@@ -205,3 +205,62 @@ export type PurchaseResponse = { kind: "done"; balance: number; message: string 
 export interface ApiError {
   error: { code: string; message: string };
 }
+
+/* ------------------------------------------------------------------ */
+/* Cerco feat (lib/beats/feat.ts)                                      */
+/* ------------------------------------------------------------------ */
+
+/** Artista come appare in bacheca e in chat: nome d'artista, colore dell'avatar, livello Resident. */
+export interface FeatArtist {
+  name: string;
+  color: string;
+  level: Pick<LevelInfo, "id" | "name" | "color">;
+}
+
+export interface FeatPostSummary {
+  id: string;
+  role: string;
+  text: string;
+  genre: TagRef | null;
+  city: string | null;
+  beat: BeatSummary | null;
+  status: "OPEN" | "CLOSED";
+  createdAt: string;
+  expiresAt: string;
+  author: FeatArtist;
+  /** L'annuncio è dell'artista collegato. */
+  isMine: boolean;
+  /** Artisti che hanno risposto (chat con almeno un messaggio). */
+  replyCount: number;
+  /** Chat già aperta dall'artista collegato su questo annuncio. */
+  threadId: string | null;
+}
+
+export interface FeatMessageItem {
+  id: string;
+  body: string;
+  mine: boolean;
+  createdAt: string;
+  readAt: string | null;
+}
+
+export interface FeatThreadSummary {
+  id: string;
+  post: { id: string; role: string; text: string; status: "OPEN" | "CLOSED"; beatTitle: string | null };
+  /** L'altra persona della chat. */
+  other: FeatArtist;
+  /** L'artista collegato è l'autore dell'annuncio (gli altri gli hanno risposto). */
+  isAuthor: boolean;
+  last: FeatMessageItem | null;
+  unread: number;
+  updatedAt: string;
+}
+
+export interface FeatThreadDetail extends FeatThreadSummary {
+  messages: FeatMessageItem[];
+}
+
+export interface FeatInbox {
+  threads: FeatThreadSummary[];
+  unread: number;
+}

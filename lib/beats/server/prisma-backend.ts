@@ -12,6 +12,7 @@ import { ensureReferralCode, residentMonths } from "./commerce";
 import { activeTier, requestCustomization, unlockWithCredits } from "./ledger";
 import { getDb } from "./prisma";
 import { createPrismaCommerce } from "./prisma-commerce";
+import { createPrismaFeat } from "./prisma-feat";
 
 export const beatInclude = (now: Date) =>
   ({
@@ -134,6 +135,7 @@ export function createPrismaBackend(): StoreBackend {
 
   return {
     ...createPrismaCommerce(),
+    ...createPrismaFeat(),
 
     async search(filters) {
       const now = new Date();
