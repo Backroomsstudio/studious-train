@@ -7,9 +7,10 @@ import { getViewer } from "@/lib/beats/server/queries";
 
 export const metadata = { title: "Accedi" };
 
-export default async function SignInPage({ searchParams }: { searchParams: Promise<{ nuovo?: string }> }) {
+export default async function SignInPage({ searchParams }: { searchParams: Promise<{ nuovo?: string; invito?: string }> }) {
   if (await getViewer()) redirect("/beats");
-  const { nuovo } = await searchParams;
+  const { nuovo, invito } = await searchParams;
+  const invite = invito && /^[A-Z0-9]{3,16}$/.test(invito) ? invito : undefined;
   const providers = availableProviders();
   const google = providers.some((p) => p.id === "google");
   const magicLink = providers.some((p) => p.id === "resend");
@@ -41,7 +42,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
               </ChromeLink>
             </div>
           ) : (
-            <AuthForms initialMode={nuovo ? "signup" : "login"} />
+            <AuthForms initialMode={nuovo || invite ? "signup" : "login"} invite={invite} />
           )}
         </div>
 

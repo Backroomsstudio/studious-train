@@ -14,7 +14,7 @@ import {
 } from "../demo-data";
 import { BPM_RANGE, type BeatFilters } from "../filters";
 import { fuzzyScore } from "../fuzzy";
-import { checkUnlock, planCycleGrant } from "../ledger-rules";
+import { checkUnlock, planCycleGrant, splitDebit, totalCredits, type Wallet } from "../ledger-rules";
 import { LICENSES, licenseIncludesAsset, type LicenseType } from "../licenses";
 import { keyId } from "../music";
 import type { PlanTier } from "../plans";
@@ -24,32 +24,52 @@ import {
   customizationDueDate,
 } from "../customizations";
 import { NEW_WINDOW_DAYS } from "../drops";
+import { levelInfo } from "../offers";
 import type { BeatDetail, BeatSummary, CustomizationSummary, Facets, OwnedLicense, ProjectSummary } from "../types";
+import { createDemoCommerce, type DemoCommerceState, initialCommerceState } from "./demo-commerce";
 import type { LedgerEntry, StoreBackend } from "./backend";
 import { StoreError } from "./errors";
 
 export const DEMO_USER_ID = "demo-kael";
 const DEMO_TIER: PlanTier = "ELITE";
+/** Mesi da Resident di Kael: livello Gold (sconto studio e prelazione sulle aste). */
+const DEMO_MONTHS = 7;
 const DAY = 86_400_000;
 
-interface DemoState {
-  balance: number;
+export interface DemoState extends DemoCommerceState {
+  credits: Wallet;
   licenses: Array<OwnedLicense & { creditsSpent: number }>;
   ledger: LedgerEntry[];
   customizations: CustomizationSummary[];
+  pausedUntil: string | null;
 }
 
 const globalForDemo = globalThis as unknown as { beatsDemoState?: DemoState };
 
-function state(): DemoState {
+/** Addebito demo con la stessa regola del DB: prima l'abbonamento, poi il portafoglio. */
+export function demoDebit(s: DemoState, cost: number): { walletAmount: number; balanceAfter: number } {
+  const split = splitDebit(s.credits, cost);
+  if (!split) throw new StoreError("INSUFFICIENT_CREDITS");
+  s.credits = { subscription: s.credits.subscription - split.fromSubscription, wallet: s.credits.wallet - split.fromWallet };
+  return { walletAmount: -split.fromWallet, balanceAfter: totalCredits(s.credits) };
+}
+
+export function demoLedger(s: DemoState, entry: Omit<LedgerEntry, "id" | "createdAt" | "balanceAfter">) {
+  s.ledger.unshift({ ...entry, id: `demo-tx-${s.ledger.length + 1}`, balanceAfter: totalCredits(s.credits), createdAt: new Date().toISOString() });
+}
+
+export function state(): DemoState {
   if (globalForDemo.beatsDemoState) return globalForDemo.beatsDemoState;
   const now = Date.now();
-  // Saldo iniziale come nel mockup (45 ⚡): rinnovo VIP Resident + rollover, meno un WAV Lease.
-  const grant = planCycleGrant({ tier: DEMO_TIER, balance: 14, reason: "renewal", grantedThisPeriod: 0 });
+  // Saldo iniziale come nel mockup (45 ⚡): rinnovo VIP Resident + rollover, meno un WAV Lease,
+  // più 5 crediti di un invito nel portafoglio.
+  const grant = planCycleGrant({ tier: DEMO_TIER, balance: 9, reason: "renewal", grantedThisPeriod: 0 });
   const spent = LICENSES.WAV_LEASE.credits;
   const initial: DemoState = {
+    ...initialCommerceState(now),
+    pausedUntil: null,
     customizations: [],
-    balance: grant.balanceAfter - spent,
+    credits: { subscription: grant.balanceAfter - spent, wallet: 5 },
     licenses: [
       {
         id: "demo-lic-level-0",
@@ -60,6 +80,14 @@ function state(): DemoState {
       },
     ],
     ledger: [
+      {
+        id: "demo-tx-3",
+        type: "REFERRAL",
+        amount: 5,
+        balanceAfter: grant.balanceAfter - spent + 5,
+        description: "Invito: Nebbia si è abbonata",
+        createdAt: new Date(now - 2 * 3_600_000).toISOString(),
+      },
       {
         id: "demo-tx-2",
         type: "UNLOCK",
@@ -88,7 +116,7 @@ function nextMidnight(now: Date): Date {
   return end;
 }
 
-function toSummary(beat: DemoBeat, now = new Date()): BeatSummary {
+export function toSummary(beat: DemoBeat, now = new Date()): BeatSummary {
   const released = new Date(now.getTime() - beat.daysAgo * DAY);
   // Uscita a inizio giornata: un beat "di oggi" non risulta mai nel futuro.
   released.setHours(0, 1, 0, 0);
@@ -142,6 +170,8 @@ const plays = (b: BeatSummary) => findBeat(b.id)?.plays ?? 0;
 
 export function createDemoBackend(): StoreBackend {
   return {
+    ...createDemoCommerce(),
+
     async search(filters) {
       let pool = DEMO_BEATS.filter((b) => matches(b, filters)).map((b) => ({ beat: b, score: 1 }));
       if (filters.q) {
@@ -205,12 +235,17 @@ export function createDemoBackend(): StoreBackend {
         name: "Marco “Kael” Rossi",
         artistName: "Kael",
         image: null,
-        creditBalance: s.balance,
+        creditBalance: totalCredits(s.credits),
+        credits: { ...s.credits },
+        level: levelInfo(DEMO_MONTHS),
+        referralCode: "KAEL742",
         plan: {
           tier: DEMO_TIER,
+          interval: "MONTH",
           status: "ACTIVE",
           renewsAt: new Date(Date.now() + 24 * DAY).toISOString(),
           cancelAtPeriodEnd: false,
+          pausedUntil: s.pausedUntil,
         },
         owned,
       };
@@ -256,14 +291,14 @@ export function createDemoBackend(): StoreBackend {
         throw new StoreError("BAD_REQUEST", "Questo beat non ha gli stems.");
       }
       const existing = s.licenses.find((l) => l.beatId === beatId && l.type === license);
-      if (existing) return { license: existing, balance: s.balance, alreadyOwned: true };
+      if (existing) return { license: existing, balance: totalCredits(s.credits), alreadyOwned: true };
 
       const summary = toSummary(beat);
-      const check = checkUnlock({ tier: DEMO_TIER, balance: s.balance, license, discountPct: summary.deal?.discountPct });
+      const check = checkUnlock({ tier: DEMO_TIER, balance: totalCredits(s.credits), license, discountPct: summary.deal?.discountPct });
       if (!check.ok) throw new StoreError(check.reason);
 
       // Nessun await tra controllo e scrittura: in un singolo processo Node l'operazione è atomica.
-      s.balance -= check.cost;
+      const { balanceAfter } = demoDebit(s, check.cost);
       const created = {
         id: `demo-lic-${beat.slug}-${license.toLowerCase()}`,
         beatId,
@@ -276,11 +311,11 @@ export function createDemoBackend(): StoreBackend {
         id: `demo-tx-${s.ledger.length + 1}`,
         type: "UNLOCK",
         amount: -check.cost,
-        balanceAfter: s.balance,
+        balanceAfter,
         description: `${LICENSES[license].name} · ${beat.title}`,
         createdAt: created.createdAt,
       });
-      return { license: created, balance: s.balance, alreadyOwned: false };
+      return { license: created, balance: balanceAfter, alreadyOwned: false };
     },
 
     async resolveDownload(userId, licenseId, asset) {
@@ -308,8 +343,7 @@ export function createDemoBackend(): StoreBackend {
         throw new StoreError("BAD_REQUEST", `Hai già ${open} personalizzazioni in corso: aspetta la consegna di una.`);
       }
       const cost = customizationCost(input.options, input.express);
-      if (s.balance < cost) throw new StoreError("INSUFFICIENT_CREDITS");
-      s.balance -= cost;
+      const { balanceAfter } = demoDebit(s, cost);
       const summary = toSummary(beat);
       const now = new Date();
       const request: CustomizationSummary = {
@@ -328,11 +362,11 @@ export function createDemoBackend(): StoreBackend {
         id: `demo-tx-${s.ledger.length + 1}`,
         type: "CUSTOMIZATION",
         amount: -cost,
-        balanceAfter: s.balance,
+        balanceAfter,
         description: `Personalizzazione · ${beat.title}`,
         createdAt: request.createdAt,
       });
-      return { request, balance: s.balance };
+      return { request, balance: balanceAfter };
     },
 
     async customizations(userId) {

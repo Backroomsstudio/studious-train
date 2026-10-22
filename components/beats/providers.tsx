@@ -1,11 +1,12 @@
 "use client";
 
 import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { create } from "zustand";
 import type { LicenseType } from "@/lib/beats/licenses";
 import type { CustomizationOption } from "@/lib/beats/customizations";
-import type { ApiError, BeatSummary, CustomizationResponse, UnlockResponse, Viewer } from "@/lib/beats/types";
+import type { ApiError, BeatSummary, CustomizationResponse, PurchaseResponse, UnlockResponse, Viewer } from "@/lib/beats/types";
 
 /**
  * Stato server lato client con TanStack Query.
@@ -109,3 +110,27 @@ export const useCustomizeDialog = create<UnlockDialogState>((set) => ({
   open: (beat) => set({ beat }),
   close: () => set({ beat: null }),
 }));
+
+/**
+ * Acquisti oltre allo sblocco (servizi, kit, ricariche, gift card, esclusive).
+ * Pagato in crediti → saldo aggiornato e pagina ricaricata dal server; con carta → Stripe Checkout.
+ */
+export function usePurchase() {
+  const qc = useQueryClient();
+  const router = useRouter();
+  return useMutation({
+    mutationFn: ({ url, body }: { url: string; body: unknown }) =>
+      api<PurchaseResponse>(url, { method: "POST", body: JSON.stringify(body) }),
+    onSuccess(result) {
+      if (result.kind === "redirect") {
+        window.location.assign(result.url);
+        return;
+      }
+      qc.setQueryData<Viewer | null>(["viewer"], (viewer) => (viewer ? { ...viewer, creditBalance: result.balance } : viewer));
+      router.refresh();
+    },
+    onError(error) {
+      if (error instanceof ApiRequestError && error.code === "UNAUTHENTICATED") window.location.assign("/beats/accedi?nuovo=1");
+    },
+  });
+}

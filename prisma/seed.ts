@@ -5,7 +5,8 @@
  */
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../lib/generated/prisma/client";
-import { DEMO_BEATS, DEMO_DEAL, DEMO_GENRES, DEMO_PRODUCERS, DEMO_TYPE_TAGS, searchDocumentFor } from "../lib/beats/demo-data";
+import { DEMO_BEATS, DEMO_DEAL, DEMO_GENRES, DEMO_PRODUCERS, DEMO_PRODUCTS, DEMO_TYPE_TAGS, searchDocumentFor } from "../lib/beats/demo-data";
+import { AUCTION } from "../lib/beats/offers";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL non impostato");
@@ -67,7 +68,38 @@ async function main() {
   await db.dailyDeal.deleteMany({ where: { beatId: dealBeat.id, startsAt: start } });
   await db.dailyDeal.create({ data: { beatId: dealBeat.id, discountPct: DEMO_DEAL.discountPct, startsAt: start, endsAt: end } });
 
-  console.log(`Seed completato: ${DEMO_BEATS.length} beat, ${DEMO_PRODUCERS.length} produttori.`);
+  // Kit, sample pack e preset: gli archivi vanno caricati su R2 come `products/<slug>.zip`.
+  for (const p of DEMO_PRODUCTS) {
+    const data = {
+      kind: p.kind,
+      title: p.title,
+      description: p.description,
+      contents: p.contents,
+      producerId: producers.get(p.producer) ?? null,
+      priceCents: p.priceCents,
+      credits: p.credits,
+      coverColor: p.coverColor,
+      objectKey: `products/${p.slug}.zip`,
+    };
+    await db.product.upsert({ where: { slug: p.slug }, create: { ...data, slug: p.slug }, update: data });
+  }
+
+  // Un'asta dell'esclusiva in corso, se non ce n'è già una aperta.
+  const auctionBeat = await db.beat.findUniqueOrThrow({ where: { slug: "level-37" } });
+  if (!(await db.auction.findFirst({ where: { status: "OPEN" } }))) {
+    await db.auction.create({
+      data: {
+        beatId: auctionBeat.id,
+        startsAt: new Date(),
+        endsAt: new Date(Date.now() + 2 * 3_600_000),
+        startPriceCents: AUCTION.startPriceCents,
+        minIncrementCents: AUCTION.minIncrementCents,
+        live: true,
+      },
+    });
+  }
+
+  console.log(`Seed completato: ${DEMO_BEATS.length} beat, ${DEMO_PRODUCERS.length} produttori, ${DEMO_PRODUCTS.length} prodotti.`);
 }
 
 main()

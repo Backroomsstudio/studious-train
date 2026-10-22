@@ -168,3 +168,85 @@ export function searchDocumentFor(beat: DemoBeat): string {
   const typeNames = beat.typeTags.map((t) => `${DEMO_TYPE_TAGS.find((d) => d.slug === t)?.name ?? t} type beat`);
   return [beat.title, ...producerNames, ...genreNames, ...typeNames, ...beat.moods].join(" ").toLowerCase();
 }
+
+export interface DemoProduct {
+  slug: string;
+  kind: "DRUM_KIT" | "SAMPLE_PACK" | "VOCAL_PRESET";
+  title: string;
+  description: string;
+  contents: string[];
+  producer: string;
+  priceCents: number;
+  credits: number;
+  coverColor: string;
+}
+
+/** Drum kit, sample pack e preset dello studio (prezzi da lib/beats/offers.ts). */
+export const DEMO_PRODUCTS: DemoProduct[] = [
+  {
+    slug: "backrooms-drum-kit-vol-1",
+    kind: "DRUM_KIT",
+    title: "Backrooms Drum Kit Vol. 1",
+    description: "I suoni con cui sono nati Level 0 e Cromo: kick, snare e 808 già accordati.",
+    contents: ["42 one-shot", "12 loop di hi-hat", "8 808 accordati", "Licenza royalty-free"],
+    producer: "astral",
+    priceCents: 2490,
+    credits: 8,
+    coverColor: "#22c55e",
+  },
+  {
+    slug: "plugghe-808-arsenal",
+    kind: "DRUM_KIT",
+    title: "Plugghe 808 Arsenal",
+    description: "808 distorti, clap e percussioni rage: il kit dietro No-Clip e Neon Giallo.",
+    contents: ["24 808", "30 percussioni", "10 FX", "Licenza royalty-free"],
+    producer: "plugghe",
+    priceCents: 2490,
+    credits: 8,
+    coverColor: "#0066ff",
+  },
+  {
+    slug: "fluorescent-melodies",
+    kind: "SAMPLE_PACK",
+    title: "Fluorescent Melodies",
+    description: "Melodie e texture notturne in WAV, con BPM e tonalità nel nome del file.",
+    contents: ["25 loop melodici", "Stems di ogni loop", "Tonalità e BPM nel nome", "Licenza royalty-free"],
+    producer: "astral",
+    priceCents: 2990,
+    credits: 10,
+    coverColor: "#64d2ff",
+  },
+  {
+    slug: "freya-rnb-sessions",
+    kind: "SAMPLE_PACK",
+    title: "Freya R&B Sessions",
+    description: "Chitarre, rhodes e cori registrati nello Studio Lounge.",
+    contents: ["30 loop", "8 cori", "Rhodes e chitarre vere", "Licenza royalty-free"],
+    producer: "freya",
+    priceCents: 2990,
+    credits: 10,
+    coverColor: "#bf5af2",
+  },
+  {
+    slug: "voce-chrome",
+    kind: "VOCAL_PRESET",
+    title: "Voce Chrome",
+    description: "Le catene voce che usiamo in studio, pronte da aprire nella tua DAW.",
+    contents: ["6 catene: rap, melodico, ad-lib", "FL Studio, Logic, Ableton", "Solo plugin stock", "Video guida"],
+    producer: "freya",
+    priceCents: 1990,
+    credits: 6,
+    coverColor: "#ec4899",
+  },
+  {
+    slug: "autotune-notturno",
+    kind: "VOCAL_PRESET",
+    title: "Autotune Notturno",
+    description: "Il suono melodico trap delle nostre uscite, dal tuning al riverbero.",
+    contents: ["4 catene tuning", "Delay e riverberi a tempo", "FL Studio e Logic", "Video guida"],
+    producer: "plugghe",
+    priceCents: 1990,
+    credits: 6,
+    coverColor: "#ff9f0a",
+  },
+];

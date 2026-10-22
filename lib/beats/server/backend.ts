@@ -8,14 +8,21 @@ import "server-only";
 import type { BeatFilters } from "../filters";
 import type { DownloadAsset, LicenseType } from "../licenses";
 import type { CustomizationOption } from "../customizations";
+import type { PaidWith, ServiceKind } from "../offers";
 import type {
+  AuctionSummary,
   BeatDetail,
   BeatSummary,
   CustomizationSummary,
   Facets,
+  GiftCardSummary,
+  LiveOverlay,
   OwnedLicense,
+  ProductSummary,
   ProjectSummary,
+  PurchaseResponse,
   SearchResult,
+  ServiceOrderSummary,
   Viewer,
 } from "../types";
 import { storeEnv } from "./env";
@@ -36,7 +43,23 @@ export interface LedgerEntry {
 
 export type FileTarget =
   | { kind: "r2"; objectKey: string; filename: string; contentType: string }
-  | { kind: "demo"; beatId: string; filename: string };
+  | { kind: "demo"; beatId: string; filename: string }
+  | { kind: "text"; body: string; filename: string };
+
+export interface ServiceRequest {
+  kind: ServiceKind;
+  tierId: string;
+  beatId?: string;
+  notes: string;
+  scheduledFor?: string;
+  paidWith: PaidWith;
+}
+
+/** Acquisti con carta che passano da Stripe Checkout. */
+export type CheckoutItem =
+  | { purpose: "TOPUP"; packId: string }
+  | { purpose: "GIFT"; cardId: string; recipientName?: string; message?: string }
+  | { purpose: "AUCTION"; auctionId: string };
 
 export interface StoreBackend {
   search(filters: BeatFilters): Promise<SearchResult>;
@@ -64,6 +87,21 @@ export interface StoreBackend {
     input: { options: CustomizationOption[]; express: boolean; notes: string; referenceUrl?: string },
   ): Promise<{ request: CustomizationSummary; balance: number }>;
   customizations(userId: string): Promise<CustomizationSummary[]>;
+
+  /* Monetizzazione oltre all'abbonamento (lib/beats/offers.ts) */
+  products(userId: string | null): Promise<ProductSummary[]>;
+  buyProduct(userId: string, productId: string, paidWith: PaidWith, origin: string): Promise<PurchaseResponse>;
+  productDownload(userId: string, productId: string): Promise<FileTarget>;
+  orderService(userId: string, input: ServiceRequest, origin: string): Promise<PurchaseResponse>;
+  orders(userId: string): Promise<ServiceOrderSummary[]>;
+  checkout(userId: string, item: CheckoutItem, origin: string): Promise<PurchaseResponse>;
+  giftCards(userId: string): Promise<GiftCardSummary[]>;
+  redeemGift(userId: string, code: string): Promise<{ credits: number; balance: number }>;
+  auctions(viewerId: string | null): Promise<AuctionSummary[]>;
+  auction(id: string, viewerId: string | null): Promise<AuctionSummary | null>;
+  bid(userId: string, auctionId: string, amountCents: number): Promise<AuctionSummary>;
+  liveOverlay(): Promise<LiveOverlay>;
+  pause(userId: string, resume: boolean): Promise<{ pausedUntil: string | null }>;
 }
 
 let backend: Promise<StoreBackend> | null = null;

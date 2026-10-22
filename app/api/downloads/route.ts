@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
         cache: "private, no-store",
       });
     }
+    if (target.kind === "text") throw new StoreError("NOT_FOUND", "File non disponibile.");
     const url = await presignObject(target.objectKey, {
       expiresIn: 60,
       downloadName: target.filename,

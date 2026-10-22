@@ -37,6 +37,22 @@ export const storeEnv = {
         ELITE: read("STRIPE_PRICE_ELITE"),
       } as const;
     },
+    /** Prezzi annuali (10 mesi pagati, 12 di crediti). */
+    get yearlyPrices() {
+      return {
+        STARTER: read("STRIPE_PRICE_STARTER_YEARLY"),
+        PRO: read("STRIPE_PRICE_PRO_YEARLY"),
+        ELITE: read("STRIPE_PRICE_ELITE_YEARLY"),
+      } as const;
+    },
+  },
+  /** Segreto del cron (accrediti mensili degli annuali, chiusura aste): header `Authorization: Bearer …`. */
+  get cronSecret() {
+    return read("CRON_SECRET");
+  },
+  /** Origini autorizzate a leggere l'overlay della diretta (app overlay-live), separate da virgola. */
+  get overlayOrigins() {
+    return (read("LIVE_OVERLAY_ORIGINS") ?? "*").split(",").map((o) => o.trim());
   },
   r2: {
     get config() {

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { HomePromos } from "@/components/beats/commerce/home-promos";
 import { BeatOfTheDay } from "@/components/beats/home/beat-of-the-day";
 import { ProjectsCard } from "@/components/beats/home/projects-card";
 import { NewArrivals } from "@/components/beats/home/new-arrivals";
@@ -19,14 +20,16 @@ export default async function BeatsHomePage({ searchParams }: { searchParams: Pr
   const filters = parseFilters(params);
   const backend = await getBackend();
   const viewer = await getViewer();
-  const [facets, result, beatOfTheDay, projects, library, arrivals] = await Promise.all([
+  const [facets, result, beatOfTheDay, projects, library, arrivals, auctions] = await Promise.all([
     getFacets(),
     backend.search(filters),
     backend.beatOfTheDay(),
     viewer ? backend.projects(viewer.id) : [],
     viewer ? backend.library(viewer.id) : [],
     backend.newArrivals(),
+    backend.auctions(viewer?.id ?? null),
   ]);
+  const liveAuction = auctions.find((a) => a.status === "OPEN" && a.phase === "LIVE") ?? null;
   const last = library[0];
   const firstName = viewer?.artistName ?? viewer?.name.split(" ")[0];
 
@@ -57,7 +60,7 @@ export default async function BeatsHomePage({ searchParams }: { searchParams: Pr
           <p className="mt-1.5 truncate text-sm text-chrome-500">
             {viewer
               ? viewer.plan
-                ? `${PLANS[viewer.plan.tier].name} · ${viewer.creditBalance} crediti`
+                ? `${PLANS[viewer.plan.tier].name} · Resident ${viewer.level.name} · ${viewer.creditBalance} crediti`
                 : "Scegli un piano per ricevere i tuoi crediti ogni mese"
               : "Abbonati, ricevi crediti ogni mese e sblocca beat, stems e licenze."}
           </p>
@@ -84,6 +87,8 @@ export default async function BeatsHomePage({ searchParams }: { searchParams: Pr
       </div>
 
       <NewArrivals beats={arrivals} daysToNextDrop={daysUntilNextDrop()} />
+
+      <HomePromos auction={liveAuction} level={viewer?.level ?? null} />
 
       <section aria-labelledby="catalogo-title" className="space-y-3">
         <div className="flex items-end justify-between">

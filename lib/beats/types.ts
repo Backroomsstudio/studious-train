@@ -1,7 +1,8 @@
 /** DTO condivisi tra server e client (serializzabili in JSON). */
 import type { LicenseType } from "./licenses";
 import type { MusicalKey } from "./music";
-import type { PlanTier } from "./plans";
+import type { ProductKind, ServiceKind } from "./offers";
+import type { PlanInterval, PlanTier } from "./plans";
 
 export interface ProducerRef {
   slug: string;
@@ -66,13 +67,35 @@ export interface OwnedLicense {
   createdAt: string;
 }
 
+export interface LevelInfo {
+  id: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM";
+  name: string;
+  color: string;
+  months: number;
+  studioDiscountPct: number;
+  perks: string[];
+  next: { name: string; monthsToNext: number } | null;
+}
+
 export interface Viewer {
   id: string;
   name: string;
   artistName: string | null;
   image: string | null;
+  /** Totale spendibile (abbonamento + portafoglio). */
   creditBalance: number;
-  plan: { tier: PlanTier; status: string; renewsAt: string; cancelAtPeriodEnd: boolean } | null;
+  /** Le due borse: `subscription` segue rollover e scadenza, `wallet` non scade. */
+  credits: { subscription: number; wallet: number };
+  level: LevelInfo;
+  referralCode: string | null;
+  plan: {
+    tier: PlanTier;
+    interval: PlanInterval;
+    status: string;
+    renewsAt: string;
+    cancelAtPeriodEnd: boolean;
+    pausedUntil: string | null;
+  } | null;
   /** licenze possedute, indicizzate per beatId */
   owned: Record<string, LicenseType[]>;
 }
@@ -108,6 +131,76 @@ export interface CustomizationResponse {
   request: CustomizationSummary;
   balance: number;
 }
+
+export interface ProductSummary {
+  id: string;
+  slug: string;
+  kind: ProductKind;
+  title: string;
+  description: string;
+  contents: string[];
+  priceCents: number;
+  credits: number;
+  coverColor: string;
+  producer: { name: string; accentColor: string | null } | null;
+  owned: boolean;
+}
+
+export type OrderStatus = "PENDING_PAYMENT" | "PAID" | "IN_PROGRESS" | "DELIVERED" | "CANCELED" | "REFUNDED";
+
+export interface ServiceOrderSummary {
+  id: string;
+  kind: ServiceKind;
+  tierId: string;
+  beat: { slug: string; title: string } | null;
+  notes: string;
+  scheduledFor: string | null;
+  paidWith: "CREDITS" | "CARD";
+  creditsSpent: number;
+  amountCents: number;
+  discountPct: number;
+  status: OrderStatus;
+  createdAt: string;
+}
+
+export interface GiftCardSummary {
+  id: string;
+  code: string;
+  credits: number;
+  recipientName: string | null;
+  redeemed: boolean;
+  createdAt: string;
+}
+
+export interface AuctionSummary {
+  id: string;
+  beat: BeatSummary;
+  startsAt: string;
+  endsAt: string;
+  phase: "SCHEDULED" | "LIVE" | "ENDED";
+  status: "OPEN" | "AWAITING_PAYMENT" | "PAID" | "UNSOLD";
+  live: boolean;
+  startPriceCents: number;
+  minIncrementCents: number;
+  topBidCents: number | null;
+  minNextBidCents: number;
+  bidCount: number;
+  /** Nome d'artista del miglior offerente (o del vincitore). */
+  leader: string | null;
+  bids: Array<{ artist: string; amountCents: number; at: string }>;
+  viewer: { isLeader: boolean; isWinner: boolean; payBy: string | null; earlyAccess: boolean } | null;
+}
+
+/** Dati per l'overlay della diretta TikTok (app overlay-live). */
+export interface LiveOverlay {
+  auction: AuctionSummary | null;
+  /** Coda dei pezzi da ascoltare stasera, prima chi ha pagato di più. */
+  queue: Array<{ artist: string; tier: string; tierName: string }>;
+  updatedAt: string;
+}
+
+/** Esito di un acquisto: fatto subito (crediti) o da completare su Stripe (carta). */
+export type PurchaseResponse = { kind: "done"; balance: number; message: string } | { kind: "redirect"; url: string };
 
 export interface ApiError {
   error: { code: string; message: string };

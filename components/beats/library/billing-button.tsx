@@ -2,18 +2,20 @@
 
 import { Loader2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import type { PlanTier } from "@/lib/beats/plans";
+import type { PlanInterval, PlanTier } from "@/lib/beats/plans";
 import { api, ApiRequestError } from "../providers";
 import { ChromeButton } from "../ui/chrome-button";
 
 /** Avvia il checkout Stripe di un piano o apre il portale clienti. */
 export function BillingButton({
   tier,
+  interval = "MONTH",
   variant = "electric",
   children,
   className,
 }: {
   tier?: PlanTier;
+  interval?: PlanInterval;
   variant?: "electric" | "chrome" | "obsidian";
   children: ReactNode;
   className?: string;
@@ -27,7 +29,7 @@ export function BillingButton({
     try {
       const { url } = await api<{ url: string }>(tier ? "/api/billing/checkout" : "/api/billing/portal", {
         method: "POST",
-        body: tier ? JSON.stringify({ tier }) : undefined,
+        body: tier ? JSON.stringify({ tier, interval }) : undefined,
       });
       window.location.assign(url);
     } catch (e) {

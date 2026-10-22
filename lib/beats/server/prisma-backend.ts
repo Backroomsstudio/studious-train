@@ -7,10 +7,13 @@ import type { BeatDetail, BeatSummary, CustomizationSummary, Facets, ProjectSumm
 import { NEW_WINDOW_DAYS } from "../drops";
 import type { FileTarget, StoreBackend } from "./backend";
 import { StoreError } from "./errors";
+import { levelInfo } from "../offers";
+import { ensureReferralCode, residentMonths } from "./commerce";
 import { activeTier, requestCustomization, unlockWithCredits } from "./ledger";
 import { getDb } from "./prisma";
+import { createPrismaCommerce } from "./prisma-commerce";
 
-const beatInclude = (now: Date) =>
+export const beatInclude = (now: Date) =>
   ({
     producers: { include: { producer: true }, orderBy: { role: "asc" } },
     genres: { include: { parent: { select: { slug: true } } } },
@@ -20,7 +23,7 @@ const beatInclude = (now: Date) =>
 
 type BeatRow = Prisma.BeatGetPayload<{ include: ReturnType<typeof beatInclude> }>;
 
-function toSummary(row: BeatRow): BeatSummary {
+export function toSummary(row: BeatRow): BeatSummary {
   const deal = row.deals[0];
   return {
     id: row.id,
@@ -130,6 +133,8 @@ export function createPrismaBackend(): StoreBackend {
   const db = getDb();
 
   return {
+    ...createPrismaCommerce(),
+
     async search(filters) {
       const now = new Date();
       const where = whereFor(filters);
@@ -233,7 +238,11 @@ export function createPrismaBackend(): StoreBackend {
       });
       if (!user) return null;
       const sub = user.subscriptions[0];
-      const tier = await activeTier(db, userId);
+      const [tier, months, referralCode] = await Promise.all([
+        activeTier(db, userId),
+        residentMonths(db, userId),
+        user.referralCode ?? ensureReferralCode(db, userId, user.artistName ?? user.name),
+      ]);
       const owned: Record<string, LicenseType[]> = {};
       for (const l of user.licenses) (owned[l.beatId] ??= []).push(l.type);
       return {
@@ -241,14 +250,19 @@ export function createPrismaBackend(): StoreBackend {
         name: user.name ?? user.email ?? "Artista",
         artistName: user.artistName,
         image: user.image,
-        creditBalance: user.creditBalance,
+        creditBalance: user.creditBalance + user.walletCredits,
+        credits: { subscription: user.creditBalance, wallet: user.walletCredits },
+        level: levelInfo(months),
+        referralCode,
         plan:
           sub && tier
             ? {
                 tier,
+                interval: sub.interval,
                 status: sub.status,
                 renewsAt: sub.currentPeriodEnd.toISOString(),
                 cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+                pausedUntil: sub.pausedUntil && sub.pausedUntil > new Date() ? sub.pausedUntil.toISOString() : null,
               }
             : null,
         owned,

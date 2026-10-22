@@ -64,7 +64,7 @@ function ErrorLine({ state }: { state: AuthFormState }) {
   );
 }
 
-export function AuthForms({ initialMode = "login" }: { initialMode?: "login" | "signup" }) {
+export function AuthForms({ initialMode = "login", invite }: { initialMode?: "login" | "signup"; invite?: string }) {
   const [mode, setMode] = useState(initialMode);
   const [loginState, login, loggingIn] = useActionState(loginAction, {});
   const [signupState, signup, signingUp] = useActionState(signupAction, {});
@@ -111,6 +111,14 @@ export function AuthForms({ initialMode = "login" }: { initialMode?: "login" | "
         </form>
       ) : (
         <form action={signup} className="space-y-3">
+          {invite && (
+            <>
+              <input type="hidden" name="invite" value={invite} />
+              <p className="rounded-2xl bg-electric/10 px-4 py-3 text-sm font-semibold text-electric">
+                Sei stato invitato: con il primo abbonamento ricevi 5 crediti in regalo.
+              </p>
+            </>
+          )}
           {/* Anteprima del nome come apparirà nella home */}
           <div className="obsidian rounded-3xl px-5 py-6 text-center">
             <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-electric-cyan">Il tuo nome nel Beat Store</p>

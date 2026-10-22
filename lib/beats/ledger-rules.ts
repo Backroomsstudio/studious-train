@@ -61,3 +61,42 @@ export function checkUnlock(input: {
   if (input.balance < cost) return { ok: false, reason: "INSUFFICIENT_CREDITS", cost };
   return { ok: true, cost };
 }
+
+/** Saldo diviso nelle due borse: abbonamento (scade) e portafoglio (non scade). */
+export interface Wallet {
+  subscription: number;
+  wallet: number;
+}
+
+export const totalCredits = (w: Wallet) => w.subscription + w.wallet;
+
+/**
+ * Da quale borsa esce una spesa: prima i crediti dell'abbonamento (che altrimenti scadrebbero),
+ * poi il portafoglio. `null` se il totale non basta.
+ */
+export function splitDebit(w: Wallet, cost: number): { fromSubscription: number; fromWallet: number } | null {
+  if (cost < 0 || totalCredits(w) < cost) return null;
+  const fromSubscription = Math.min(w.subscription, cost);
+  return { fromSubscription, fromWallet: cost - fromSubscription };
+}
+
+/** Data + n mesi (il 31 gennaio + 1 mese diventa l'ultimo di febbraio, non il 3 marzo). */
+export function addMonths(date: Date, months: number): Date {
+  const d = new Date(date);
+  const day = d.getUTCDate();
+  d.setUTCDate(1);
+  d.setUTCMonth(d.getUTCMonth() + months);
+  const last = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+  d.setUTCDate(Math.min(day, last));
+  return d;
+}
+
+/**
+ * Piani annuali: quante mensilità di crediti sono già iniziate nel periodo (1..12).
+ * La prima arriva con la fattura, le altre dal cron mensile.
+ */
+export function yearlyMonthsStarted(periodStart: Date, now: Date): number {
+  let n = 0;
+  while (n < 12 && addMonths(periodStart, n) <= now) n++;
+  return n;
+}

@@ -8,6 +8,9 @@
  * - Niente doppie spese: `License(userId, beatId, type)` è unica; due sblocchi concorrenti
  *   dello stesso beat fanno fallire il secondo e il suo addebito viene annullato dal rollback.
  * - Niente doppi accrediti: le righe generate dai webhook hanno un `idempotencyKey` unico.
+ * - Due borse: crediti dell'abbonamento (`creditBalance`, con rollover e scadenza) e portafoglio
+ *   (`walletCredits`, mai in scadenza). Ogni spesa passa da `debit`, che pesca prima
+ *   dall'abbonamento; `balanceAfter` nel mastro è il totale, `walletAmount` la parte del portafoglio.
  */
 import { Prisma, type PlanTier, type LicenseType } from "@/lib/generated/prisma/client";
 import {
@@ -17,13 +20,13 @@ import {
   type CustomizationOption,
 } from "../customizations";
 import { LICENSES } from "../licenses";
-import { checkUnlock, planCycleGrant, type CycleReason } from "../ledger-rules";
+import { checkUnlock, planCycleGrant, splitDebit, totalCredits, type CycleReason, type Wallet } from "../ledger-rules";
 import { StoreError } from "./errors";
 import type { Db } from "./prisma";
 
-type Tx = Prisma.TransactionClient;
+export type Tx = Prisma.TransactionClient;
 
-const isUniqueViolation = (error: unknown) =>
+export const isUniqueViolation = (error: unknown) =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
 
 /** Piano attivo dell'utente (gli abbonamenti cancellati restano validi fino a fine periodo). */
@@ -36,11 +39,27 @@ export async function activeTier(db: Db | Tx, userId: string, now = new Date()):
   return sub?.tier ?? null;
 }
 
-async function lockBalance(tx: Tx, userId: string): Promise<number> {
-  const rows = await tx.$queryRaw<Array<{ creditBalance: number }>>`
-    SELECT "creditBalance" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
+/** Blocca la riga dell'utente fino a fine transazione e legge le due borse. */
+export async function lockWallet(tx: Tx, userId: string): Promise<Wallet> {
+  const rows = await tx.$queryRaw<Array<{ creditBalance: number; walletCredits: number }>>`
+    SELECT "creditBalance", "walletCredits" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
   if (!rows[0]) throw new StoreError("NOT_FOUND", "Utente inesistente.");
-  return rows[0].creditBalance;
+  return { subscription: rows[0].creditBalance, wallet: rows[0].walletCredits };
+}
+
+/**
+ * Addebito su una riga già bloccata: UPDATE condizionato su entrambe le borse, così anche un
+ * errore di logica non può mai portare un saldo sotto zero.
+ */
+export async function debit(tx: Tx, userId: string, w: Wallet, cost: number) {
+  const split = splitDebit(w, cost);
+  if (!split) throw new StoreError("INSUFFICIENT_CREDITS");
+  const debited = await tx.user.updateMany({
+    where: { id: userId, creditBalance: { gte: split.fromSubscription }, walletCredits: { gte: split.fromWallet } },
+    data: { creditBalance: { decrement: split.fromSubscription }, walletCredits: { decrement: split.fromWallet } },
+  });
+  if (debited.count !== 1) throw new StoreError("INSUFFICIENT_CREDITS");
+  return { walletAmount: -split.fromWallet, balanceAfter: totalCredits(w) - cost };
 }
 
 export interface UnlockResult {
@@ -63,12 +82,15 @@ export async function unlockWithCredits(
       });
       if (existing) {
         if (existing.status === "REVOKED") throw new StoreError("LICENSE_REVOKED");
-        const user = await tx.user.findUniqueOrThrow({ where: { id: input.userId }, select: { creditBalance: true } });
+        const user = await tx.user.findUniqueOrThrow({
+          where: { id: input.userId },
+          select: { creditBalance: true, walletCredits: true },
+        });
         return {
           licenseId: existing.id,
           type: existing.type,
           createdAt: existing.createdAt,
-          balance: user.creditBalance,
+          balance: user.creditBalance + user.walletCredits,
           alreadyOwned: true,
         };
       }
@@ -87,16 +109,10 @@ export async function unlockWithCredits(
       }
 
       const tier = await activeTier(tx, input.userId, now);
-      const balance = await lockBalance(tx, input.userId);
-      const check = checkUnlock({ tier, balance, license: input.license, discountPct: beat.deals[0]?.discountPct });
+      const wallet = await lockWallet(tx, input.userId);
+      const check = checkUnlock({ tier, balance: totalCredits(wallet), license: input.license, discountPct: beat.deals[0]?.discountPct });
       if (!check.ok) throw new StoreError(check.reason);
-
-      const debited = await tx.user.updateMany({
-        where: { id: input.userId, creditBalance: { gte: check.cost } },
-        data: { creditBalance: { decrement: check.cost } },
-      });
-      if (debited.count !== 1) throw new StoreError("INSUFFICIENT_CREDITS");
-      const balanceAfter = balance - check.cost;
+      const { walletAmount, balanceAfter } = await debit(tx, input.userId, wallet, check.cost);
 
       const license = await tx.license.create({
         data: {
@@ -112,6 +128,7 @@ export async function unlockWithCredits(
           userId: input.userId,
           type: "UNLOCK",
           amount: -check.cost,
+          walletAmount,
           balanceAfter,
           description: `${LICENSES[input.license].name}`,
           licenseId: license.id,
@@ -130,8 +147,11 @@ export async function unlockWithCredits(
 }
 
 /**
- * Accredito del periodo dopo una fattura pagata. Idempotente per fattura.
- * Restituisce `false` se la fattura era già stata accreditata.
+ * Accredito di un mese di abbonamento. Idempotente per `cycleKey`: l'id della fattura per i
+ * mensili, `<abbonamento>:<inizio periodo>:m<n>` per i mesi successivi al primo degli annuali.
+ * Restituisce `false` se il mese era già stato accreditato.
+ *
+ * Le chiavi `grant:*` contano i mesi da Resident (livelli); gli upgrade usano `upgrade:*`.
  */
 export async function grantCycleCredits(
   db: Db,
@@ -139,14 +159,17 @@ export async function grantCycleCredits(
     userId: string;
     subscriptionId: string;
     tier: PlanTier;
-    invoiceId: string;
+    cycleKey: string;
+    invoiceId?: string;
     reason: CycleReason;
+    /** Inizio del mese di crediti (per gli annuali è l'inizio della mensilità, non dell'anno). */
     periodStart: Date;
   },
 ): Promise<boolean> {
   try {
     await db.$transaction(async (tx) => {
-      const balance = await lockBalance(tx, input.userId);
+      const w = await lockWallet(tx, input.userId);
+      const balance = w.subscription;
       const granted = await tx.creditTransaction.aggregate({
         where: {
           subscriptionId: input.subscriptionId,
@@ -168,11 +191,11 @@ export async function grantCycleCredits(
             userId: input.userId,
             type: "ROLLOVER_EXPIRY",
             amount: -plan.expire,
-            balanceAfter: plan.balanceAfterExpiry,
+            balanceAfter: plan.balanceAfterExpiry + w.wallet,
             description: "Crediti oltre il tetto di rollover",
             subscriptionId: input.subscriptionId,
             stripeInvoiceId: input.invoiceId,
-            idempotencyKey: `rollover:${input.invoiceId}`,
+            idempotencyKey: `rollover:${input.cycleKey}`,
           },
         });
       }
@@ -182,11 +205,11 @@ export async function grantCycleCredits(
             userId: input.userId,
             type: "SUBSCRIPTION_GRANT",
             amount: plan.grant,
-            balanceAfter: plan.balanceAfter,
+            balanceAfter: plan.balanceAfter + w.wallet,
             description: input.reason === "upgrade" ? "Integrazione per upgrade" : "Crediti del mese",
             subscriptionId: input.subscriptionId,
             stripeInvoiceId: input.invoiceId,
-            idempotencyKey: `grant:${input.invoiceId}`,
+            idempotencyKey: `${input.reason === "upgrade" ? "upgrade" : "grant"}:${input.cycleKey}`,
           },
         });
       }
@@ -199,7 +222,7 @@ export async function grantCycleCredits(
   }
 }
 
-/** Fine abbonamento: i crediti residui scadono. Idempotente per abbonamento. */
+/** Fine abbonamento: i crediti residui dell'abbonamento scadono (il portafoglio resta). Idempotente. */
 export async function expireCreditsAtSubscriptionEnd(
   db: Db,
   input: { userId: string; subscriptionId: string },
@@ -208,14 +231,15 @@ export async function expireCreditsAtSubscriptionEnd(
     await db.$transaction(async (tx) => {
       // Se nel frattempo è partito un altro abbonamento attivo, i crediti restano.
       if (await activeTier(tx, input.userId)) return;
-      const balance = await lockBalance(tx, input.userId);
+      const w = await lockWallet(tx, input.userId);
+      const balance = w.subscription;
       if (balance === 0) return;
       await tx.creditTransaction.create({
         data: {
           userId: input.userId,
           type: "SUBSCRIPTION_END_EXPIRY",
           amount: -balance,
-          balanceAfter: 0,
+          balanceAfter: w.wallet,
           description: "Abbonamento terminato",
           subscriptionId: input.subscriptionId,
           idempotencyKey: `end:${input.subscriptionId}`,
@@ -240,7 +264,7 @@ export interface CustomizationInput {
 
 /**
  * Richiesta di personalizzazione: addebito, richiesta e riga del mastro nella stessa transazione,
- * con lo stesso UPDATE condizionato dello sblocco (mai saldo negativo). Le richieste aperte per
+ * con lo stesso addebito condizionato dello sblocco (mai saldo negativo). Le richieste aperte per
  * artista sono limitate, così i produttori non vanno in sovraccarico.
  */
 export async function requestCustomization(db: Db, input: CustomizationInput) {
@@ -251,20 +275,14 @@ export async function requestCustomization(db: Db, input: CustomizationInput) {
     if (!beat) throw new StoreError("NOT_FOUND", "Beat non disponibile.");
     if (!(await activeTier(tx, input.userId, now))) throw new StoreError("PLAN_REQUIRED", "Serve un abbonamento attivo per le personalizzazioni.");
 
-    const balance = await lockBalance(tx, input.userId);
+    const wallet = await lockWallet(tx, input.userId);
     const open = await tx.customizationRequest.count({
       where: { userId: input.userId, status: { in: ["REQUESTED", "IN_PROGRESS"] } },
     });
     if (open >= CUSTOMIZATION_MAX_OPEN) {
       throw new StoreError("BAD_REQUEST", `Hai già ${open} personalizzazioni in corso: aspetta la consegna di una.`);
     }
-    if (balance < cost) throw new StoreError("INSUFFICIENT_CREDITS");
-
-    const debited = await tx.user.updateMany({
-      where: { id: input.userId, creditBalance: { gte: cost } },
-      data: { creditBalance: { decrement: cost } },
-    });
-    if (debited.count !== 1) throw new StoreError("INSUFFICIENT_CREDITS");
+    const { walletAmount, balanceAfter } = await debit(tx, input.userId, wallet, cost);
 
     const request = await tx.customizationRequest.create({
       data: {
@@ -283,11 +301,12 @@ export async function requestCustomization(db: Db, input: CustomizationInput) {
         userId: input.userId,
         type: "CUSTOMIZATION",
         amount: -cost,
-        balanceAfter: balance - cost,
+        walletAmount,
+        balanceAfter,
         description: `Personalizzazione · ${beat.title}`,
         customizationId: request.id,
       },
     });
-    return { request, balance: balance - cost };
+    return { request, balance: balanceAfter };
   });
 }

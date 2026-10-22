@@ -100,12 +100,14 @@ TEST_DATABASE_URL=… npm run test:beats  # regole, firme, filtri e mastro credi
 
 | Dove | Cosa |
 | --- | --- |
-| `lib/beats/plans.ts` | Piani (prezzo, crediti/mese, tetto di rollover, licenze incluse, vantaggi) |
+| `lib/beats/plans.ts` | Piani (prezzo mensile e annuale, crediti/mese, tetto di rollover, licenze incluse, vantaggi) |
+| `lib/beats/offers.ts` | Tutto il resto che si vende: servizi dello studio, kit e preset, ricariche, gift card, aste, livelli Resident, inviti, pausa |
 | `lib/beats/licenses.ts` | Licenze: costo in crediti, file inclusi, termini |
 | `prisma/schema.prisma` | Schema: utenti, abbonamenti, mastro crediti, beat, produttori, generi, type beat, licenze, download, progetti |
 | `lib/beats/server/ledger.ts` | Sblocco atomico e accrediti idempotenti (lock di riga, UPDATE condizionato, vincoli unici) |
-| `lib/beats/server/billing.ts` | Checkout, portale clienti e webhook Stripe |
-| `app/api/` | `beats` (ricerca), `beats/[id]/preview`, `beats/[id]/unlock`, `downloads`, `me`, `billing/*`, `webhooks/stripe` |
+| `lib/beats/server/commerce.ts` | Portafoglio, gift card, inviti, livelli, servizi, prodotti, aste ed evasione dei pagamenti con carta |
+| `lib/beats/server/billing.ts` | Checkout (abbonamenti e pagamenti singoli), pausa, portale clienti, webhook Stripe, cron |
+| `app/api/` | `beats` (ricerca), `beats/[id]/preview`, `beats/[id]/unlock`, `downloads`, `me`, `billing/*`, `webhooks/stripe`, `checkout`, `services`, `products/[id]/*`, `gift/redeem`, `auctions/[id]`, `live/overlay`, `cron/scheduled` |
 | `components/beats/` | Design system (`ui/`), player persistente (`player/`), catalogo e filtri (`marketplace/`), home, modale di sblocco |
 
 **Accesso:** ogni artista crea il profilo con nome d'artista, email e password personale (`/beats/accedi`).
@@ -119,8 +121,25 @@ Sblocco: `POST /api/beats/:id/unlock` addebita, crea la licenza e la riga del ma
 link di download firmati (HMAC, 15 minuti); `/api/downloads` ricontrolla sessione e licenza e reindirizza a un URL R2
 valido 60 secondi.
 
+**Oltre all'abbonamento** (`/beats/studio`, `/beats/kit`, `/beats/aste`, `/beats/piani`, `/beats/libreria`):
+
+- *Due borse di crediti:* quelli del piano (rollover e scadenza) e il portafoglio (ricariche, gift card, inviti: non scadono).
+  Ogni spesa pesca prima dal piano, poi dal portafoglio.
+- *Servizi dello studio:* "Dal beat alla hit" (199/299/399 €, include la licenza del beat), Mix & Master online, feedback 1:1,
+  slot nella live TikTok (Skip, Super Skip, Throne), uscita guidata. In crediti dove previsto, altrimenti carta con lo sconto del livello.
+- *Kit, sample pack e preset voce:* in crediti o con carta; archivi su R2 in `products/<slug>.zip`.
+- *Aste delle esclusive:* rilancio minimo, anti-cecchino (+60 s), il vincitore paga entro 48 ore o passa al secondo
+  (un pagamento fuori tempo viene rimborsato in automatico). L'overlay della diretta legge `GET /api/live/overlay`.
+- *Livelli Resident* (Bronze → Platinum) contati dai mesi pagati: sconto sui servizi, drop in anticipo, prelazione sulle aste.
+- *Inviti:* `/beats/accedi?invito=CODICE`, 5 crediti a testa al primo pagamento dell'invitato.
+- *Annuale con 2 mesi gratis* e *pausa di un mese* al posto della disdetta (una ogni 6 mesi).
+
+I pagamenti singoli sono Stripe Checkout in modalità `payment` con prezzo calcolato dal server; il webhook
+`checkout.session.completed` li evade in modo idempotente. Configurare un cron orario su `/api/cron/scheduled`.
+
 **File su R2:** `beats/<slug>/preview.mp3` (anteprima a basso bitrate con tag vocale), `master.mp3`, `master.wav`, `stems.zip`.
 Il bucket resta privato.
 
 **Prima del lancio:** sostituire il catalogo dimostrativo con i beat reali, verificare prezzi/crediti/vantaggi in
-`plans.ts`, configurare su Stripe i 3 prezzi e il webhook, scrivere il contratto di licenza.
+`plans.ts`, configurare su Stripe i 6 prezzi (mensili e annuali) e il webhook, il cron orario, caricare kit e preset su R2,
+scrivere il contratto di licenza e quello di esclusiva.

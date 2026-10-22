@@ -94,8 +94,20 @@ export async function signupAction(_prev: AuthFormState, formData: FormData): Pr
   const existing = await db.user.findUnique({ where: { email }, select: { id: true } });
   if (existing) return { error: "Esiste già un profilo con questa email: accedi.", fields };
 
+  // Invito: si collega a chi ha invitato; i crediti arrivano al primo pagamento (vedi rewardReferral).
+  const inviteCode = String(formData.get("invite") ?? "").trim().toUpperCase().slice(0, 16);
+  const inviter = inviteCode ? await db.user.findUnique({ where: { referralCode: inviteCode }, select: { id: true } }) : null;
+
   try {
-    await db.user.create({ data: { email, artistName, name: artistName, passwordHash: await hashPassword(password) } });
+    await db.user.create({
+      data: {
+        email,
+        artistName,
+        name: artistName,
+        passwordHash: await hashPassword(password),
+        referredById: inviter?.id,
+      },
+    });
   } catch {
     // Due registrazioni contemporanee con la stessa email: vince la prima (email unica nel DB).
     return { error: "Esiste già un profilo con questa email: accedi.", fields };

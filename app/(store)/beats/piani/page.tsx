@@ -1,9 +1,7 @@
-import { Check, Zap } from "lucide-react";
-import { BillingButton } from "@/components/beats/library/billing-button";
-import { GlowBadge } from "@/components/beats/ui/glow-badge";
-import { cn } from "@/lib/cn";
+import Link from "next/link";
+import { GiftShop, PlanGrid, RedeemGift, TopupPacks } from "@/components/beats/commerce/plans-shop";
 import { LICENSE_ORDER, LICENSES } from "@/lib/beats/licenses";
-import { formatEuro, PLAN_ORDER, PLANS } from "@/lib/beats/plans";
+import { PLAN_ORDER, PLANS } from "@/lib/beats/plans";
 import { getViewer } from "@/lib/beats/server/queries";
 
 export const metadata = { title: "Piani" };
@@ -19,54 +17,17 @@ export default async function PlansPage() {
         <h1 className="chrome-text mt-1 font-display text-4xl font-black tracking-tight sm:text-5xl">Crediti ogni mese</h1>
         <p className="mt-3 text-[15px] leading-relaxed text-chrome-500">
           Ogni mese ricevi crediti da spendere su beat, WAV e stems. Quelli che non usi passano al mese dopo (fino al tetto del piano).
-          Cambi piano o disdici quando vuoi.
+          Cambi piano, lo metti in pausa o disdici quando vuoi. Con l&apos;annuale paghi 10 mesi e ne ricevi 12.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {PLAN_ORDER.map((tier) => {
-          const plan = PLANS[tier];
-          const current = tier === currentTier;
-          return (
-            <article
-              key={tier}
-              className={cn(
-                "relative flex flex-col rounded-[28px] p-6",
-                plan.highlighted ? "obsidian ring-1 ring-electric/50 shadow-glow" : "glass",
-              )}
-            >
-              {plan.highlighted && (
-                <GlowBadge tone="electric" className="absolute right-5 top-5 bg-electric text-white">
-                  Il più scelto
-                </GlowBadge>
-              )}
-              <h2 className="font-display text-xl font-bold">{plan.name}</h2>
-              <p className="mt-4 flex items-baseline gap-1">
-                <span className="font-display text-4xl font-black tracking-tight">{formatEuro(plan.priceCents)}</span>
-                <span className={cn("text-sm", plan.highlighted ? "text-chrome-400" : "text-chrome-500")}>/mese</span>
-              </p>
-              <p className={cn("mt-2 inline-flex items-center gap-1.5 font-mono text-sm font-bold", plan.highlighted ? "text-electric-cyan" : "text-electric")}>
-                <Zap className="size-4 fill-current" /> {plan.monthlyCredits} crediti / mese
-              </p>
-              <ul className="mt-5 flex-1 space-y-2.5 text-sm">
-                {plan.perks.map((perk) => (
-                  <li key={perk} className="flex gap-2">
-                    <Check className={cn("mt-0.5 size-4 shrink-0", plan.highlighted ? "text-electric-cyan" : "text-electric")} /> {perk}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-6">
-                {current ? (
-                  <BillingButton variant={plan.highlighted ? "chrome" : "obsidian"}>Gestisci il piano</BillingButton>
-                ) : (
-                  <BillingButton tier={tier} variant={plan.highlighted ? "electric" : "obsidian"}>
-                    {currentTier ? `Passa a ${plan.name}` : `Scegli ${plan.name}`}
-                  </BillingButton>
-                )}
-              </div>
-            </article>
-          );
-        })}
+      <PlanGrid currentTier={currentTier} />
+
+      <TopupPacks viewer={viewer} />
+
+      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <GiftShop viewer={viewer} />
+        <RedeemGift />
       </div>
 
       <section aria-labelledby="licenze-title" className="glass rounded-[28px] p-5 sm:p-6">
@@ -102,7 +63,9 @@ export default async function PlansPage() {
             </tbody>
           </table>
         </div>
-        <p className="mt-3 text-xs text-chrome-500">Le esclusive non passano dai crediti: scrivici per trattare direttamente con i produttori.</p>
+        <p className="mt-3 text-xs text-chrome-500">
+          Le esclusive non passano dai crediti: si vincono nelle <Link href="/beats/aste" className="font-semibold text-electric">aste</Link>, anche in diretta su TikTok.
+        </p>
       </section>
     </div>
   );

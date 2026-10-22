@@ -22,6 +22,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         cache: "public, max-age=86400, immutable",
       });
     }
+    if (target.kind === "text") throw new StoreError("NOT_FOUND", "File non disponibile.");
     const url = await presignObject(target.objectKey, { expiresIn: 600, contentType: target.contentType });
     return Response.redirect(url, 302);
   } catch (error) {

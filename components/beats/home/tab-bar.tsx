@@ -14,7 +14,7 @@ export function TabBar() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-white/70 bg-white/70 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 lg:hidden"
     >
       <ul className="mx-auto grid h-[4.5rem] max-w-lg grid-cols-5">
-        {NAV_ITEMS.map(({ href, label, icon: Icon, match }) => {
+        {NAV_ITEMS.filter((item) => !item.desktopOnly).map(({ href, label, icon: Icon, match }) => {
           const active = match(pathname);
           return (
             <li key={href}>

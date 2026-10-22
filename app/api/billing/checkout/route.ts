@@ -6,7 +6,10 @@ import { errorResponse, StoreError } from "@/lib/beats/server/errors";
 import { assertSameOrigin, readJson, requestOrigin } from "@/lib/beats/server/http";
 import { requireUserId } from "@/lib/beats/server/session";
 
-const bodySchema = z.object({ tier: z.enum(PLAN_ORDER as [PlanTier, ...PlanTier[]]) });
+const bodySchema = z.object({
+  tier: z.enum(PLAN_ORDER as [PlanTier, ...PlanTier[]]),
+  interval: z.enum(["MONTH", "YEAR"]).default("MONTH"),
+});
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +18,7 @@ export async function POST(request: Request) {
     const userId = await requireUserId();
     const parsed = bodySchema.safeParse(await readJson(request));
     if (!parsed.success) throw new StoreError("BAD_REQUEST", "Piano non valido.");
-    const url = await createCheckoutSession(userId, parsed.data.tier, requestOrigin(request));
+    const url = await createCheckoutSession(userId, parsed.data.tier, requestOrigin(request), parsed.data.interval);
     return Response.json({ url });
   } catch (error) {
     return errorResponse(error);

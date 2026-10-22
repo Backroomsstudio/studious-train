@@ -4,6 +4,9 @@
 // - Il saldo crediti (`User.creditBalance`) è una cache: la fonte di verità è il libro mastro
 //   append-only `CreditTransaction`. Ogni movimento aggiorna entrambi nella stessa transazione,
 //   con un UPDATE condizionato (`creditBalance >= costo`) che rende impossibile il saldo negativo.
+// - Due borse di crediti: `creditBalance` (abbonamento: rollover e scadenza a fine piano) e
+//   `walletCredits` (ricariche, gift card, inviti: non scadono). Le spese pescano prima
+//   dall'abbonamento, poi dal portafoglio; `balanceAfter` nel mastro è sempre il totale.
 // - Ogni effetto di un webhook Stripe è idempotente: `StripeEvent` registra gli eventi già
 //   elaborati e `CreditTransaction.idempotencyKey` impedisce doppi accrediti.
 // - I file audio non sono mai pubblici: nel DB ci sono solo le chiavi degli oggetti su R2,
@@ -45,10 +48,18 @@ model User {
   passwordHash     String?
   role             UserRole  @default(ARTIST)
   stripeCustomerId String?   @unique
-  /// Cache del saldo: aggiornata solo insieme a una riga di CreditTransaction.
+  /// Crediti dell'abbonamento (cache): aggiornati solo insieme a una riga di CreditTransaction.
   creditBalance    Int       @default(0)
+  /// Crediti del portafoglio (ricariche, gift card, inviti): non scadono mai.
+  walletCredits    Int       @default(0)
+  /// Codice personale per invitare altri artisti.
+  referralCode     String?   @unique
+  referredById     String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+
+  referredBy User?  @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals  User[] @relation("Referrals")
 
   accounts       Account[]
   sessions       Session[]
@@ -59,6 +70,12 @@ model User {
   projects       Project[]
   customizations CustomizationRequest[]
   producer       Producer?
+  purchases      ProductPurchase[]
+  orders         ServiceOrder[]
+  bids           Bid[]
+  auctionsWon    Auction[]              @relation("AuctionWinner")
+  giftsBought    GiftCard[]             @relation("GiftPurchaser")
+  giftsRedeemed  GiftCard[]             @relation("GiftRedeemer")
 }
 
 model Account {
@@ -126,17 +143,27 @@ enum SubscriptionStatus {
   CANCELED
 }
 
+enum BillingInterval {
+  MONTH
+  YEAR
+}
+
 model Subscription {
   id                   String             @id @default(cuid())
   userId               String
   stripeSubscriptionId String             @unique
   stripePriceId        String
   tier                 PlanTier
+  /// Annuale: un pagamento, crediti accreditati ogni mese dal cron.
+  interval             BillingInterval    @default(MONTH)
   status               SubscriptionStatus
   currentPeriodStart   DateTime
   currentPeriodEnd     DateTime
   cancelAtPeriodEnd    Boolean            @default(false)
   canceledAt           DateTime?
+  /// Pausa al posto della disdetta: niente addebiti né accrediti fino a questa data.
+  pausedUntil          DateTime?
+  lastPausedAt         DateTime?
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 
@@ -163,14 +190,27 @@ enum CreditTransactionType {
   BONUS
   /// Spesa per una personalizzazione su richiesta.
   CUSTOMIZATION
+  /// Ricarica comprata con carta (portafoglio).
+  TOPUP
+  /// Gift card riscattata (portafoglio).
+  GIFT_REDEEM
+  /// Premio per un invito andato a buon fine (portafoglio).
+  REFERRAL
+  /// Servizio dello studio pagato in crediti.
+  SERVICE
+  /// Drum kit, sample pack o preset pagato in crediti.
+  PRODUCT
 }
 
 model CreditTransaction {
   id              String                @id @default(cuid())
   userId          String
   type            CreditTransactionType
-  /// Positivo = accredito, negativo = addebito.
+  /// Positivo = accredito, negativo = addebito (totale delle due borse).
   amount          Int
+  /// Parte di `amount` che riguarda il portafoglio (il resto riguarda i crediti dell'abbonamento).
+  walletAmount    Int                   @default(0)
+  /// Saldo totale (abbonamento + portafoglio) dopo il movimento.
   balanceAfter    Int
   description     String?
   /// Chiave unica per gli effetti esterni (es. `grant:<invoiceId>`): rende idempotenti i webhook.
@@ -220,8 +260,9 @@ model Producer {
   userId      String?  @unique
   createdAt   DateTime @default(now())
 
-  user  User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
-  beats BeatProducer[]
+  user     User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  beats    BeatProducer[]
+  products Product[]
 }
 
 enum BeatStatus {
@@ -274,6 +315,8 @@ model Beat {
   deals          DailyDeal[]
   projects       Project[]
   customizations CustomizationRequest[]
+  orders         ServiceOrder[]
+  auctions       Auction[]
 
   @@index([status, releasedAt(sort: Desc)])
   @@index([bpm])
@@ -472,4 +515,209 @@ model CustomizationRequest {
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([status, dueAt])
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Prodotti digitali: drum kit, sample pack, preset voce
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+enum ProductKind {
+  DRUM_KIT
+  SAMPLE_PACK
+  VOCAL_PRESET
+}
+
+enum PaymentMethod {
+  CREDITS
+  CARD
+}
+
+model Product {
+  id               String      @id @default(cuid())
+  slug             String      @unique
+  kind             ProductKind
+  title            String
+  description      String
+  /// Contenuto in breve ("42 one-shot", "Preset per FL Studio e Logic").
+  contents         String[]
+  producerId       String?
+  priceCents       Int
+  credits          Int
+  coverColor       String      @default("#0066ff")
+  previewObjectKey String?
+  /// Archivio ZIP su R2, firmato al volo solo per chi l'ha comprato.
+  objectKey        String
+  published        Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+
+  producer  Producer?         @relation(fields: [producerId], references: [id], onDelete: SetNull)
+  purchases ProductPurchase[]
+
+  @@index([published, kind])
+}
+
+model ProductPurchase {
+  id              String        @id @default(cuid())
+  userId          String
+  productId       String
+  paidWith        PaymentMethod
+  creditsSpent    Int           @default(0)
+  amountCents     Int           @default(0)
+  stripeSessionId String?       @unique
+  createdAt       DateTime      @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, productId])
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Servizi dello studio: pacchetto hit, mix & master, feedback, live, uscita
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+enum ServiceKind {
+  HIT_PACKAGE
+  MIX_MASTER
+  FEEDBACK
+  LIVE_SLOT
+  RELEASE
+}
+
+enum ServiceOrderStatus {
+  PENDING_PAYMENT
+  PAID
+  IN_PROGRESS
+  DELIVERED
+  CANCELED
+  REFUNDED
+}
+
+/// Ordine di un servizio (vedi lib/beats/offers.ts per livelli e prezzi).
+model ServiceOrder {
+  id                String             @id @default(cuid())
+  userId            String
+  kind              ServiceKind
+  tierId            String
+  beatId            String?
+  notes             String
+  /// Data o fascia preferita (feedback, live, sessione in studio).
+  scheduledFor      DateTime?
+  paidWith          PaymentMethod
+  creditsSpent      Int                @default(0)
+  amountCents       Int                @default(0)
+  /// Sconto del livello Resident applicato al prezzo in euro.
+  discountPct       Int                @default(0)
+  stripeSessionId   String?            @unique
+  status            ServiceOrderStatus @default(PENDING_PAYMENT)
+  deliveredAt       DateTime?
+  deliveryObjectKey String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  beat Beat? @relation(fields: [beatId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([kind, status, scheduledFor])
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Aste delle esclusive (anche in diretta TikTok tramite l'overlay)
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+enum AuctionStatus {
+  /// Aperta (o programmata, se `startsAt` è nel futuro).
+  OPEN
+  /// Chiusa: il vincitore ha `paymentDueAt` per pagare.
+  AWAITING_PAYMENT
+  PAID
+  /// Chiusa senza offerte valide o senza pagamento.
+  UNSOLD
+}
+
+model Auction {
+  id                String        @id @default(cuid())
+  beatId            String
+  startsAt          DateTime
+  endsAt            DateTime
+  startPriceCents   Int
+  minIncrementCents Int
+  status            AuctionStatus @default(OPEN)
+  /// Asta legata a una diretta (mostrata dall'overlay TikTok).
+  live              Boolean       @default(false)
+  winnerId          String?
+  winningBidCents   Int?
+  paymentDueAt      DateTime?
+  /// Vincitori che non hanno pagato in tempo (l'esclusiva passa all'offerta successiva).
+  skippedUserIds    String[]
+  stripeSessionId   String?       @unique
+  paidAt            DateTime?
+  createdAt         DateTime      @default(now())
+
+  beat   Beat  @relation(fields: [beatId], references: [id], onDelete: Restrict)
+  winner User? @relation("AuctionWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+  bids   Bid[]
+
+  @@index([status, endsAt])
+}
+
+model Bid {
+  id          String   @id @default(cuid())
+  auctionId   String
+  userId      String
+  amountCents Int
+  createdAt   DateTime @default(now())
+
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([auctionId, amountCents])
+  @@index([auctionId, createdAt(sort: Desc)])
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Gift card di crediti
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+model GiftCard {
+  id              String    @id @default(cuid())
+  /// Codice da riscattare (es. BR-7KQ2-M9XA).
+  code            String    @unique
+  credits         Int
+  amountCents     Int
+  recipientName   String?
+  message         String?
+  purchaserId     String?
+  stripeSessionId String?   @unique
+  redeemedById    String?
+  redeemedAt      DateTime?
+  createdAt       DateTime  @default(now())
+
+  purchaser  User? @relation("GiftPurchaser", fields: [purchaserId], references: [id], onDelete: SetNull)
+  redeemedBy User? @relation("GiftRedeemer", fields: [redeemedById], references: [id], onDelete: SetNull)
 }

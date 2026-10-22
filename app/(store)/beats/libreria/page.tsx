@@ -1,4 +1,6 @@
-import { Download, Zap } from "lucide-react";
+import { Download, Gift, Package, Zap } from "lucide-react";
+import { PauseButton, ReferralCard } from "@/components/beats/commerce/account-actions";
+import { LevelCard } from "@/components/beats/commerce/level-card";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BillingButton } from "@/components/beats/library/billing-button";
@@ -9,7 +11,8 @@ import { cn } from "@/lib/cn";
 import { formatDay, formatRelativeDay } from "@/lib/beats/format";
 import { CUSTOMIZATION_OPTIONS, CUSTOMIZATION_STATUS } from "@/lib/beats/customizations";
 import { LICENSES } from "@/lib/beats/licenses";
-import { PLANS } from "@/lib/beats/plans";
+import { findTier, PRODUCT_KINDS, SERVICE_STATUS, SERVICES } from "@/lib/beats/offers";
+import { formatEuro, PLANS } from "@/lib/beats/plans";
 import { SIGN_IN_PATH, signOut } from "@/lib/beats/server/auth";
 import { storeEnv } from "@/lib/beats/server/env";
 import { getBackend } from "@/lib/beats/server/backend";
@@ -27,17 +30,34 @@ const LEDGER_LABELS: Record<string, string> = {
   REFUND: "Rimborso",
   ADJUSTMENT: "Correzione",
   BONUS: "Bonus",
+  TOPUP: "Ricarica",
+  GIFT_REDEEM: "Gift card",
+  REFERRAL: "Invito",
+  SERVICE: "Servizio studio",
+  PRODUCT: "Kit e preset",
 };
 
-export default async function LibraryPage() {
+const NOTICES: Record<string, string> = {
+  ricarica: "Pagamento ricevuto: i crediti della ricarica arrivano nel portafoglio entro pochi secondi.",
+  regalo: "Gift card pagata: trovi il codice qui sotto, pronto da regalare.",
+  ordine: "Ordine confermato: ti scriviamo entro 24 ore per organizzare il lavoro.",
+};
+
+export default async function LibraryPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  const params = await searchParams;
   const viewer = await getViewer();
   if (!viewer) redirect(SIGN_IN_PATH);
   const backend = await getBackend();
-  const [library, ledger, customizations] = await Promise.all([
+  const [library, ledger, customizations, orders, products, giftCards] = await Promise.all([
     backend.library(viewer.id),
     backend.ledger(viewer.id, 15),
     backend.customizations(viewer.id),
+    backend.orders(viewer.id),
+    backend.products(viewer.id),
+    backend.giftCards(viewer.id),
   ]);
+  const ownedProducts = products.filter((p) => p.owned);
+  const notice = Object.keys(NOTICES).find((k) => params[k]);
   const plan = viewer.plan ? PLANS[viewer.plan.tier] : null;
 
   return (
@@ -63,24 +83,39 @@ export default async function LibraryPage() {
         )}
       </div>
 
+      {notice && (
+        <p role="status" className="rounded-2xl bg-ok/10 px-4 py-3 text-sm font-semibold text-ok">
+          {NOTICES[notice]}
+        </p>
+      )}
+
       <section className="obsidian grid gap-5 rounded-[28px] p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6" aria-label="Piano e crediti">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-chrome-400">Il tuo piano</p>
           <p className="mt-1 font-display text-2xl font-bold">{plan?.name ?? "Nessun abbonamento"}</p>
           {viewer.plan && (
             <p className="mt-1 text-sm text-chrome-300">
-              {viewer.plan.cancelAtPeriodEnd ? "Termina" : "Si rinnova"} il {formatDay(viewer.plan.renewsAt)}
-              {plan && ` · +${plan.monthlyCredits} crediti`}
+              {viewer.plan.pausedUntil
+                ? `In pausa fino al ${formatDay(viewer.plan.pausedUntil)}`
+                : `${viewer.plan.cancelAtPeriodEnd ? "Termina" : "Si rinnova"} il ${formatDay(viewer.plan.renewsAt)}`}
+              {plan && !viewer.plan.pausedUntil && ` · +${plan.monthlyCredits} crediti`}
+              {viewer.plan.interval === "YEAR" && " · annuale"}
             </p>
           )}
           <p className="mt-4 inline-flex items-center gap-2 font-mono text-3xl font-black text-electric-cyan drop-shadow-[0_0_12px_rgba(0,240,255,0.5)]">
             <Zap className="size-6 fill-current" /> {viewer.creditBalance}
             <span className="font-sans text-sm font-medium text-chrome-400">crediti</span>
           </p>
+          <p className="mt-1 text-xs text-chrome-400">
+            {viewer.credits.subscription} del piano (rollover) · {viewer.credits.wallet} nel portafoglio (non scadono)
+          </p>
         </div>
-        <div className="sm:w-56">
+        <div className="space-y-2 sm:w-56">
           {viewer.plan ? (
-            <BillingButton variant="chrome">Gestisci abbonamento</BillingButton>
+            <>
+              <BillingButton variant="chrome">Gestisci abbonamento</BillingButton>
+              <PauseButton pausedUntil={viewer.plan.pausedUntil} />
+            </>
           ) : (
             <ChromeLink href="/beats/piani" variant="electric" size="lg" className="w-full">
               Scegli un piano
@@ -88,6 +123,88 @@ export default async function LibraryPage() {
           )}
         </div>
       </section>
+
+      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
+        <LevelCard level={viewer.level} />
+        {viewer.referralCode && <ReferralCard code={viewer.referralCode} />}
+      </div>
+
+      {orders.length > 0 && (
+        <section aria-labelledby="ordini-title" className="space-y-3">
+          <h2 id="ordini-title" className="font-display text-xl font-bold">
+            Ordini allo studio <span className="text-chrome-400">· {orders.length}</span>
+          </h2>
+          <ul className="space-y-2">
+            {orders.map((o) => (
+              <li key={o.id} className="glass flex flex-col gap-2 rounded-2xl p-4 sm:flex-row sm:items-center">
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-display font-semibold">
+                    {SERVICES[o.kind].name} · {findTier(o.kind, o.tierId)?.name ?? o.tierId}
+                  </span>
+                  <span className="block truncate text-[13px] text-chrome-500">
+                    {o.beat ? `${o.beat.title} · ` : ""}
+                    {o.scheduledFor ? `${formatDay(o.scheduledFor)} · ` : ""}
+                    {o.paidWith === "CREDITS" ? `${o.creditsSpent} crediti` : formatEuro(o.amountCents)}
+                    {o.discountPct ? ` (-${o.discountPct}% Resident)` : ""}
+                  </span>
+                </span>
+                <GlowBadge tone={o.status === "DELIVERED" ? "ok" : o.status === "CANCELED" || o.status === "REFUNDED" ? "chrome" : "studio"}>
+                  {SERVICE_STATUS[o.status]}
+                </GlowBadge>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {(ownedProducts.length > 0 || giftCards.length > 0) && (
+        <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
+          {ownedProducts.length > 0 && (
+            <section aria-labelledby="kit-title" className="glass rounded-[28px] p-5">
+              <h2 id="kit-title" className="flex items-center gap-2 font-display text-xl font-bold">
+                <Package className="size-5 text-electric" /> Kit e preset
+              </h2>
+              <ul className="mt-3 space-y-2">
+                {ownedProducts.map((p) => (
+                  <li key={p.id} className="flex items-center justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold">{p.title}</span>
+                      <span className="text-xs text-chrome-500">{PRODUCT_KINDS[p.kind]}</span>
+                    </span>
+                    <a
+                      href={`/api/products/${encodeURIComponent(p.id)}/download`}
+                      download
+                      className="chrome-surface inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold hover:shadow-glow-sm"
+                    >
+                      <Download className="size-3.5 text-electric" /> ZIP
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {giftCards.length > 0 && (
+            <section aria-labelledby="gift-title" className="glass rounded-[28px] p-5">
+              <h2 id="gift-title" className="flex items-center gap-2 font-display text-xl font-bold">
+                <Gift className="size-5 text-studio" /> Gift card comprate
+              </h2>
+              <ul className="mt-3 space-y-2">
+                {giftCards.map((g) => (
+                  <li key={g.id} className="flex items-center justify-between gap-3">
+                    <span className="min-w-0">
+                      <code className="block font-mono text-sm font-bold tracking-wider">{g.code}</code>
+                      <span className="text-xs text-chrome-500">
+                        {g.credits} crediti{g.recipientName ? ` · per ${g.recipientName}` : ""}
+                      </span>
+                    </span>
+                    <GlowBadge tone={g.redeemed ? "chrome" : "ok"}>{g.redeemed ? "Usata" : "Da usare"}</GlowBadge>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+      )}
 
       {customizations.length > 0 && (
         <section aria-labelledby="custom-title" className="space-y-3">

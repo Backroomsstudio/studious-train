@@ -56,13 +56,22 @@ export const PLANS: Record<PlanTier, Plan> = {
       "35 crediti al mese",
       "Licenza Unlimited",
       "Rollover fino a 35 crediti",
-      "-15% su Mix & Master in studio",
+      "Sconti sullo studio fino al -15% col livello Resident",
       "Prelazione sulle esclusive",
     ],
   },
 };
 
 export const PLAN_ORDER: PlanTier[] = ["STARTER", "PRO", "ELITE"];
+
+export type PlanInterval = "MONTH" | "YEAR";
+
+/** Annuale: 10 mensilità pagate, 12 mesi di crediti (2 mesi in regalo). */
+export const YEARLY_PRICES: Record<PlanTier, number> = { STARTER: 29900, PRO: 39900, ELITE: 49990 };
+
+export function yearlySavingCents(tier: PlanTier): number {
+  return PLANS[tier].priceCents * 12 - YEARLY_PRICES[tier];
+}
 
 export function isPlanTier(value: unknown): value is PlanTier {
   return typeof value === "string" && value in PLANS;

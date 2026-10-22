@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, CircleCheck, Download, Loader2, Lock, Wand2, Zap } from "lucide-react";
+import { ArrowRight, Check, CircleCheck, Crown, Download, Loader2, Lock, Wand2, Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
@@ -111,6 +111,19 @@ export function UnlockDialog() {
                 </li>
               ))}
             </ul>
+            {/* Il momento giusto per proporre lo studio: il beat è appena diventato suo. */}
+            <Link
+              href={`/beats/studio?servizio=HIT_PACKAGE&beat=${encodeURIComponent(beat.slug)}`}
+              onClick={close}
+              className="obsidian sheen mt-4 flex items-center gap-3 rounded-2xl p-4 transition hover:shadow-glow-sm"
+            >
+              <Crown className="size-5 shrink-0 text-electric-cyan" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-bold text-white">Trasformalo in una hit</span>
+                <span className="block text-xs text-chrome-400">Registrazione, mix e master in studio da 199 €</span>
+              </span>
+              <ArrowRight className="size-4 text-chrome-400" />
+            </Link>
             <div className="mt-5 flex gap-2">
               <ChromeLink href="/beats/libreria" variant="ghost" size="md" onClick={close}>
                 Vai alla Libreria
@@ -231,7 +244,7 @@ export function UnlockDialog() {
                   Passa a {cheapestPlanFor(selected).name}
                 </ChromeLink>
               ) : insufficient || error?.code === "INSUFFICIENT_CREDITS" ? (
-                <ChromeLink href="/beats/piani" variant="electric" size="lg" className="sm:ml-auto" onClick={close}>
+                <ChromeLink href="/beats/piani#ricariche" variant="electric" size="lg" className="sm:ml-auto" onClick={close}>
                   Ricarica crediti
                 </ChromeLink>
               ) : (

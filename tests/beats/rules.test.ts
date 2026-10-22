@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { DEFAULT_FILTERS, filtersToParams, parseFilters } from "../../lib/beats/filters";
 import { fuzzyScore } from "../../lib/beats/fuzzy";
-import { checkUnlock, planCycleGrant } from "../../lib/beats/ledger-rules";
+import { addMonths, checkUnlock, planCycleGrant, splitDebit, yearlyMonthsStarted } from "../../lib/beats/ledger-rules";
 import { creditCost } from "../../lib/beats/licenses";
 import { ALL_KEYS, camelotCode, compatibleKeys, keyName } from "../../lib/beats/music";
 import { issueDownloadGrant, verifyDownloadGrant } from "../../lib/beats/server/download-grant";
+import { checkBid, giftCode, levelFor, minNextBid, pickWinner, quoteService } from "../../lib/beats/offers";
 
 test("Camelot: A minore è 8A, compatibili 8B, 7A e 9A", () => {
   const aMinor = { root: 9, mode: "MINOR" as const };
@@ -106,4 +107,43 @@ test("personalizzazione: costo, consegna in giorni lavorativi e drop settimanale
   assert.equal(nextDrop(wednesday).getDate(), 26);
   assert.equal(isNewRelease(new Date(2026, 9, 15, 16), wednesday), true);
   assert.equal(isNewRelease(new Date(2026, 9, 13), wednesday), false);
+});
+
+test("portafoglio: prima i crediti dell'abbonamento, poi quelli che non scadono", () => {
+  assert.deepEqual(splitDebit({ subscription: 3, wallet: 10 }, 4), { fromSubscription: 3, fromWallet: 1 });
+  assert.deepEqual(splitDebit({ subscription: 8, wallet: 10 }, 4), { fromSubscription: 4, fromWallet: 0 });
+  assert.equal(splitDebit({ subscription: 1, wallet: 2 }, 4), null);
+});
+
+test("annuale: mensilità iniziate e fine mese senza sforare", () => {
+  const start = new Date("2026-01-31T10:00:00Z");
+  assert.equal(addMonths(start, 1).toISOString(), "2026-02-28T10:00:00.000Z");
+  assert.equal(yearlyMonthsStarted(start, new Date("2026-01-31T10:00:00Z")), 1);
+  assert.equal(yearlyMonthsStarted(start, new Date("2026-03-30T00:00:00Z")), 2);
+  assert.equal(yearlyMonthsStarted(start, new Date("2027-06-01T00:00:00Z")), 12);
+});
+
+test("servizi: metodo di pagamento e sconto del livello", () => {
+  assert.deepEqual(quoteService("MIX_MASTER", "mix", "CREDITS"), { ok: true, paidWith: "CREDITS", credits: 20, amountCents: 0, discountPct: 0 });
+  assert.equal(quoteService("HIT_PACKAGE", "studio", "CREDITS").ok, false);
+  const hit = quoteService("HIT_PACKAGE", "studio", "CARD", 10);
+  assert.ok(hit.ok && hit.amountCents === 26910 && hit.discountPct === 10);
+  const mix = quoteService("MIX_MASTER", "mix", "CARD", 10);
+  assert.ok(mix.ok && mix.amountCents === 4900, "lo sconto vale solo sui servizi in studio");
+  assert.equal(levelFor(7).level.id, "GOLD");
+  assert.equal(levelFor(7).monthsToNext, 5);
+});
+
+test("aste: offerta minima e proroga anti-cecchino", () => {
+  const now = new Date("2026-10-22T20:00:00Z");
+  const a = { startsAt: new Date(now.getTime() - 60_000), endsAt: new Date(now.getTime() + 30_000), startPriceCents: 30000, minIncrementCents: 2500, topBidCents: 32500 };
+  assert.equal(minNextBid(a), 35000);
+  assert.equal(checkBid(a, 34000, now).ok, false);
+  const ok = checkBid(a, 35000, now);
+  assert.ok(ok.ok && ok.newEndsAt.getTime() === now.getTime() + 60_000);
+  const calm = checkBid({ ...a, endsAt: new Date(now.getTime() + 600_000) }, 35000, now);
+  assert.ok(calm.ok && calm.newEndsAt.getTime() === now.getTime() + 600_000);
+  assert.equal(checkBid({ ...a, startsAt: new Date(now.getTime() + 1000) }, 35000, now).ok, false);
+  assert.equal(pickWinner([{ userId: "a", amountCents: 1 }, { userId: "b", amountCents: 2 }], ["b"])?.userId, "a");
+  assert.match(giftCode(() => 0), /^BR-AAAA-AAAA$/);
 });

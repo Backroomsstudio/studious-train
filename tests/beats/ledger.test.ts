@@ -49,7 +49,7 @@ after(async () => {
 const balance = async () => (await db.user.findUniqueOrThrow({ where: { id: userId } })).creditBalance;
 
 test("accredito idempotente per fattura", { skip }, async () => {
-  const input = { userId, subscriptionId, tier: "PRO" as const, invoiceId: `in_${run}_1`, reason: "renewal" as const, periodStart: new Date(0) };
+  const input = { userId, subscriptionId, tier: "PRO" as const, cycleKey: `in_${run}_1`, reason: "renewal" as const, periodStart: new Date(0) };
   assert.equal(await grantCycleCredits(db, input), true);
   assert.equal(await grantCycleCredits(db, input), false, "il secondo webhook non accredita");
   assert.equal(await balance(), 20);
@@ -60,7 +60,7 @@ test("rinnovo con rollover: il saldo torna al tetto prima del nuovo accredito", 
     db.user.update({ where: { id: userId }, data: { creditBalance: 26 } }),
     db.creditTransaction.create({ data: { userId, type: "BONUS", amount: 6, balanceAfter: 26 } }),
   ]);
-  await grantCycleCredits(db, { userId, subscriptionId, tier: "PRO", invoiceId: `in_${run}_2`, reason: "renewal", periodStart: new Date(0) });
+  await grantCycleCredits(db, { userId, subscriptionId, tier: "PRO", cycleKey: `in_${run}_2`, reason: "renewal", periodStart: new Date(0) });
   assert.equal(await balance(), 40);
   const expiry = await db.creditTransaction.findUniqueOrThrow({ where: { idempotencyKey: `rollover:in_${run}_2` } });
   assert.equal(expiry.amount, -6);
