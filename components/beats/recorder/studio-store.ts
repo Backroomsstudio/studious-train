@@ -25,6 +25,7 @@ import {
 import { PRESET_GENRES, presetGenreOf, ROLE_NAME, BK, type DelayTime, type ModId, type PresetGenre, type VocalRole, type VoxFx } from "@/lib/beats/audio/vocal-presets";
 import { encodeWav } from "@/lib/beats/audio/wav";
 import { zipStore } from "@/lib/beats/audio/zip";
+import { recordAchievement } from "@/lib/beats/achievements";
 import { processInBackground } from "./dsp-client";
 import { getStudioEngine } from "./studio-engine";
 
@@ -516,6 +517,7 @@ export const useStudio = create<StudioState>()((set, get) => {
           { name: "LEGGIMI.txt", data: new TextEncoder().encode(readmeText({ artist: get().artist, beat })) },
         ]);
         download(zip, `${name}.zip`, "application/zip");
+        recordAchievement("demo");
         get().notify("ZIP pronto: lo trovi nei download");
       } catch {
         get().notify("Esportazione non riuscita: riprova tra un attimo.");
@@ -569,6 +571,7 @@ export const useStudio = create<StudioState>()((set, get) => {
         await localPut("projects", id, project);
         set({ projectId: id });
         await storeLastDemo(await currentMix());
+        if (!previous) recordAchievement("demo");
         window.dispatchEvent(new Event(DEMOS_CHANGED));
         get().notify(previous ? "Progetto aggiornato" : "Demo salvata nelle tue demo, su questo dispositivo");
       } catch {

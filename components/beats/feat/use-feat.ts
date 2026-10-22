@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { recordAchievement } from "@/lib/beats/achievements";
 import { FEAT, type FeatFilters, type FeatPostInput } from "@/lib/beats/feat";
 import type { FeatInbox, FeatMessageItem, FeatPostSummary, FeatThreadDetail } from "@/lib/beats/types";
 import { api, ApiRequestError, useViewer } from "../providers";
@@ -107,9 +108,11 @@ export function useSendFeatMessage(threadId: string) {
       const previous = qc.getQueryData<FeatThreadDetail>(key);
       const temp: PendingMessage = { id: `tmp-${Date.now()}`, body: body.trim(), mine: true, createdAt: new Date().toISOString(), readAt: null, pending: true };
       if (previous) qc.setQueryData<FeatThreadDetail>(key, { ...previous, messages: [...previous.messages, temp] });
-      return { previous, tempId: temp.id };
+      return { previous, tempId: temp.id, first: !previous?.messages.some((m) => m.mine) };
     },
     onSuccess(message, _body, context) {
+      // Il primo messaggio in una chat conta come collaborazione avviata (badge "Collab").
+      if (context?.first) recordAchievement("collab");
       qc.setQueryData<FeatThreadDetail>(key, (thread) => {
         if (!thread) return thread;
         // Un polling arrivato nel frattempo può aver già portato (o tolto) il messaggio provvisorio.
@@ -132,6 +135,7 @@ export function useCreateFeatPost() {
     mutationFn: async (input: FeatPostInput) =>
       (await api<{ post: FeatPostSummary }>("/api/feat/posts", { method: "POST", body: JSON.stringify(input) })).post,
     onSuccess() {
+      recordAchievement("collab");
       void qc.invalidateQueries({ queryKey: featKeys.allPosts });
     },
     onError: goToSignIn,

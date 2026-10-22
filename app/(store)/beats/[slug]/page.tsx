@@ -1,4 +1,6 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Mic } from "lucide-react";
+import { CompareButton } from "@/components/beats/engage/compare-button";
+import { ChromeLink } from "@/components/beats/ui/chrome-button";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -60,6 +62,13 @@ export default async function BeatPage({ params }: Props) {
             </div>
           </div>
           <BeatHero beat={beat} />
+          <div className="flex flex-wrap items-center gap-2">
+            <ChromeLink href={`/beats/registra?beat=${encodeURIComponent(beat.slug)}`} variant="electric">
+              <Mic className="size-4" aria-hidden />
+              Registra su questo beat
+            </ChromeLink>
+            <CompareButton slug={beat.slug} />
+          </div>
           {beat.hasStems && (
             <div className="flex flex-wrap items-center gap-3">
               <StemMixerButton beat={beat} />

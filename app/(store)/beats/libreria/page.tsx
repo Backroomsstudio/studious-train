@@ -1,4 +1,7 @@
-import { Download, Gift, Package, Zap } from "lucide-react";
+import { DoorOpen, Download, Gift, Package, Sparkles, Zap } from "lucide-react";
+import { BadgesGrid } from "@/components/beats/engage/badges-grid";
+import { MembershipPass } from "@/components/beats/engage/membership-pass";
+import { MyDemos } from "@/components/beats/recorder/my-demos";
 import { PauseButton, ReferralCard } from "@/components/beats/commerce/account-actions";
 import { LevelCard } from "@/components/beats/commerce/level-card";
 import Link from "next/link";
@@ -129,6 +132,34 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         <LevelCard level={viewer.level} />
         {viewer.referralCode && <ReferralCard code={viewer.referralCode} />}
       </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr] [&>*]:min-w-0">
+        <MembershipPass />
+        <div className="grid gap-3">
+          <Link href="/beats/wrapped" className="obsidian group flex items-center gap-4 rounded-[24px] p-4 transition hover:shadow-glow-sm">
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-electric/20 text-electric-cyan">
+              <Sparkles className="size-5" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-display font-bold">Il tuo anno su Backrooms</span>
+              <span className="text-sm text-chrome-400">Ore di ascolto, produttore e genere preferiti, da condividere</span>
+            </span>
+          </Link>
+          <Link href="/beats/stanza" className="glass group flex items-center gap-4 rounded-[24px] p-4 transition hover:shadow-glow-sm">
+            <span className="chrome-surface grid size-12 shrink-0 place-items-center rounded-2xl text-electric">
+              <DoorOpen className="size-5" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-display font-bold">La tua stanza</span>
+              <span className="text-sm text-chrome-500">Il tuo profilo d&apos;artista, con il tema che scegli tu</span>
+            </span>
+          </Link>
+        </div>
+      </div>
+
+      <MyDemos />
+
+      <BadgesGrid unlocked={library.length} />
 
       {orders.length > 0 && (
         <section aria-labelledby="ordini-title" className="space-y-3">

@@ -1,4 +1,4 @@
-import { Gavel, Package } from "lucide-react";
+import { AudioWaveform, Gavel, Layers, Mic, Package, Users } from "lucide-react";
 import Link from "next/link";
 import { LevelCard } from "@/components/beats/commerce/level-card";
 import { StudioServices } from "@/components/beats/commerce/studio-services";
@@ -8,6 +8,16 @@ import { getBackend } from "@/lib/beats/server/backend";
 import { getViewer } from "@/lib/beats/server/queries";
 
 export const metadata = { title: "Studio" };
+
+/** Gli strumenti in app (da mobile si raggiungono solo da qui) prima dei servizi a pagamento. */
+const TOOLS = [
+  { href: "/beats/registra", title: "Registra la tua demo", text: "Voce, autotune e le nostre catene, nel browser", icon: Mic, dark: true },
+  { href: "/beats/master", title: "Master A/B", text: "Senti la tua demo masterizzata, prima e dopo", icon: AudioWaveform, dark: true },
+  { href: "/beats/feat", title: "Cerco feat", text: "Trova una voce, un rapper o un produttore", icon: Users, dark: false },
+  { href: "/beats/swipe", title: "Swipe", text: "Scopri beat nuovi con un dito", icon: Layers, dark: false },
+  { href: "/beats/kit", title: "Kit, sample e preset", text: "I suoni dei nostri beat, da 6 crediti", icon: Package, dark: false },
+  { href: "/beats/aste", title: "Aste delle esclusive", text: "Anche in diretta su TikTok", icon: Gavel, dark: true },
+] as const;
 
 /** Servizi dello studio: dal pacchetto "dal beat alla hit" al feedback 1:1 e agli slot in live. */
 export default async function StudioPage({ searchParams }: { searchParams: Promise<{ servizio?: string; beat?: string }> }) {
@@ -38,25 +48,28 @@ export default async function StudioPage({ searchParams }: { searchParams: Promi
         {viewer && <LevelCard level={viewer.level} compact />}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Link href="/beats/kit" className="glass group flex items-center gap-4 rounded-[24px] p-4 transition hover:shadow-glow-sm">
-          <span className="chrome-surface grid size-12 place-items-center rounded-2xl text-electric">
-            <Package className="size-5" />
-          </span>
-          <span>
-            <span className="block font-display font-bold">Kit, sample e preset</span>
-            <span className="text-sm text-chrome-500">I suoni dei nostri beat, da 6 crediti</span>
-          </span>
-        </Link>
-        <Link href="/beats/aste" className="obsidian group flex items-center gap-4 rounded-[24px] p-4 transition hover:shadow-glow-sm">
-          <span className="grid size-12 place-items-center rounded-2xl bg-electric/20 text-electric-cyan">
-            <Gavel className="size-5" />
-          </span>
-          <span>
-            <span className="block font-display font-bold">Aste delle esclusive</span>
-            <span className="text-sm text-chrome-400">Anche in diretta su TikTok</span>
-          </span>
-        </Link>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {TOOLS.map(({ href, title, text, icon: Icon, dark }) => (
+          <Link
+            key={href}
+            href={href}
+            className={`${dark ? "obsidian" : "glass"} group flex items-center gap-4 rounded-[24px] p-4 transition hover:shadow-glow-sm`}
+          >
+            <span
+              className={
+                dark
+                  ? "grid size-12 shrink-0 place-items-center rounded-2xl bg-electric/20 text-electric-cyan"
+                  : "chrome-surface grid size-12 shrink-0 place-items-center rounded-2xl text-electric"
+              }
+            >
+              <Icon className="size-5" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-display font-bold">{title}</span>
+              <span className={`text-sm ${dark ? "text-chrome-400" : "text-chrome-500"}`}>{text}</span>
+            </span>
+          </Link>
+        ))}
       </div>
 
       <StudioServices

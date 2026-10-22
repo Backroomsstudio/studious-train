@@ -1,11 +1,12 @@
 "use client";
 
-import { Zap } from "lucide-react";
+import { Search, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { PLANS } from "@/lib/beats/plans";
 import { Logo3D } from "../experience/logo-3d";
+import { FeatInboxBadge } from "../feat/inbox-badge";
 import { useViewer } from "../providers";
 import { SettingsButton } from "../settings/settings-sheet";
 import { GlowBadge } from "../ui/glow-badge";
@@ -32,14 +33,17 @@ export function StoreHeader({ demo }: { demo: boolean }) {
             <span className="chrome-surface relative grid size-11 shrink-0 place-items-center rounded-full font-display text-lg font-bold text-graphite ring-2 ring-electric/40 shadow-glow-sm">
               {initial}
             </span>
-            <span className="min-w-0">
+            {/* Da desktop la nav lunga si prende lo spazio: resta l'avatar (il nome torna sugli schermi larghi). */}
+            <span className="min-w-0 lg:hidden 2xl:block">
               <span className="block truncate font-display text-[15px] font-bold leading-tight">{viewer.artistName ?? viewer.name}</span>
               {plan ? (
-                <GlowBadge tone={plan.tier === "ELITE" ? "holo" : "chrome"} className="mt-1 px-2 py-0.5 text-[10px]">
-                  {plan.name}
-                </GlowBadge>
+                <span className="mt-1 hidden min-w-0 max-w-full overflow-hidden rounded-full min-[420px]:flex">
+                  <GlowBadge tone={plan.tier === "ELITE" ? "holo" : "chrome"} className="min-w-0 max-w-full px-2 py-0.5 text-[10px]">
+                    <span className="truncate">{plan.name}</span>
+                  </GlowBadge>
+                </span>
               ) : (
-                <span className="text-xs text-chrome-500">Nessun piano</span>
+                <span className="hidden text-xs text-chrome-500 min-[420px]:block">Nessun piano</span>
               )}
             </span>
           </Link>
@@ -49,7 +53,7 @@ export function StoreHeader({ demo }: { demo: boolean }) {
           </Link>
         )}
 
-        <nav aria-label="Sezioni" className="ml-6 hidden items-center gap-1 lg:flex">
+        <nav aria-label="Sezioni" className="ml-3 hidden items-center gap-0.5 lg:flex xl:ml-6 xl:gap-1">
           {NAV_ITEMS.map((item) => {
             const active = item.match(pathname);
             return (
@@ -58,11 +62,12 @@ export function StoreHeader({ demo }: { demo: boolean }) {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "rounded-full px-3.5 py-2 text-sm font-semibold transition",
+                  "inline-flex items-center rounded-full px-3 py-2 text-sm font-semibold transition xl:px-3.5",
                   active ? "bg-graphite text-white shadow-glow-sm" : "text-graphite-700 hover:bg-white/70",
                 )}
               >
                 {item.label}
+                {item.featBadge && <FeatInboxBadge className="ml-1" />}
               </Link>
             );
           })}
@@ -75,6 +80,13 @@ export function StoreHeader({ demo }: { demo: boolean }) {
               <GlowBadge tone="chrome">Demo</GlowBadge>
             </span>
           )}
+          <Link
+            href="/beats/cerca"
+            aria-label="Cerca un beat"
+            className="chrome-surface grid size-11 place-items-center rounded-full text-graphite-700 lg:hidden"
+          >
+            <Search className="size-[18px]" aria-hidden />
+          </Link>
           <SettingsButton />
           {viewer ? (
             <Link

@@ -104,6 +104,8 @@ const PATTERNS: Record<HapticKind, number | number[]> = {
 /** Vibrazione breve (Android e browser che la supportano; su iPhone Safari non è disponibile). */
 export function haptic(kind: HapticKind | number | number[] = "tap"): void {
   if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function" || !getPrefs().haptic) return;
+  // Prima del primo tocco il browser blocca la vibrazione (e lo scrive in console): meglio non chiederla.
+  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
   try {
     navigator.vibrate(typeof kind === "string" ? PATTERNS[kind] : kind);
   } catch {
