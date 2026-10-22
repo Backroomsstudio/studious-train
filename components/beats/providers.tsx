@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { create } from "zustand";
 import type { LicenseType } from "@/lib/beats/licenses";
 import type { ApiError, BeatSummary, UnlockResponse, Viewer } from "@/lib/beats/types";
@@ -42,6 +42,11 @@ export function BeatsProviders({ viewer, children }: { viewer: Viewer | null; ch
     qc.setQueryData(["viewer"], viewer);
     return qc;
   });
+  // Dopo accesso, registrazione o uscita il layout arriva dal server con un nuovo profilo:
+  // la cache del client si allinea senza ricaricare la pagina.
+  useEffect(() => {
+    client.setQueryData(["viewer"], viewer);
+  }, [client, viewer]);
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 

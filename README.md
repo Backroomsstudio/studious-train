@@ -108,6 +108,11 @@ TEST_DATABASE_URL=… npm run test:beats  # regole, firme, filtri e mastro credi
 | `app/api/` | `beats` (ricerca), `beats/[id]/preview`, `beats/[id]/unlock`, `downloads`, `me`, `billing/*`, `webhooks/stripe` |
 | `components/beats/` | Design system (`ui/`), player persistente (`player/`), catalogo e filtri (`marketplace/`), home, modale di sblocco |
 
+**Accesso:** ogni artista crea il profilo con nome d'artista, email e password personale (`/beats/accedi`).
+La password è salvata solo come hash scrypt con sale (`lib/beats/server/password.ts`), la sessione è un cookie JWT
+httpOnly firmato da `AUTH_SECRET`; i tentativi sbagliati ripetuti vengono rallentati. Google e link via email restano opzionali.
+Il nome d'artista è il protagonista della home e della libreria.
+
 **Flusso dei crediti:** `invoice.payment_succeeded` → l'eccedenza oltre il tetto di rollover scade → accredito del mese.
 Upgrade a metà periodo: si accredita solo la differenza. `customer.subscription.deleted` → i crediti residui scadono.
 Sblocco: `POST /api/beats/:id/unlock` addebita, crea la licenza e la riga del mastro in un'unica transazione e restituisce

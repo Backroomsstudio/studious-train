@@ -80,3 +80,15 @@ test("permesso di download: firma, scadenza e manomissione", () => {
   assert.equal(verifyDownloadGrant(`${forged}.${sig}`, { key, now }), null, "payload manomesso");
   assert.equal(verifyDownloadGrant(`${payload}.${sig}.x`, { key, now }), null);
 });
+
+test("password: hash con sale, verifica e rifiuto", async () => {
+  const { hashPassword, verifyPassword } = await import("../../lib/beats/server/password");
+  const a = await hashPassword("Studio2026");
+  const b = await hashPassword("Studio2026");
+  assert.notEqual(a, b, "sale casuale: due hash diversi per la stessa password");
+  assert.ok(!a.includes("Studio2026"));
+  assert.equal(await verifyPassword("Studio2026", a), true);
+  assert.equal(await verifyPassword("studio2026", a), false);
+  assert.equal(await verifyPassword("Studio2026", null), false);
+  assert.equal(await verifyPassword("Studio2026", "scrypt$rotto"), false);
+});

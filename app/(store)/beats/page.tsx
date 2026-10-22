@@ -12,7 +12,9 @@ import { getFacets, getViewer } from "@/lib/beats/server/queries";
 export const metadata = { title: "Home" };
 
 export default async function BeatsHomePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const filters = parseFilters(await searchParams);
+  const params = await searchParams;
+  const benvenuto = params.benvenuto === "1";
+  const filters = parseFilters(params);
   const backend = await getBackend();
   const viewer = await getViewer();
   const [facets, result, beatOfTheDay, projects, library] = await Promise.all([
@@ -38,12 +40,22 @@ export default async function BeatsHomePage({ searchParams }: { searchParams: Pr
         />
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Backrooms · Beat Store</p>
-          <h1 id="home-title" className="chrome-text mt-1 font-display text-[2rem] font-black leading-none tracking-tight sm:text-5xl">
-            {viewer ? `Bentornato, ${firstName}` : "Beat dai produttori resident"}
-          </h1>
+          {viewer ? (
+            <h1 id="home-title" className="mt-1 font-display leading-none tracking-tight">
+              <span className="block text-lg font-semibold text-chrome-500">{benvenuto ? "Benvenuto nel Beat Store," : "Bentornato,"}</span>
+              {/* Il nome d'artista è il protagonista della pagina */}
+              <span className="chrome-text block truncate text-[clamp(2.8rem,11vw,6rem)] font-black">{firstName}</span>
+            </h1>
+          ) : (
+            <h1 id="home-title" className="chrome-text mt-1 font-display text-[2rem] font-black leading-none tracking-tight sm:text-5xl">
+              Beat dai produttori resident
+            </h1>
+          )}
           <p className="mt-1.5 truncate text-sm text-chrome-500">
             {viewer
-              ? `${viewer.name}${viewer.plan ? ` · ${PLANS[viewer.plan.tier].name}` : ""}`
+              ? viewer.plan
+                ? `${PLANS[viewer.plan.tier].name} · ${viewer.creditBalance} crediti`
+                : "Scegli un piano per ricevere i tuoi crediti ogni mese"
               : "Abbonati, ricevi crediti ogni mese e sblocca beat, stems e licenze."}
           </p>
         </div>

@@ -35,6 +35,8 @@ model User {
   emailVerified    DateTime?
   image            String?
   artistName       String?
+  /// Hash scrypt della password personale (null per chi entra solo con Google o link email).
+  passwordHash     String?
   role             UserRole  @default(ARTIST)
   stripeCustomerId String?   @unique
   /// Cache del saldo: aggiornata solo insieme a una riga di CreditTransaction.

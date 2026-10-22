@@ -9,7 +9,8 @@ import { cn } from "@/lib/cn";
 import { formatDay, formatRelativeDay } from "@/lib/beats/format";
 import { LICENSES } from "@/lib/beats/licenses";
 import { PLANS } from "@/lib/beats/plans";
-import { SIGN_IN_PATH } from "@/lib/beats/server/auth";
+import { SIGN_IN_PATH, signOut } from "@/lib/beats/server/auth";
+import { storeEnv } from "@/lib/beats/server/env";
 import { getBackend } from "@/lib/beats/server/backend";
 import { issueDownloadGrant } from "@/lib/beats/server/download-grant";
 import { getViewer } from "@/lib/beats/server/queries";
@@ -35,7 +36,26 @@ export default async function LibraryPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="chrome-text font-display text-4xl font-black tracking-tight">Libreria</h1>
+      <div className="flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Libreria di</p>
+          <h1 className="chrome-text truncate font-display text-[clamp(2.6rem,9vw,4.5rem)] font-black leading-none tracking-tight">
+            {viewer.artistName ?? viewer.name}
+          </h1>
+        </div>
+        {!storeEnv.demoMode && (
+          <form
+            action={async () => {
+              "use server";
+              await signOut({ redirectTo: "/beats/accedi" });
+            }}
+          >
+            <button type="submit" className="chrome-surface h-10 shrink-0 rounded-full px-4 text-sm font-semibold text-graphite-700">
+              Esci
+            </button>
+          </form>
+        )}
+      </div>
 
       <section className="obsidian grid gap-5 rounded-[28px] p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6" aria-label="Piano e crediti">
         <div>
