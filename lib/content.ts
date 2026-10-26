@@ -65,34 +65,42 @@ export const loungeFeatures: { icon: LoungeIcon; title: string; text: string }[]
 
 export const studioPhotos = [
   {
-    src: "/images/sala-registrazione-panoramica.webp",
-    alt: "Panoramica dello Studio Lounge Backrooms Studio ad Arcugnano, Vicenza: sala unica da 65 mq con area relax",
+    src: "/images/lounge-regia-divani-vicenza.webp",
+    alt: "Studio Lounge Backrooms Studio ad Arcugnano, Vicenza: postazione di mix con monitor Focal e divani nella stessa sala da 65 mq",
     caption: "La Lounge",
     width: 1800,
-    height: 1348,
+    height: 2250,
   },
   {
-    src: "/images/studio-registrazione-vicenza-sala.webp",
-    alt: "Sala di registrazione e area divani dello studio di registrazione a Vicenza",
-    caption: "La sala",
+    src: "/images/microfono-registrazione-voce-vicenza.webp",
+    alt: "Microfono a condensatore con filtro anti-pop AKG pronto per la registrazione voce nello studio di Vicenza",
+    caption: "Registrazione",
     width: 1800,
-    height: 1348,
+    height: 2250,
   },
   {
-    src: "/images/regia-mix-mastering-vicenza.webp",
-    alt: "Postazione di mix e master in-the-box nello studio di Arcugnano",
+    src: "/images/mix-master-neve-focal-vicenza.webp",
+    alt: "Engineer al lavoro su una sessione di mix e master: DAW sul monitor curvo, preamp Neve e monitor Focal",
     caption: "Mix & Master",
     width: 1800,
-    height: 1348,
+    height: 2250,
   },
   {
-    src: "/images/postazione-produzione-musicale.webp",
-    alt: "Postazione di produzione musicale e registrazione voce a Vicenza",
+    src: "/images/tastiera-produzione-musicale-vicenza.webp",
+    alt: "Tastiera MIDI per la produzione musicale e il beatmaking nello studio di Arcugnano",
     caption: "Produzione",
     width: 1800,
-    height: 1348,
+    height: 2250,
   },
 ];
+
+/** Foto della prima schermata: la Lounge con le luci esagonali, la regia e i divani. */
+export const heroPhoto = {
+  src: "/images/studio-lounge-vicenza-hero.webp",
+  alt: "La Lounge di Backrooms Studio di notte: luci esagonali sul soffitto, regia con monitor Focal e divani per la crew",
+  width: 2048,
+  height: 2560,
+};
 
 /* ------------------------------------------------------------------ */
 /* In-The-Box                                                          */

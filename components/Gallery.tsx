@@ -65,19 +65,19 @@ export function Gallery() {
 
         <div className="mt-14 grid gap-5 lg:grid-cols-12">
           <Reveal className="lg:col-span-8">
-            <ParallaxPhoto photo={hero} index={0} sizes="(min-width: 1024px) 66vw, 100vw" className="aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[36rem]" />
+            <ParallaxPhoto photo={hero} index={0} sizes="(min-width: 1024px) 66vw, 100vw" className="aspect-[4/5] sm:aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[36rem]" />
           </Reveal>
           <div className="grid gap-5 lg:col-span-4">
             {rest.slice(0, 2).map((photo, i) => (
               <Reveal key={photo.src} delay={0.1 * (i + 1)}>
-                <ParallaxPhoto photo={photo} index={i + 1} sizes="(min-width: 1024px) 33vw, 100vw" className="aspect-[4/3]" />
+                <ParallaxPhoto photo={photo} index={i + 1} sizes="(min-width: 1024px) 33vw, 100vw" className="aspect-[4/5] sm:aspect-[4/3]" />
               </Reveal>
             ))}
           </div>
           {rest[2] && (
             <Reveal className="lg:col-span-12">
               <div className="grid gap-5 lg:grid-cols-12">
-                <ParallaxPhoto photo={rest[2]} index={3} sizes="(min-width: 1024px) 58vw, 100vw" className="aspect-[4/3] lg:col-span-7 lg:aspect-[16/9]" />
+                <ParallaxPhoto photo={rest[2]} index={3} sizes="(min-width: 1024px) 58vw, 100vw" className="aspect-[4/5] sm:aspect-[4/3] lg:col-span-7 lg:aspect-[16/9]" />
                 <div className="glass flex flex-col justify-between gap-8 rounded-[1.75rem] p-8 lg:col-span-5 sm:p-10">
                   <div>
                     <p className="eyebrow">Prenota una visita</p>

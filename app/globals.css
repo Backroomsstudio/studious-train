@@ -340,12 +340,17 @@ details.faq-item > summary { list-style: none; }
 details.faq-item > summary::-webkit-details-marker { display: none; }
 details.faq-item[open] .faq-icon { transform: rotate(45deg); }
 
+/*
+ * Movimento ridotto: spariscono le animazioni (entrate, marquee, riflessi che scorrono),
+ * ma i cambi di stato restano leggibili con una dissolvenza breve invece di scattare.
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 0.15s !important;
+    transition-property: opacity, color, background-color, border-color, box-shadow !important;
   }
 }

@@ -48,8 +48,8 @@ export function LiveStreaming() {
             <figure className="chrome-border relative overflow-hidden rounded-[1.75rem] bg-titanium">
               <div className="relative aspect-[4/5] sm:aspect-video">
                 <Image
-                  src="/images/postazione-produzione-musicale.webp"
-                  alt="Inquadratura della postazione di produzione dello studio, come appare in diretta"
+                  src="/images/diretta-sessione-registrazione.webp"
+                  alt="Inquadratura del microfono di registrazione dello studio, come appare in diretta"
                   fill
                   sizes="(min-width: 1024px) 55vw, 100vw"
                   className="object-cover grayscale contrast-125"

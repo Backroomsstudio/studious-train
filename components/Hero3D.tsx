@@ -1,11 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { BookingTrigger } from "@/components/BookingModal";
 import { Magnetic } from "@/components/Magnetic";
 import { buttonStyles, cn } from "@/lib/cn";
-import { heroFacts } from "@/lib/content";
+import { heroFacts, heroPhoto } from "@/lib/content";
 import { studio } from "@/lib/studio";
 
 // La scena WebGL viene caricata solo lato client e dopo il primo paint:
@@ -76,10 +77,20 @@ export function Hero3D() {
       aria-labelledby="hero-title"
       className="relative isolate flex min-h-[100svh] flex-col justify-end overflow-hidden pb-10 pt-28 sm:pb-20 sm:pt-32"
     >
-      {/* Poster statico: visibile subito, fa da fallback se WebGL non è disponibile */}
-      <div aria-hidden="true" className="absolute inset-0 -z-20">
-        <div className="absolute left-1/2 top-[58%] h-[60vmax] w-[80vmax] -translate-x-1/2 -translate-y-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(255,255,255,0.18),rgba(170,170,170,0.10)_45%,transparent_75%)] blur-2xl motion-safe:animate-pulse" />
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,var(--color-obsidian),transparent)]" />
+      {/* Foto reale della Lounge: visibile subito, è la prima cosa che vede chi arriva dal link in bio */}
+      <div className="absolute inset-0 -z-20">
+        <Image
+          src={heroPhoto.src}
+          alt={heroPhoto.alt}
+          fill
+          priority
+          sizes="100vw"
+          quality={70}
+          className="object-cover object-[38%_18%] sm:object-[45%_34%] lg:object-[50%_30%]"
+        />
+        <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(13,13,13,0.55),transparent_22%)]" />
+        <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[78%] bg-[linear-gradient(to_top,var(--color-obsidian)_28%,rgba(13,13,13,0.82)_58%,transparent)] lg:h-[62%] lg:bg-[linear-gradient(to_top,var(--color-obsidian)_12%,rgba(13,13,13,0.6)_50%,transparent)]" />
+        <div aria-hidden="true" className="absolute inset-0 hidden bg-[linear-gradient(to_right,rgba(13,13,13,0.75),rgba(13,13,13,0.35)_45%,transparent_70%)] lg:block" />
       </div>
 
       <div
@@ -92,7 +103,7 @@ export function Hero3D() {
         ) : null}
       </div>
 
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,transparent_30%,rgba(13,13,13,0.85)_85%)]" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,transparent_35%,rgba(13,13,13,0.7)_90%)]" />
 
       <div className="container-x relative">
         <div className="fade-up mb-6 flex flex-wrap items-center gap-3 sm:mb-8" style={{ ["--d" as string]: "50ms" }}>
@@ -162,7 +173,7 @@ export function Hero3D() {
 
         <dl className="fade-up mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-4 lg:mt-14" style={{ ["--d" as string]: "1000ms" }}>
           {heroFacts.map((f) => (
-            <div key={f.label} className="bg-obsidian/80 px-4 py-4 backdrop-blur sm:px-6 sm:py-5">
+            <div key={f.label} className="flex flex-col justify-between gap-1 bg-obsidian/80 px-4 py-4 backdrop-blur sm:px-6 sm:py-5">
               <dt className="font-mono text-[0.62rem] uppercase tracking-[0.22em] text-mist">{f.label}</dt>
               <dd className="mt-1 font-display text-4xl leading-none text-white sm:text-5xl">
                 <span className="chrome-text">{f.value}</span>
