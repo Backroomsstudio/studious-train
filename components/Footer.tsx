@@ -1,18 +1,19 @@
 import Image from "next/image";
 import { CookiePreferencesLink } from "@/components/Analytics";
-import { BookingTrigger } from "@/components/BookingModal";
+import { BookingTrigger, WhatsAppIcon } from "@/components/BookingModal";
 import { Magnetic } from "@/components/Magnetic";
 import { MapEmbed } from "@/components/MapEmbed";
 import { KineticText } from "@/components/Reveal";
 import { buttonStyles } from "@/lib/cn";
 import { landingPages } from "@/lib/landing-pages";
-import { activeSocials, directionsUrl, fullAddress, phoneHref, studio } from "@/lib/studio";
+import { activeSocials, directionsUrl, fullAddress, phoneHref, studio, whatsappLink } from "@/lib/studio";
 
 const headingClass = "font-mono text-[0.7rem] uppercase tracking-[0.24em] text-white";
 
 export function Footer() {
   const year = new Date().getFullYear();
   const socials = activeSocials();
+  const wa = whatsappLink(`Ciao ${studio.name}! Vorrei prenotare una sessione.`);
 
   return (
     <footer id="contatti" aria-labelledby="contatti-title" className="relative overflow-hidden border-t border-white/10 pt-20 sm:pt-32">
@@ -27,6 +28,14 @@ export function Footer() {
           <Magnetic className="w-full sm:w-auto">
             <BookingTrigger className={buttonStyles.primary + " w-full sm:w-auto"}>Prenota la tua sessione →</BookingTrigger>
           </Magnetic>
+          {wa && (
+            <Magnetic className="w-full sm:w-auto">
+              <a href={wa} target="_blank" rel="noopener noreferrer" className={buttonStyles.ghost + " w-full sm:w-auto"}>
+                <WhatsAppIcon />
+                WhatsApp
+              </a>
+            </Magnetic>
+          )}
           {studio.phone && (
             <Magnetic className="w-full sm:w-auto">
               <a href={`tel:${phoneHref()}`} className={buttonStyles.ghost + " w-full sm:w-auto"}>

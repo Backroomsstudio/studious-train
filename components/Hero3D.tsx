@@ -2,17 +2,20 @@
 
 import dynamic from "next/dynamic";
 import { Fragment, useEffect, useRef, useState } from "react";
-import { BookingTrigger } from "@/components/BookingModal";
+import { BookingTrigger, WhatsAppIcon } from "@/components/BookingModal";
 import { Magnetic } from "@/components/Magnetic";
 import { buttonStyles, cn } from "@/lib/cn";
-import { heroFacts } from "@/lib/content";
-import { studio } from "@/lib/studio";
+import { heroFacts, reviews } from "@/lib/content";
+import { googleBusinessUrl, studio, whatsappLink } from "@/lib/studio";
 
 // La scena WebGL viene caricata solo lato client e dopo il primo paint:
 // il testo (LCP) resta server-rendered e immediato, three.js non blocca il main thread iniziale.
 const WaveformScene = dynamic(() => import("@/components/three/WaveformScene"), { ssr: false });
 
 const HEADLINE = ["Il", "primo", "Studio"];
+
+const WHATSAPP = whatsappLink(`Ciao ${studio.name}! Vorrei informazioni per una sessione in studio.`);
+const ALL_FIVE_STARS = reviews.length > 0 && reviews.every((r) => r.rating === 5);
 
 /**
  * Monta la scena 3D alla prima interazione reale dell'utente (movimento del mouse, tocco, scroll, tastiera).
@@ -153,12 +156,37 @@ export function Hero3D() {
               </BookingTrigger>
             </Magnetic>
             <Magnetic className="w-full sm:w-auto">
-              <a href="#lounge" className={cn(buttonStyles.ghost, "w-full sm:w-auto")}>
-                Scopri la Lounge
-              </a>
+              {WHATSAPP ? (
+                <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className={cn(buttonStyles.ghost, "w-full sm:w-auto")} data-cursor="Scrivi">
+                  <WhatsAppIcon />
+                  Scrivici su WhatsApp
+                </a>
+              ) : (
+                <a href="#lounge" className={cn(buttonStyles.ghost, "w-full sm:w-auto")}>
+                  Scopri la Lounge
+                </a>
+              )}
             </Magnetic>
           </div>
         </div>
+
+        {/* Prova sociale subito sotto le CTA: rimanda alle recensioni reali sul profilo Google */}
+        {ALL_FIVE_STARS && (
+          <a
+            href={googleBusinessUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="fade-up press mt-6 inline-flex min-h-11 items-center gap-3 text-sm text-mist transition-colors hover:text-white"
+            style={{ ["--d" as string]: "950ms" }}
+          >
+            <span aria-hidden="true" className="tracking-[0.15em] text-white">
+              ★★★★★
+            </span>
+            <span>
+              Leggi le recensioni 5 stelle su Google <span aria-hidden="true">↗</span>
+            </span>
+          </a>
+        )}
 
         <dl className="fade-up mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-4 lg:mt-14" style={{ ["--d" as string]: "1000ms" }}>
           {heroFacts.map((f) => (

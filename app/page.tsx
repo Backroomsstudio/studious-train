@@ -14,8 +14,8 @@ import { TailorMade } from "@/components/TailorMade";
 
 /**
  * Architettura della landing (mobile-first):
- * Hero → Studio Lounge Experience → Foto → Servizi → Tecnologia ITB → Pacchetti Tailor-Made
- * → Live Streaming → Playlist (se configurata) → Testimonianze (se presenti) → FAQ → Footer
+ * Hero → Studio Lounge Experience → Foto → Testimonianze (se presenti, prova sociale prima dell'offerta)
+ * → Servizi → Tecnologia ITB → Pacchetti Tailor-Made → Live Streaming → Playlist (se configurata) → FAQ → Footer
  */
 export default function HomePage() {
   return (
@@ -26,12 +26,12 @@ export default function HomePage() {
         <Hero3D />
         <Lounge />
         <Gallery />
+        <Reviews />
         <Services />
         <InTheBox />
         <TailorMade />
         <LiveStreaming />
         <Playlist />
-        <Reviews />
         <Faq />
       </main>
       <Footer />
