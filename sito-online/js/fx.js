@@ -1,8 +1,7 @@
 /* Backrooms Studio — livello immersivo (2026)
-   - Hero: camminata in soggettiva nelle Backrooms (WebGL): corridoi infiniti, neon che sfarfallano.
-     Scorrendo, il passo accelera e le luci si spengono: si "esce" nella Lounge.
-   - Suono (solo se l'utente lo accende): ronzio dei neon nell'hero e Lounge FM, tutto sintetizzato con Web Audio
-   - Cursore a goccia, gocce sui pulsanti, magnetismo, riflessi sulle card
+   - Hero: foto dello studio in 3D attorno al logo, seguono il cursore
+   - Suono (solo se l'utente lo accende): Lounge FM e micro-suoni a goccia, sintetizzati con Web Audio
+   - Cursore a goccia, gocce sui pulsanti, magnetismo, luce che segue il mouse sulle card
    - Infografiche: viaggio del brano disegnato allo scroll, contatori
    Ogni pezzo controlla da solo se gli elementi esistono: il file funziona anche nelle pagine servizio. */
 (function () {
@@ -22,142 +21,28 @@
     if (window.gtag && store.get('bs_consent') === 'yes') { try { window.gtag('event', name, params || {}); } catch (e) {} }
   }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
-  var hero = $('.br-hero');
+  var hero = $('.hero');
 
   /* =====================================================================
-     BACKROOMS (WebGL, ray marching di una griglia infinita di stanze)
+     HERO: foto dello studio in 3D che seguono il cursore (a riposo ondeggiano da sole)
      ===================================================================== */
   var Scene = (function () {
     var api = { pulse: function () {} };
-    if (!hero) return api;
-    // se la scena non può partire, al suo posto c'è la foto dello studio
-    var none = function () { hero.classList.add('no-scene'); return api; };
-    if (REDUCED || SAVE || (navigator.deviceMemory && navigator.deviceMemory < 4)) return none();
-    var cv = document.createElement('canvas');
-    cv.className = 'fx-scene'; cv.setAttribute('aria-hidden', 'true');
-    var gl = cv.getContext('webgl', { alpha: false, antialias: false, depth: false, powerPreference: 'high-performance' });
-    if (!gl) return none();
-
-    var fs = [
-      'precision highp float;',
-      'uniform vec2 uRes;uniform float uTime,uZ,uS,uLook,uPulse;',
-      '#define CELL 4.',
-      '#define HGT 2.8',
-      'float hs(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
-      'float box(vec2 p,vec2 b){vec2 d=abs(p)-b;return length(max(d,0.))+min(max(d.x,d.y),0.);}',
-      // pareti lungo z sul bordo sinistro di ogni cella, a volte con un varco
-      'float wallV(vec2 q,vec2 o){',
-      '  if(hs(o+.1)<.4)return 1e3;',
-      '  vec2 r=vec2(q.x-o.x*CELL,q.y-(o.y+.5)*CELL);',
-      '  if(hs(o+.7)>.45){r.y=abs(r.y);return box(r-vec2(0.,1.4),vec2(.07,.62));}',
-      '  return box(r,vec2(.07,2.02));',
-      '}',
-      // pareti lungo x: sempre con la porta al centro, così la camminata non si blocca mai
-      'float wallH(vec2 q,vec2 o){',
-      '  if(hs(o+.3)<.3)return 1e3;',
-      '  vec2 r=vec2(abs(q.x-(o.x+.5)*CELL),q.y-o.y*CELL);',
-      '  return box(r-vec2(1.4,0.),vec2(.62,.07));',
-      '}',
-      'float map(vec2 q){',
-      '  vec2 c=floor(q/CELL);',
-      '  float d=min(wallV(q,c),wallV(q,c+vec2(1.,0.)));',
-      '  d=min(d,min(wallH(q,c),wallH(q,c+vec2(0.,1.))));',
-      '  vec2 g=q-floor(q/CELL+.5)*CELL;',
-      '  return min(d,box(g,vec2(.09)));',
-      '}',
-      'float lightAt(vec2 c){',
-      '  float h=hs(c+5.3),f=1.;',
-      '  if(h>.84)f=.2+.8*step(.45,hs(vec2(floor(uTime*14.),h*97.)));',
-      '  if(h<.05)f=0.;',
-      '  f*=1.-step(hs(c+9.1),uS*1.3);',
-      '  return f;',
-      '}',
-      'void main(){',
-      '  vec2 uv=(gl_FragCoord.xy-.5*uRes)/uRes.y;',
-      '  vec3 ro=vec3(2.+sin(uZ*1.65)*.05,1.55+sin(uZ*3.3)*.035,uZ);',
-      '  float yaw=uLook+sin(uTime*.13)*.06;',
-      '  vec3 rd=normalize(vec3(uv.x,uv.y-.03,1.25));',
-      '  rd.xz=mat2(cos(yaw),sin(yaw),-sin(yaw),cos(yaw))*rd.xz;',
-      '  float tp=rd.y<0.?-ro.y/rd.y:(HGT-ro.y)/rd.y;',
-      '  float tmax=min(tp,45.),t=.05,hl=max(length(rd.xz),.05);',
-      '  bool hit=false;',
-      '  for(int i=0;i<96;i++){',
-      '    float d=map((ro+rd*t).xz);',
-      '    if(d<.003){hit=true;break;}',
-      '    t+=min(d,1.2)/hl*.9;',
-      '    if(t>tmax)break;',
-      '  }',
-      '  if(!hit)t=tmax;',
-      '  vec3 p=ro+rd*t,n,alb;float emis=0.;',
-      '  vec2 c=floor(p.xz/CELL);',
-      '  if(hit){',
-      '    vec2 e=vec2(.01,0.);',
-      '    n=normalize(vec3(map(p.xz+e.xy)-map(p.xz-e.xy),0.,map(p.xz+e.yx)-map(p.xz-e.yx)));',
-      '    float u=p.x+p.z;',
-      '    alb=vec3(.80,.72,.43)*(.93+.07*step(.5,fract(u*3.)))*(.97+.03*sin(u*25.)*sin(p.y*25.));',
-      '    alb*=mix(.5,1.,smoothstep(0.,.14,p.y))*(.9+.1*hs(floor(p.xz*3.)+floor(p.y*3.)));',
-      '  }else if(rd.y<0.){',
-      '    n=vec3(0.,1.,0.);alb=vec3(.52,.46,.28)*(.85+.15*hs(floor(p.xz*30.)));',
-      '  }else{',
-      '    n=vec3(0.,-1.,0.);vec2 g=fract(p.xz);',
-      '    alb=vec3(.86,.83,.7)*(.75+.25*step(.03,g.x)*step(.03,g.y));',
-      '    vec2 l=p.xz-(c+.5)*CELL;',
-      '    if(abs(l.x)<.45&&abs(l.y)<.9)emis=lightAt(c);',
-      '  }',
-      '  vec3 col=alb*.06;',
-      '  for(int k=-1;k<=1;k++){',
-      '    vec2 cc=c+vec2(0.,float(k));',
-      '    vec3 L=vec3((cc.x+.5)*CELL,HGT-.05,(cc.y+.5)*CELL)-p;float dl=length(L);',
-      '    float dif=n.y<-.5?.6:max(dot(n,L/dl),0.);',
-      '    col+=alb*dif*lightAt(cc)*2.2/(1.+.25*dl*dl);',
-      '  }',
-      '  col+=vec3(1.,.96,.8)*emis*1.6;',
-      '  col=mix(col,vec3(.36,.31,.16)*(1.-uS*.8),1.-exp(-t*.06));',
-      '  vec2 q=gl_FragCoord.xy/uRes;',
-      '  col*=.35+.65*pow(16.*q.x*q.y*(1.-q.x)*(1.-q.y),.25);',
-      '  col+=(hs(gl_FragCoord.xy+fract(uTime*7.)*100.)-.5)*.05;',
-      '  col*=(1.+uPulse*.35)*(1.-uS*.6);',
-      '  gl_FragColor=vec4(pow(max(col,0.),vec3(.9)),1.);',
-      '}'
-    ].join('\n');
-    function sh(t, s) { var o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); return gl.getShaderParameter(o, gl.COMPILE_STATUS) ? o : null; }
-    var v = sh(gl.VERTEX_SHADER, 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}'), f = sh(gl.FRAGMENT_SHADER, fs);
-    if (!v || !f) return none();
-    var pr = gl.createProgram(); gl.attachShader(pr, v); gl.attachShader(pr, f); gl.linkProgram(pr);
-    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return none();
-    gl.useProgram(pr);
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    var loc = gl.getAttribLocation(pr, 'a'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    var U = {}; ['uRes', 'uTime', 'uZ', 'uS', 'uLook', 'uPulse'].forEach(function (k) { U[k] = gl.getUniformLocation(pr, k); });
-    hero.insertBefore(cv, hero.firstChild);
-
-    var mobile = window.innerWidth < 700, scale = mobile ? .38 : .5, W = 1, H = 1;
-    function size() {
-      W = Math.max(1, Math.round(hero.clientWidth * scale)); H = Math.max(1, Math.round(hero.clientHeight * scale));
-      cv.width = W; cv.height = H; gl.viewport(0, 0, W, H);
-    }
-    var t0 = performance.now(), last = t0, z = 1, look = 0, lookT = 0, pulse = 0, s = 0, visible = true, raf = 0, odd = false;
-    hero.addEventListener('pointermove', function (e) { lookT = ((e.clientX / window.innerWidth) - .5) * -.5; }, { passive: true });
-    function frame(now) {
-      raf = 0;
+    var wrap = $('[data-stage]'), stage = wrap && $('.stage', wrap);
+    if (!stage || REDUCED) return api;
+    var tx = 0, ty = 0, x = 0, y = 0, pulse = 0, mouse = false, visible = true, t0 = performance.now();
+    window.addEventListener('pointermove', function (e) {
+      if (e.pointerType !== 'mouse') return;
+      tx = e.clientX / window.innerWidth - .5; ty = e.clientY / window.innerHeight - .5; mouse = true;
+    }, { passive: true });
+    new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(wrap);
+    (function frame(now) {
+      requestAnimationFrame(frame);
       if (!visible || document.hidden) return;
-      raf = requestAnimationFrame(frame);
-      odd = !odd; if (mobile && odd) return; // sul telefono 30 fps: batteria
-      var dt = Math.min(.05, (now - last) / 1000); last = now;
-      s = clamp(window.scrollY / hero.offsetHeight, 0, 1);
-      z += dt * (.9 + s * 5);
-      look += (lookT - look) * .04; pulse *= .9;
-      gl.uniform2f(U.uRes, W, H); gl.uniform1f(U.uTime, (now - t0) / 1000); gl.uniform1f(U.uZ, z);
-      gl.uniform1f(U.uS, s); gl.uniform1f(U.uLook, look); gl.uniform1f(U.uPulse, pulse);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-    }
-    function kick() { if (!raf && visible && !document.hidden) { last = performance.now(); raf = requestAnimationFrame(frame); } }
-    new IntersectionObserver(function (es) { visible = es[0].isIntersecting; kick(); }).observe(hero);
-    document.addEventListener('visibilitychange', kick);
-    window.addEventListener('resize', size);
-    size(); kick();
-    requestAnimationFrame(function () { cv.classList.add('on'); });
+      var t = (now - t0) / 1000, gx = mouse ? tx : Math.sin(t * .45) * .3, gy = mouse ? ty : Math.cos(t * .33) * .18;
+      x += (gx - x) * .06; y += (gy - y) * .06; pulse *= .9;
+      stage.style.transform = 'rotateY(' + (x * 28).toFixed(2) + 'deg) rotateX(' + (-y * 18).toFixed(2) + 'deg) scale(' + (1 + pulse * .03).toFixed(3) + ')';
+    })(t0);
     api.pulse = function (v) { pulse = Math.max(pulse, v); };
     return api;
   })();
@@ -167,7 +52,7 @@
      ===================================================================== */
   var Sound = (function () {
     var AC = window.AudioContext || window.webkitAudioContext;
-    var ctx = null, master, sendBus, noiseBuf, humG = null, crackle = null, on = false, timer = 0;
+    var ctx = null, master, sendBus, noiseBuf, crackle = null, on = false, timer = 0;
     var BPM = 84, SPB = 60 / BPM, step = 0, nextT = 0;
     // Fmaj9 · Em7 · Dm9 · Cmaj9: progressione lo-fi / R&B
     var CHORDS = [[53, 57, 60, 64, 67], [52, 55, 59, 62, 66], [50, 53, 57, 60, 64], [48, 52, 55, 59, 62]];
@@ -254,15 +139,6 @@
       for (var i = 0; i < d.length; i++) d[i] = Math.random() < .0009 ? (Math.random() * 2 - 1) * .9 : (Math.random() * 2 - 1) * .012;
       s.buffer = b; s.loop = true; var fl = ctx.createBiquadFilter(); fl.type = 'highpass'; fl.frequency.value = 1800;
       var g = ctx.createGain(); g.gain.value = .5; s.connect(fl); fl.connect(g); out(g, 0); s.start(); crackle = s;
-      // ronzio dei neon delle Backrooms: 50 Hz di rete e armoniche
-      if (!humG) {
-        humG = ctx.createGain(); humG.gain.value = 0;
-        var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400; lp.connect(humG); out(humG, .3);
-        [[100, 'sawtooth', .05], [150, 'square', .012], [200, 'sine', .03]].forEach(function (h) {
-          var o = ctx.createOscillator(), og = ctx.createGain(); o.type = h[1]; o.frequency.value = h[0]; og.gain.value = h[2];
-          o.connect(og); og.connect(lp); o.start();
-        });
-      }
     }
     function start() {
       if (!init()) return false;
@@ -286,8 +162,6 @@
     });
     return {
       start: start, stop: stop, drop: drop, tick: tick,
-      /** 0..1: quanto si sente il ronzio dei neon (forte nell'hero, sparisce scendendo) */
-      hum: function (v) { if (humG) humG.gain.setTargetAtTime(on ? v : 0, ctx.currentTime, .15); },
       playing: function () { return on; },
       onBeat: function (fn) { listeners.push(fn); },
       supported: !!AC
@@ -319,7 +193,7 @@
     }
     var root = document.documentElement;
     Sound.onBeat(function () {
-      Scene.pulse(.6);
+      Scene.pulse(.8);
       root.style.setProperty('--beat', '1');
       setTimeout(function () { root.style.setProperty('--beat', '0'); }, 140);
     });
@@ -337,21 +211,6 @@
     Sound.drop({ f: big ? 380 : 620, vol: big ? .3 : .18, wet: big ? .7 : .4 });
   });
   $$('.faq details').forEach(function (d) { d.addEventListener('toggle', function () { if (d.open) Sound.drop({ f: 820, vol: .14 }); }); });
-
-  /* =====================================================================
-     HERO: testo che si scrive da solo
-     ===================================================================== */
-  var typed = $('[data-type]');
-  if (typed && !REDUCED) {
-    var full = typed.textContent, k = 0;
-    typed.setAttribute('aria-label', full);
-    typed.textContent = '';
-    typed.classList.add('typing');
-    (function type() {
-      typed.textContent = full.slice(0, ++k);
-      if (k < full.length) setTimeout(type, 38 + Math.random() * 60);
-    })();
-  }
 
   /* =====================================================================
      CURSORE A GOCCIA + GOCCE SUI PULSANTI + MAGNETISMO + RIFLESSI
@@ -441,7 +300,7 @@
       es.forEach(function (e) { ctaSeen += e.isIntersecting ? 1 : -1; });
       ctaSeen = Math.max(0, ctaSeen); onScroll();
     });
-    $$('.final .cta,.intro .cta,.free-band').forEach(function (el) { cio.observe(el); });
+    $$('.final .cta,.intro .cta,.free-band,.calc-cta').forEach(function (el) { cio.observe(el); });
   }
   function onScroll() {
     ticking = false;
@@ -450,7 +309,6 @@
     [50, 90].forEach(function (m) { if (p * 100 >= m && !depth[m]) { depth[m] = 1; track('scroll_' + m); } });
     var hs = hero ? clamp(h.scrollTop / hero.offsetHeight, 0, 1) : 1;
     if (hero) hero.style.setProperty('--s', hs.toFixed(3));
-    Sound.hum(Math.pow(1 - hs, 2) * .9);
     wa.classList.toggle('show', !ctaSeen && (!hero || hs > .7));
     if (path && !REDUCED) {
       var r = path.getBoundingClientRect(), vh = window.innerHeight;
