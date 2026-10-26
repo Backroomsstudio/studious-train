@@ -97,7 +97,7 @@ export function Reviews() {
       <Reveal delay={0.1}>
         <ul
           ref={trackRef}
-          className="no-scrollbar mt-12 flex items-start snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-[max(1.25rem,calc((100vw-88rem)/2+3rem))] pb-4"
+          className="no-scrollbar mt-12 flex items-stretch snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-[max(1.25rem,calc((100vw-88rem)/2+3rem))] pb-4"
           aria-label="Testimonianze degli artisti"
         >
           {reviews.map((r, i) => (

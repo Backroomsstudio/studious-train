@@ -84,37 +84,37 @@ export function Footer() {
 
         <div>
           <h2 className={headingClass}>Contatti</h2>
-          <ul className="mt-5 grid gap-2 text-sm">
+          <ul className="mt-4 grid text-sm lg:mt-5 lg:gap-2">
             {studio.phone && (
               <li>
-                <a className="text-white transition-colors hover:text-mist" href={`tel:${phoneHref()}`}>
+                <a className="text-white transition-colors hover:text-mist inline-flex min-h-11 items-center lg:min-h-0" href={`tel:${phoneHref()}`}>
                   {studio.phone}
                 </a>
               </li>
             )}
             {studio.email && (
               <li>
-                <a className="text-white transition-colors hover:text-mist" href={`mailto:${studio.email}`}>
+                <a className="text-white transition-colors hover:text-mist inline-flex min-h-11 items-center lg:min-h-0" href={`mailto:${studio.email}`}>
                   {studio.email}
                 </a>
               </li>
             )}
-            <li className="text-mist">{fullAddress}</li>
+            <li className="py-2.5 text-mist lg:py-0">{fullAddress}</li>
           </ul>
         </div>
 
         <div>
           <h2 className={headingClass}>Servizi</h2>
-          <ul className="mt-5 grid gap-2 text-sm">
+          <ul className="mt-4 grid text-sm lg:mt-5 lg:gap-2">
             {landingPages.map((p) => (
               <li key={p.slug}>
-                <a className="text-mist transition-colors hover:text-white" href={`/${p.slug}`}>
+                <a className="text-mist transition-colors hover:text-white inline-flex min-h-11 items-center lg:min-h-0" href={`/${p.slug}`}>
                   {p.h1}
                 </a>
               </li>
             ))}
             <li>
-              <a className="text-mist transition-colors hover:text-white" href="/#servizi">
+              <a className="text-mist transition-colors hover:text-white inline-flex min-h-11 items-center lg:min-h-0" href="/#servizi">
                 Pacchetti su misura
               </a>
             </li>
@@ -124,10 +124,10 @@ export function Footer() {
         {socials.length > 0 && (
           <div>
             <h2 className={headingClass}>Social</h2>
-            <ul className="mt-5 grid gap-2 text-sm">
+            <ul className="mt-4 grid text-sm lg:mt-5 lg:gap-2">
               {socials.map((s) => (
                 <li key={s.key}>
-                  <a className="text-mist transition-colors hover:text-white" href={s.url} target="_blank" rel="noopener noreferrer me">
+                  <a className="text-mist transition-colors hover:text-white inline-flex min-h-11 items-center lg:min-h-0" href={s.url} target="_blank" rel="noopener noreferrer me">
                     {s.label} ↗
                   </a>
                 </li>
@@ -149,14 +149,14 @@ export function Footer() {
           </div>
           <div className="flex flex-col gap-2 sm:items-end">
             <p>Studio di registrazione · Arcugnano (VI) · Vicenza · Veneto</p>
-            <p className="flex gap-4">
-              <a className="transition-colors hover:text-white" href="/privacy">
+            <p className="flex flex-wrap gap-x-5">
+              <a className="inline-flex min-h-11 items-center transition-colors hover:text-white sm:min-h-0" href="/privacy">
                 Privacy e cookie
               </a>
-              <a className="transition-colors hover:text-white" href="/termini">
+              <a className="inline-flex min-h-11 items-center transition-colors hover:text-white sm:min-h-0" href="/termini">
                 Termini
               </a>
-              <CookiePreferencesLink className="uppercase tracking-[0.16em] transition-colors hover:text-white" />
+              <CookiePreferencesLink className="inline-flex min-h-11 items-center uppercase tracking-[0.16em] transition-colors hover:text-white sm:min-h-0" />
             </p>
           </div>
         </div>

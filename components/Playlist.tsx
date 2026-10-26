@@ -59,7 +59,19 @@ export function Playlist() {
           </Reveal>
         </div>
         <Reveal delay={0.1}>
-          <div className="chrome-border overflow-hidden rounded-[1.75rem] bg-titanium p-2">
+          <div className="chrome-border relative overflow-hidden rounded-[1.75rem] bg-titanium p-2">
+            {/* Resta visibile dietro al player finché il provider non carica (o se è bloccato da rete o cookie) */}
+            <div className="absolute inset-2 flex flex-col items-center justify-center gap-4 rounded-[1.4rem] px-6 text-center">
+              <p className="font-display text-3xl text-white">Carico la playlist…</p>
+              <a
+                href={playlistUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="press inline-flex min-h-11 items-center text-sm font-semibold text-mist underline underline-offset-4 hover:text-white"
+              >
+                Non parte? Ascoltala su {embed.provider} ↗
+              </a>
+            </div>
             <iframe
               title={`Playlist ufficiale Backrooms Studio su ${embed.provider}`}
               src={embed.src}
@@ -67,7 +79,7 @@ export function Playlist() {
               height={embed.height}
               loading="lazy"
               allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-              className="block rounded-[1.4rem] border-0"
+              className="relative block rounded-[1.4rem] border-0"
             />
           </div>
         </Reveal>
