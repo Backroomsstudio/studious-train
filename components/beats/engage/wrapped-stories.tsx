@@ -382,7 +382,7 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
 
   const count = slides.length;
   const goTo = useCallback((i: number) => setIndex(Math.max(0, Math.min(count - 1, i))), [count]);
-  const close = useCallback(() => router.push("/beats/libreria"), [router]);
+  const close = useCallback(() => router.push("/beats/profilo"), [router]);
 
   useEffect(() => {
     const prev = document.body.style.overflow;

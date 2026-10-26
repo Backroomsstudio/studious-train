@@ -12,7 +12,7 @@ import { getPrefs } from "./prefs";
  * si possono chiamare ovunque senza controlli.
  */
 
-export type SfxName = "tap" | "pop" | "coin" | "unlock" | "win" | "error";
+export type SfxName = "tap" | "pop" | "coin" | "unlock" | "win" | "error" | "tab" | "whoosh" | "like";
 export type HapticKind = "tap" | "select" | "success" | "warning" | "error" | "heavy";
 
 let ctx: AudioContext | null = null;
@@ -50,6 +50,30 @@ function tone(c: AudioContext, f: number, f2: number | null, d: number, type: Os
   o.stop(t + d + 0.05);
 }
 
+/** Soffio di rumore filtrato (passaggi tra le slide): passa-banda che scende, coda brevissima. */
+function noise(c: AudioContext, d: number, f1: number, f2: number, g: number) {
+  const t = c.currentTime;
+  const len = Math.ceil(c.sampleRate * d);
+  const buf = c.createBuffer(1, len, c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  const bp = c.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.Q.value = 1.4;
+  bp.frequency.setValueAtTime(f1, t);
+  bp.frequency.exponentialRampToValueAtTime(f2, t + d);
+  const e = c.createGain();
+  e.gain.setValueAtTime(0, t);
+  e.gain.linearRampToValueAtTime(g, t + d * 0.25);
+  e.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  src.connect(bp);
+  bp.connect(e);
+  e.connect(out!);
+  src.start(t);
+}
+
 /** Suona un effetto dell'interfaccia (se l'utente li ha attivi). */
 export function sfx(name: SfxName): void {
   if (!getPrefs().sound) return;
@@ -81,6 +105,19 @@ export function sfx(name: SfxName): void {
       case "win":
         [523, 659, 784, 1047].forEach((f, i) => tone(c, f, null, 0.32, "triangle", 0.24, i * 0.07));
         tone(c, 110, 55, 0.5, "sine", 0.5);
+        break;
+      case "tab":
+        // Tick morbido e caldo per il cambio di sezione (più basso del "tap").
+        tone(c, 1180, 980, 0.06, "sine", 0.16);
+        tone(c, 2360, null, 0.02, "triangle", 0.04);
+        break;
+      case "whoosh":
+        noise(c, 0.22, 2600, 700, 0.12);
+        break;
+      case "like":
+        // Pizzicato con quinta sopra: un "sì" breve.
+        tone(c, 784, null, 0.18, "triangle", 0.2);
+        tone(c, 1175, null, 0.24, "sine", 0.14, 0.05);
         break;
       case "error":
         tone(c, 220, 150, 0.22, "sawtooth", 0.08);

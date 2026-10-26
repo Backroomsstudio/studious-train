@@ -420,7 +420,7 @@ export function MasterStudio({ beats, autoDemo = false }: { beats: MasterBeatOpt
 
           <p className="rounded-2xl bg-white/[0.06] px-4 py-3 text-sm text-chrome-300">
             È un master automatico per le demo. Per l&apos;uscita, il master lo facciamo noi in studio.{" "}
-            <Link href="/beats/studio?servizio=MIX_MASTER" className="font-semibold text-electric-cyan underline-offset-2 hover:underline">
+            <Link href="/beats/registra?servizio=MIX_MASTER#servizi" className="font-semibold text-electric-cyan underline-offset-2 hover:underline">
               Scopri il master vero <ArrowRight className="inline size-3.5" />
             </Link>
           </p>

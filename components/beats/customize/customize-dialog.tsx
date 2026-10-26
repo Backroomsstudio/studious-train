@@ -97,7 +97,7 @@ export function CustomizeDialog() {
             </div>
           </div>
           <div className="flex gap-2">
-            <ChromeLink href="/beats/libreria" variant="ghost" onClick={close}>
+            <ChromeLink href="/beats/profilo" variant="ghost" onClick={close}>
               Segui la richiesta
             </ChromeLink>
             <ChromeButton variant="obsidian" className="ml-auto" onClick={close}>

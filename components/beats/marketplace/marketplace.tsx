@@ -1,14 +1,16 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, SearchX } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, SearchX, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import type { ProducerPair } from "@/lib/beats/pairs";
 import { activeFilterCount, DEFAULT_FILTERS, filtersToParams, type BeatFilters } from "@/lib/beats/filters";
 import type { Facets, SearchResult } from "@/lib/beats/types";
 import { api } from "../providers";
 import { FilterBar, type FiltersPatch } from "./filter-bar";
 import { GenreShelves, GenreTabs } from "./genre-nav";
+import { SearchPresets } from "./search-presets";
 import { TrackList } from "./track-row";
 
 /**
@@ -23,6 +25,8 @@ export function Marketplace({
   autoFocusSearch,
   syncUrl = true,
   defaultLayout = "genre",
+  idle,
+  pairs,
   className,
 }: {
   initialFilters: BeatFilters;
@@ -32,8 +36,16 @@ export function Marketplace({
   syncUrl?: boolean;
   /** "genre": catalogo diviso in scaffali per genere quando non ci sono filtri attivi. */
   defaultLayout?: "genre" | "list";
+  /**
+   * Modalità Cerca: senza ricerca né filtri si vede `idle` (le uscite); toccando la barra
+   * compaiono i filtri pronti (`pairs` = coppie di produttori) e i risultati.
+   */
+  idle?: ReactNode;
+  pairs?: ProducerPair[];
   className?: string;
 }) {
+  const hub = idle !== undefined;
+  const [focused, setFocused] = useState(Boolean(autoFocusSearch));
   const [layout, setLayout] = useState<"genre" | "list">(defaultLayout);
   const [filters, setFilters] = useState(initialFilters);
   const params = filtersToParams(filters).toString();
@@ -63,7 +75,8 @@ export function Marketplace({
 
   const result = query.data ?? { items: [], total: 0, page: 1, pageCount: 1 };
   const unfiltered = !filters.q && activeFilterCount(filters) === 0;
-  const byGenre = unfiltered && layout === "genre";
+  const engaged = !hub || focused || !unfiltered;
+  const byGenre = !hub && unfiltered && layout === "genre";
 
   return (
     <section className={className} aria-label="Catalogo beat">
@@ -76,13 +89,38 @@ export function Marketplace({
         total={result.total}
         fetching={query.isFetching && query.isPlaceholderData}
         autoFocusSearch={autoFocusSearch}
+        onSearchFocus={hub ? () => setFocused(true) : undefined}
+        quickChips={!hub}
+        showCount={engaged}
       />
 
-      <div className="mt-4">
-        <GenreTabs facets={facets} selected={filters.genres} onSelect={(genres) => onChange({ genres })} />
-      </div>
+      {hub ? (
+        engaged && (
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-chrome-500">Filtri pronti, oppure scrivi quello che cerchi</p>
+              {unfiltered && (
+                <button
+                  type="button"
+                  onClick={() => setFocused(false)}
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-electric hover:underline"
+                >
+                  <X className="size-3.5" aria-hidden /> Chiudi
+                </button>
+              )}
+            </div>
+            <SearchPresets filters={filters} facets={facets} pairs={pairs ?? []} onChange={onChange} />
+          </div>
+        )
+      ) : (
+        <div className="mt-4">
+          <GenreTabs facets={facets} selected={filters.genres} onSelect={(genres) => onChange({ genres })} />
+        </div>
+      )}
 
-      {unfiltered && (
+      {!engaged && <div className="mt-6">{idle}</div>}
+
+      {!hub && unfiltered && (
         <div className="mt-4 flex justify-end">
           <div className="inline-flex rounded-xl bg-chrome-200/70 p-1" role="group" aria-label="Vista del catalogo">
             {(["genre", "list"] as const).map((l) => (
@@ -103,26 +141,28 @@ export function Marketplace({
         </div>
       )}
 
-      <div className={cn("mt-3 transition-opacity duration-200", query.isPlaceholderData && "opacity-60")}>
-        {byGenre ? (
-          <GenreShelves facets={facets} onSelect={(genres) => onChange({ genres })} />
-        ) : query.isError ? (
-          <p className="glass rounded-3xl p-6 text-center text-sm text-deal">{(query.error as Error).message}</p>
-        ) : result.items.length ? (
-          <TrackList beats={result.items} />
-        ) : (
-          <div className="glass flex flex-col items-center gap-3 rounded-3xl px-6 py-12 text-center">
-            <SearchX className="size-8 text-chrome-400" aria-hidden />
-            <p className="font-display text-lg font-semibold">Nessun beat con questi filtri</p>
-            <p className="max-w-sm text-sm text-chrome-500">Allarga l’intervallo di BPM, attiva le tonalità compatibili o togli un genere.</p>
-            <button type="button" onClick={onReset} className="text-sm font-semibold text-electric hover:underline">
-              Azzera filtri
-            </button>
-          </div>
-        )}
-      </div>
+      {engaged && (
+        <div className={cn("mt-3 transition-opacity duration-200", query.isPlaceholderData && "opacity-60")}>
+          {byGenre ? (
+            <GenreShelves facets={facets} onSelect={(genres) => onChange({ genres })} />
+          ) : query.isError ? (
+            <p className="glass rounded-3xl p-6 text-center text-sm text-deal">{(query.error as Error).message}</p>
+          ) : result.items.length ? (
+            <TrackList beats={result.items} />
+          ) : (
+            <div className="glass flex flex-col items-center gap-3 rounded-3xl px-6 py-12 text-center">
+              <SearchX className="size-8 text-chrome-400" aria-hidden />
+              <p className="font-display text-lg font-semibold">Nessun beat con questi filtri</p>
+              <p className="max-w-sm text-sm text-chrome-500">Allarga l’intervallo di BPM, attiva le tonalità compatibili o togli un genere.</p>
+              <button type="button" onClick={onReset} className="text-sm font-semibold text-electric hover:underline">
+                Azzera filtri
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
-      {!byGenre && result.pageCount > 1 && (
+      {engaged && !byGenre && result.pageCount > 1 && (
         <nav className="mt-6 flex items-center justify-center gap-3" aria-label="Pagine">
           <button
             type="button"

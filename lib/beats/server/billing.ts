@@ -95,7 +95,7 @@ export async function createCheckoutSession(userId: string, tier: PlanTier, orig
 export async function createPortalSession(userId: string, origin: string): Promise<string> {
   const portal = await stripe().billingPortal.sessions.create({
     customer: await ensureCustomer(userId),
-    return_url: `${origin}/beats/libreria`,
+    return_url: `${origin}/beats/profilo`,
   });
   return portal.url;
 }

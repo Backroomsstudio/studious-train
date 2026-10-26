@@ -2,6 +2,8 @@ import { DoorOpen, Download, Gift, Package, Sparkles, Zap } from "lucide-react";
 import { BadgesGrid } from "@/components/beats/engage/badges-grid";
 import { MembershipPass } from "@/components/beats/engage/membership-pass";
 import { MyDemos } from "@/components/beats/recorder/my-demos";
+import { RedeemGift, TopupPacks } from "@/components/beats/commerce/plans-shop";
+import { SettingsCard } from "@/components/beats/settings/settings-sheet";
 import { PauseButton, ReferralCard } from "@/components/beats/commerce/account-actions";
 import { LevelCard } from "@/components/beats/commerce/level-card";
 import Link from "next/link";
@@ -23,7 +25,17 @@ import { getBackend } from "@/lib/beats/server/backend";
 import { issueDownloadGrant } from "@/lib/beats/server/download-grant";
 import { getViewer } from "@/lib/beats/server/queries";
 
-export const metadata = { title: "Libreria" };
+export const metadata = { title: "Profilo" };
+
+/** Le parti del Profilo, raggiungibili dalle pillole in alto. */
+const SECTIONS = [
+  ["piano", "Piano e crediti"],
+  ["badge", "Badge"],
+  ["demo", "Le tue demo"],
+  ["licenze", "I tuoi beat"],
+  ["movimenti", "Movimenti"],
+  ["impostazioni", "Impostazioni"],
+] as const;
 
 const LEDGER_LABELS: Record<string, string> = {
   SUBSCRIPTION_GRANT: "Accredito",
@@ -47,7 +59,7 @@ const NOTICES: Record<string, string> = {
   ordine: "Ordine confermato: ti scriviamo entro 24 ore per organizzare il lavoro.",
 };
 
-export default async function LibraryPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function ProfilePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
   const viewer = await getViewer();
   if (!viewer) redirect(SIGN_IN_PATH);
@@ -67,11 +79,23 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
   return (
     <RevealList className="space-y-6">
       <div className="flex items-end justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Libreria di</p>
-          <h1 className="chrome-text truncate font-display text-[clamp(2.6rem,9vw,4.5rem)] font-black leading-none tracking-tight">
-            {viewer.artistName ?? viewer.name}
-          </h1>
+        <div className="flex min-w-0 items-center gap-4">
+          <span
+            className="grid size-16 shrink-0 place-items-center rounded-[22px] font-display text-3xl font-black text-white sm:size-20"
+            style={{ background: `linear-gradient(145deg, ${viewer.level.color}, #111827)`, boxShadow: `0 12px 30px -10px ${viewer.level.color}` }}
+            aria-hidden
+          >
+            {(viewer.artistName ?? viewer.name).charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Il tuo profilo</p>
+            <h1 className="chrome-text truncate font-display text-[clamp(2.4rem,9vw,4.5rem)] font-black leading-none tracking-tight">
+              {viewer.artistName ?? viewer.name}
+            </h1>
+            <p className="mt-1 text-sm text-chrome-500">
+              {plan?.name ?? "Nessun piano"} · Resident {viewer.level.name} · {new Set(library.map((e) => e.beat.id)).size} beat sbloccati
+            </p>
+          </div>
         </div>
         {!storeEnv.demoMode && (
           <form
@@ -87,13 +111,21 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         )}
       </div>
 
+      <nav aria-label="Sezioni del profilo" className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 lg:mx-0 lg:flex-wrap lg:px-0">
+        {SECTIONS.map(([id, label]) => (
+          <a key={id} href={`#${id}`} className="chrome-surface shrink-0 rounded-full px-4 py-2 text-sm font-semibold text-graphite-700 transition hover:text-graphite">
+            {label}
+          </a>
+        ))}
+      </nav>
+
       {notice && (
         <p role="status" className="rounded-2xl bg-ok/10 px-4 py-3 text-sm font-semibold text-ok">
           {NOTICES[notice]}
         </p>
       )}
 
-      <section className="obsidian grid gap-5 rounded-[28px] p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6" aria-label="Piano e crediti">
+      <section id="piano" className="obsidian grid scroll-mt-24 gap-5 rounded-[28px] p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6" aria-label="Piano e crediti">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-chrome-400">Il tuo piano</p>
           <p className="mt-1 font-display text-2xl font-bold">{plan?.name ?? "Nessun abbonamento"}</p>
@@ -118,6 +150,9 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
           {viewer.plan ? (
             <>
               <BillingButton variant="chrome">Gestisci abbonamento</BillingButton>
+              <ChromeLink href="/beats/piani" variant="obsidian" className="w-full">
+                Cambia piano
+              </ChromeLink>
               <PauseButton pausedUntil={viewer.plan.pausedUntil} />
             </>
           ) : (
@@ -127,6 +162,9 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
           )}
         </div>
       </section>
+
+      <TopupPacks viewer={viewer} />
+      <RedeemGift />
 
       <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         <LevelCard level={viewer.level} />
@@ -157,9 +195,13 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         </div>
       </div>
 
-      <MyDemos />
+      <div id="badge" className="scroll-mt-24">
+        <BadgesGrid unlocked={new Set(library.map((e) => e.beat.id)).size} />
+      </div>
 
-      <BadgesGrid unlocked={library.length} />
+      <div id="demo" className="scroll-mt-24">
+        <MyDemos />
+      </div>
 
       {orders.length > 0 && (
         <section aria-labelledby="ordini-title" className="space-y-3">
@@ -270,7 +312,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         </section>
       )}
 
-      <section aria-labelledby="licenze-title" className="space-y-3">
+      <section id="licenze" aria-labelledby="licenze-title" className="scroll-mt-24 space-y-3">
         <h2 id="licenze-title" className="font-display text-xl font-bold">
           Le tue licenze <span className="text-chrome-400">· {library.length}</span>
         </h2>
@@ -309,7 +351,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         )}
       </section>
 
-      <section aria-labelledby="movimenti-title" className="glass rounded-[28px] p-5">
+      <section id="movimenti" aria-labelledby="movimenti-title" className="glass scroll-mt-24 rounded-[28px] p-5">
         <h2 id="movimenti-title" className="font-display text-xl font-bold">Movimenti crediti</h2>
         <ul className="mt-3 divide-y divide-chrome-200">
           {ledger.map((t) => (
@@ -330,6 +372,13 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
           ))}
           {!ledger.length && <li className="py-3 text-sm text-chrome-500">Nessun movimento.</li>}
         </ul>
+      </section>
+
+      <section id="impostazioni" aria-labelledby="impostazioni-title" className="scroll-mt-24 space-y-3">
+        <h2 id="impostazioni-title" className="font-display text-xl font-bold">
+          Impostazioni
+        </h2>
+        <SettingsCard />
       </section>
     </RevealList>
   );

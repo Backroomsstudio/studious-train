@@ -2,6 +2,7 @@
 
 import * as Popover from "@radix-ui/react-popover";
 import { AnimatePresence, motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { Gauge, ListMusic, Loader2, Mic, Pause, Play, Repeat, SkipBack, SkipForward, Volume2, VolumeX, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect, type ComponentProps, type ReactNode } from "react";
@@ -155,6 +156,8 @@ export function PlayerDock() {
   const queueLength = usePlayer((s) => s.queue.length);
   const { toggle, seek, next, previous, setVolume, toggleMute, loopBars, clearLoop } = usePlayer.getState();
   const openUnlock = useUnlockDialog((s) => s.open);
+  // Nello Swipe il beat suona a schermo intero: il dock si nasconde (il motore resta attivo).
+  const hidden = usePathname().startsWith("/beats/swipe");
 
   // Barra spaziatrice = play/pausa (fuori dai campi di testo).
   useEffect(() => {
@@ -173,7 +176,7 @@ export function PlayerDock() {
 
   return (
     <AnimatePresence>
-      {current && (
+      {current && !hidden && (
         <motion.div
           initial={{ y: 120, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

@@ -55,6 +55,7 @@ function whereFor(f: BeatFilters): Prisma.BeatWhereInput {
   const and: Prisma.BeatWhereInput[] = [{ status: "PUBLISHED" }];
   if (f.bpmMin !== BPM_RANGE.min || f.bpmMax !== BPM_RANGE.max) and.push({ bpm: { gte: f.bpmMin, lte: f.bpmMax } });
   if (f.producers.length) and.push({ producers: { some: { producer: { slug: { in: f.producers } } } } });
+  if (f.together) for (const slug of f.producers) and.push({ producers: { some: { producer: { slug } } } });
   if (f.collab === "only") and.push({ producers: { some: { role: "CO_PRODUCER" } } });
   if (f.collab === "exclude") and.push({ producers: { none: { role: "CO_PRODUCER" } } });
   if (f.genres.length) {

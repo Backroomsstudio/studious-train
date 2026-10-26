@@ -191,3 +191,29 @@ export function SettingsButton({ className }: { className?: string }) {
     </>
   );
 }
+
+/** Scheda larga del Profilo che apre le stesse impostazioni (suoni, vibrazione, modalità leggera, app). */
+export function SettingsCard() {
+  const [open, setOpen] = useState(false);
+  const prefs = usePrefs();
+  const on = [prefs.sound && "suoni", prefs.haptic && "vibrazione", prefs.lite && "modalità leggera"].filter(Boolean).join(", ");
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        className="glass flex w-full items-center gap-4 rounded-[24px] p-4 text-left transition hover:shadow-glow-sm active:scale-[0.99]"
+      >
+        <span className="chrome-surface grid size-12 shrink-0 place-items-center rounded-2xl text-electric">
+          <Settings2 className="size-5" aria-hidden />
+        </span>
+        <span className="min-w-0">
+          <span className="block font-display font-bold">Impostazioni dell&apos;app</span>
+          <span className="block truncate text-sm text-chrome-500">{on ? `Attivi: ${on}` : "Suoni e vibrazione spenti"} · installa l&apos;app</span>
+        </span>
+      </button>
+      {open && <SettingsSheet open={open} onOpenChange={setOpen} />}
+    </>
+  );
+}

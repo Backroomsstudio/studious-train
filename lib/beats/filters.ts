@@ -30,6 +30,11 @@ export const filtersSchema = z
     q: z.string().trim().max(80).optional().catch(undefined),
     producers: list,
     collab: z.enum(["only", "exclude"]).optional().catch(undefined),
+    /** "1": i produttori scelti devono esserci tutti (collab tra producer), non uno qualsiasi. */
+    together: z
+      .string()
+      .optional()
+      .transform((v) => v === "1"),
     bpmMin: bpm,
     bpmMax: bpm,
     key: z
@@ -51,6 +56,7 @@ export const filtersSchema = z
       q: f.q || undefined,
       producers: f.producers,
       collab: f.collab,
+      together: f.together && f.producers.length > 1,
       bpmMin: lo,
       bpmMax: hi,
       key: f.key,
@@ -87,6 +93,7 @@ export function filtersToParams(f: BeatFilters): URLSearchParams {
   if (f.q) p.set("q", f.q);
   if (f.producers.length) p.set("producers", f.producers.join(","));
   if (f.collab) p.set("collab", f.collab);
+  if (f.together) p.set("together", "1");
   if (f.bpmMin !== BPM_RANGE.min) p.set("bpmMin", String(f.bpmMin));
   if (f.bpmMax !== BPM_RANGE.max) p.set("bpmMax", String(f.bpmMax));
   if (f.key) p.set("key", f.key);

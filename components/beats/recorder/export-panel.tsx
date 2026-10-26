@@ -53,7 +53,7 @@ export function ExportPanel() {
       </section>
 
       <Link
-        href={`/beats/studio?servizio=MIX_MASTER&beat=${encodeURIComponent(beat.slug)}`}
+        href={`/beats/registra?servizio=MIX_MASTER&beat=${encodeURIComponent(beat.slug)}#servizi`}
         className="obsidian group flex items-center gap-4 rounded-[28px] p-5 transition hover:shadow-glow-sm"
       >
         <span className="min-w-0 flex-1">

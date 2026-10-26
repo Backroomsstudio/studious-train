@@ -147,3 +147,15 @@ test("aste: offerta minima e proroga anti-cecchino", () => {
   assert.equal(pickWinner([{ userId: "a", amountCents: 1 }, { userId: "b", amountCents: 2 }], ["b"])?.userId, "a");
   assert.match(giftCode(() => 0), /^BR-AAAA-AAAA$/);
 });
+
+test("filtro 'together': serve più di un produttore e finisce nell'URL", async () => {
+  const { parseFilters, filtersToParams } = await import("../../lib/beats/filters");
+  const { producerPairs } = await import("../../lib/beats/pairs");
+  assert.equal(parseFilters({ producers: "astral", together: "1" }).together, false);
+  const f = parseFilters({ producers: "astral,freya", together: "1" });
+  assert.equal(f.together, true);
+  assert.equal(filtersToParams(f).get("together"), "1");
+  const p = (slug: string) => ({ slug, name: slug, accentColor: null });
+  const pairs = producerPairs([{ producers: [p("freya"), p("astral")] }, { producers: [p("astral"), p("freya")] }, { producers: [p("plugghe")] }]);
+  assert.deepEqual(pairs.map((x) => [x.slugs, x.count]), [[["astral", "freya"], 2]]);
+});

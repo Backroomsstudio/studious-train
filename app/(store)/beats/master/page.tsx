@@ -50,11 +50,11 @@ export default async function MasterPage({ searchParams }: { searchParams: Promi
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <ChromeLink href="/beats/studio?servizio=MIX_MASTER" variant="electric">
+          <ChromeLink href="/beats/registra?servizio=MIX_MASTER#servizi" variant="electric">
             {solo.name} · {formatEuro(solo.priceCents ?? 0)}
             {solo.credits ? ` o ${solo.credits} crediti` : ""}
           </ChromeLink>
-          <ChromeLink href="/beats/studio?servizio=MIX_MASTER" variant="obsidian">
+          <ChromeLink href="/beats/registra?servizio=MIX_MASTER#servizi" variant="obsidian">
             {mix.name} · {formatEuro(mix.priceCents ?? 0)}
           </ChromeLink>
         </div>

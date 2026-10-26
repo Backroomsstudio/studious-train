@@ -8,10 +8,11 @@ import { getBackend } from "@/lib/beats/server/backend";
 import { getFacets } from "@/lib/beats/server/queries";
 import type { BeatSummary } from "@/lib/beats/types";
 
-export const metadata = { title: "Feed" };
-
-/** Feed: il drop della settimana, le uscite precedenti divise per settimana e per genere, i più ascoltati. */
-export default async function FeedPage() {
+/**
+ * Le uscite (ex pagina Feed), vista iniziale di Cerca: il drop della settimana, diviso per genere,
+ * i più ascoltati e le uscite precedenti settimana per settimana.
+ */
+export async function FeedSections() {
   const backend = await getBackend();
   const [arrivals, latest, popular, facets] = await Promise.all([
     backend.newArrivals(),
@@ -28,11 +29,6 @@ export default async function FeedPage() {
 
   return (
     <RevealList className="space-y-10">
-      <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Feed</p>
-        <h1 className="chrome-text mt-1 font-display text-4xl font-black tracking-tight">Nuove uscite</h1>
-      </div>
-
       <NewArrivals beats={arrivals} daysToNextDrop={daysUntilNextDrop()} />
 
       {arrivals.length > 0 && (

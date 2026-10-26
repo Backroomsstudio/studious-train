@@ -956,3 +956,158 @@ body.lite .logo3d,
 body.lite [data-beat-cover][data-playing],
 body.lite .beat-btn { transform: none; }
 body.lite [data-parallax] { translate: none; }
+
+/* ------------------------------------------------------------------ */
+/* Home "Level 0": testata dei Backrooms e zone a griglia bento         */
+/* ------------------------------------------------------------------ */
+@layer components {
+  .home-hero {
+    box-shadow:
+      0 40px 80px -30px rgba(10, 8, 2, 0.55),
+      0 18px 30px -18px rgba(255, 196, 64, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  /* Carta da parati gialla a righe, come le stanze del Level 0 */
+  .home-hero-wall {
+    background:
+      repeating-linear-gradient(90deg, rgba(120, 96, 30, 0.35) 0 2px, transparent 2px 22px),
+      repeating-linear-gradient(90deg, rgba(255, 236, 160, 0.12) 0 1px, transparent 1px 11px),
+      linear-gradient(180deg, #b79a48, #6e5a22 55%, #2a2310);
+  }
+  /* Tubo al neon: si accende una volta tremolando, poi resta fisso */
+  .home-hero-neon {
+    background: linear-gradient(90deg, transparent, #fff6d0 12%, #ffffff 50%, #fff6d0 88%, transparent);
+    box-shadow:
+      0 0 18px 4px rgba(255, 236, 170, 0.75),
+      0 0 70px 18px rgba(255, 214, 102, 0.35);
+    animation: neon-on 1.4s steps(1, end) both;
+  }
+  @keyframes neon-on {
+    0% { opacity: 0; }
+    12% { opacity: 1; }
+    16% { opacity: 0.15; }
+    24% { opacity: 1; }
+    30% { opacity: 0.4; }
+    36%, 100% { opacity: 1; }
+  }
+  .home-hero-grain {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  .home-hero-name {
+    background: linear-gradient(180deg, #ffffff 0%, #f4ecd2 45%, #c9b98a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 6px 22px rgba(255, 214, 102, 0.25));
+  }
+
+  /* Zone: ogni sezione ha la sua materia */
+  .zone-tile {
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  .zone-tile > a {
+    box-shadow:
+      0 24px 40px -24px rgba(17, 24, 39, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+  .zone-swipe {
+    background:
+      radial-gradient(90% 120% at 100% 0%, rgba(255, 84, 189, 0.85), transparent 55%),
+      radial-gradient(80% 100% at 0% 100%, rgba(108, 63, 255, 0.9), transparent 60%),
+      linear-gradient(160deg, #2a0f3d, #0b0614);
+  }
+  .zone-rec {
+    background:
+      radial-gradient(100% 120% at 0% 0%, rgba(255, 140, 120, 0.55), transparent 55%),
+      linear-gradient(160deg, #ff3b30, #a3000d);
+  }
+  .zone-search {
+    background:
+      radial-gradient(circle at 1px 1px, rgba(17, 24, 39, 0.12) 1px, transparent 1.5px) 0 0 / 14px 14px,
+      linear-gradient(160deg, #ffffff, #e6e9ee);
+  }
+  .zone-search > span:first-child > span:first-child {
+    background: rgba(17, 24, 39, 0.06);
+  }
+  .zone-auction {
+    background:
+      radial-gradient(100% 120% at 100% 0%, rgba(255, 255, 255, 0.65), transparent 50%),
+      linear-gradient(160deg, #ffe08a, #e3a82b 70%, #b07a12);
+  }
+  .zone-kit {
+    background:
+      radial-gradient(100% 120% at 0% 0%, rgba(0, 240, 255, 0.55), transparent 55%),
+      linear-gradient(160deg, #0066ff, #001f73);
+  }
+  .zone-profile {
+    background:
+      radial-gradient(100% 120% at 100% 100%, rgba(255, 216, 102, 0.35), transparent 55%),
+      linear-gradient(160deg, #1f2937, #07080b);
+  }
+  /* Ventaglio di copertine: si apre quando la scheda viene puntata */
+  .zone-fan-card {
+    transform: rotate(calc((var(--i) - 1) * 9deg)) translateY(calc(var(--i) * 4px));
+    transition: transform 0.6s var(--ease-spring);
+  }
+  .zone-tile:hover .zone-fan-card {
+    transform: rotate(calc((var(--i) - 1) * 16deg)) translateX(calc((var(--i) - 1) * 10px)) translateY(-6px);
+  }
+  .zone-rec-dot {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+    animation: rec-pulse 1.6s ease-out infinite;
+  }
+  .zone-live {
+    animation: rec-pulse 1.6s ease-out infinite;
+  }
+  @keyframes rec-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.65); }
+    70%, 100% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+  }
+
+  /* Barra in basso: pillola attiva che scivola con una molla (framer-motion) */
+  .tab-active-pill {
+    background: linear-gradient(180deg, rgba(0, 102, 255, 0.14), rgba(0, 102, 255, 0.06));
+    box-shadow: inset 0 0 0 1px rgba(0, 102, 255, 0.18);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-hero-neon,
+    .zone-rec-dot,
+    .zone-live {
+      animation: none;
+    }
+    .zone-fan-card {
+      transition: none;
+    }
+  }
+}
+body.lite .home-hero-grain {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Swipe in stile Reels                                                */
+/* ------------------------------------------------------------------ */
+@layer components {
+  .reel-bg {
+    filter: blur(42px) saturate(1.5) brightness(0.8);
+  }
+  .reels-shell .no-scrollbar {
+    -webkit-overflow-scrolling: touch;
+  }
+  /* La copertina respira a tempo col beat (variabile --beat del blocco "Esperienza") */
+  .reel-cover::before {
+    content: "";
+    position: absolute;
+    inset: -14%;
+    border-radius: 48px;
+    background: radial-gradient(closest-side, var(--reel), transparent 70%);
+    opacity: calc(0.35 + var(--beat, 0) * 0.5);
+    filter: blur(18px);
+    z-index: -1;
+  }
+}
+body.lite .reel-bg {
+  filter: brightness(0.55);
+}

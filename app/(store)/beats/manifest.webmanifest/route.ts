@@ -26,9 +26,9 @@ const manifest: MetadataRoute.Manifest = {
     { src: "/brand/beats-icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
   ],
   shortcuts: [
-    { name: "Nuove uscite", url: "/beats/feed" },
+    { name: "Nuove uscite", url: "/beats/cerca" },
     { name: "Cerca un beat", url: "/beats/cerca" },
-    { name: "La tua libreria", url: "/beats/libreria" },
+    { name: "La tua libreria", url: "/beats/profilo" },
   ],
 };
 

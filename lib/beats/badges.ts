@@ -45,7 +45,6 @@ export const BADGES: BadgeDef[] = [
   { id: "notturno", name: "Notturno", goal: "Ascolta dopo mezzanotte", icon: "moon", target: 1, value: (i) => (i.nightOwl ? 1 : 0) },
   { id: "resident-gold", name: "Resident Gold", goal: "6 mesi con noi", icon: "star", target: 6, unit: "mesi", gold: true, value: (i) => i.levelMonths },
   { id: "prima-demo", name: "Prima demo", goal: "Registra la tua prima demo", icon: "mic", target: 1, value: (i) => i.counters.demo ?? 0 },
-  { id: "collab", name: "Collab", goal: "Fai il tuo primo feat", icon: "users", target: 1, value: (i) => i.counters.collab ?? 0 },
   { id: "orecchio-fino", name: "Orecchio fino", goal: "Confronta due beat in A/B", icon: "ab", target: 1, value: (i) => i.counters.compare ?? 0 },
   { id: "ambasciatore", name: "Ambasciatore", goal: "Condividi il tuo Wrapped o la tessera", icon: "share", target: 1, value: (i) => i.counters.share ?? 0 },
   { id: "talent-scout", name: "Talent scout", goal: "Invita un artista", icon: "invite", target: 1, value: (i) => i.counters.invite ?? 0 },

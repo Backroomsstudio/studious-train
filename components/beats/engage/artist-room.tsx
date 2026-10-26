@@ -192,7 +192,7 @@ export function ArtistRoom({ profile }: { profile: RoomProfile }) {
               <span className="block font-semibold">Pezzi usciti</span>
               <span className="block text-[13px] text-chrome-500">Il tuo primo pezzo non è ancora fuori.</span>
             </span>
-            <ChromeLink href="/beats/studio" size="sm">
+            <ChromeLink href="/beats/registra#servizi" size="sm">
               Studio
             </ChromeLink>
           </li>

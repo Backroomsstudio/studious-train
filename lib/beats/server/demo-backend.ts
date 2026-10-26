@@ -153,6 +153,7 @@ export function toSummary(beat: DemoBeat, now = new Date()): BeatSummary {
 function matches(beat: DemoBeat, f: BeatFilters): boolean {
   if (beat.bpm < f.bpmMin || beat.bpm > f.bpmMax) return false;
   if (f.producers.length && !beat.producers.some((p) => f.producers.includes(p.slug))) return false;
+  if (f.together && !f.producers.every((slug) => beat.producers.some((p) => p.slug === slug))) return false;
   if (f.collab === "only" && beat.producers.length < 2) return false;
   if (f.collab === "exclude" && beat.producers.length > 1) return false;
   if (f.genres.length) {

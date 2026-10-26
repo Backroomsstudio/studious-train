@@ -21,7 +21,17 @@ const SORT_LABELS: Record<SortOrder, string> = {
 
 const toggle = (list: string[], value: string) => (list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
 
-function SearchField({ value, onChange, autoFocus }: { value: string; onChange: (q: string) => void; autoFocus?: boolean }) {
+function SearchField({
+  value,
+  onChange,
+  autoFocus,
+  onFocus,
+}: {
+  value: string;
+  onChange: (q: string) => void;
+  autoFocus?: boolean;
+  onFocus?: () => void;
+}) {
   const [text, setText] = useState(value);
   const last = useRef(value);
 
@@ -44,13 +54,14 @@ function SearchField({ value, onChange, autoFocus }: { value: string; onChange: 
   }, [value]);
 
   return (
-    <label className="glass flex h-12 flex-1 items-center gap-3 rounded-full px-4 focus-within:ring-2 focus-within:ring-electric/50 focus-within:shadow-glow-sm">
+    <label className="glass flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full px-4 focus-within:ring-2 focus-within:ring-electric/50 focus-within:shadow-glow-sm">
       <Search className="size-4 shrink-0 text-chrome-500" aria-hidden />
       <span className="sr-only">Cerca beat</span>
       <input
         type="search"
         value={text}
         autoFocus={autoFocus}
+        onFocus={onFocus}
         onChange={(e) => setText(e.target.value)}
         placeholder="Beat, produttori, mood, type beat…"
         className="min-w-0 flex-1 bg-transparent text-[15px] text-graphite outline-none placeholder:text-chrome-400 [&::-webkit-search-cancel-button]:hidden"
@@ -83,6 +94,9 @@ export function FilterBar({
   total,
   fetching,
   autoFocusSearch,
+  onSearchFocus,
+  quickChips = true,
+  showCount = true,
 }: {
   filters: BeatFilters;
   facets: Facets;
@@ -91,6 +105,10 @@ export function FilterBar({
   total: number;
   fetching: boolean;
   autoFocusSearch?: boolean;
+  onSearchFocus?: () => void;
+  /** Pillole dei produttori sotto la barra (Cerca le sostituisce con i filtri pronti). */
+  quickChips?: boolean;
+  showCount?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [bpm, setBpm] = useState([filters.bpmMin, filters.bpmMax]);
@@ -109,7 +127,7 @@ export function FilterBar({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <SearchField value={filters.q ?? ""} onChange={(q) => onChange({ q: q.trim() || undefined })} autoFocus={autoFocusSearch} />
+        <SearchField value={filters.q ?? ""} onChange={(q) => onChange({ q: q.trim() || undefined })} autoFocus={autoFocusSearch} onFocus={onSearchFocus} />
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
@@ -129,30 +147,32 @@ export function FilterBar({
       </div>
 
       {/* Produttori resident: sempre visibili, come le pillole del mockup */}
-      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0" role="group" aria-label="Produttori">
-        <Chip active={!filters.producers.length} onClick={() => onChange({ producers: [] })}>
-          Tutti
-        </Chip>
-        {residents.map((p) => (
-          <Chip
-            key={p.slug}
-            active={filters.producers.includes(p.slug)}
-            accent={p.accentColor}
-            onClick={() => onChange({ producers: toggle(filters.producers, p.slug) })}
-          >
-            <span className="size-2 rounded-full" style={{ background: p.accentColor ?? "#0066ff" }} aria-hidden />
-            {p.name}
-            <span className="text-[11px] font-medium opacity-60">{p.count}</span>
+      {quickChips && (
+        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0" role="group" aria-label="Produttori">
+          <Chip active={!filters.producers.length} onClick={() => onChange({ producers: [] })}>
+            Tutti
           </Chip>
-        ))}
-        <Chip
-          active={filters.collab === "only"}
-          onClick={() => onChange({ collab: filters.collab === "only" ? undefined : "only" })}
-          title="Beat prodotti in collaborazione tra più produttori"
-        >
-          <Users className="size-3.5" /> Co-produzioni
-        </Chip>
-      </div>
+          {residents.map((p) => (
+            <Chip
+              key={p.slug}
+              active={filters.producers.includes(p.slug)}
+              accent={p.accentColor}
+              onClick={() => onChange({ producers: toggle(filters.producers, p.slug) })}
+            >
+              <span className="size-2 rounded-full" style={{ background: p.accentColor ?? "#0066ff" }} aria-hidden />
+              {p.name}
+              <span className="text-[11px] font-medium opacity-60">{p.count}</span>
+            </Chip>
+          ))}
+          <Chip
+            active={filters.collab === "only"}
+            onClick={() => onChange({ collab: filters.collab === "only" ? undefined : "only" })}
+            title="Beat prodotti in collaborazione tra più produttori"
+          >
+            <Users className="size-3.5" /> Co-produzioni
+          </Chip>
+        </div>
+      )}
 
       <div
         id="beat-filters"
@@ -245,17 +265,19 @@ export function FilterBar({
         </Section>
       </div>
 
-      <div className="flex items-center justify-between px-1 text-[13px] text-chrome-500" aria-live="polite">
-        <span>
-          {fetching ? "Ricerca…" : `${total} beat`}
-          {filters.q && !fetching && ` per “${filters.q}”`}
-        </span>
-        {(active > 0 || filters.q) && (
-          <button type="button" onClick={onReset} className="inline-flex items-center gap-1 font-semibold text-electric hover:underline">
-            <RotateCcw className="size-3.5" /> Azzera filtri
-          </button>
-        )}
-      </div>
+      {showCount && (
+        <div className="flex items-center justify-between px-1 text-[13px] text-chrome-500" aria-live="polite">
+          <span>
+            {fetching ? "Ricerca…" : `${total} beat`}
+            {filters.q && !fetching && ` per “${filters.q}”`}
+          </span>
+          {(active > 0 || filters.q) && (
+            <button type="button" onClick={onReset} className="inline-flex items-center gap-1 font-semibold text-electric hover:underline">
+              <RotateCcw className="size-3.5" /> Azzera filtri
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -148,12 +148,11 @@ test("badge: traguardi da libreria, salvati, ascolti, livello e contatori", () =
   assert.equal(b["resident-gold"].unlocked, true);
   assert.equal(b["resident-gold"].current, 6); // limitato al traguardo
   assert.equal(b["prima-demo"].unlocked, true);
-  assert.equal(b.collab.unlocked, false);
 });
 
 test("badge: solo i nuovi sblocchi rispetto a quelli già visti", () => {
-  const states = computeBadges({ ...base, unlocked: 1, counters: { collab: 2 } });
-  assert.deepEqual(newlyUnlocked(states, ["primo-sblocco"]).map((s) => s.def.id), ["collab"]);
+  const states = computeBadges({ ...base, unlocked: 1, counters: { compare: 2 } });
+  assert.deepEqual(newlyUnlocked(states, ["primo-sblocco"]).map((s) => s.def.id), ["orecchio-fino"]);
 });
 
 /* ---- Confronto A/B ---- */

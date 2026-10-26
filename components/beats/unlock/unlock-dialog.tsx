@@ -113,7 +113,7 @@ export function UnlockDialog() {
             </ul>
             {/* Il momento giusto per proporre lo studio: il beat è appena diventato suo. */}
             <Link
-              href={`/beats/studio?servizio=HIT_PACKAGE&beat=${encodeURIComponent(beat.slug)}`}
+              href={`/beats/registra?servizio=HIT_PACKAGE&beat=${encodeURIComponent(beat.slug)}#servizi`}
               onClick={close}
               className="obsidian sheen mt-4 flex items-center gap-3 rounded-2xl p-4 transition hover:shadow-glow-sm"
             >
@@ -125,7 +125,7 @@ export function UnlockDialog() {
               <ArrowRight className="size-4 text-chrome-400" />
             </Link>
             <div className="mt-5 flex gap-2">
-              <ChromeLink href="/beats/libreria" variant="ghost" size="md" onClick={close}>
+              <ChromeLink href="/beats/profilo" variant="ghost" size="md" onClick={close}>
                 Vai alla Libreria
               </ChromeLink>
               <ChromeButton variant="obsidian" className="ml-auto" onClick={close}>

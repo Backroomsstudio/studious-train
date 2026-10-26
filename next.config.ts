@@ -14,6 +14,16 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   compress: true,
   images: { formats: ["image/avif", "image/webp"] },
+  // Vecchie sezioni del Beat Store: Feed è dentro Cerca, Libreria è diventata Profilo, i servizi
+  // dello Studio stanno in fondo a Registra. Temporanei (307): la struttura può ancora cambiare.
+  async redirects() {
+    return [
+      { source: "/beats/feed", destination: "/beats/cerca", permanent: false },
+      { source: "/beats/libreria", destination: "/beats/profilo", permanent: false },
+      { source: "/beats/studio", destination: "/beats/registra#servizi", permanent: false },
+      { source: "/beats/feat", destination: "/beats", permanent: false },
+    ];
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
