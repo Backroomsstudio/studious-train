@@ -1,7 +1,7 @@
 "use client";
 
 import * as Popover from "@radix-ui/react-popover";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { Gauge, ListMusic, Loader2, Mic, Pause, Play, Repeat, SkipBack, SkipForward, Volume2, VolumeX, X, Zap } from "lucide-react";
 import Link from "next/link";

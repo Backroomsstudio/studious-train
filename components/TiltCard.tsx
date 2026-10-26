@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type PointerEvent, type ReactNode } from "react";
-import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
 import { cn } from "@/lib/cn";
 
 /**

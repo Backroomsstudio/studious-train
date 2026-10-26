@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
 import { ArrowUpRight, Gavel, Mic, Package, Play, Search, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode, type PointerEvent } from "react";

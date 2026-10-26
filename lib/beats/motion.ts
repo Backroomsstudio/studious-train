@@ -1,8 +1,8 @@
 /**
- * Molle condivise (framer-motion): tutte le animazioni del negozio usano la fisica delle molle,
+ * Molle condivise (Motion, motion.dev): tutte le animazioni del negozio usano la fisica delle molle,
  * non curve ease-in-out. Valori pensati per 60/120 Hz: rigidi abbastanza da non "galleggiare".
  */
-import type { Transition } from "framer-motion";
+import type { Transition } from "motion/react";
 
 /** Pressione e rilascio dei tasti: risposta immediata, piccolo rimbalzo. */
 export const SPRING_PRESS: Transition = { type: "spring", stiffness: 700, damping: 30, mass: 0.6 };

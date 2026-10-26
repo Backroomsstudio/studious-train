@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Bookmark, Heart, Lock, Mic, Pause, Play, Share2, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";

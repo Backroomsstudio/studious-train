@@ -1,6 +1,6 @@
 "use client";
 
-import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "framer-motion";
+import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
 import { Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";

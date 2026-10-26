@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Download, Loader2, Play, RotateCcw, Share2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

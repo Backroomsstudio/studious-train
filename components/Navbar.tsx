@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { motion, useMotionValueEvent, useScroll } from "framer-motion";
+import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import { BookingTrigger } from "@/components/BookingModal";
 import { Magnetic } from "@/components/Magnetic";
 import { buttonStyles, cn } from "@/lib/cn";

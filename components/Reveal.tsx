@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { motion, useReducedMotion, type Variants } from "motion/react";
 import { Fragment, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 

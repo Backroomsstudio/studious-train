@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "motion/react";
 import { KineticText, Marquee, Reveal } from "@/components/Reveal";
 import { loungeFeatures, type LoungeIcon } from "@/lib/content";
 import { cn } from "@/lib/cn";

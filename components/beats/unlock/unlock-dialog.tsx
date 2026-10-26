@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { ArrowRight, Check, CircleCheck, Crown, Download, Loader2, Lock, Wand2, Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";

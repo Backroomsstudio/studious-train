@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRef } from "react";
-import { motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useInView, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { KineticText, Reveal } from "@/components/Reveal";
 import { BookingTrigger } from "@/components/BookingModal";
 import { studioPhotos } from "@/lib/content";

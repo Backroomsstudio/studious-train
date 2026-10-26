@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Check, CircleCheck, Clock, Loader2, Wand2, Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
