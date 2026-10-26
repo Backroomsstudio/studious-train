@@ -22,14 +22,14 @@
 .hero .logo-wrap .s3{--z:-170px;width:32%;right:6%;top:-8%;opacity:.7;transform:translateZ(var(--z)) rotateY(-16deg) rotateZ(2deg)}
 .hero .logo-wrap .s4{--z:-130px;width:30%;left:8%;bottom:-6%;opacity:.7;transform:translateZ(var(--z)) rotateY(18deg) rotateZ(-3deg)}
 .hero .logo-wrap .ph:hover{--z:90px;opacity:1;box-shadow:0 40px 80px rgba(0,0,0,.9),0 0 50px rgba(110,128,255,.45)}
-.hero .logo-wrap .lg{transform:translateZ(70px)}
-@media(max-width:900px){.hero .logo-wrap .stage{position:relative}}
-/* logo dell'apertura: argento opaco al posto del cromo, con un riflesso blu che passa ogni tanto */
-.hero .logo{animation:none;transform:none;filter:grayscale(1) contrast(.6) brightness(.9) drop-shadow(0 18px 24px rgba(0,0,0,.65)) drop-shadow(0 0 22px rgba(91,108,255,.2))}
-.hero .logo-wrap .lg::after{content:"";position:absolute;inset:0;pointer-events:none;-webkit-mask:url(../brand/logo-silver.webp) center/74% auto no-repeat;mask:url(../brand/logo-silver.webp) center/74% auto no-repeat;background:linear-gradient(115deg,transparent 35%,rgba(120,138,255,.5) 47%,rgba(200,210,255,.3) 50%,transparent 62%) 0 0/260% 100% no-repeat,linear-gradient(0deg,rgba(91,108,255,.25),transparent 55%);mix-blend-mode:screen;animation:fxSheen 7s ease-in-out infinite}
-@keyframes fxSheen{0%,15%{background-position:120% 0,0 0}60%,100%{background-position:-60% 0,0 0}}
-.hero .logo-wrap::before{background:radial-gradient(closest-side,rgba(110,128,255,.18),transparent 70%)}
-@media(max-width:900px){.hero .logo-wrap .lg::after{-webkit-mask-size:100% auto;mask-size:100% auto}}
+/* foto centrale della sala, la più vicina: al posto del logo */
+.hero .logo-wrap .s0{--z:70px;width:60%;left:20%;top:4%;opacity:1;transform:translateZ(var(--z))}
+.hero .logo-wrap .s0:hover{--z:120px}
+@media(max-width:900px){
+  .hero .logo-wrap{max-width:none;margin:0 0 6px}
+  .hero .logo-wrap .stage{position:relative}
+  .hero .logo-wrap .s0{display:block;position:relative;left:auto;top:auto;width:100%;aspect-ratio:16/10;transform:none}
+}
 .hdr .acts{display:flex;align-items:center;gap:8px}
 
 /* ---------- LO STUDIO: mosaico di foto ---------- */
