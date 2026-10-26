@@ -1,0 +1,146 @@
+/* Backrooms Studio — livello immersivo: liquido WebGL, suono, cursore a goccia, infografiche animate.
+   Tutto progressivo: senza JS o con "riduci movimento" il sito resta identico e leggibile. */
+:root{--beat:0}
+
+/* ---------- hero: ingresso senza nascondere il testo (LCP) ---------- */
+.hero-in{animation:fxHeroIn 1s cubic-bezier(.2,.7,.2,1) both}
+@keyframes fxHeroIn{from{transform:translateY(26px)}}
+.hero h1.gold-text{background-size:100% 260%;animation:fxShine 3.2s .4s cubic-bezier(.3,.6,.2,1) both}
+@keyframes fxShine{from{background-position:0 100%}to{background-position:0 0}}
+.fx-liquid{position:absolute;inset:0;z-index:-1;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen;opacity:0;transition:opacity 1.6s ease}
+.fx-liquid.on{opacity:.9}
+
+/* prova sociale nell'hero */
+.hero .proof{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;margin-top:22px}
+.rating{display:inline-flex;align-items:center;gap:10px;font:700 14px/1.2 var(--sans);color:var(--soft);padding:8px 14px 8px 10px;border-radius:999px;background:rgba(8,9,12,.55);border:1px solid rgba(255,255,255,.12);transition:border-color .2s}
+.rating:hover{border-color:rgba(255,255,255,.4)}
+.rating .st{color:#ffd76a;letter-spacing:.12em;font-size:15px}
+.rating b{color:#fff}
+
+/* ---------- interruttore suono ---------- */
+.hdr .acts{display:flex;align-items:center;gap:8px}
+.fx-snd{display:inline-flex;align-items:center;gap:9px;height:40px;padding:0 14px;border-radius:999px;border:1px solid rgba(110,128,255,.4);background:rgba(16,18,24,.6);color:var(--soft);font:700 11px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;transition:border-color .2s,color .2s,box-shadow .2s}
+.fx-snd:hover{border-color:#fff;color:#fff}
+.fx-snd[aria-pressed="true"]{color:#fff;border-color:var(--gold2);box-shadow:0 0 calc(10px + var(--beat)*26px) rgba(110,128,255,calc(.25 + var(--beat)*.5))}
+.eq{display:flex;align-items:flex-end;gap:2px;height:14px}
+.eq i{width:3px;height:4px;border-radius:2px;background:currentColor;transition:height .3s}
+.fx-snd[aria-pressed="true"] .eq i{animation:fxEq .9s ease-in-out infinite}
+.fx-snd[aria-pressed="true"] .eq i:nth-child(2){animation-delay:-.3s}
+.fx-snd[aria-pressed="true"] .eq i:nth-child(3){animation-delay:-.6s}
+.fx-snd[aria-pressed="true"] .eq i:nth-child(4){animation-delay:-.15s}
+@keyframes fxEq{0%,100%{height:4px}50%{height:14px}}
+@media(max-width:520px){.fx-snd .lbl{display:none}.fx-snd{padding:0 12px}.brand small.t2{display:none}}
+@media(max-width:430px){.hdr .brand>span{display:none}}
+
+.fx-invite{display:inline-flex;align-items:center;gap:10px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--soft);padding:10px 4px;border-bottom:1px dashed rgba(255,255,255,.3);transition:color .2s,border-color .2s}
+.fx-invite:hover{color:#fff;border-color:#fff}
+.fx-invite svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6}
+.fx-invite[hidden]{display:none}
+
+/* ---------- barra di avanzamento "forma d'onda" ---------- */
+.fx-progress{position:fixed;left:0;top:0;right:0;height:3px;z-index:70;pointer-events:none;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,#5b6cff,#c9d2df,#fff);box-shadow:0 0 12px rgba(110,128,255,.8)}
+
+/* ---------- cursore a goccia (solo mouse) ---------- */
+.fx-cur,.fx-ring{position:fixed;left:0;top:0;z-index:95;pointer-events:none;border-radius:50%;will-change:transform}
+.fx-cur{width:6px;height:6px;margin:-3px 0 0 -3px;background:#fff;box-shadow:0 0 10px rgba(142,156,255,.9)}
+.fx-ring{width:38px;height:38px;margin:-19px 0 0 -19px;border:1.5px solid rgba(220,226,235,.55);background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.18),rgba(142,156,255,.06) 60%,transparent 70%);transition:width .35s cubic-bezier(.2,.7,.2,1),height .35s cubic-bezier(.2,.7,.2,1),margin .35s cubic-bezier(.2,.7,.2,1),border-color .3s,border-radius .5s}
+.fx-ring.hot{width:72px;height:72px;margin:-36px 0 0 -36px;border-color:rgba(255,255,255,.9);border-radius:46% 54% 52% 48%/55% 45% 55% 45%;animation:fxBlob 2.4s ease-in-out infinite}
+.fx-ring.down{width:26px;height:26px;margin:-13px 0 0 -13px}
+@keyframes fxBlob{50%{border-radius:56% 44% 45% 55%/45% 55% 45% 55%}}
+.fx-splash{position:fixed;z-index:94;pointer-events:none;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;border:2px solid rgba(220,226,235,.8);animation:fxSplash .7s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes fxSplash{to{transform:scale(9);opacity:0;border-width:.5px}}
+
+/* ---------- pulsanti: goccia al click + magnetismo ---------- */
+.btn,.btn-ghost,.go{position:relative;overflow:hidden;isolation:isolate}
+.fx-drop{position:absolute;z-index:-1;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,.95),rgba(142,156,255,.45) 55%,transparent 70%);animation:fxDrop .75s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes fxDrop{to{transform:scale(28);opacity:0}}
+.fx-mag{transition:translate .35s cubic-bezier(.2,.7,.2,1)}
+
+/* riflesso che segue il mouse sulle card 3D */
+.fx-glare{position:absolute;inset:0;z-index:5;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(420px circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.16),rgba(142,156,255,.06) 35%,transparent 60%);mix-blend-mode:screen}
+.slab:hover .fx-glare{opacity:1}
+
+/* ---------- confronto 30 vs 70 mq: le barre si riempiono ---------- */
+.js .cmp .tr i{transform:scaleX(0);transform-origin:0 50%;transition:transform 1.6s cubic-bezier(.2,.7,.2,1) .25s}
+.js .cmp.in .tr i{transform:none}
+.js .cmp.in .bar.us .tr i{transition-delay:.7s}
+
+/* ---------- INFOGRAFICA: il viaggio del tuo brano ---------- */
+#percorso{overflow:hidden}
+.path{position:relative;--p:0}
+.path-wave{display:block;width:100%;height:clamp(90px,11vw,140px);overflow:visible}
+.path-wave path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.path-wave .bg{stroke:rgba(110,128,255,.18);stroke-width:2}
+.path-wave .fg{stroke:url(#fxWaveGrad);stroke-width:3;filter:drop-shadow(0 0 8px rgba(142,156,255,.8))}
+.path-steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(14px,2vw,26px);margin-top:clamp(10px,2vw,22px);counter-reset:s}
+.path-steps li{position:relative;padding:24px 22px 26px;border-radius:22px;background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid rgba(110,128,255,.22);box-shadow:0 16px 30px rgba(0,0,0,.45);transition:border-color .6s,box-shadow .6s,transform .6s cubic-bezier(.2,.7,.2,1),opacity .6s}
+.path-steps .dot{position:absolute;left:22px;top:-9px;width:18px;height:18px;border-radius:50%;background:#1b1e26;border:2px solid rgba(110,128,255,.5);transition:background .5s,box-shadow .5s}
+.path-steps .n{font:900 13px/1 var(--serif);letter-spacing:.2em;color:var(--gold2)}
+.path-steps .ic{width:42px;height:42px;margin:14px 0 12px}
+.path-steps h3{font:800 clamp(18px,1.9vw,22px)/1.2 var(--serif);color:#fff;margin-bottom:8px}
+.path-steps p{font:500 14.5px/1.6 var(--sans);color:var(--muted)}
+.path-steps em{display:inline-block;margin-top:14px;font:800 11px/1 var(--sans);font-style:normal;letter-spacing:.14em;text-transform:uppercase;padding:8px 12px;border-radius:99px;border:1px solid rgba(110,128,255,.45);color:var(--gold1)}
+.path.armed .path-steps li{opacity:.45;transform:translateY(14px)}
+.path.armed .path-steps li.on{opacity:1;transform:none;border-color:rgba(142,156,255,.75);box-shadow:0 0 44px rgba(110,128,255,.22),0 16px 30px rgba(0,0,0,.45)}
+.path-steps li.on .dot{background:#fff;box-shadow:0 0 0 5px rgba(142,156,255,.25),0 0 22px #8e9cff}
+.path-cta{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;justify-content:center;margin-top:clamp(30px,4vw,52px);text-align:center}
+.path-cta p{font:600 14px/1.4 var(--sans);color:var(--muted)}
+@media(max-width:900px){
+  .path-wave{display:none}
+  .path-steps{grid-template-columns:1fr;padding-left:28px;gap:18px}
+  .path-steps::before,.path-steps::after{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;border-radius:2px;background:rgba(110,128,255,.2)}
+  .path-steps::after{background:linear-gradient(180deg,#fff,#8e9cff);box-shadow:0 0 10px #8e9cff;transform-origin:0 0;transform:scaleY(var(--p))}
+  .path-steps .dot{left:-29px;top:26px}
+}
+
+/* ---------- INFOGRAFICA: indicatore del pacchetto ---------- */
+.gauge{display:flex;align-items:center;gap:18px;margin-top:18px;padding:16px 18px;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid rgba(110,128,255,.25)}
+.gauge svg{width:112px;height:112px;flex:none;transform:rotate(-90deg);overflow:visible}
+.gauge circle{fill:none;stroke-width:9}
+.gauge .tk{stroke:rgba(255,255,255,.08)}
+.gauge .vl{stroke:url(#fxGaugeGrad);stroke-linecap:round;stroke-dasharray:326.73;stroke-dashoffset:326.73;transition:stroke-dashoffset .9s cubic-bezier(.2,.7,.2,1);filter:drop-shadow(0 0 6px rgba(142,156,255,.7))}
+.gauge .ring{position:relative;flex:none}
+.gauge .ctr{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font:900 30px/1 var(--sans);color:#fff}
+.gauge .ctr small{display:block;font:700 10px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.tiers{display:grid;gap:8px;flex:1}
+.tiers span{display:flex;align-items:center;gap:10px;font:700 13px/1.2 var(--sans);color:var(--muted);transition:color .4s}
+.tiers span::before{content:"";width:12px;height:12px;border-radius:50%;border:2px solid rgba(110,128,255,.45);flex:none;transition:background .4s,box-shadow .4s}
+.tiers span.on{color:#fff}
+.tiers span.on::before{background:#46e08a;border-color:#46e08a;box-shadow:0 0 12px #46e08a}
+.gauge.pop{animation:fxPop .6s cubic-bezier(.2,.7,.2,1)}
+@keyframes fxPop{40%{transform:scale(1.035);box-shadow:0 0 50px rgba(70,224,138,.35)}}
+.fx-bead{position:fixed;z-index:96;pointer-events:none;width:8px;height:10px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:radial-gradient(circle at 35% 30%,#fff,#8e9cff 60%,#5b6cff);animation:fxBead .9s cubic-bezier(.2,.6,.3,1) forwards}
+@keyframes fxBead{to{transform:translate(var(--dx),var(--dy)) scale(.3);opacity:0}}
+
+/* ---------- WhatsApp sempre a portata ---------- */
+.fx-wa{position:fixed;right:20px;bottom:22px;z-index:65;display:flex;align-items:center;gap:10px;height:58px;padding:0 20px 0 16px;border-radius:999px;background:linear-gradient(180deg,#38e07b,#1fa855);color:#04210f;font:800 13px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;box-shadow:0 14px 34px rgba(31,168,85,.45),inset 0 1px 0 rgba(255,255,255,.5);transform:translateY(140%);opacity:0;visibility:hidden;transition:transform .5s cubic-bezier(.2,.7,.2,1),opacity .3s,visibility 0s .5s}
+.fx-wa.show{transform:none;opacity:1;visibility:visible;transition:transform .5s cubic-bezier(.2,.7,.2,1),opacity .3s}
+.fx-wa svg{width:26px;height:26px;fill:currentColor}
+.fx-wa::after{content:"";position:absolute;inset:0;border-radius:inherit;border:2px solid #38e07b;animation:fxRipple 2.6s ease-out infinite;pointer-events:none}
+@keyframes fxRipple{0%{opacity:.8;transform:scale(1)}70%,100%{opacity:0;transform:scale(1.35,1.6)}}
+@media(max-width:900px){.fx-wa{bottom:calc(90px + env(safe-area-inset-bottom));right:14px;height:54px;width:54px;padding:0;justify-content:center}.fx-wa span{display:none}}
+
+/* ---------- pagine servizio ---------- */
+.svc-page .intro{position:relative;padding:clamp(130px,16vw,190px) 0 clamp(50px,7vw,90px);background:#050507 url(../img/bg-silver.webp) center bottom/cover no-repeat;isolation:isolate;overflow:hidden}
+.svc-page .intro::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(5,5,7,.88),rgba(5,5,7,.45)),linear-gradient(180deg,rgba(5,5,7,.4),rgba(5,5,7,.95))}
+.crumbs{font:700 11px/1.4 var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:26px}
+.crumbs a:hover{color:#fff}
+.svc-page h1{font-weight:900;font-size:clamp(36px,6vw,80px);line-height:1.02;margin:16px 0 22px;max-width:16ch}
+.svc-page .cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:30px}
+.svc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(18px,2.6vw,32px)}
+.svc-grid .face{padding:clamp(24px,3vw,36px);height:100%}
+.svc-grid h2{font:800 clamp(22px,2.6vw,30px)/1.15 var(--serif);color:#fff;margin-bottom:12px}
+.svc-grid p{color:var(--soft);font:500 16px/1.7 var(--sans);margin-top:10px}
+.svc-grid ul{margin-top:16px;display:grid;gap:10px}
+.svc-grid li{display:flex;gap:11px;font:500 15px/1.45 var(--sans);color:#fff}
+@media(max-width:900px){.svc-grid{grid-template-columns:1fr}}
+.rel{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.rel a{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:22px 24px;border-radius:20px;border:1px solid rgba(110,128,255,.35);font:800 clamp(17px,1.8vw,21px)/1.2 var(--serif);text-transform:uppercase;color:#fff;transition:background .2s,border-color .2s}
+.rel a:hover{background:rgba(110,128,255,.12);border-color:#fff}
+
+@media (prefers-reduced-motion:reduce){
+  .hero-in,.hero h1.gold-text{animation:none}
+  .fx-liquid,.fx-cur,.fx-ring{display:none}
+  .js .cmp .tr i{transform:none;transition:none}
+  .path.armed .path-steps li{opacity:1;transform:none}
+}

@@ -15,9 +15,9 @@
 <link rel="canonical" href="https://backroomsstudio.it/">
 <link rel="alternate" hreflang="it-IT" href="https://backroomsstudio.it/">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png?v=20261018b">
-<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=20261018b">
-<link rel="apple-touch-icon" href="/apple-icon.png?v=20261018b">
+<link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png?v=20261026fx">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=20261026fx">
+<link rel="apple-touch-icon" href="/apple-icon.png?v=20261026fx">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="it_IT">
 <meta property="og:site_name" content="Backrooms Studio">
@@ -34,7 +34,8 @@
 <link rel="preload" href="/fonts/cinzel.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/montserrat.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/img/bg-silver.webp" as="image">
-<link rel="stylesheet" href="/css/main.css?v=20261018b">
+<link rel="stylesheet" href="/css/main.css?v=20261026fx">
+<link rel="stylesheet" href="/css/fx.css?v=20261026fx">
 <script>document.documentElement.classList.add('js')</script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[
@@ -56,10 +57,16 @@
 {"@type":"WebSite","@id":"https://backroomsstudio.it/#website","url":"https://backroomsstudio.it","name":"Backrooms Studio","inLanguage":"it-IT","publisher":{"@id":"https://backroomsstudio.it/#studio"}},
 {"@type":"FAQPage","mainEntity":[
 {"@type":"Question","name":"Dove si trova lo studio di registrazione?","acceptedAnswer":{"@type":"Answer","text":"In Via Galileo Galilei 3 ad Arcugnano, in provincia di Vicenza."}},
-{"@type":"Question","name":"Quanto costa registrare in studio?","acceptedAnswer":{"@type":"Answer","text":"Più servizi prendi, meno paghi: scrivici su WhatsApp al 324 891 1607 e ti mandiamo i prezzi e il pacchetto più conveniente per il tuo progetto. La prima sessione è gratuita."}},
-{"@type":"Question","name":"Quante persone posso portare in sessione?","acceptedAnswer":{"@type":"Answer","text":"Fino a 6 persone del tuo team o entourage."}},
-{"@type":"Question","name":"Quali sono gli orari dello studio?","acceptedAnswer":{"@type":"Answer","text":"Lo studio è aperto 24 ore su 24, 7 giorni su 7."}},
-{"@type":"Question","name":"Fate mix e master anche a distanza?","acceptedAnswer":{"@type":"Answer","text":"Sì, con consegna online, da qualsiasi città."}}]}
+{"@type":"Question","name":"Quanto costa registrare in studio?","acceptedAnswer":{"@type":"Answer","text":"Il prezzo dipende da cosa ti serve: più servizi prendi, meno paghi, e con i pacchetti e il Backrooms Pass risparmi ancora di più. Scrivici su WhatsApp al 324 891 1607 e ti mandiamo il listino completo. La prima sessione è gratis."}},
+{"@type":"Question","name":"La prima sessione è davvero gratuita?","acceptedAnswer":{"@type":"Answer","text":"Sì: la tua prima sessione in studio è gratis. Prenota scrivendoci su WhatsApp o dal pulsante «Prenota», così ti confermiamo data e orario."}},
+{"@type":"Question","name":"Come funziona il Backrooms Pass?","acceptedAnswer":{"@type":"Answer","text":"È un abbonamento mensile con sessioni, beat e mix & master inclusi, gruppo privato con tutti e tre i producer e priorità sulle date. Si rinnova ogni mese e puoi disdirlo quando vuoi."}},
+{"@type":"Question","name":"Quante persone posso portare in sessione?","acceptedAnswer":{"@type":"Answer","text":"Fino a 6 persone del tuo team o entourage. La Lounge è un unico ambiente da 70 mq con area relax, TV da 75 pollici, PlayStation e zona bar."}},
+{"@type":"Question","name":"Quali sono gli orari dello studio?","acceptedAnswer":{"@type":"Answer","text":"Lo studio è aperto 24 ore su 24, 7 giorni su 7: scegli tu la fascia oraria della tua sessione al momento della prenotazione."}},
+{"@type":"Question","name":"Come si prenota e come si paga?","acceptedAnswer":{"@type":"Answer","text":"Ci scrivi su WhatsApp, Instagram o dal modulo del sito. Per bloccare la data serve una caparra del 30%. Produzioni e mix includono fino a 2 revisioni."}},
+{"@type":"Question","name":"Fate mix e master anche a distanza?","acceptedAnswer":{"@type":"Answer","text":"Sì. Mix & Master e produzione musicale sono disponibili anche a distanza, con consegna online: non serve essere di Vicenza."}},
+{"@type":"Question","name":"Con che tecnologia lavorate?","acceptedAnswer":{"@type":"Answer","text":"Il nostro workflow è 100% in-the-box: plugin, DSP e software di SSL, Universal Audio, FabFilter, Waves e iZotope, per recall istantaneo, flessibilità e velocità. In regia ci sono monitor Focal Twin Evo."}},
+{"@type":"Question","name":"Cos'è il live streaming delle sessioni?","acceptedAnswer":{"@type":"Answer","text":"Durante le sessioni una telecamera 4K trasmette il dietro le quinte in simulcast su Twitch, TikTok, Kick, YouTube e Instagram: in diretta gli artisti ricevono sponsorship e il brano viene ascoltato insieme alla community."}},
+{"@type":"Question","name":"Posso combinare più servizi?","acceptedAnswer":{"@type":"Answer","text":"Sì: puoi combinare sessioni, beat e mix & master in qualsiasi combinazione e lo sconto si calcola sul totale. Oppure scegli un pacchetto chiavi in mano: singolo, EP o album."}}]}
 ]}
 </script>
 </head>
@@ -68,6 +75,10 @@
 
 <!-- ============ SVG ICONS ============ -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="fxWaveGrad" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#5b6cff"/><stop offset=".6" stop-color="#c9d2df"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+    <linearGradient id="fxGaugeGrad" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#8e9cff"/><stop offset="1" stop-color="#46e08a"/></linearGradient>
+  </defs>
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2.5 4.5 5.5v6c0 5 3.3 8.5 7.5 10 4.2-1.5 7.5-5 7.5-10v-6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></symbol>
   <symbol id="i-speaker" viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><circle cx="12" cy="14.5" r="3.6"/><circle cx="12" cy="7" r="1.3"/></symbol>
   <symbol id="i-drum" viewBox="0 0 24 24"><ellipse cx="12" cy="11" rx="8" ry="3"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/><path d="M7 3.5l4 6M17 3.5l-4 6"/></symbol>
@@ -105,7 +116,10 @@
   <nav class="nav" aria-label="Navigazione principale">
     <a href="#lounge">Lounge</a><a href="#team">Team</a><a href="#listino">Pacchetti</a><a href="#live">Live</a><a href="#ascolta">Ascolta</a><a href="#recensioni">Recensioni</a><a href="#contatti">Contatti</a>
   </nav>
-  <button class="btn sm" type="button" data-book>Prenota</button>
+  <div class="acts">
+    <button class="fx-snd" type="button" data-sound aria-pressed="false" aria-label="Accendi o spegni il suono della Lounge"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="lbl">Suono</span></button>
+    <button class="btn sm" type="button" data-book data-svc="Prima sessione gratuita">Prenota</button>
+  </div>
 </header>
 <nav class="qnav" aria-label="Navigazione rapida">
   <a href="#lounge" data-q="lounge"><svg><use href="#i-sofa"/></svg>Lounge</a>
@@ -121,17 +135,20 @@
 <section class="hero" id="top" aria-labelledby="hero-title">
   <div class="wrap">
     <div class="grid">
-      <div class="rv">
+      <div class="hero-in">
         <div class="open pill"><i></i>Aperto 24/7 · Arcugnano, Vicenza</div>
         <div class="eyebrow">Studio di registrazione · Vicenza</div>
         <h1 id="hero-title" class="gold-text t3d">Il primo studio<br>Lounge</h1>
         <h2 class="sub">di Registrazione e Mix/Master a Vicenza.</h2>
         <p class="lead">Un collettivo di <b>3 produttori e sound/mix engineer</b> con oltre 5 anni sul campo. <b>70 mq</b> in stile americano ad Arcugnano, aperti giorno e notte: registri, produci e ti rilassi con la tua crew, nello stesso spazio.</p>
         <div class="cta">
-          <button class="btn" type="button" data-book>Prenota la tua sessione →</button>
+          <button class="btn" type="button" data-book data-svc="Prima sessione gratuita">Prenota la prima sessione gratis →</button>
           <a class="btn-ghost" href="#lounge">Scopri la Lounge</a>
         </div>
-        <div style="margin-top:26px"><span class="pill free"><svg class="ic" style="width:20px;height:20px;stroke:#0d0f14;filter:none"><use href="#i-star"/></svg>La prima sessione è gratis</span></div>
+        <div class="proof">
+          <a class="rating" href="https://maps.google.com/?cid=418318090488923855" target="_blank" rel="noopener" data-track="recensioni_google"><span class="st" aria-hidden="true">★★★★★</span><span><b>5,0</b> su Google · 23 recensioni</span></a>
+          <button class="fx-invite" type="button" data-sound aria-pressed="false"><svg aria-hidden="true"><use href="#i-headphones"/></svg>Accendi la Lounge: esperienza sonora</button>
+        </div>
       </div>
       <div class="logo-wrap rv"><div class="ph p1" aria-hidden="true"><img src="/img/studio-lounge-sm.webp" alt="" width="640" height="800"></div><div class="ph p2" aria-hidden="true"><img src="/img/studio-logo-wall-sm.webp" alt="" width="640" height="800"></div><div class="lg"><img class="logo" src="/brand/logo-silver.webp" width="900" height="695" alt="Backrooms Studio — logo BR" fetchpriority="high"></div></div>
     </div>
@@ -287,6 +304,24 @@
   </div>
 </section>
 
+<!-- ============ PERCORSO (infografica) ============ -->
+<section class="sec" id="percorso" aria-labelledby="percorso-title">
+  <div class="wrap">
+    <div class="sec-head rv"><div><div class="eyebrow">Dall'idea all'uscita</div><h2 class="t gold-text t3d" id="percorso-title">Il viaggio del tuo brano.</h2></div>
+      <p class="lead">Quattro tappe, sempre con le stesse persone: <b>Plugghe, Freya e Astral</b> ti seguono dalla prima nota al master, nel gruppo privato aperto 24/7.</p></div>
+    <div class="path" id="path">
+      <svg class="path-wave" viewBox="0 0 1000 140" preserveAspectRatio="none" aria-hidden="true"><path class="bg"/><path class="fg"/></svg>
+      <ol class="path-steps">
+        <li><i class="dot" aria-hidden="true"></i><span class="n">01</span><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><h3>Ci scrivi</h3><p>Su WhatsApp o dal pulsante Prenota: fissiamo data e orario, anche di sera o di notte.</p><em>Prima sessione gratis</em></li>
+        <li><i class="dot" aria-hidden="true"></i><span class="n">02</span><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg><h3>Beat e voce</h3><p>Il beat nasce su misura per te e registri con l'engineer al tuo fianco, take dopo take, con la tua crew in sala.</p><em>Fino a 6 ospiti</em></li>
+        <li><i class="dot" aria-hidden="true"></i><span class="n">03</span><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg><h3>Mix &amp; master</h3><p>Ascolti il mix crescere dal divano o lo ricevi online. Recall istantaneo: ogni revisione richiede minuti.</p><em>2 revisioni incluse</em></li>
+        <li><i class="dot" aria-hidden="true"></i><span class="n">04</span><svg class="ic" aria-hidden="true"><use href="#i-cam"/></svg><h3>Esce e va in onda</h3><p>Master pronto per Spotify &amp; co. e il dietro le quinte della sessione in diretta su Twitch, TikTok, Kick, YouTube e Instagram.</p><em>Live in simulcast</em></li>
+      </ol>
+    </div>
+    <div class="path-cta rv"><button class="btn" type="button" data-book data-svc="Prima sessione gratuita">Inizia dalla prima sessione gratis →</button><p>Nessun impegno: ti confermiamo data e orario su WhatsApp.</p></div>
+  </div>
+</section>
+
 <!-- ============ PACCHETTI ============ -->
 <section class="sec lst" id="listino" aria-labelledby="listino-title">
   <div class="wrap">
@@ -384,6 +419,10 @@
         <div class="rl" id="rl_beat"><span id="rn_beat">Beat su misura</span><span class="v"><b id="r_beat">3</b></span></div>
         <div class="rl" id="rl_mm"><span id="rn_mm">Mix &amp; Master</span><span class="v"><b id="r_mm">2</b></span></div>
         <div class="rl dim" id="rl_ore"><span id="rn_ore">Ore di corso</span><span class="v"><b id="r_ore">0</b></span></div>
+        <div class="gauge" id="gauge">
+          <div class="ring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="tk" cx="60" cy="60" r="52"/><circle class="vl" cx="60" cy="60" r="52"/></svg><div class="ctr"><div><b>0</b><small>su 10</small></div></div></div>
+          <div class="tiers"><span data-min="3">3 servizi · sconto attivo</span><span data-min="5">5 servizi · sconto più alto</span><span data-min="10">10 servizi · sconto massimo</span></div>
+        </div>
         <div class="savebar"><span id="r_pct">10 servizi</span><b id="r_save">Sconto massimo</b></div>
         <div class="nudge" id="r_msg" aria-live="polite">Più servizi scegli, più il prezzo scende: con 10 servizi hai lo sconto massimo.</div>
         <div class="calc-cta"><a class="btn" id="calc_wa" href="#" target="_blank" rel="noopener" data-track="whatsapp_pacchetto">Invia la richiesta su WhatsApp</a><a class="btn-ghost" id="calc_mail" href="#" data-track="email_pacchetto">Invia via email</a></div>
@@ -499,7 +538,7 @@
       <div class="cols">
         <div><a class="brand" href="#top"><img src="/brand/logo-silver-120.webp" width="44" height="34" alt=""><span>Backrooms <small class="t2">Studio</small></span></a><p>Il primo Studio Lounge di Vicenza. Registrazione, produzione musicale, mix e master ad Arcugnano e a distanza.</p></div>
         <div><h4>Contatti</h4><ul><li><a href="tel:+393248911607" data-track="telefono">+39 324 891 1607</a></li><li><a href="https://wa.me/393248911607" target="_blank" rel="noopener" data-track="whatsapp">WhatsApp</a></li><li><a href="mailto:backrooms.studios.vi@gmail.com" data-track="email">backrooms.studios.vi@gmail.com</a></li><li>Via Galileo Galilei, 3, 36057 Arcugnano (VI)</li></ul></div>
-        <div><h4>Servizi</h4><ul><li><a href="#servizi">Mix e Master a Vicenza</a></li><li><a href="#servizi">Produzione musicale e beat su misura a Vicenza</a></li><li><a href="#servizi">Registrare una canzone a Vicenza</a></li><li><a href="#listino">Listino e pacchetti</a></li></ul></div>
+        <div><h4>Servizi</h4><ul><li><a href="/mix-e-master-vicenza/">Mix e Master a Vicenza</a></li><li><a href="/produzione-musicale-vicenza/">Produzione musicale e beat su misura a Vicenza</a></li><li><a href="/registrazione-voce-vicenza/">Registrare una canzone a Vicenza</a></li><li><a href="#listino">Listino e pacchetti</a></li></ul></div>
         <div><h4>Social</h4><ul><li><a href="https://www.instagram.com/backrooms.studios/" target="_blank" rel="noopener">Instagram ↗</a></li><li><a href="https://www.tiktok.com/@backrooms.studios" target="_blank" rel="noopener">TikTok ↗</a></li><li><a href="https://www.twitch.tv/backrooms_studio" target="_blank" rel="noopener">Twitch ↗</a></li><li><a href="https://kick.com/backrooms-studio" target="_blank" rel="noopener">Kick ↗</a></li></ul></div>
       </div>
       <div class="legal">
@@ -543,6 +582,7 @@
 </div>
 
 <nav aria-hidden="true" style="display:none"><a href="/listino/">Listino</a></nav>
-<script src="/js/main.js?v=20261018b" defer></script>
+<script src="/js/main.js?v=20261026fx" defer></script>
+<script src="/js/fx.js?v=20261026fx" defer></script>
 </body>
 </html>

@@ -128,6 +128,8 @@
     track('apri_prenotazione');
   }
   document.addEventListener('click', function (e) { var b = e.target.closest('[data-book]'); if (b) { e.preventDefault(); openBook(b.getAttribute('data-svc')); } });
+  // le pagine servizio rimandano qui con #prenota
+  if (location.hash === '#prenota') openBook('Prima sessione gratuita');
   $('#bookx').addEventListener('click', function () { dlg.close(); });
   dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
   function bookText() {
