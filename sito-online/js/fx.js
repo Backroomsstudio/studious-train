@@ -1,8 +1,9 @@
 /* Backrooms Studio — livello immersivo (2026)
-   - Liquido cromato in WebGL nell'hero: gocce che reagiscono a mouse, tocco, click e al ritmo della musica
-   - Lounge FM: suoni e musica sintetizzati dal vivo con Web Audio (nessun file), solo se l'utente li accende
-   - Cursore a goccia, gocce sui pulsanti, magnetismo, riflessi sulle card 3D
-   - Infografiche animate: contatori, viaggio del brano, indicatore del pacchetto
+   - Hero: camminata in soggettiva nelle Backrooms (WebGL): corridoi infiniti, neon che sfarfallano.
+     Scorrendo, il passo accelera e le luci si spengono: si "esce" nella Lounge.
+   - Suono (solo se l'utente lo accende): ronzio dei neon nell'hero e Lounge FM, tutto sintetizzato con Web Audio
+   - Cursore a goccia, gocce sui pulsanti, magnetismo, riflessi sulle card
+   - Infografiche: viaggio del brano disegnato allo scroll, contatori
    Ogni pezzo controlla da solo se gli elementi esistono: il file funziona anche nelle pagine servizio. */
 (function () {
   'use strict';
@@ -21,131 +22,152 @@
     if (window.gtag && store.get('bs_consent') === 'yes') { try { window.gtag('event', name, params || {}); } catch (e) {} }
   }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  var hero = $('.br-hero');
 
   /* =====================================================================
-     LIQUIDO WEBGL (hero)
+     BACKROOMS (WebGL, ray marching di una griglia infinita di stanze)
      ===================================================================== */
-  var Liquid = (function () {
-    var hero = $('.hero');
-    var api = { drop: function () {}, pulse: function () {} };
-    if (!hero || REDUCED || SAVE || (navigator.deviceMemory && navigator.deviceMemory < 4)) return api;
+  var Scene = (function () {
+    var api = { pulse: function () {} };
+    if (!hero) return api;
+    // se la scena non può partire, al suo posto c'è la foto dello studio
+    var none = function () { hero.classList.add('no-scene'); return api; };
+    if (REDUCED || SAVE || (navigator.deviceMemory && navigator.deviceMemory < 4)) return none();
     var cv = document.createElement('canvas');
-    cv.className = 'fx-liquid'; cv.setAttribute('aria-hidden', 'true');
-    var gl = cv.getContext('webgl', { alpha: false, antialias: false, depth: false, powerPreference: 'low-power' });
-    if (!gl) return api;
-    hero.insertBefore(cv, hero.firstChild);
+    cv.className = 'fx-scene'; cv.setAttribute('aria-hidden', 'true');
+    var gl = cv.getContext('webgl', { alpha: false, antialias: false, depth: false, powerPreference: 'high-performance' });
+    if (!gl) return none();
 
-    var N = 12;
-    var vs = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
     var fs = [
       'precision highp float;',
-      'uniform vec2 uRes;uniform float uTime;uniform float uPulse;uniform vec4 uD[' + N + '];',
-      'float H(vec2 p){',
-      '  float h=.03*sin(p.x*3.1+uTime*.35)*sin(p.y*2.3-uTime*.27)+.018*sin((p.x+p.y)*5.7+uTime*.6);',
-      '  for(int i=0;i<' + N + ';i++){',
-      '    vec4 d=uD[i];float age=uTime-d.z;',
-      '    if(age>0.&&age<7.){',
-      '      float r=length(p-d.xy);float front=age*.38;',
-      '      float env=(1.-smoothstep(front-.18,front,r))*exp(-age*.75)*exp(-r*2.6);',
-      '      h+=d.w*(.045*sin(r*40.-age*15.)*env+.25*exp(-r*r*500.)*exp(-age*9.));',
-      '    }',
-      '  }',
-      '  return h;',
+      'uniform vec2 uRes;uniform float uTime,uZ,uS,uLook,uPulse;',
+      '#define CELL 4.',
+      '#define HGT 2.8',
+      'float hs(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
+      'float box(vec2 p,vec2 b){vec2 d=abs(p)-b;return length(max(d,0.))+min(max(d.x,d.y),0.);}',
+      // pareti lungo z sul bordo sinistro di ogni cella, a volte con un varco
+      'float wallV(vec2 q,vec2 o){',
+      '  if(hs(o+.1)<.4)return 1e3;',
+      '  vec2 r=vec2(q.x-o.x*CELL,q.y-(o.y+.5)*CELL);',
+      '  if(hs(o+.7)>.45){r.y=abs(r.y);return box(r-vec2(0.,1.4),vec2(.07,.62));}',
+      '  return box(r,vec2(.07,2.02));',
+      '}',
+      // pareti lungo x: sempre con la porta al centro, così la camminata non si blocca mai
+      'float wallH(vec2 q,vec2 o){',
+      '  if(hs(o+.3)<.3)return 1e3;',
+      '  vec2 r=vec2(abs(q.x-(o.x+.5)*CELL),q.y-o.y*CELL);',
+      '  return box(r-vec2(1.4,0.),vec2(.62,.07));',
+      '}',
+      'float map(vec2 q){',
+      '  vec2 c=floor(q/CELL);',
+      '  float d=min(wallV(q,c),wallV(q,c+vec2(1.,0.)));',
+      '  d=min(d,min(wallH(q,c),wallH(q,c+vec2(0.,1.))));',
+      '  vec2 g=q-floor(q/CELL+.5)*CELL;',
+      '  return min(d,box(g,vec2(.09)));',
+      '}',
+      'float lightAt(vec2 c){',
+      '  float h=hs(c+5.3),f=1.;',
+      '  if(h>.84)f=.2+.8*step(.45,hs(vec2(floor(uTime*14.),h*97.)));',
+      '  if(h<.05)f=0.;',
+      '  f*=1.-step(hs(c+9.1),uS*1.3);',
+      '  return f;',
       '}',
       'void main(){',
-      '  vec2 uv=gl_FragCoord.xy/uRes;vec2 p=gl_FragCoord.xy/uRes.y;float e=1.5/uRes.y;',
-      '  float h=H(p);',
-      '  vec3 n=normalize(vec3(-(H(p+vec2(e,0.))-h)/e,-(H(p+vec2(0.,e))-h)/e,1.));',
-      '  vec3 v=vec3(0.,0.,1.);vec3 r=reflect(-v,n);',
-      '  float band=.5+.5*sin(r.x*7.+r.y*4.+uTime*.25);',
-      '  vec3 col=vec3(.012,.012,.02);',
-      '  col+=vec3(.62,.67,.8)*pow(band,5.)*length(r.xy)*1.6;',
-      '  col+=vec3(.56,.61,1.)*pow(1.-n.z,1.6)*1.4;',
-      '  vec3 L=normalize(vec3(-.45,.55,.7));',
-      '  col+=vec3(1.)*pow(max(dot(reflect(-L,n),v),0.),70.)*1.6;',
-      '  col*=mix(.35,1.,smoothstep(.15,.85,uv.x))*(1.+uPulse*.6);',
-      '  gl_FragColor=vec4(col,1.);',
+      '  vec2 uv=(gl_FragCoord.xy-.5*uRes)/uRes.y;',
+      '  vec3 ro=vec3(2.+sin(uZ*1.65)*.05,1.55+sin(uZ*3.3)*.035,uZ);',
+      '  float yaw=uLook+sin(uTime*.13)*.06;',
+      '  vec3 rd=normalize(vec3(uv.x,uv.y-.03,1.25));',
+      '  rd.xz=mat2(cos(yaw),sin(yaw),-sin(yaw),cos(yaw))*rd.xz;',
+      '  float tp=rd.y<0.?-ro.y/rd.y:(HGT-ro.y)/rd.y;',
+      '  float tmax=min(tp,45.),t=.05,hl=max(length(rd.xz),.05);',
+      '  bool hit=false;',
+      '  for(int i=0;i<96;i++){',
+      '    float d=map((ro+rd*t).xz);',
+      '    if(d<.003){hit=true;break;}',
+      '    t+=min(d,1.2)/hl*.9;',
+      '    if(t>tmax)break;',
+      '  }',
+      '  if(!hit)t=tmax;',
+      '  vec3 p=ro+rd*t,n,alb;float emis=0.;',
+      '  vec2 c=floor(p.xz/CELL);',
+      '  if(hit){',
+      '    vec2 e=vec2(.01,0.);',
+      '    n=normalize(vec3(map(p.xz+e.xy)-map(p.xz-e.xy),0.,map(p.xz+e.yx)-map(p.xz-e.yx)));',
+      '    float u=p.x+p.z;',
+      '    alb=vec3(.80,.72,.43)*(.93+.07*step(.5,fract(u*3.)))*(.97+.03*sin(u*25.)*sin(p.y*25.));',
+      '    alb*=mix(.5,1.,smoothstep(0.,.14,p.y))*(.9+.1*hs(floor(p.xz*3.)+floor(p.y*3.)));',
+      '  }else if(rd.y<0.){',
+      '    n=vec3(0.,1.,0.);alb=vec3(.52,.46,.28)*(.85+.15*hs(floor(p.xz*30.)));',
+      '  }else{',
+      '    n=vec3(0.,-1.,0.);vec2 g=fract(p.xz);',
+      '    alb=vec3(.86,.83,.7)*(.75+.25*step(.03,g.x)*step(.03,g.y));',
+      '    vec2 l=p.xz-(c+.5)*CELL;',
+      '    if(abs(l.x)<.45&&abs(l.y)<.9)emis=lightAt(c);',
+      '  }',
+      '  vec3 col=alb*.06;',
+      '  for(int k=-1;k<=1;k++){',
+      '    vec2 cc=c+vec2(0.,float(k));',
+      '    vec3 L=vec3((cc.x+.5)*CELL,HGT-.05,(cc.y+.5)*CELL)-p;float dl=length(L);',
+      '    float dif=n.y<-.5?.6:max(dot(n,L/dl),0.);',
+      '    col+=alb*dif*lightAt(cc)*2.2/(1.+.25*dl*dl);',
+      '  }',
+      '  col+=vec3(1.,.96,.8)*emis*1.6;',
+      '  col=mix(col,vec3(.36,.31,.16)*(1.-uS*.8),1.-exp(-t*.06));',
+      '  vec2 q=gl_FragCoord.xy/uRes;',
+      '  col*=.35+.65*pow(16.*q.x*q.y*(1.-q.x)*(1.-q.y),.25);',
+      '  col+=(hs(gl_FragCoord.xy+fract(uTime*7.)*100.)-.5)*.05;',
+      '  col*=(1.+uPulse*.35)*(1.-uS*.6);',
+      '  gl_FragColor=vec4(pow(max(col,0.),vec3(.9)),1.);',
       '}'
     ].join('\n');
     function sh(t, s) { var o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); return gl.getShaderParameter(o, gl.COMPILE_STATUS) ? o : null; }
-    var v = sh(gl.VERTEX_SHADER, vs), f = sh(gl.FRAGMENT_SHADER, fs);
-    if (!v || !f) { cv.remove(); return api; }
+    var v = sh(gl.VERTEX_SHADER, 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}'), f = sh(gl.FRAGMENT_SHADER, fs);
+    if (!v || !f) return none();
     var pr = gl.createProgram(); gl.attachShader(pr, v); gl.attachShader(pr, f); gl.linkProgram(pr);
-    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) { cv.remove(); return api; }
+    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return none();
     gl.useProgram(pr);
-    var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     var loc = gl.getAttribLocation(pr, 'a'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    var uRes = gl.getUniformLocation(pr, 'uRes'), uTime = gl.getUniformLocation(pr, 'uTime'), uPulse = gl.getUniformLocation(pr, 'uPulse'), uD = gl.getUniformLocation(pr, 'uD');
+    var U = {}; ['uRes', 'uTime', 'uZ', 'uS', 'uLook', 'uPulse'].forEach(function (k) { U[k] = gl.getUniformLocation(pr, k); });
+    hero.insertBefore(cv, hero.firstChild);
 
-    var drops = new Float32Array(N * 4), di = 0, t0 = performance.now(), pulse = 0;
-    for (var i = 0; i < N; i++) drops[i * 4 + 2] = -99;
-    var W = 1, Hh = 1, scale = window.innerWidth < 700 ? .42 : .6;
+    var mobile = window.innerWidth < 700, scale = mobile ? .38 : .5, W = 1, H = 1;
     function size() {
-      var r = hero.getBoundingClientRect();
-      W = Math.max(1, Math.round(r.width * scale)); Hh = Math.max(1, Math.round(r.height * scale));
-      cv.width = W; cv.height = Hh; gl.viewport(0, 0, W, Hh);
+      W = Math.max(1, Math.round(hero.clientWidth * scale)); H = Math.max(1, Math.round(hero.clientHeight * scale));
+      cv.width = W; cv.height = H; gl.viewport(0, 0, W, H);
     }
-    function now() { return (performance.now() - t0) / 1000; }
-    /** x, y in pixel CSS relativi all'hero; amp 0..1 */
-    function drop(x, y, amp) {
-      var r = hero.getBoundingClientRect();
-      drops[di * 4] = (x / r.width) * (W / Hh);
-      drops[di * 4 + 1] = 1 - y / r.height;
-      drops[di * 4 + 2] = now();
-      drops[di * 4 + 3] = amp;
-      di = (di + 1) % N;
-    }
-    function randomDrop(amp) {
-      var r = hero.getBoundingClientRect();
-      drop(r.width * (.45 + Math.random() * .52), r.height * (.12 + Math.random() * .76), amp);
-    }
-
-    var visible = true, raf = 0;
-    function frame() {
+    var t0 = performance.now(), last = t0, z = 1, look = 0, lookT = 0, pulse = 0, s = 0, visible = true, raf = 0, odd = false;
+    hero.addEventListener('pointermove', function (e) { lookT = ((e.clientX / window.innerWidth) - .5) * -.5; }, { passive: true });
+    function frame(now) {
       raf = 0;
       if (!visible || document.hidden) return;
-      pulse *= .9;
-      gl.uniform2f(uRes, W, Hh); gl.uniform1f(uTime, now()); gl.uniform1f(uPulse, pulse);
-      gl.uniform4fv(uD, drops);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
       raf = requestAnimationFrame(frame);
+      odd = !odd; if (mobile && odd) return; // sul telefono 30 fps: batteria
+      var dt = Math.min(.05, (now - last) / 1000); last = now;
+      s = clamp(window.scrollY / hero.offsetHeight, 0, 1);
+      z += dt * (.9 + s * 5);
+      look += (lookT - look) * .04; pulse *= .9;
+      gl.uniform2f(U.uRes, W, H); gl.uniform1f(U.uTime, (now - t0) / 1000); gl.uniform1f(U.uZ, z);
+      gl.uniform1f(U.uS, s); gl.uniform1f(U.uLook, look); gl.uniform1f(U.uPulse, pulse);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
-    function kick() { if (!raf && visible && !document.hidden) raf = requestAnimationFrame(frame); }
+    function kick() { if (!raf && visible && !document.hidden) { last = performance.now(); raf = requestAnimationFrame(frame); } }
     new IntersectionObserver(function (es) { visible = es[0].isIntersecting; kick(); }).observe(hero);
     document.addEventListener('visibilitychange', kick);
     window.addEventListener('resize', size);
     size(); kick();
     requestAnimationFrame(function () { cv.classList.add('on'); });
-
-    // interazione: il mouse sfiora l'acqua, il click è una goccia piena
-    var last = 0;
-    hero.addEventListener('pointermove', function (e) {
-      var t = performance.now(); if (t - last < 110) return; last = t;
-      var r = hero.getBoundingClientRect(); drop(e.clientX - r.left, e.clientY - r.top, e.pointerType === 'touch' ? .5 : .32);
-    }, { passive: true });
-    hero.addEventListener('pointerdown', function (e) {
-      var r = hero.getBoundingClientRect(); drop(e.clientX - r.left, e.clientY - r.top, 1);
-    });
-    // gocce spontanee finché la musica è spenta
-    (function auto() {
-      if (!Sound || !Sound.playing()) randomDrop(.55 + Math.random() * .35);
-      setTimeout(auto, 1700 + Math.random() * 1600);
-    })();
-    // prima goccia "di benvenuto"
-    setTimeout(function () { randomDrop(1); }, 500);
-
-    api.drop = randomDrop;
     api.pulse = function (v) { pulse = Math.max(pulse, v); };
     return api;
   })();
 
   /* =====================================================================
-     LOUNGE FM — suono sintetizzato (Web Audio)
+     SUONO — sintetizzato (Web Audio): ronzio dei neon + Lounge FM
      ===================================================================== */
   var Sound = (function () {
     var AC = window.AudioContext || window.webkitAudioContext;
-    var ctx = null, master, verb, sendBus, noiseBuf, crackle = null, on = false, timer = 0;
+    var ctx = null, master, sendBus, noiseBuf, humG = null, crackle = null, on = false, timer = 0;
     var BPM = 84, SPB = 60 / BPM, step = 0, nextT = 0;
     // Fmaj9 · Em7 · Dm9 · Cmaj9: progressione lo-fi / R&B
     var CHORDS = [[53, 57, 60, 64, 67], [52, 55, 59, 62, 66], [50, 53, 57, 60, 64], [48, 52, 55, 59, 62]];
@@ -160,8 +182,7 @@
       var comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4;
       master.connect(comp); comp.connect(ctx.destination);
       // riverbero generato: niente file da scaricare
-      verb = ctx.createConvolver();
-      var len = ctx.sampleRate * 2.6, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+      var verb = ctx.createConvolver(), len = ctx.sampleRate * 2.6, ir = ctx.createBuffer(2, len, ctx.sampleRate);
       for (var c = 0; c < 2; c++) { var d = ir.getChannelData(c); for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
       verb.buffer = ir;
       sendBus = ctx.createGain(); sendBus.gain.value = .4; sendBus.connect(verb); verb.connect(master);
@@ -189,10 +210,6 @@
       osc.type = 'triangle'; osc.frequency.value = 2600 + Math.random() * 500;
       env(g, t, .002, .035, .03); osc.connect(g); out(g, .2); osc.start(t); osc.stop(t + .08);
     }
-    function chime(level) {
-      if (!on) return;
-      for (var i = 0; i < 3 + level; i++) drop({ f: hz(PENTA[(i * 2 + level) % PENTA.length]) / 2.2, rise: 2.2, at: i * .07, vol: .16, wet: .8, len: .3 });
-    }
     function noise(t, type, freq, vol, dec, wet) {
       var s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain();
       s.buffer = noiseBuf; fl.type = type; fl.frequency.value = freq; fl.Q.value = .8;
@@ -202,8 +219,7 @@
       var osc = ctx.createOscillator(), g = ctx.createGain();
       osc.frequency.setValueAtTime(130, t); osc.frequency.exponentialRampToValueAtTime(44, t + .14);
       env(g, t, .003, .55, .38); osc.connect(g); out(g, 0); osc.start(t); osc.stop(t + .5);
-      var delay = Math.max(0, (t - ctx.currentTime) * 1000);
-      setTimeout(function () { listeners.forEach(function (fn) { fn(); }); }, delay);
+      setTimeout(function () { listeners.forEach(function (fn) { fn(); }); }, Math.max(0, (t - ctx.currentTime) * 1000));
     }
     function pad(t, chord, dur) {
       var fl = ctx.createBiquadFilter(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
@@ -232,18 +248,28 @@
         nextT += SPB / 4; step++;
       }
     }
-    function startCrackle() {
+    function startBeds() {
+      // fruscio di vinile
       var s = ctx.createBufferSource(), b = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), d = b.getChannelData(0);
       for (var i = 0; i < d.length; i++) d[i] = Math.random() < .0009 ? (Math.random() * 2 - 1) * .9 : (Math.random() * 2 - 1) * .012;
       s.buffer = b; s.loop = true; var fl = ctx.createBiquadFilter(); fl.type = 'highpass'; fl.frequency.value = 1800;
       var g = ctx.createGain(); g.gain.value = .5; s.connect(fl); fl.connect(g); out(g, 0); s.start(); crackle = s;
+      // ronzio dei neon delle Backrooms: 50 Hz di rete e armoniche
+      if (!humG) {
+        humG = ctx.createGain(); humG.gain.value = 0;
+        var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400; lp.connect(humG); out(humG, .3);
+        [[100, 'sawtooth', .05], [150, 'square', .012], [200, 'sine', .03]].forEach(function (h) {
+          var o = ctx.createOscillator(), og = ctx.createGain(); o.type = h[1]; o.frequency.value = h[0]; og.gain.value = h[2];
+          o.connect(og); og.connect(lp); o.start();
+        });
+      }
     }
     function start() {
       if (!init()) return false;
       on = true; ctx.resume();
       master.gain.cancelScheduledValues(ctx.currentTime);
       master.gain.setTargetAtTime(.8, ctx.currentTime, .4);
-      if (!timer) { step = 0; nextT = ctx.currentTime + .1; timer = setInterval(schedule, 25); startCrackle(); }
+      if (!timer) { step = 0; nextT = ctx.currentTime + .1; timer = setInterval(schedule, 25); startBeds(); }
       return true;
     }
     function stop() {
@@ -259,7 +285,9 @@
       else { ctx.resume(); nextT = ctx.currentTime + .1; timer = setInterval(schedule, 25); }
     });
     return {
-      start: start, stop: stop, drop: drop, tick: tick, chime: chime,
+      start: start, stop: stop, drop: drop, tick: tick,
+      /** 0..1: quanto si sente il ronzio dei neon (forte nell'hero, sparisce scendendo) */
+      hum: function (v) { if (humG) humG.gain.setTargetAtTime(on ? v : 0, ctx.currentTime, .15); },
       playing: function () { return on; },
       onBeat: function (fn) { listeners.push(fn); },
       supported: !!AC
@@ -273,12 +301,11 @@
     function set(v, user) {
       if (v) { if (!Sound.start()) return; } else Sound.stop();
       btns.forEach(function (b) {
-        if (b.classList.contains('fx-invite')) b.hidden = v;
         b.setAttribute('aria-pressed', v ? 'true' : 'false');
-        var l = $('.lbl', b); if (l && b.classList.contains('fx-snd')) l.textContent = v ? 'Lounge FM' : 'Suono';
+        var l = $('.lbl', b); if (l) l.textContent = v ? 'Lounge FM' : 'Suono';
       });
       if (user) { store.set('bs_sound', v ? 'on' : 'off'); track(v ? 'suono_on' : 'suono_off'); }
-      if (v) Sound.drop({ f: 700, vol: .25 });
+      if (v) { Sound.drop({ f: 700, vol: .25 }); onScroll(); }
     }
     btns.forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); set(!Sound.playing(), true); }); });
     // chi l'aveva acceso ritrova la musica al primo gesto (i browser vietano l'audio automatico)
@@ -290,16 +317,16 @@
       };
       document.addEventListener('pointerdown', first, true);
     }
-    var root = document.documentElement, beat = 0;
+    var root = document.documentElement;
     Sound.onBeat(function () {
-      Liquid.drop(.85); Liquid.pulse(.5);
-      beat = 1; root.style.setProperty('--beat', '1');
+      Scene.pulse(.6);
+      root.style.setProperty('--beat', '1');
       setTimeout(function () { root.style.setProperty('--beat', '0'); }, 140);
     });
   })();
 
   /* ---------- micro-suoni dell'interfaccia ---------- */
-  var HOT = '.btn,.btn-ghost,.go,a,button,summary,[data-book],.cf .it';
+  var HOT = '.btn,.btn-ghost,.go,a,button,summary,[data-book],[role="tab"]';
   document.addEventListener('pointerover', function (e) {
     var el = e.target.closest(HOT); if (!el || el.contains(e.relatedTarget)) return;
     if (FINE) Sound.tick();
@@ -310,6 +337,21 @@
     Sound.drop({ f: big ? 380 : 620, vol: big ? .3 : .18, wet: big ? .7 : .4 });
   });
   $$('.faq details').forEach(function (d) { d.addEventListener('toggle', function () { if (d.open) Sound.drop({ f: 820, vol: .14 }); }); });
+
+  /* =====================================================================
+     HERO: testo che si scrive da solo
+     ===================================================================== */
+  var typed = $('[data-type]');
+  if (typed && !REDUCED) {
+    var full = typed.textContent, k = 0;
+    typed.setAttribute('aria-label', full);
+    typed.textContent = '';
+    typed.classList.add('typing');
+    (function type() {
+      typed.textContent = full.slice(0, ++k);
+      if (k < full.length) setTimeout(type, 38 + Math.random() * 60);
+    })();
+  }
 
   /* =====================================================================
      CURSORE A GOCCIA + GOCCE SUI PULSANTI + MAGNETISMO + RIFLESSI
@@ -341,7 +383,7 @@
     document.documentElement.addEventListener('pointerenter', function () { cur.style.opacity = ring.style.opacity = ''; });
 
     // magnetismo: i pulsanti principali si lasciano "attirare" dal cursore
-    $$('.btn,.fx-snd,.fx-wa').forEach(function (b) {
+    $$('.btn,.fx-snd').forEach(function (b) {
       b.classList.add('fx-mag');
       b.addEventListener('pointermove', function (e) {
         var r = b.getBoundingClientRect();
@@ -350,21 +392,14 @@
       b.addEventListener('pointerleave', function () { b.style.translate = ''; });
     });
 
-    // card 3D: inclinazione che segue il mouse + riflesso di luce
-    if (mq('(min-width: 1000px)')) {
-      $$('.slab').forEach(function (s) {
-        var face = $('.face', s); if (!face) return;
-        var gl = document.createElement('span'); gl.className = 'fx-glare'; gl.setAttribute('aria-hidden', 'true'); face.appendChild(gl);
-        var cs = getComputedStyle(s), rx0 = cs.getPropertyValue('--rx') || '0deg', ry0 = cs.getPropertyValue('--ry') || '0deg';
-        s.addEventListener('pointermove', function (e) {
-          var r = s.getBoundingClientRect(), px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
-          s.style.setProperty('--ry', ((px - .5) * 14).toFixed(2) + 'deg');
-          s.style.setProperty('--rx', ((.5 - py) * 10).toFixed(2) + 'deg');
-          face.style.setProperty('--gx', (px * 100).toFixed(1) + '%'); face.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
-        });
-        s.addEventListener('pointerleave', function () { s.style.setProperty('--ry', ry0); s.style.setProperty('--rx', rx0); });
+    // card: luce che segue il mouse
+    $$('.offer,.bento figure,.crew figure').forEach(function (c) {
+      c.addEventListener('pointermove', function (e) {
+        var r = c.getBoundingClientRect();
+        c.style.setProperty('--gx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
+        c.style.setProperty('--gy', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
       });
-    }
+    });
   }
   // goccia che si allarga dal punto del click (anche su touch)
   document.addEventListener('pointerdown', function (e) {
@@ -375,18 +410,16 @@
   });
 
   /* =====================================================================
-     SCROLL: barra d'avanzamento, profondità di lettura, viaggio del brano
+     SCROLL: barra d'avanzamento, uscita dalle Backrooms, viaggio del brano
      ===================================================================== */
   var bar = document.createElement('div'); bar.className = 'fx-progress'; bar.setAttribute('aria-hidden', 'true'); document.body.appendChild(bar);
-  var wa = null;
-  if (!$('.fx-wa')) {
-    wa = document.createElement('a');
-    wa.className = 'fx-wa'; wa.target = '_blank'; wa.rel = 'noopener'; wa.setAttribute('data-track', 'whatsapp_flottante');
-    wa.href = 'https://wa.me/' + WA + '?text=' + encodeURIComponent('Ciao Backrooms Studio! Ho visto il sito e vorrei prenotare la prima sessione gratuita.');
-    wa.setAttribute('aria-label', 'Scrivici su WhatsApp');
-    wa.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.9 11.9 0 0 0 4.6 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.4-.3z"/></svg><span>Scrivici ora</span>';
-    document.body.appendChild(wa);
-  }
+  var wa = document.createElement('a');
+  wa.className = 'fx-wa'; wa.target = '_blank'; wa.rel = 'noopener'; wa.setAttribute('data-track', 'whatsapp_flottante');
+  wa.href = 'https://wa.me/' + WA + '?text=' + encodeURIComponent('Ciao Backrooms Studio! Ho visto il sito e vorrei prenotare la prima sessione gratuita.');
+  wa.setAttribute('aria-label', 'Scrivici su WhatsApp');
+  wa.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.9 11.9 0 0 0 4.6 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.4-.3z"/></svg><span>Scrivici ora</span>';
+  document.body.appendChild(wa);
+
   var path = $('#path'), steps = path ? $$('.path-steps li', path) : [], fg = path ? $('.path-wave .fg', path) : null, len = 0;
   if (path) {
     if (fg) {
@@ -401,21 +434,24 @@
     }
     if (!REDUCED) path.classList.add('armed'); else steps.forEach(function (s) { s.classList.add('on'); });
   }
-  var depth = {}, ticking = false, lit = -1, hero = $('.hero'), ctaSeen = 0;
+  var depth = {}, ticking = false, lit = -1, ctaSeen = 0;
   // il pulsante flottante si fa da parte quando sullo schermo c'è già un invito all'azione
-  if (wa && 'IntersectionObserver' in window) {
+  if ('IntersectionObserver' in window) {
     var cio = new IntersectionObserver(function (es) {
       es.forEach(function (e) { ctaSeen += e.isIntersecting ? 1 : -1; });
       ctaSeen = Math.max(0, ctaSeen); onScroll();
     });
-    $$('.calc-cta,.path-cta,.final .cta,.intro .cta').forEach(function (el) { cio.observe(el); });
+    $$('.final .cta,.intro .cta,.free-band').forEach(function (el) { cio.observe(el); });
   }
   function onScroll() {
     ticking = false;
     var h = document.documentElement, max = h.scrollHeight - h.clientHeight, p = max > 0 ? h.scrollTop / max : 0;
     bar.style.transform = 'scaleX(' + p.toFixed(4) + ')';
     [50, 90].forEach(function (m) { if (p * 100 >= m && !depth[m]) { depth[m] = 1; track('scroll_' + m); } });
-    if (wa) wa.classList.toggle('show', !ctaSeen && (!hero || h.scrollTop > hero.offsetHeight * .7));
+    var hs = hero ? clamp(h.scrollTop / hero.offsetHeight, 0, 1) : 1;
+    if (hero) hero.style.setProperty('--s', hs.toFixed(3));
+    Sound.hum(Math.pow(1 - hs, 2) * .9);
+    wa.classList.toggle('show', !ctaSeen && (!hero || hs > .7));
     if (path && !REDUCED) {
       var r = path.getBoundingClientRect(), vh = window.innerHeight;
       var pp = clamp((vh * .85 - r.top) / (r.height + vh * .35), 0, 1);
@@ -431,7 +467,7 @@
   window.addEventListener('resize', onScroll); onScroll();
 
   /* =====================================================================
-     CONTATORI (numeri dell'hero)
+     CONTATORI
      ===================================================================== */
   var stats = $('.stats');
   if (stats && 'IntersectionObserver' in window && !REDUCED) {
@@ -451,41 +487,5 @@
       })(t0);
     }, { threshold: .4 });
     io.observe(stats);
-  }
-
-  /* =====================================================================
-     INDICATORE DEL PACCHETTO (calcolatore)
-     ===================================================================== */
-  var gauge = $('#gauge'), rp = $('#r_pct');
-  if (gauge && rp) {
-    var C = 326.73, vl = $('.vl', gauge), num = $('.ctr b', gauge), tiers = $$('.tiers span', gauge), lvl = -1;
-    function upd() {
-      var n = parseInt(rp.textContent, 10) || 0, l = n >= 10 ? 3 : n >= 5 ? 2 : n >= 3 ? 1 : 0;
-      vl.style.strokeDashoffset = (C * (1 - Math.min(n, 10) / 10)).toFixed(1);
-      num.textContent = n;
-      tiers.forEach(function (t) { t.classList.toggle('on', n >= +t.getAttribute('data-min')); });
-      if (lvl >= 0 && l > lvl) {
-        gauge.classList.remove('pop'); void gauge.offsetWidth; gauge.classList.add('pop');
-        Sound.chime(l); burst(gauge);
-        track('pacchetto_livello', { livello: l, servizi: n });
-      }
-      lvl = l;
-    }
-    new MutationObserver(upd).observe(rp, { childList: true, characterData: true, subtree: true });
-    upd();
-    $$('.stepper button').forEach(function (b) {
-      b.addEventListener('click', function () { Sound.drop({ f: b.getAttribute('data-d') === '1' ? 640 : 420, vol: .2 }); });
-    });
-  }
-  function burst(el) {
-    if (REDUCED) return;
-    var r = el.getBoundingClientRect(), cx = r.left + 56, cy = r.top + r.height / 2;
-    for (var i = 0; i < 14; i++) {
-      var b = document.createElement('i'), ang = Math.random() * Math.PI * 2, dist = 50 + Math.random() * 90;
-      b.className = 'fx-bead'; b.style.left = cx + 'px'; b.style.top = cy + 'px';
-      b.style.setProperty('--dx', (Math.cos(ang) * dist).toFixed(0) + 'px');
-      b.style.setProperty('--dy', (Math.sin(ang) * dist - 30).toFixed(0) + 'px');
-      document.body.appendChild(b); setTimeout(function (n) { n.remove(); }.bind(null, b), 950);
-    }
   }
 })();
