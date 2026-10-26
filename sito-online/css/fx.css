@@ -24,21 +24,13 @@
 .hero .logo-wrap .ph:hover{--z:90px;opacity:1;box-shadow:0 40px 80px rgba(0,0,0,.9),0 0 50px rgba(110,128,255,.45)}
 .hero .logo-wrap .lg{transform:translateZ(70px)}
 @media(max-width:900px){.hero .logo-wrap .stage{position:relative}}
-
-/* ---------- interruttore suono ---------- */
+/* logo dell'apertura: argento opaco al posto del cromo, con un riflesso blu che passa ogni tanto */
+.hero .logo{animation:none;transform:none;filter:grayscale(1) contrast(.6) brightness(.9) drop-shadow(0 18px 24px rgba(0,0,0,.65)) drop-shadow(0 0 22px rgba(91,108,255,.2))}
+.hero .logo-wrap .lg::after{content:"";position:absolute;inset:0;pointer-events:none;-webkit-mask:url(../brand/logo-silver.webp) center/74% auto no-repeat;mask:url(../brand/logo-silver.webp) center/74% auto no-repeat;background:linear-gradient(115deg,transparent 35%,rgba(120,138,255,.5) 47%,rgba(200,210,255,.3) 50%,transparent 62%) 0 0/260% 100% no-repeat,linear-gradient(0deg,rgba(91,108,255,.25),transparent 55%);mix-blend-mode:screen;animation:fxSheen 7s ease-in-out infinite}
+@keyframes fxSheen{0%,15%{background-position:120% 0,0 0}60%,100%{background-position:-60% 0,0 0}}
+.hero .logo-wrap::before{background:radial-gradient(closest-side,rgba(110,128,255,.18),transparent 70%)}
+@media(max-width:900px){.hero .logo-wrap .lg::after{-webkit-mask-size:100% auto;mask-size:100% auto}}
 .hdr .acts{display:flex;align-items:center;gap:8px}
-.fx-snd{display:inline-flex;align-items:center;gap:9px;height:40px;padding:0 14px;border-radius:999px;border:1px solid rgba(110,128,255,.4);background:rgba(16,18,24,.6);color:var(--soft);font:700 11px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;transition:border-color .2s,color .2s,box-shadow .2s}
-.fx-snd:hover{border-color:#fff;color:#fff}
-.fx-snd[aria-pressed="true"]{color:#fff;border-color:var(--gold2);box-shadow:0 0 calc(10px + var(--beat)*26px) rgba(110,128,255,calc(.25 + var(--beat)*.5))}
-.eq{display:flex;align-items:flex-end;gap:2px;height:14px}
-.eq i{width:3px;height:4px;border-radius:2px;background:currentColor}
-.fx-snd[aria-pressed="true"] .eq i{animation:fxEq .9s ease-in-out infinite}
-.fx-snd[aria-pressed="true"] .eq i:nth-child(2){animation-delay:-.3s}
-.fx-snd[aria-pressed="true"] .eq i:nth-child(3){animation-delay:-.6s}
-.fx-snd[aria-pressed="true"] .eq i:nth-child(4){animation-delay:-.15s}
-@keyframes fxEq{0%,100%{height:4px}50%{height:14px}}
-@media(max-width:520px){.fx-snd .lbl{display:none}.fx-snd{padding:0 12px}.brand small.t2{display:none}}
-@media(max-width:430px){.hdr .brand>span{display:none}}
 
 /* ---------- LO STUDIO: mosaico di foto ---------- */
 .bento{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:clamp(150px,17vw,250px);gap:clamp(10px,1.4vw,18px)}

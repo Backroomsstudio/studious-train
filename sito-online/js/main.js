@@ -34,7 +34,7 @@
   var hdr = $('#hdr');
   function onScroll() { hdr.classList.toggle('solid', window.scrollY > 40); }
   onScroll(); window.addEventListener('scroll', onScroll, { passive: true });
-  var map = { studio: 'studio', team: 'team', prezzi: 'prezzi', percorso: 'prezzi', tecnologia: 'live', live: 'live', ascolta: 'ascolta', recensioni: 'recensioni', faq: 'recensioni', contatti: 'contatti' };
+  var map = { studio: 'studio', team: 'team', prezzi: 'prezzi', percorso: 'prezzi', live: 'live', ascolta: 'ascolta', recensioni: 'recensioni', faq: 'recensioni', contatti: 'contatti' };
   if ('IntersectionObserver' in window) {
     var so = new IntersectionObserver(function (es) {
       es.forEach(function (e) {
