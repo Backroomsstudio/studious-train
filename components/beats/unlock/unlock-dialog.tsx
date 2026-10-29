@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowRight, Check, CircleCheck, Download, Loader2, Lock, SlidersHorizontal, Users } from "lucide-react";
+import { ArrowRight, Check, CircleCheck, Download, Loader2, Lock, MessageCircle, SlidersHorizontal, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
@@ -10,6 +10,7 @@ import { allowedLicenses } from "@/lib/beats/ledger-rules";
 import { creditCost, LICENSE_ORDER, LICENSES, type LicenseType } from "@/lib/beats/licenses";
 import { camelotCode, keyName } from "@/lib/beats/music";
 import { cheapestPlanFor } from "@/lib/beats/plans";
+import { stemsRequestLink } from "@/lib/beats/stems-request";
 import type { UnlockResponse } from "@/lib/beats/types";
 import { usePlayer } from "../player/player-store";
 import { ApiRequestError, useCustomizeDialog, useUnlock, useUnlockDialog, useViewer } from "../providers";
@@ -96,7 +97,7 @@ export function UnlockDialog() {
               </div>
             </div>
             <ul className="mt-4 space-y-2">
-              {result.downloads.map((d) => (
+              {result.downloads.filter((d) => d.asset !== "STEMS" || !beat.stemsOnRequest).map((d) => (
                 <li key={d.asset}>
                   <a
                     href={d.url}
@@ -110,6 +111,21 @@ export function UnlockDialog() {
                   </a>
                 </li>
               ))}
+              {beat.stemsOnRequest && LICENSES[result.license.type].assets.includes("STEMS") && (
+                <li>
+                  <a
+                    href={stemsRequestLink(beat.title, LICENSES[result.license.type].name, result.license.id) ?? "/beats/profilo"}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="chrome-surface flex h-14 items-center justify-between rounded-2xl px-4 text-sm font-semibold transition"
+                  >
+                    <span className="flex items-center gap-4">
+                      <MessageCircle className="size-4 text-electric" /> Stems: te li mandiamo in chat
+                    </span>
+                    <ArrowRight className="size-4 text-chrome-400" />
+                  </a>
+                </li>
+              )}
             </ul>
             {/* Il momento giusto per proporre lo studio: il beat è appena diventato suo. */}
             <Link
@@ -177,7 +193,11 @@ export function UnlockDialog() {
                             </span>
                           )}
                         </span>
-                        <span className="block text-xs text-chrome-500">{noStems ? "Stems non disponibili per questo beat" : def.summary}</span>
+                        <span className="block text-xs text-chrome-500">{noStems
+                            ? "Stems non disponibili per questo beat"
+                            : def.assets.includes("STEMS") && beat.stemsOnRequest
+                              ? `${def.summary} · stems su richiesta in chat`
+                              : def.summary}</span>
                       </span>
                       <CreditCost cost={creditCost(type, discount)} original={discount ? def.credits : undefined} />
                     </label>

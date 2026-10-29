@@ -1,4 +1,4 @@
-import { DoorOpen, Download, Gift, Package, CalendarDays, SlidersHorizontal, ChevronRight } from "lucide-react";
+import { DoorOpen, Download, Gift, Package, CalendarDays, SlidersHorizontal, ChevronRight, MessageCircle } from "lucide-react";
 import { BadgesGrid } from "@/components/beats/engage/badges-grid";
 import { MembershipPass } from "@/components/beats/engage/membership-pass";
 import { MyDemos } from "@/components/beats/recorder/my-demos";
@@ -25,6 +25,7 @@ import { getBackend } from "@/lib/beats/server/backend";
 import { issueDownloadGrant } from "@/lib/beats/server/download-grant";
 import { getViewer } from "@/lib/beats/server/queries";
 import { isStaffRole } from "@/lib/beats/launch";
+import { licenseCode, stemsRequestLink } from "@/lib/beats/stems-request";
 
 export const metadata = { title: "Profilo" };
 
@@ -340,16 +341,28 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
                   </span>
                 </Link>
                 <div className="flex flex-wrap gap-2">
-                  {LICENSES[license.type].assets.map((asset) => (
-                    <a
-                      key={asset}
-                      download
-                      href={`/api/downloads?grant=${issueDownloadGrant({ userId: viewer.id, licenseId: license.id, asset })}`}
-                      className="chrome-surface inline-flex h-9 items-center gap-2 rounded-full px-4 text-xs font-semibold transition"
-                    >
-                      <Download className="size-3.5 text-electric" /> {asset}
-                    </a>
-                  ))}
+                  {LICENSES[license.type].assets.map((asset) =>
+                    asset === "STEMS" && beat.stemsOnRequest ? (
+                      <a
+                        key={asset}
+                        href={stemsRequestLink(beat.title, LICENSES[license.type].name, license.id) ?? "#"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="chrome-surface inline-flex h-9 items-center gap-2 rounded-full px-4 text-xs font-semibold transition"
+                      >
+                        <MessageCircle className="size-3.5 text-electric" /> Stems in chat · {licenseCode(license.id)}
+                      </a>
+                    ) : (
+                      <a
+                        key={asset}
+                        download
+                        href={`/api/downloads?grant=${issueDownloadGrant({ userId: viewer.id, licenseId: license.id, asset })}`}
+                        className="chrome-surface inline-flex h-9 items-center gap-2 rounded-full px-4 text-xs font-semibold transition"
+                      >
+                        <Download className="size-3.5 text-electric" /> {asset}
+                      </a>
+                    ),
+                  )}
                 </div>
               </li>
             ))}

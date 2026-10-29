@@ -39,6 +39,8 @@ export interface BeatSummary {
   releasedAt: string;
   isCollab: boolean;
   hasStems: boolean;
+  /** Stems non scaricabili dal sito: li manda lo staff in chat privata dopo l'acquisto. */
+  stemsOnRequest: boolean;
   deal: DealRef | null;
 }
 

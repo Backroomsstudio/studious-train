@@ -35,7 +35,7 @@ export default async function BeatPage({ params }: Props) {
     ["BPM", String(beat.bpm)],
     ["Tonalità", `${keyName(beat.key)} · ${camelotCode(beat.key)}`],
     ["Durata", formatTime(beat.durationSec)],
-    ["Stems", beat.hasStems ? "Disponibili" : "No"],
+    ["Stems", beat.stemsOnRequest ? "Su richiesta" : beat.hasStems ? "Disponibili" : "No"],
   ];
 
   return (
@@ -69,7 +69,8 @@ export default async function BeatPage({ params }: Props) {
             </ChromeLink>
             <CompareButton slug={beat.slug} />
           </div>
-          {beat.hasStems && (
+          {/* Il mixer serve le anteprime delle singole parti: c'è solo se gli stems sono caricati. */}
+          {beat.hasStems && !beat.stemsOnRequest && (
             <div className="flex flex-wrap items-center gap-4">
               <StemMixerButton beat={beat} />
               <p className="text-sm text-chrome-500">Batteria, 808, accordi e FX separati: prova il beat parte per parte.</p>

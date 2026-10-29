@@ -100,14 +100,11 @@ export async function unlockWithCredits(
         where: { id: input.beatId, ...liveBeatWhere() },
         select: {
           id: true,
-          stemsObjectKey: true,
           deals: { where: { startsAt: { lte: now }, endsAt: { gt: now } }, select: { discountPct: true }, take: 1 },
         },
       });
       if (!beat) throw new StoreError("NOT_FOUND", "Beat non disponibile.");
-      if (LICENSES[input.license].assets.includes("STEMS") && !beat.stemsObjectKey) {
-        throw new StoreError("BAD_REQUEST", "Questo beat non ha gli stems.");
-      }
+      // Senza ZIP degli stems la licenza vale lo stesso: gli stems li manda lo staff in chat.
 
       const tier = await activeTier(tx, input.userId, now);
       const wallet = await lockWallet(tx, input.userId);

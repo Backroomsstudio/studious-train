@@ -143,6 +143,7 @@ export function toSummary(beat: DemoBeat, now = new Date()): BeatSummary {
     releasedAt: released.toISOString(),
     isCollab: beat.producers.length > 1,
     hasStems: beat.hasStems,
+    stemsOnRequest: false,
     deal:
       beat.slug === DEMO_DEAL.beatSlug
         ? { discountPct: DEMO_DEAL.discountPct, endsAt: nextMidnight(now).toISOString() }

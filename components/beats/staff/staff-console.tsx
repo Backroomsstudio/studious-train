@@ -1,13 +1,13 @@
 "use client";
 
-import { Pause, Pencil, Play, Plus } from "lucide-react";
+import { Check, Mail, Pause, Pencil, Play, Plus } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { keyName } from "@/lib/beats/music";
 import { formatEuro } from "@/lib/beats/plans";
 import { PRODUCT_KINDS } from "@/lib/beats/offers";
-import { beatVisibility, type ProducerInput, type StaffBeat, type StaffProducer, type StaffProduct } from "@/lib/beats/staff";
+import { beatVisibility, type ProducerInput, type StaffBeat, type StaffProducer, type StaffProduct, type StemRequest } from "@/lib/beats/staff";
 import { feedback } from "@/lib/beats/ui-feedback";
 import { api, ApiRequestError } from "../providers";
 import { BeatCover } from "../ui/beat-cover";
@@ -101,6 +101,71 @@ function ProducerForm({ producer, onSaved }: { producer: StaffProducer; onSaved:
   );
 }
 
+/** Chi ha comprato Trackout o Unlimited: gli stems vanno mandati in chat, citando il codice. */
+function StemRequests({ initial }: { initial: StemRequest[] }) {
+  const [requests, setRequests] = useState(initial);
+  const [pending, setPending] = useState<string | null>(null);
+  const toggle = async (r: StemRequest) => {
+    setPending(r.licenseId);
+    try {
+      const res = await api<{ request: StemRequest }>(`/api/staff/stems/${encodeURIComponent(r.licenseId)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ sent: !r.sentAt }),
+      });
+      feedback("pop");
+      setRequests((all) => all.map((x) => (x.licenseId === r.licenseId ? res.request : x)));
+    } catch {
+      feedback("error");
+    } finally {
+      setPending(null);
+    }
+  };
+  if (!requests.length) {
+    return (
+      <div className="glass rounded-[28px] p-6 text-center">
+        <p className="font-semibold">Nessuno stems da mandare</p>
+        <p className="mt-2 text-sm text-chrome-500">
+          Quando qualcuno prende una licenza Trackout o Unlimited compare qui. Ti scrive in chat con il codice della licenza.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <ul className="space-y-2" aria-label="Stems da mandare">
+      {requests.map((r) => (
+        <li key={r.licenseId} className={cn("glass flex flex-wrap items-center gap-4 rounded-[22px] px-4 py-4", r.sentAt && "opacity-60")}>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[15px] font-semibold">
+              {r.beatTitle} · {r.licenseName}
+            </p>
+            <p className="mt-0 truncate text-[13px] text-chrome-500">
+              {r.buyer.name} · codice {r.code} · {DATE.format(new Date(r.createdAt))}
+            </p>
+          </div>
+          {r.buyer.email && (
+            <a
+              href={`mailto:${r.buyer.email}?subject=${encodeURIComponent(`Stems di ${r.beatTitle}`)}`}
+              aria-label={`Scrivi a ${r.buyer.name}`}
+              className="chrome-surface grid size-10 place-items-center rounded-full text-graphite-700"
+            >
+              <Mail className="size-4" />
+            </a>
+          )}
+          <ChromeButton variant={r.sentAt ? "chrome" : "obsidian"} size="sm" disabled={pending === r.licenseId} onClick={() => toggle(r)}>
+            {r.sentAt ? (
+              <>
+                <Check className="size-4 text-ok" /> Mandati
+              </>
+            ) : (
+              "Segna come mandati"
+            )}
+          </ChromeButton>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function StorageCheck() {
   const [state, setState] = useState<{ pending?: boolean; message?: string; error?: string }>({});
   const run = async () => {
@@ -134,6 +199,7 @@ export function StaffConsole({
   initialProducts,
   initialProducers,
   genres,
+  stemRequests,
   viewerProducer,
   launch,
   waitlist,
@@ -143,12 +209,13 @@ export function StaffConsole({
   initialProducts: StaffProduct[];
   initialProducers: StaffProducer[];
   genres: Genre[];
+  stemRequests: StemRequest[];
   viewerProducer: string | null;
   launch: { at: string; label: string; open: boolean } | null;
   waitlist: number;
   members: number;
 }) {
-  const [tab, setTab] = useState<"beat" | "kit" | "profilo">("beat");
+  const [tab, setTab] = useState<"beat" | "kit" | "stems" | "profilo">("beat");
   const [beats, setBeats] = useState(initialBeats);
   const [products, setProducts] = useState(initialProducts);
   const [producers, setProducers] = useState(initialProducers);
@@ -194,11 +261,12 @@ export function StaffConsole({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex gap-2" role="tablist" aria-label="Sezioni della Gestione">
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Sezioni della Gestione">
           {(
             [
               ["beat", `Beat ${beats.length}`],
               ["kit", `Kit ${products.length}`],
+              ["stems", `Stems ${stemRequests.filter((r) => !r.sentAt).length}`],
               ["profilo", "Profilo"],
             ] as const
           ).map(([id, label]) => (
@@ -207,7 +275,7 @@ export function StaffConsole({
             </Chip>
           ))}
         </div>
-        {tab !== "profilo" && (
+        {(tab === "beat" || tab === "kit") && (
           <ChromeButton variant="electric" onClick={() => setEditing(tab === "beat" ? { kind: "beat" } : { kind: "kit" })}>
             <Plus className="size-4" /> {tab === "beat" ? "Nuovo beat" : "Nuovo kit"}
           </ChromeButton>
@@ -305,6 +373,8 @@ export function StaffConsole({
             <p className="mt-2 text-sm text-chrome-500">Loop kit, sample kit, drum kit e preset: un ZIP, una demo d&apos;ascolto e il prezzo.</p>
           </div>
         ))}
+
+      {tab === "stems" && <StemRequests initial={stemRequests} />}
 
       {tab === "profilo" && (
         <div className="grid gap-4 lg:grid-cols-2">

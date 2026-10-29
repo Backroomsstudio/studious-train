@@ -4,7 +4,6 @@
  * dopo aver controllato che l'oggetto esista davvero.
  */
 import { z } from "zod";
-import { STEM_NAMES, type StemName } from "./stems";
 
 /* ------------------------------------------------------------------ */
 /* Caricamenti                                                         */
@@ -16,16 +15,14 @@ export const CONTENT_TYPES: Record<FileFormat, string> = { mp3: "audio/mpeg", wa
 
 const MB = 1024 * 1024;
 
-/** Ogni "posto" del modulo accetta un formato, con un limite di peso. */
+/**
+ * Ogni "posto" del modulo accetta un formato, con un limite di peso. Per i beat si caricano solo
+ * MP3 e WAV: gli stems li manda lo staff in chat a chi compra una licenza che li include.
+ */
 export const UPLOAD_SLOTS = {
   preview: { label: "Anteprima con tag", format: "mp3", maxBytes: 25 * MB },
   mp3: { label: "Master MP3", format: "mp3", maxBytes: 50 * MB },
   wav: { label: "Master WAV", format: "wav", maxBytes: 400 * MB },
-  stems: { label: "Stems (ZIP)", format: "zip", maxBytes: 3000 * MB },
-  "stem-drums": { label: "Anteprima drums", format: "mp3", maxBytes: 25 * MB },
-  "stem-bass": { label: "Anteprima bass", format: "mp3", maxBytes: 25 * MB },
-  "stem-keys": { label: "Anteprima keys", format: "mp3", maxBytes: 25 * MB },
-  "stem-fx": { label: "Anteprima fx", format: "mp3", maxBytes: 25 * MB },
   "product-zip": { label: "Archivio del kit (ZIP)", format: "zip", maxBytes: 3000 * MB },
   "product-preview": { label: "Demo d'ascolto", format: "mp3", maxBytes: 25 * MB },
 } as const satisfies Record<string, { label: string; format: FileFormat; maxBytes: number }>;
@@ -33,8 +30,6 @@ export const UPLOAD_SLOTS = {
 export type UploadSlot = keyof typeof UPLOAD_SLOTS;
 
 export const isUploadSlot = (value: unknown): value is UploadSlot => typeof value === "string" && value in UPLOAD_SLOTS;
-
-export const stemSlot = (stem: StemName) => `stem-${stem}` as const;
 
 /** Formato dal nome del file (i browser non sono d'accordo sul tipo MIME di WAV e ZIP). */
 export function formatOf(filename: string): FileFormat | null {
@@ -45,10 +40,9 @@ export function formatOf(filename: string): FileFormat | null {
 /** Bozza di caricamento: un UUID scelto dal browser, una cartella per beat o kit. */
 export const DRAFT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-/** Chiave dell'oggetto: `beats/<bozza>/preview.mp3`, `beats/<bozza>/stems/drums.mp3`, `products/<bozza>/kit.zip`. */
+/** Chiave dell'oggetto: `beats/<bozza>/preview.mp3`, `products/<bozza>/kit.zip`. */
 export function uploadKey(draftId: string, slot: UploadSlot): string {
   const format = UPLOAD_SLOTS[slot].format;
-  if (slot.startsWith("stem-")) return `beats/${draftId}/stems/${slot.slice(5)}.${format}`;
   if (slot === "product-zip") return `products/${draftId}/kit.zip`;
   if (slot === "product-preview") return `products/${draftId}/preview.mp3`;
   return `beats/${draftId}/${slot}.${format}`;
@@ -199,6 +193,17 @@ export const producerInputSchema = z.object({
 
 export type ProducerInput = z.infer<typeof producerInputSchema>;
 
+/** Licenza con gli stems da mandare in chat (o già mandati). */
+export interface StemRequest {
+  licenseId: string;
+  code: string;
+  licenseName: string;
+  beatTitle: string;
+  buyer: { name: string; email: string | null };
+  createdAt: string;
+  sentAt: string | null;
+}
+
 export interface StaffProducer extends ProducerInput {
   slug: string;
   linked: boolean;
@@ -242,7 +247,5 @@ export function guessFromFilename(name: string): { bpm?: number; keyRoot?: numbe
   }
   return result;
 }
-
-export const STEM_SLOTS = STEM_NAMES.map(stemSlot);
 
 export const contentTypeFor = (slot: UploadSlot) => CONTENT_TYPES[UPLOAD_SLOTS[slot].format];

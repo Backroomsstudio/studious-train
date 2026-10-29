@@ -50,7 +50,7 @@ test("caricamenti: formato dal nome e chiavi per bozza", () => {
   assert.equal(formatOf("cover.png"), null);
   const draft = "3f2b8c1e-1d2a-4b5c-8d9e-0a1b2c3d4e5f";
   assert.equal(uploadKey(draft, "preview"), `beats/${draft}/preview.mp3`);
-  assert.equal(uploadKey(draft, "stem-bass"), `beats/${draft}/stems/bass.mp3`);
+  assert.equal(uploadKey(draft, "wav"), `beats/${draft}/wav.wav`);
   assert.equal(uploadKey(draft, "product-zip"), `products/${draft}/kit.zip`);
 });
 

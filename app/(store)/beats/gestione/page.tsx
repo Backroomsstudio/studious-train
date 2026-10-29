@@ -31,6 +31,7 @@ export default async function StaffPage() {
       initialProducts={overview.products}
       initialProducers={overview.producers}
       genres={overview.genres}
+      stemRequests={overview.stemRequests}
       viewerProducer={viewer.producerSlug}
       launch={launchAt ? { at: launchAt.toISOString(), label: launchLabel(launchAt), open: storeOpen(launchAt) } : null}
       waitlist={overview.waitlist}

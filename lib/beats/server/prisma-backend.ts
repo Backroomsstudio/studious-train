@@ -47,7 +47,9 @@ export function toSummary(row: BeatRow): BeatSummary {
     moods: row.moods,
     releasedAt: row.releasedAt.toISOString(),
     isCollab: row.producers.length > 1,
-    hasStems: Boolean(row.stemsObjectKey),
+    // I producer hanno sempre le tracce: senza ZIP caricato gli stems arrivano su richiesta in chat.
+    hasStems: true,
+    stemsOnRequest: !row.stemsObjectKey,
     deal: deal ? { discountPct: deal.discountPct, endsAt: deal.endsAt.toISOString() } : null,
   };
 }

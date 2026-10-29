@@ -8,13 +8,11 @@ import {
   evenSplits,
   formatOf,
   guessFromFilename,
-  stemSlot,
   type BeatInput,
   type StaffBeat,
   type StaffProducer,
   type UploadSlot,
 } from "@/lib/beats/staff";
-import { STEM_INFO, STEM_NAMES } from "@/lib/beats/stems";
 import { feedback } from "@/lib/beats/ui-feedback";
 import { Waveform } from "../player/waveform";
 import { api, ApiRequestError } from "../providers";
@@ -29,15 +27,9 @@ type Genre = { slug: string; name: string; parent: string | null };
 /** Dove va un file trascinato insieme agli altri: dal formato e dal nome. */
 function slotForFile(file: File, taken: (slot: UploadSlot) => boolean): UploadSlot | null {
   const format = formatOf(file.name);
-  const name = file.name.toLowerCase();
   if (format === "wav") return "wav";
-  if (format === "zip") return "stems";
   if (format !== "mp3") return null;
-  if (/drum|batteria|perc/.test(name)) return stemSlot("drums");
-  if (/bass|808/.test(name)) return stemSlot("bass");
-  if (/keys|chord|accordi|melod/.test(name)) return stemSlot("keys");
-  if (/\bfx\b|_fx|-fx|effetti/.test(name)) return stemSlot("fx");
-  if (/tag|preview|anteprima/.test(name)) return "preview";
+  if (/tag|preview|anteprima/i.test(file.name)) return "preview";
   return taken("mp3") ? "preview" : "mp3";
 }
 
@@ -57,13 +49,7 @@ export function BeatEditor({
   onSaved: (beat: StaffBeat) => void;
 }) {
   const [draftId] = useState(newDraftId);
-  const uploads = useUploads(draftId, {
-    preview: beat?.files.preview,
-    mp3: beat?.files.mp3,
-    wav: beat?.files.wav,
-    stems: beat?.files.stems,
-    ...(beat?.files.stemPreviewPrefix ? Object.fromEntries(STEM_NAMES.map((s) => [stemSlot(s), `${beat.files.stemPreviewPrefix}/${s}.mp3`])) : {}),
-  });
+  const uploads = useUploads(draftId, { preview: beat?.files.preview, mp3: beat?.files.mp3, wav: beat?.files.wav });
 
   const [title, setTitle] = useState(beat?.title ?? "");
   const [description, setDescription] = useState(beat?.description ?? "");
@@ -141,12 +127,10 @@ export function BeatEditor({
     });
   };
 
-  const stemsComplete = STEM_NAMES.every((s) => uploads.keyOf(stemSlot(s)));
   const scheduled = new Date(fromLocalInput(releasedAt)).getTime() > Date.now();
 
   const save = async () => {
     setState({ pending: true });
-    const stemKey = uploads.keyOf(stemSlot("drums"));
     const body: BeatInput = {
       title,
       description,
@@ -166,9 +150,9 @@ export function BeatEditor({
         preview: uploads.keyOf("preview"),
         mp3: uploads.keyOf("mp3"),
         wav: uploads.keyOf("wav"),
-        stems: uploads.keyOf("stems") || null,
-        // Le anteprime del mixer valgono solo tutte e quattro insieme, nella stessa cartella.
-        stemPreviewPrefix: stemsComplete && stemKey ? stemKey.slice(0, stemKey.lastIndexOf("/")) : null,
+        // Gli stems non si caricano (li mandate in chat): restano quelli eventualmente già salvati.
+        stems: beat?.files.stems ?? null,
+        stemPreviewPrefix: beat?.files.stemPreviewPrefix ?? null,
       },
     };
     try {
@@ -188,13 +172,15 @@ export function BeatEditor({
 
   return (
     <div className="space-y-6">
-      <Section title="File" hint="Trascina insieme WAV, MP3, anteprima con tag e ZIP degli stems: ognuno va al suo posto. Il caricamento parte subito.">
-        <DropZone onFiles={dropFiles} label="Trascina qui i file del beat" accept=".mp3,.wav,.zip,audio/mpeg,audio/wav,application/zip" />
+      <Section
+        title="File"
+        hint="Trascina insieme WAV, MP3 e anteprima con tag: ognuno va al suo posto e il caricamento parte subito. Gli stems non servono: chi compra Trackout o Unlimited ve li chiede in chat."
+      >
+        <DropZone onFiles={dropFiles} label="Trascina qui i file del beat" accept=".mp3,.wav,audio/mpeg,audio/wav" />
         <div className="space-y-2">
           <SlotRow slot="preview" state={uploads.get("preview")} onFile={(f) => handleFile("preview", f)} hint="MP3 con il tag vocale: è l'unico file che si ascolta gratis" />
           <SlotRow slot="mp3" state={uploads.get("mp3")} onFile={(f) => handleFile("mp3", f)} hint="MP3 senza tag, per la licenza MP3" />
           <SlotRow slot="wav" state={uploads.get("wav")} onFile={(f) => handleFile("wav", f)} hint="WAV senza tag, per le licenze WAV e superiori" />
-          <SlotRow slot="stems" state={uploads.get("stems")} onFile={(f) => handleFile("stems", f)} hint="Facoltativo: ZIP con le tracce separate" />
         </div>
         {(peaks.length > 0 || analyzing) && (
           <div className="rounded-2xl bg-chrome-50 px-4 py-4">
@@ -203,17 +189,6 @@ export function BeatEditor({
             </p>
             {peaks.length > 0 && <Waveform peaks={peaks} progress={0} height={40} compact label="Forma d'onda dell'anteprima" />}
           </div>
-        )}
-        {uploads.keyOf("stems") && (
-          <details className="rounded-2xl" open={STEM_NAMES.some((s) => uploads.get(stemSlot(s)).status !== "empty")}>
-            <summary className="cursor-pointer text-sm font-semibold text-graphite-700">Anteprime per il mixer (facoltative)</summary>
-            <p className="mt-2 text-sm text-chrome-500">Quattro MP3 brevi con il tag: chi ascolta può alzare e abbassare le parti prima di comprare.</p>
-            <div className="mt-4 space-y-2">
-              {STEM_NAMES.map((s) => (
-                <SlotRow key={s} slot={stemSlot(s)} state={uploads.get(stemSlot(s))} onFile={(f) => handleFile(stemSlot(s), f)} hint={STEM_INFO[s].label} />
-              ))}
-            </div>
-          </details>
         )}
       </Section>
 

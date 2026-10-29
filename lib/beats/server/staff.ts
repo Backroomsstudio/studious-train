@@ -17,7 +17,10 @@ import {
   type StaffBeat,
   type StaffProduct,
   type StaffProducer,
+  type StemRequest,
 } from "../staff";
+import { LICENSES } from "../licenses";
+import { licenseCode } from "../stems-request";
 import { STEM_NAMES } from "../stems";
 import type { Viewer } from "../types";
 import { StoreError } from "./errors";
@@ -103,17 +106,50 @@ export interface StaffOverview {
   products: StaffProduct[];
   producers: StaffProducer[];
   genres: Array<{ slug: string; name: string; parent: string | null }>;
+  stemRequests: StemRequest[];
   waitlist: number;
   members: number;
 }
 
+/** Licenze con gli stems su beat senza ZIP: da mandare in chat (prima le più vecchie ancora aperte). */
+async function stemRequests(db: Db): Promise<StemRequest[]> {
+  const rows = await db.license.findMany({
+    where: { type: { in: ["TRACKOUT", "UNLIMITED"] }, status: "ACTIVE", beat: { stemsObjectKey: null } },
+    include: { beat: { select: { title: true } }, user: { select: { artistName: true, name: true, email: true } } },
+    orderBy: [{ createdAt: "desc" }],
+    take: 100,
+  });
+  return rows
+    .map((l) => ({
+      licenseId: l.id,
+      code: licenseCode(l.id),
+      licenseName: LICENSES[l.type].name,
+      beatTitle: l.beat.title,
+      buyer: { name: l.user.artistName ?? l.user.name ?? "Artista", email: l.user.email },
+      createdAt: l.createdAt.toISOString(),
+      sentAt: l.stemsSentAt?.toISOString() ?? null,
+    }))
+    .sort((a, b) => Number(Boolean(a.sentAt)) - Number(Boolean(b.sentAt)));
+}
+
+export async function markStemsSent(licenseId: string, sent: boolean): Promise<StemRequest> {
+  const db = getDb();
+  const found = await db.license.findUnique({ where: { id: licenseId }, select: { id: true } });
+  if (!found) throw new StoreError("NOT_FOUND", "Licenza non trovata.");
+  await db.license.update({ where: { id: licenseId }, data: { stemsSentAt: sent ? new Date() : null } });
+  const [request] = (await stemRequests(db)).filter((r) => r.licenseId === licenseId);
+  if (!request) throw new StoreError("BAD_REQUEST", "Questa licenza non prevede stems in chat.");
+  return request;
+}
+
 export async function staffOverview(): Promise<StaffOverview> {
   const db = getDb();
-  const [beats, products, producers, genres, waitlist, members] = await Promise.all([
+  const [beats, products, producers, genres, requests, waitlist, members] = await Promise.all([
     db.beat.findMany({ include: staffBeatInclude, orderBy: [{ updatedAt: "desc" }] }),
     db.product.findMany({ include: { producer: true, _count: { select: { purchases: true } } }, orderBy: { createdAt: "desc" } }),
     db.producer.findMany({ orderBy: [{ isResident: "desc" }, { name: "asc" }] }),
     db.genre.findMany({ include: { parent: { select: { slug: true } } }, orderBy: { name: "asc" } }),
+    stemRequests(db),
     db.waitlistEntry.count(),
     db.user.count({ where: { role: "ARTIST" } }),
   ]);
@@ -129,6 +165,7 @@ export async function staffOverview(): Promise<StaffOverview> {
       linked: Boolean(p.userId),
     })),
     genres: genres.map((g) => ({ slug: g.slug, name: g.name, parent: g.parent?.slug ?? null })),
+    stemRequests: requests,
     waitlist,
     members,
   };

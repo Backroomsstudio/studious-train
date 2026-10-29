@@ -93,6 +93,15 @@ test("licenza fuori piano rifiutata senza addebito", { skip }, async () => {
   assert.equal(await balance(), 50);
 });
 
+test("Trackout su un beat senza ZIP degli stems: si sblocca e gli stems restano da mandare in chat", { skip }, async () => {
+  const beat = await db.beat.findFirstOrThrow({ where: { status: "PUBLISHED", stemsObjectKey: null, releasedAt: { lte: new Date() } } });
+  await db.user.update({ where: { id: userId }, data: { creditBalance: 50 } });
+  const result = await unlockWithCredits(db, { userId, beatId: beat.id, license: "TRACKOUT" });
+  assert.equal(result.type, "TRACKOUT");
+  const license = await db.license.findUniqueOrThrow({ where: { id: result.licenseId } });
+  assert.equal(license.stemsSentAt, null);
+});
+
 test("fine abbonamento: i crediti scadono una volta sola", { skip }, async () => {
   await db.subscription.update({ where: { id: subscriptionId }, data: { status: "CANCELED", currentPeriodEnd: new Date(Date.now() - 1000) } });
   await expireCreditsAtSubscriptionEnd(db, { userId, subscriptionId });

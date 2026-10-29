@@ -415,6 +415,8 @@ model License {
   creditsSpent Int
   /// Copia dei termini al momento dell'acquisto (stream massimi, copie, ecc.).
   terms        Json
+  /// Stems su richiesta: quando lo staff li ha mandati in chat privata (null = ancora da mandare).
+  stemsSentAt  DateTime?
   createdAt    DateTime      @default(now())
 
   user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
