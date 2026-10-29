@@ -38,13 +38,13 @@ export function RangeSlider({
       className={cn("relative flex h-6 w-full touch-none select-none items-center", className)}
     >
       <Slider.Track className="relative h-1.5 grow overflow-hidden rounded-full bg-chrome-300 shadow-[inset_0_1px_2px_rgba(17,24,39,0.15)]">
-        <Slider.Range className="absolute h-full rounded-full bg-gradient-to-r from-electric to-electric-cyan shadow-glow-sm" />
+        <Slider.Range className="absolute h-full rounded-full bg-electric" />
       </Slider.Track>
       {value.map((v, i) => (
         <Slider.Thumb
           key={i}
           aria-label={thumbLabels?.[i] ?? label}
-          className="chrome-surface block size-5 rounded-full transition-transform hover:scale-110 focus-visible:scale-110 focus-visible:shadow-glow focus-visible:outline-none"
+          className="chrome-surface block size-5 rounded-full transition-transform hover:scale-110 focus-visible:scale-110 focus-visible:outline-none"
         >
           <span className="sr-only">{v}</span>
         </Slider.Thumb>

@@ -136,10 +136,10 @@ test("ogni genere dei preset ha Main, Doppie e Sporche con valori dentro le mano
   assert.equal(BK.trap.sporche.fx.dly.pp, true);
 });
 
-test("firme: colore d'accento del produttore, gradiente per le collaborazioni", () => {
-  assert.equal(signatureColor("Astral"), "#22C55E");
-  assert.equal(signatureColor("Freya"), "#EC4899");
-  assert.match(signatureColor("Freya & Astral"), /linear-gradient\(90deg, #EC4899, #22C55E\)/);
+test("firme: tono del produttore, nelle collaborazioni quello del primo", () => {
+  assert.equal(signatureColor("Astral"), "#121214");
+  assert.equal(signatureColor("Freya"), "#e0306c");
+  assert.equal(signatureColor("Freya & Astral"), "#e0306c");
 });
 
 test("generi del catalogo → generi dei preset (i sottogeneri usano il padre)", () => {

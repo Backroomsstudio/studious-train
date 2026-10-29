@@ -40,11 +40,11 @@ export default async function BeatPage({ params }: Props) {
 
   return (
     <div className="space-y-8">
-      <Link href="/beats" className="inline-flex items-center gap-1.5 text-sm font-semibold text-chrome-500 hover:text-graphite">
+      <Link href="/beats" className="inline-flex items-center gap-2 text-sm font-semibold text-chrome-500 hover:text-graphite">
         <ArrowLeft className="size-4" /> Catalogo
       </Link>
 
-      <section className="glass grid gap-6 rounded-[32px] p-5 sm:p-7 lg:grid-cols-[auto_1fr]" aria-labelledby="beat-title">
+      <section className="glass grid gap-6 rounded-[32px] p-6 sm:p-8 lg:grid-cols-[auto_1fr]" aria-labelledby="beat-title">
         <BeatCover beat={beat} size="xl" />
         <div className="min-w-0 space-y-4">
           <div>
@@ -52,7 +52,7 @@ export default async function BeatPage({ params }: Props) {
               {beat.isCollab && <GlowBadge tone="electric">Co-produzione</GlowBadge>}
               {beat.deal && <GlowBadge tone="deal">Beat del giorno -{beat.deal.discountPct}%</GlowBadge>}
             </div>
-            <h1 id="beat-title" className="chrome-text mt-2 font-display text-5xl font-black tracking-tight">
+            <h1 id="beat-title" className="chrome-text mt-2 font-display text-5xl font-semibold tracking-tight">
               {beat.title}
             </h1>
             <div className="mt-2 flex flex-wrap gap-x-4">
@@ -70,22 +70,22 @@ export default async function BeatPage({ params }: Props) {
             <CompareButton slug={beat.slug} />
           </div>
           {beat.hasStems && (
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-4">
               <StemMixerButton beat={beat} />
               <p className="text-sm text-chrome-500">Batteria, 808, accordi e FX separati: prova il beat parte per parte.</p>
             </div>
           )}
           <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {facts.map(([label, value]) => (
-              <div key={label} className="chrome-surface rounded-2xl px-4 py-3">
-                <dt className="text-[11px] font-bold uppercase tracking-[0.14em] text-chrome-500">{label}</dt>
-                <dd className="mt-0.5 font-semibold">{value}</dd>
+              <div key={label} className="chrome-surface rounded-2xl px-4 py-4">
+                <dt className="text-[11px] font-semibold text-chrome-500">{label}</dt>
+                <dd className="mt-0 font-semibold">{value}</dd>
               </div>
             ))}
           </dl>
           <div className="flex flex-wrap gap-2">
             {[...beat.genres.map((g) => g.name), ...beat.typeTags.map((t) => `${t.name} Type`), ...beat.moods].map((tag) => (
-              <span key={tag} className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-graphite-700">
+              <span key={tag} className="rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-graphite-700">
                 {tag}
               </span>
             ))}
@@ -96,7 +96,7 @@ export default async function BeatPage({ params }: Props) {
 
       {similar.length > 0 && (
         <section aria-labelledby="simili-title" className="space-y-2">
-          <h2 id="simili-title" className="font-display text-xl font-bold">
+          <h2 id="simili-title" className="font-display text-xl font-semibold">
             In armonia con {beat.title}
           </h2>
           <p className="text-sm text-chrome-500">Tonalità compatibili sulla ruota Camelot e BPM vicini: perfetti per un medley o un remix.</p>

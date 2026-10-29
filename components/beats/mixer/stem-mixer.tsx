@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Pause, Play, SlidersVertical, Zap } from "lucide-react";
+import { Loader2, Pause, Play, SlidersVertical } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { formatTime } from "@/lib/beats/format";
@@ -154,7 +154,7 @@ function StemMixer({ beat, onUnlock }: { beat: BeatSummary; onUnlock: () => void
   return (
     <div className="space-y-4">
       {error && (
-        <p className="rounded-2xl bg-deal/10 px-4 py-3 text-sm font-semibold text-deal" role="alert">
+        <p className="rounded-2xl bg-deal/10 px-4 py-4 text-sm font-semibold text-deal" role="alert">
           Non riesco a caricare gli stems di questo beat. Riprova tra poco.
         </p>
       )}
@@ -192,7 +192,7 @@ function StemMixer({ beat, onUnlock }: { beat: BeatSummary; onUnlock: () => void
                   }}
                 />
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-2">
                 <button
                   type="button"
                   className="mxr-btn"
@@ -250,17 +250,17 @@ function StemMixer({ beat, onUnlock }: { beat: BeatSummary; onUnlock: () => void
         <span ref={barRef} style={{ width: `${(position / (duration || 1)) * 100}%` }} />
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-4">
         <ChromeButton variant="electric" size="lg" onClick={() => void toggle()} disabled={!buffers}>
           {playing ? <Pause className="size-4 fill-current" /> : <Play className="size-4 fill-current" />}
           {playing ? "Pausa" : "Ascolta"}
         </ChromeButton>
-        <span className="font-mono text-sm tabular-nums text-chrome-500">
+        <span className="text-sm tabular-nums text-chrome-500">
           <span ref={timeRef}>{formatTime(position)}</span> / {formatTime(duration)}
         </span>
       </div>
 
-      <div className="obsidian flex flex-wrap items-center gap-3 rounded-[22px] p-4">
+      <div className="obsidian flex flex-wrap items-center gap-4 rounded-[22px] p-4">
         <p className="min-w-[180px] flex-1 text-sm text-chrome-200">
           <b className="block font-display text-[15px] text-white">Vuoi le stems vere? Sbloccale con la licenza</b>
           WAV separati in qualità piena, senza tag, con la Trackout o la Unlimited.
@@ -271,8 +271,7 @@ function StemMixer({ beat, onUnlock }: { beat: BeatSummary; onUnlock: () => void
             onUnlock();
             openUnlock(beat);
           }}
-        >
-          <Zap className="size-4 fill-current" /> Trackout · {trackoutCost} crediti
+        > Trackout · {trackoutCost} crediti
         </ChromeButton>
       </div>
     </div>

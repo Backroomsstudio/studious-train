@@ -203,10 +203,10 @@ export interface ResidentLevel {
 }
 
 export const LEVELS: ResidentLevel[] = [
-  { id: "BRONZE", name: "Bronze", minMonths: 0, studioDiscountPct: 0, perks: ["Accesso al catalogo e ai drop"], color: "#cd7f32" },
-  { id: "SILVER", name: "Silver", minMonths: 3, studioDiscountPct: 5, perks: ["-5% sui servizi dello studio", "Drop 24 ore prima"], color: "#c0c7d2" },
-  { id: "GOLD", name: "Gold", minMonths: 6, studioDiscountPct: 10, perks: ["-10% sui servizi dello studio", "Drop 24 ore prima", "Prelazione sulle aste", "Nome nei crediti delle live"], color: "#f5c542" },
-  { id: "PLATINUM", name: "Platinum", minMonths: 12, studioDiscountPct: 15, perks: ["-15% sui servizi dello studio", "Drop 48 ore prima", "Prelazione sulle aste", "Un feedback 1:1 l'anno incluso"], color: "#e5f0ff" },
+  { id: "BRONZE", name: "Bronze", minMonths: 0, studioDiscountPct: 0, perks: ["Accesso al catalogo e ai drop"], color: "#8e8e95" },
+  { id: "SILVER", name: "Silver", minMonths: 3, studioDiscountPct: 5, perks: ["-5% sui servizi dello studio", "Drop 24 ore prima"], color: "#c9c9ce" },
+  { id: "GOLD", name: "Gold", minMonths: 6, studioDiscountPct: 10, perks: ["-10% sui servizi dello studio", "Drop 24 ore prima", "Prelazione sulle aste", "Nome nei crediti delle live"], color: "#e95b8c" },
+  { id: "PLATINUM", name: "Platinum", minMonths: 12, studioDiscountPct: 15, perks: ["-15% sui servizi dello studio", "Drop 48 ore prima", "Prelazione sulle aste", "Un feedback 1:1 l'anno incluso"], color: "#e0306c" },
 ];
 
 export function levelFor(months: number): { level: ResidentLevel; next: ResidentLevel | null; monthsToNext: number } {

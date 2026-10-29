@@ -18,7 +18,7 @@ import { scrollToTop } from "./scroll";
 function StudioSkeleton() {
   return (
     <div className="grid gap-4" aria-busy="true" aria-label="Carico lo studio…">
-      <div className="obsidian grid gap-3 rounded-[28px] p-5">
+      <div className="obsidian grid gap-4 rounded-[28px] p-6">
         <span className="studio-skel h-11 w-2/3 rounded-xl" />
         <span className="studio-skel h-[46px] rounded-xl" />
         <span className="studio-skel h-10 rounded-xl" />
@@ -26,7 +26,7 @@ function StudioSkeleton() {
         <span className="studio-skel h-10 rounded-xl" />
         <span className="studio-skel mx-auto h-[76px] w-[76px] rounded-full" />
       </div>
-      <div className="glass grid gap-3 rounded-[28px] p-5">
+      <div className="glass grid gap-4 rounded-[28px] p-6">
         <span className="studio-skel studio-skel-light h-6 w-1/3 rounded-lg" />
         <span className="studio-skel studio-skel-light h-28 rounded-2xl" />
       </div>
@@ -96,11 +96,11 @@ export function RecorderStudio({
   const canRecord = transport !== "rec" && transport !== "count";
 
   return (
-    <div className="grid min-w-0 gap-5 lg:gap-6">
+    <div className="grid min-w-0 gap-6 lg:gap-6">
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Studio in app</p>
-        <h1 className="chrome-text mt-1 font-display text-[clamp(2.2rem,7vw,3.6rem)] font-black leading-none tracking-tight">Registra la tua demo</h1>
-        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-chrome-500">
+        <p className="text-[11px] font-semibold text-electric">Studio in app</p>
+        <h1 className="chrome-text mt-2 font-display text-[clamp(2.2rem,7vw,3.6rem)] font-semibold leading-none tracking-tight">Registra la tua demo</h1>
+        <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-chrome-500">
           Come in studio, dal telefono: registra sul beat, metti l&apos;autotune nella tonalità giusta, usa le nostre catene voce, poi esporta e
           mandala a chi vuoi.
         </p>
@@ -172,7 +172,7 @@ export function RecorderStudio({
       <div
         role="status"
         aria-live="polite"
-        className={`pointer-events-none fixed inset-x-4 top-[calc(4.5rem+env(safe-area-inset-top))] z-40 mx-auto w-fit max-w-[calc(100vw-2rem)] rounded-full bg-graphite/90 px-4 py-2.5 text-center text-[13px] font-semibold text-white shadow-chrome-lg backdrop-blur transition duration-300 ${
+        className={`pointer-events-none fixed inset-x-4 top-[calc(4.5rem+env(safe-area-inset-top))] z-40 mx-auto w-fit max-w-[calc(100vw-2rem)] rounded-full bg-graphite/90 px-4 py-2 text-center text-[13px] font-semibold text-white shadow-chrome-lg backdrop-blur transition duration-300 ${
           toastVisible ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"
         }`}
       >

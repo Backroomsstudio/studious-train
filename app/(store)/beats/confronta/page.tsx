@@ -22,15 +22,15 @@ export default async function ComparePage({ searchParams }: Props) {
   const b = a && (fromB && fromB.id !== a.id ? fromB : rankCandidates(a, catalog, 1)[0]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Confronto istantaneo</p>
-        <h1 className="chrome-text mt-1 font-display text-4xl font-black tracking-tight">A o B?</h1>
+        <p className="text-[11px] font-semibold text-electric">Confronto istantaneo</p>
+        <h1 className="chrome-text mt-2 font-display text-4xl font-semibold tracking-tight">A o B?</h1>
       </div>
       {a && b ? (
         <CompareView a={a} b={b} catalog={[...catalog].sort((x, y) => x.title.localeCompare(y.title, "it"))} />
       ) : (
-        <p className="glass rounded-2xl p-5 text-sm text-chrome-500">Servono almeno due beat nel catalogo per confrontarli.</p>
+        <p className="glass rounded-2xl p-6 text-sm text-chrome-500">Servono almeno due beat nel catalogo per confrontarli.</p>
       )}
     </div>
   );

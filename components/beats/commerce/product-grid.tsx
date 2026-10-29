@@ -18,27 +18,24 @@ function ProductCard({ product }: { product: ProductSummary }) {
 
   return (
     <article className="glass flex flex-col overflow-hidden rounded-[26px]">
-      <div
-        className="relative grid h-36 place-items-center overflow-hidden"
-        style={{ background: `radial-gradient(circle at 30% 20%, ${product.coverColor}, #0b0f19 75%)` }}
-      >
-        <Package className="size-12 text-white/85 drop-shadow-[0_0_18px_rgba(255,255,255,0.4)]" />
-        <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur">
+      <div className="chrome-pink relative grid h-36 place-items-center overflow-hidden">
+        <Package className="size-12 text-white/85" />
+        <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2 py-2 text-[10px] font-semibold text-white backdrop-blur">
           {PRODUCT_KINDS[product.kind]}
         </span>
       </div>
-      <div className="flex flex-1 flex-col p-5">
-        <h3 className="font-display text-lg font-bold leading-tight">{product.title}</h3>
+      <div className="flex flex-1 flex-col p-6">
+        <h3 className="font-display text-lg font-semibold leading-tight">{product.title}</h3>
         {product.producer && (
-          <p className="mt-0.5 text-[13px] font-medium text-chrome-500">
+          <p className="mt-0 text-[13px] font-normal text-chrome-500">
             di <span style={{ color: product.producer.accentColor ?? undefined }}>{product.producer.name}</span>
           </p>
         )}
         <p className="mt-2 text-sm text-chrome-500">{product.description}</p>
-        <ul className="mt-3 flex-1 space-y-1 text-[13px]">
+        <ul className="mt-4 flex-1 space-y-2 text-[13px]">
           {product.contents.map((c) => (
             <li key={c} className="flex gap-2">
-              <Check className="mt-0.5 size-3.5 shrink-0 text-electric" /> {c}
+              <Check className="mt-0 size-3.5 shrink-0 text-electric" /> {c}
             </li>
           ))}
         </ul>
@@ -47,7 +44,7 @@ function ProductCard({ product }: { product: ProductSummary }) {
             <a
               href={`/api/products/${encodeURIComponent(product.id)}/download`}
               download
-              className="chrome-surface inline-flex h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-bold text-graphite hover:shadow-glow-sm"
+              className="chrome-surface inline-flex h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold text-graphite"
             >
               <Download className="size-4 text-electric" /> Scarica
             </a>

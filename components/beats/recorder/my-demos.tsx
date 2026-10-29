@@ -57,9 +57,9 @@ export function MyDemos({
   if (!rows.length && hideWhenEmpty) return null;
 
   return (
-    <section aria-labelledby="my-demos-title" className="grid gap-2.5" data-testid="my-demos">
-      <div className="flex items-end justify-between gap-3">
-        <h2 id="my-demos-title" className="font-display text-xl font-bold tracking-tight">
+    <section aria-labelledby="my-demos-title" className="grid gap-2" data-testid="my-demos">
+      <div className="flex items-end justify-between gap-4">
+        <h2 id="my-demos-title" className="font-display text-xl font-semibold tracking-tight">
           {title}
         </h2>
         <span className="text-xs text-chrome-500">Salvate su questo dispositivo</span>
@@ -67,7 +67,7 @@ export function MyDemos({
       {rows.length ? (
         <ul className="grid gap-2">
           {rows.map((row) => (
-            <li key={row.id} className="glass flex min-w-0 items-center gap-3 rounded-[20px] p-2.5">
+            <li key={row.id} className="glass flex min-w-0 items-center gap-4 rounded-[20px] p-2">
               <BeatCover beat={row.beat} size="sm" />
               <span className="min-w-0 flex-1">
                 <b className="block truncate font-display text-[15px]">{row.name}</b>
@@ -96,7 +96,7 @@ export function MyDemos({
           ))}
         </ul>
       ) : (
-        <div className="glass flex flex-wrap items-center gap-3 rounded-[20px] p-4 text-sm text-chrome-500">
+        <div className="glass flex flex-wrap items-center gap-4 rounded-[20px] p-4 text-sm text-chrome-500">
           <Mic className="size-4 text-electric" aria-hidden />
           <span className="min-w-0 flex-1">Nessuna demo salvata qui. Registra la voce su un beat e salvala nei progetti.</span>
           <Link className={chromeButtonClass("electric", "sm")} href="/beats/registra">

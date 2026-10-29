@@ -17,39 +17,39 @@ export default async function AuctionsPage() {
   return (
     <RevealList className="space-y-8" items="li, article, [data-reveal], section > a">
       <div className="max-w-2xl">
-        <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Esclusive</p>
-        <h1 className="chrome-text mt-1 font-display text-4xl font-black tracking-tight sm:text-5xl">Aste dei beat</h1>
-        <p className="mt-3 text-[15px] leading-relaxed text-chrome-500">
+        <p className="text-[11px] font-semibold text-electric">Esclusive</p>
+        <h1 className="chrome-text mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">Aste dei beat</h1>
+        <p className="mt-4 text-[15px] leading-relaxed text-chrome-500">
           Un solo artista porta a casa il beat, per sempre. Le aste partono da {formatEuro(AUCTION.startPriceCents)} e spesso le facciamo in
           diretta su TikTok: offri da qui, le offerte compaiono in live.
         </p>
       </div>
 
       {open.length > 0 && (
-        <section aria-labelledby="aste-live" className="space-y-3">
-          <h2 id="aste-live" className="font-display text-xl font-bold">In corso</h2>
+        <section aria-labelledby="aste-live" className="space-y-4">
+          <h2 id="aste-live" className="font-display text-xl font-semibold">In corso</h2>
           {open.map((a) => (
             <AuctionCard key={a.id} auction={a} large />
           ))}
         </section>
       )}
       {upcoming.length > 0 && (
-        <section aria-labelledby="aste-next" className="space-y-3">
-          <h2 id="aste-next" className="font-display text-xl font-bold">In arrivo</h2>
+        <section aria-labelledby="aste-next" className="space-y-4">
+          <h2 id="aste-next" className="font-display text-xl font-semibold">In arrivo</h2>
           {upcoming.map((a) => (
             <AuctionCard key={a.id} auction={a} />
           ))}
         </section>
       )}
       {closed.length > 0 && (
-        <section aria-labelledby="aste-closed" className="space-y-3">
-          <h2 id="aste-closed" className="font-display text-xl font-bold">Concluse</h2>
+        <section aria-labelledby="aste-closed" className="space-y-4">
+          <h2 id="aste-closed" className="font-display text-xl font-semibold">Concluse</h2>
           {closed.map((a) => (
             <AuctionCard key={a.id} auction={a} />
           ))}
         </section>
       )}
-      {!auctions.length && <p className="glass rounded-2xl p-5 text-sm text-chrome-500">Nessuna asta in programma: seguici su TikTok per la prossima.</p>}
+      {!auctions.length && <p className="glass rounded-2xl p-6 text-sm text-chrome-500">Nessuna asta in programma: seguici su TikTok per la prossima.</p>}
     </RevealList>
   );
 }

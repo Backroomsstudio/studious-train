@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftRight, Pause, Play, RotateCcw, Zap } from "lucide-react";
+import { ArrowLeftRight, Pause, Play, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
@@ -148,7 +148,7 @@ function useDualPreview(a: BeatSummary, b: BeatSummary) {
 
 function Fact({ label, value, highlight }: { label: string; value: ReactNode; highlight?: boolean }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 border-t border-chrome-200/80 py-2 text-sm first:border-t-0">
+    <div className="flex items-baseline justify-between gap-4 border-t border-chrome-200/80 py-2 text-sm first:border-t-0">
       <dt className="text-chrome-500">{label}</dt>
       <dd className={cn("truncate text-right font-semibold", highlight && "text-ok")}>{value}</dd>
     </div>
@@ -180,12 +180,12 @@ function SideCard({
   return (
     <section
       aria-label={`Beat ${label}: ${beat.title}`}
-      className={cn("glass min-w-0 rounded-[28px] p-4 transition-shadow sm:p-5", active && "shadow-glow ring-2 ring-electric")}
+      className={cn("glass min-w-0 rounded-[28px] p-4 transition-shadow sm:p-6", active && " ring-2 ring-electric")}
       data-testid={`compare-${side}`}
       data-active={active || undefined}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className={cn("grid size-9 place-items-center rounded-full font-display text-lg font-black", active ? "bg-electric text-white shadow-glow-sm" : "chrome-surface text-graphite")}>
+        <span className={cn("grid size-9 place-items-center rounded-full font-display text-lg font-semibold", active ? "bg-electric text-white" : "chrome-surface text-graphite")}>
           {label}
         </span>
         <label className="min-w-0 flex-1">
@@ -193,7 +193,7 @@ function SideCard({
           <select
             value={beat.slug}
             onChange={(e) => onPick(e.target.value)}
-            className="chrome-surface h-9 w-full min-w-0 truncate rounded-full px-3 text-[13px] font-semibold text-graphite-700"
+            className="chrome-surface h-9 w-full min-w-0 truncate rounded-full px-4 text-[13px] font-semibold text-graphite-700"
           >
             {catalog.map((x) => (
               <option key={x.id} value={x.slug} disabled={x.id === other.id}>
@@ -203,25 +203,24 @@ function SideCard({
           </select>
         </label>
       </div>
-      <button type="button" onClick={onSelect} className="mt-4 flex w-full min-w-0 items-center gap-3 text-left" aria-pressed={active}>
+      <button type="button" onClick={onSelect} className="mt-4 flex w-full min-w-0 items-center gap-4 text-left" aria-pressed={active}>
         <BeatCover beat={beat} size="lg" playing={active} />
         <span className="min-w-0">
-          <span className="block truncate font-display text-xl font-bold">{beat.title}</span>
-          <span className="flex flex-wrap gap-x-3">
+          <span className="block truncate font-display text-xl font-semibold">{beat.title}</span>
+          <span className="flex flex-wrap gap-x-4">
             {beat.producers.map((p) => (
               <ProducerTag key={p.slug} name={p.name} color={p.accentColor} co={p.role === "CO_PRODUCER"} />
             ))}
           </span>
         </span>
       </button>
-      <dl className="mt-3">
+      <dl className="mt-4">
         <Fact label="BPM" value={`${beat.bpm}${bpmDiff ? ` (${bpmDiff > 0 ? "+" : ""}${bpmDiff})` : ""}`} />
         <Fact label="Tonalità" value={`${keyName(beat.key)} · ${camelotCode(beat.key)}`} highlight={side === "b" && keysCompatible(other, beat)} />
         <Fact label="Genere" value={genre} />
         <Fact label="Durata" value={formatTime(beat.durationSec)} />
       </dl>
-      <ChromeButton variant={active ? "electric" : "chrome"} className="mt-3 w-full" onClick={onChoose}>
-        <Zap className="size-4 fill-current" /> Scelgo {label}
+      <ChromeButton variant={active ? "electric" : "chrome"} className="mt-4 w-full" onClick={onChoose}> Scelgo {label}
       </ChromeButton>
     </section>
   );
@@ -262,17 +261,17 @@ export function CompareView({ a, b, catalog }: { a: BeatSummary; b: BeatSummary;
   return (
     <div className="flex flex-col gap-6">
       {player.audio}
-      <div className="order-2 grid gap-3 md:order-1 md:grid-cols-2 [&>*]:min-w-0">
+      <div className="order-2 grid gap-4 md:order-1 md:grid-cols-2 [&>*]:min-w-0">
         <SideCard side="a" beat={a} other={b} active={active === "a"} catalog={catalog} onPick={(s) => go(s, b.slug === s ? a.slug : b.slug)} onSelect={() => select("a")} onChoose={() => choose(a)} />
         <SideCard side="b" beat={b} other={a} active={active === "b"} catalog={catalog} onPick={(s) => go(a.slug === s ? b.slug : a.slug, s)} onSelect={() => select("b")} onChoose={() => choose(b)} />
       </div>
 
-      <section aria-label="Controlli del confronto" className="obsidian order-1 space-y-4 md:order-2 rounded-[28px] p-4 sm:p-5">
-        <div className="flex flex-wrap items-center gap-3">
+      <section aria-label="Controlli del confronto" className="obsidian order-1 space-y-4 md:order-2 rounded-[28px] p-4 sm:p-6">
+        <div className="flex flex-wrap items-center gap-4">
           <ChromeButton size="icon-lg" onClick={() => void (playing ? pause() : play())} aria-label={playing ? "Pausa" : "Ascolta"} data-testid="compare-play">
-            {playing ? <Pause className="size-6 fill-current" /> : <Play className="ml-0.5 size-6 fill-current" />}
+            {playing ? <Pause className="size-6 fill-current" /> : <Play className="ml-0 size-6 fill-current" />}
           </ChromeButton>
-          <div className="chrome-surface flex rounded-full p-1" role="group" aria-label="Cosa ascolti">
+          <div className="chrome-surface flex rounded-full p-2" role="group" aria-label="Cosa ascolti">
             {(["a", "b"] as const).map((side) => (
               <button
                 key={side}
@@ -281,8 +280,8 @@ export function CompareView({ a, b, catalog }: { a: BeatSummary; b: BeatSummary;
                 aria-pressed={active === side}
                 data-testid={`compare-switch-${side}`}
                 className={cn(
-                  "h-11 min-w-14 rounded-full px-5 font-display text-lg font-black transition-colors",
-                  active === side ? "bg-graphite text-white shadow-[0_0_18px_rgba(0,102,255,0.45)]" : "text-graphite-700",
+                  "h-11 min-w-14 rounded-full px-6 font-display text-lg font-semibold transition-colors",
+                  active === side ? "bg-graphite text-white" : "text-graphite-700",
                 )}
               >
                 {side.toUpperCase()}
@@ -295,7 +294,7 @@ export function CompareView({ a, b, catalog }: { a: BeatSummary; b: BeatSummary;
           <ChromeButton size="icon" onClick={() => player.seek(0)} aria-label="Da capo">
             <RotateCcw className="size-4" />
           </ChromeButton>
-          <p className="ml-auto font-mono text-sm tabular-nums text-chrome-300" data-testid="compare-time">
+          <p className="ml-auto text-sm tabular-nums text-chrome-300" data-testid="compare-time">
             {formatTime(player.position)} / {formatTime(player.duration)}
           </p>
         </div>
@@ -308,7 +307,7 @@ export function CompareView({ a, b, catalog }: { a: BeatSummary; b: BeatSummary;
           onChange={(e) => player.seek(Number(e.target.value))}
           aria-label="Posizione"
           aria-valuetext={formatTime(player.position)}
-          className="h-2 w-full cursor-pointer accent-[#00f0ff]"
+          className="h-2 w-full cursor-pointer accent-[#8e8e95]"
         />
         <p className="text-sm text-chrome-300">
           Stai ascoltando <b className="text-white">{(active === "a" ? a : b).title}</b>. Passa da A a B (anche coi tasti A e B): il punto resta lo
@@ -319,7 +318,7 @@ export function CompareView({ a, b, catalog }: { a: BeatSummary; b: BeatSummary;
 
       {suggestions.length > 0 && (
         <section aria-labelledby="cmp-sugg" className="order-3 space-y-2">
-          <h2 id="cmp-sugg" className="font-display text-lg font-bold">
+          <h2 id="cmp-sugg" className="font-display text-lg font-semibold">
             Altri B con BPM vicino a {a.title}
           </h2>
           <ul className="flex flex-wrap gap-2">
@@ -335,7 +334,7 @@ export function CompareView({ a, b, catalog }: { a: BeatSummary; b: BeatSummary;
                   )}
                 >
                   {x.title} · {x.bpm}
-                  {keysCompatible(a, x) && <GlowBadge tone="ok" className="px-1.5 py-0.5 text-[9px]">key</GlowBadge>}
+                  {keysCompatible(a, x) && <GlowBadge tone="ok" className="px-2 py-0 text-[9px]">key</GlowBadge>}
                 </button>
               </li>
             ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, Loader2, Lock, Mail, Sparkles } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, UserRound } from "lucide-react";
 import { useActionState, useState, type ComponentProps } from "react";
 import { cn } from "@/lib/cn";
 import { loginAction, signupAction, type AuthFormState } from "@/app/(store)/beats/accedi/actions";
@@ -8,11 +8,11 @@ import { ChromeButton } from "../ui/chrome-button";
 
 function Field({ icon, className, ...props }: ComponentProps<"input"> & { icon: React.ReactNode }) {
   return (
-    <label className={cn("glass flex h-13 items-center gap-3 rounded-2xl px-4 focus-within:ring-2 focus-within:ring-electric/50", className)}>
+    <label className={cn("glass flex h-13 items-center gap-4 rounded-2xl px-4 focus-within:ring-2 focus-within:ring-electric/50", className)}>
       <span className="text-chrome-400" aria-hidden>
         {icon}
       </span>
-      <input className="min-w-0 flex-1 bg-transparent py-3.5 text-[16px] outline-none placeholder:text-chrome-400" {...props} />
+      <input className="min-w-0 flex-1 bg-transparent py-4 text-[16px] outline-none placeholder:text-chrome-400" {...props} />
     </label>
   );
 }
@@ -20,7 +20,7 @@ function Field({ icon, className, ...props }: ComponentProps<"input"> & { icon: 
 function PasswordField({ id, label, autoComplete, onValue }: { id: string; label: string; autoComplete: string; onValue?: (v: string) => void }) {
   const [visible, setVisible] = useState(false);
   return (
-    <label className="glass flex items-center gap-3 rounded-2xl px-4 focus-within:ring-2 focus-within:ring-electric/50">
+    <label className="glass flex items-center gap-4 rounded-2xl px-4 focus-within:ring-2 focus-within:ring-electric/50">
       <Lock className="size-4 text-chrome-400" aria-hidden />
       <span className="sr-only">{label}</span>
       <input
@@ -31,7 +31,7 @@ function PasswordField({ id, label, autoComplete, onValue }: { id: string; label
         autoComplete={autoComplete}
         placeholder={label}
         onChange={(e) => onValue?.(e.target.value)}
-        className="min-w-0 flex-1 bg-transparent py-3.5 text-[16px] outline-none placeholder:text-chrome-400"
+        className="min-w-0 flex-1 bg-transparent py-4 text-[16px] outline-none placeholder:text-chrome-400"
       />
       <button
         type="button"
@@ -58,7 +58,7 @@ const STRENGTH = ["Troppo corta", "Debole", "Discreta", "Buona", "Ottima"];
 
 function ErrorLine({ state }: { state: AuthFormState }) {
   return (
-    <p role="alert" aria-live="polite" className={cn("min-h-5 text-sm font-medium text-deal", !state.error && "invisible")}>
+    <p role="alert" aria-live="polite" className={cn("min-h-5 text-sm font-normal text-deal", !state.error && "invisible")}>
       {state.error ?? "—"}
     </p>
   );
@@ -73,8 +73,8 @@ export function AuthForms({ initialMode = "login", invite }: { initialMode?: "lo
   const score = strength(pw);
 
   return (
-    <div className="space-y-5">
-      <div role="tablist" aria-label="Accesso" className="grid grid-cols-2 rounded-2xl bg-chrome-200/70 p-1">
+    <div className="space-y-6">
+      <div role="tablist" aria-label="Accesso" className="grid grid-cols-2 rounded-2xl bg-chrome-200/70 p-2">
         {(["login", "signup"] as const).map((m) => (
           <button
             key={m}
@@ -93,7 +93,7 @@ export function AuthForms({ initialMode = "login", invite }: { initialMode?: "lo
       </div>
 
       {mode === "login" ? (
-        <form action={login} className="space-y-3">
+        <form action={login} className="space-y-4">
           <Field
             icon={<Mail className="size-4" />}
             name="email"
@@ -110,22 +110,22 @@ export function AuthForms({ initialMode = "login", invite }: { initialMode?: "lo
           </ChromeButton>
         </form>
       ) : (
-        <form action={signup} className="space-y-3">
+        <form action={signup} className="space-y-4">
           {invite && (
             <>
               <input type="hidden" name="invite" value={invite} />
-              <p className="rounded-2xl bg-electric/10 px-4 py-3 text-sm font-semibold text-electric">
+              <p className="rounded-2xl bg-electric/10 px-4 py-4 text-sm font-semibold text-electric">
                 Sei stato invitato: con il primo abbonamento ricevi 5 crediti in regalo.
               </p>
             </>
           )}
           {/* Anteprima del nome come apparirà nella home */}
-          <div className="obsidian rounded-3xl px-5 py-6 text-center">
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-electric-cyan">Il tuo nome nel Beat Store</p>
-            <p className="chrome-text-light mt-2 truncate font-display text-5xl font-black tracking-tight">{artist.trim() || "Il tuo nome"}</p>
+          <div className="obsidian rounded-3xl px-6 py-6 text-center">
+            <p className="text-[11px] font-semibold text-electric-cyan">Il tuo nome nel Beat Store</p>
+            <p className="chrome-text-light mt-2 truncate font-display text-5xl font-semibold tracking-tight">{artist.trim() || "Il tuo nome"}</p>
           </div>
           <Field
-            icon={<Sparkles className="size-4" />}
+            icon={<UserRound className="size-4" />}
             name="artistName"
             required
             minLength={2}
@@ -145,8 +145,8 @@ export function AuthForms({ initialMode = "login", invite }: { initialMode?: "lo
             defaultValue={signupState.fields?.email}
           />
           <PasswordField id="password" label="Password (min. 8, con un numero)" autoComplete="new-password" onValue={setPw} />
-          <div aria-live="polite" className="flex items-center gap-2 px-1">
-            <div className="grid flex-1 grid-cols-4 gap-1">
+          <div aria-live="polite" className="flex items-center gap-2 px-2">
+            <div className="grid flex-1 grid-cols-4 gap-2">
               {[1, 2, 3, 4].map((i) => (
                 <span key={i} className={cn("h-1.5 rounded-full transition", i <= score ? (score >= 3 ? "bg-ok" : "bg-electric") : "bg-chrome-300")} />
               ))}

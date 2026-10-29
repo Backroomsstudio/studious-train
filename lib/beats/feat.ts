@@ -116,7 +116,7 @@ export function parseFeatFilters(params: URLSearchParams): FeatFilters {
 }
 
 /** Colori degli avatar (gli stessi del prototipo): stabili per artista. */
-export const FEAT_AVATAR_COLORS = ["#bf5af2", "#ff9f0a", "#30d158", "#64d2ff", "#ff2d92", "#0a84ff"] as const;
+export const FEAT_AVATAR_COLORS = ["#66666d", "#c9c9ce", "#8e8e95", "#2e2e33", "#e0306c", "#121214"] as const;
 
 export function featAvatarColor(seed: string): string {
   let h = 0;

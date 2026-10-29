@@ -24,9 +24,9 @@ function SwitchRow({ title, text, checked, onToggle, note }: { title: string; te
       role="switch"
       aria-checked={checked}
       onClick={onToggle}
-      className="chrome-surface flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition hover:shadow-chrome-lg"
+      className="chrome-surface flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left transition hover:shadow-chrome-lg"
     >
-      <span className="grid min-w-0 flex-1 gap-0.5">
+      <span className="grid min-w-0 flex-1 gap-0">
         <span className="text-[15px] font-semibold text-graphite">{title}</span>
         <span className="text-[12.5px] leading-snug text-chrome-500">{text}</span>
         {note}
@@ -61,7 +61,7 @@ function InstallCard() {
   const steps =
     platform === "ios"
       ? [
-          <>Tocca <b className="inline-flex items-center gap-1">Condividi <Share className="inline size-3.5" aria-hidden /></b> nella barra di Safari</>,
+          <>Tocca <b className="inline-flex items-center gap-2">Condividi <Share className="inline size-3.5" aria-hidden /></b> nella barra di Safari</>,
           <>Scegli <b>Aggiungi alla schermata Home</b></>,
           <>Apri Backrooms Beats dalla Home</>,
         ]
@@ -72,18 +72,18 @@ function InstallCard() {
         ];
 
   return (
-    <section aria-labelledby="install-title" className="obsidian mt-5 rounded-3xl p-5">
+    <section aria-labelledby="install-title" className="obsidian mt-6 rounded-3xl p-6">
       <div className="flex items-center gap-4">
-        <span className="grid size-16 shrink-0 place-items-center rounded-[18px] bg-[linear-gradient(160deg,#2a2f38,#05070a_60%,#1c2028)] shadow-[0_14px_30px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.2)]">
-          <Image src="/brand/logo-br-120.webp" alt="" width={46} height={36} className="drop-shadow-[0_0_10px_rgba(0,140,255,0.6)]" />
+        <span className="grid size-16 shrink-0 place-items-center rounded-[18px] bg-white/10 ring-1 ring-white/16">
+          <Image src="/brand/logo-br-120.webp" alt="" width={46} height={36} className="" />
         </span>
         <div className="min-w-0">
-          <h3 id="install-title" className="font-display text-lg font-bold text-white">Installa l&apos;app</h3>
+          <h3 id="install-title" className="font-display text-lg font-semibold text-white">Installa l&apos;app</h3>
           <p className="text-[13px] leading-snug text-chrome-300">A tutto schermo, parte in un attimo e la ritrovi sulla Home accanto alle altre app.</p>
         </div>
       </div>
       {installed ? (
-        <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-ok/15 px-3 py-1.5 text-sm font-semibold text-[#4ade80]">
+        <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-ok/15 px-4 py-2 text-sm font-semibold text-[#8e8e95]">
           <Check className="size-4" /> Già installata su questo dispositivo
         </p>
       ) : (
@@ -91,8 +91,8 @@ function InstallCard() {
           {(showSteps || platform === "ios" || !event) && (
             <ol className="mt-4 grid gap-2 text-sm text-chrome-200">
               {steps.map((step, i) => (
-                <li key={i} className="flex items-start gap-2.5">
-                  <span className="grid size-5 shrink-0 place-items-center rounded-full bg-electric/25 text-[11px] font-bold text-electric-cyan">{i + 1}</span>
+                <li key={i} className="flex items-start gap-2">
+                  <span className="grid size-5 shrink-0 place-items-center rounded-full bg-electric/25 text-[11px] font-semibold text-electric-cyan">{i + 1}</span>
                   <span>{step}</span>
                 </li>
               ))}
@@ -181,7 +181,7 @@ export function SettingsButton({ className }: { className?: string }) {
         aria-haspopup="dialog"
         title="Impostazioni"
         className={cn(
-          "chrome-surface grid size-11 shrink-0 place-items-center rounded-full text-graphite-700 transition hover:text-graphite hover:shadow-glow-sm",
+          "chrome-surface grid size-11 shrink-0 place-items-center rounded-full text-graphite-700 transition hover:text-graphite",
           className,
         )}
       >
@@ -203,13 +203,13 @@ export function SettingsCard() {
         type="button"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
-        className="glass flex w-full items-center gap-4 rounded-[24px] p-4 text-left transition hover:shadow-glow-sm active:scale-[0.99]"
+        className="glass flex w-full items-center gap-4 rounded-[24px] p-4 text-left transition active:scale-[0.99]"
       >
         <span className="chrome-surface grid size-12 shrink-0 place-items-center rounded-2xl text-electric">
           <Settings2 className="size-5" aria-hidden />
         </span>
         <span className="min-w-0">
-          <span className="block font-display font-bold">Impostazioni dell&apos;app</span>
+          <span className="block font-display font-semibold">Impostazioni dell&apos;app</span>
           <span className="block truncate text-sm text-chrome-500">{on ? `Attivi: ${on}` : "Suoni e vibrazione spenti"} · installa l&apos;app</span>
         </span>
       </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowRight, Check, CircleCheck, Crown, Download, Loader2, Lock, Wand2, Zap } from "lucide-react";
+import { ArrowRight, Check, CircleCheck, Download, Loader2, Lock, SlidersHorizontal, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
@@ -72,7 +72,7 @@ export function UnlockDialog() {
       title={result ? "Licenza sbloccata" : "Sblocca con i crediti"}
       description={result ? "I file sono pronti: i link valgono 15 minuti, poi li ritrovi in Libreria." : undefined}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <BeatCover beat={beat} size="md" />
         <div className="min-w-0 flex-1">
           <p className="truncate font-display text-lg font-semibold">{beat.title}</p>
@@ -85,8 +85,8 @@ export function UnlockDialog() {
 
       <AnimatePresence mode="wait" initial={false}>
         {result ? (
-          <motion.div key="done" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-5">
-            <div className="flex items-center gap-3 rounded-2xl bg-ok/10 p-4 text-ok">
+          <motion.div key="done" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-6">
+            <div className="flex items-center gap-4 rounded-2xl bg-ok/10 p-4 text-ok">
               <motion.span initial={{ scale: 0.4, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 420, damping: 18 }}>
                 <CircleCheck className="size-7" />
               </motion.span>
@@ -101,9 +101,9 @@ export function UnlockDialog() {
                   <a
                     href={d.url}
                     download
-                    className="chrome-surface sheen flex h-14 items-center justify-between rounded-2xl px-4 text-sm font-semibold transition hover:shadow-glow-sm"
+                    className="chrome-surface flex h-14 items-center justify-between rounded-2xl px-4 text-sm font-semibold transition"
                   >
-                    <span className="flex items-center gap-3">
+                    <span className="flex items-center gap-4">
                       <Download className="size-4 text-electric" /> {ASSET_LABELS[d.asset]}
                     </span>
                     <ArrowRight className="size-4 text-chrome-400" />
@@ -115,16 +115,16 @@ export function UnlockDialog() {
             <Link
               href={`/beats/registra?servizio=HIT_PACKAGE&beat=${encodeURIComponent(beat.slug)}#servizi`}
               onClick={close}
-              className="obsidian sheen mt-4 flex items-center gap-3 rounded-2xl p-4 transition hover:shadow-glow-sm"
+              className="obsidian mt-4 flex items-center gap-4 rounded-2xl p-4 transition"
             >
-              <Crown className="size-5 shrink-0 text-electric-cyan" />
+              <Users className="size-5 shrink-0" />
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold text-white">Trasformalo in una hit</span>
+                <span className="block text-sm font-semibold text-white">Trasformalo in una hit</span>
                 <span className="block text-xs text-chrome-400">Registrazione, mix e master in studio da 199 €</span>
               </span>
               <ArrowRight className="size-4 text-chrome-400" />
             </Link>
-            <div className="mt-5 flex gap-2">
+            <div className="mt-6 flex gap-2">
               <ChromeLink href="/beats/profilo" variant="ghost" size="md" onClick={close}>
                 Vai alla Libreria
               </ChromeLink>
@@ -134,9 +134,9 @@ export function UnlockDialog() {
             </div>
           </motion.div>
         ) : (
-          <motion.div key="choose" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-5">
+          <motion.div key="choose" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-6">
             <fieldset>
-              <legend className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-chrome-500">Licenza</legend>
+              <legend className="mb-2 text-[11px] font-semibold text-chrome-500">Licenza</legend>
               <div className="grid gap-2">
                 {LICENSE_ORDER.map((type) => {
                   const def = LICENSES[type];
@@ -147,8 +147,8 @@ export function UnlockDialog() {
                     <label
                       key={type}
                       className={cn(
-                        "relative flex cursor-pointer items-center gap-3 rounded-2xl p-3.5 transition",
-                        selected === type ? "bg-white shadow-glow-sm ring-2 ring-electric" : "chrome-surface hover:shadow-chrome-lg",
+                        "relative flex cursor-pointer items-center gap-4 rounded-2xl p-4 transition",
+                        selected === type ? "bg-white ring-2 ring-electric" : "chrome-surface hover:shadow-chrome-lg",
                         noStems && "pointer-events-none opacity-50",
                       )}
                     >
@@ -172,7 +172,7 @@ export function UnlockDialog() {
                           {def.name}
                           {has && <GlowBadge tone="ok">Tua</GlowBadge>}
                           {lockedByPlan && !has && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-chrome-500">
+                            <span className="inline-flex items-center gap-2 text-[11px] font-semibold text-chrome-500">
                               <Lock className="size-3" /> {cheapestPlanFor(type).name}
                             </span>
                           )}
@@ -192,9 +192,9 @@ export function UnlockDialog() {
                 close();
                 openCustomize(beat);
               }}
-              className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-dashed border-electric/40 bg-electric-50/60 p-3 text-left transition hover:border-electric hover:shadow-glow-sm"
+              className="mt-4 flex w-full items-center gap-4 rounded-2xl border border-dashed border-electric/40 bg-electric-50/60 p-4 text-left transition hover:border-electric"
             >
-              <Wand2 className="size-5 text-electric" />
+              <SlidersHorizontal className="size-5 text-electric" />
               <span className="flex-1">
                 <span className="block text-sm font-semibold">Personalizza questo beat</span>
                 <span className="block text-xs text-chrome-500">Tonalità, BPM, struttura o suoni su misura per te</span>
@@ -204,34 +204,34 @@ export function UnlockDialog() {
 
             <div className="obsidian mt-4 grid grid-cols-3 items-center rounded-2xl p-4 text-center">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.14em] text-chrome-400">Saldo</p>
-                <p className="mt-1 font-display text-xl font-bold tabular-nums">{balance}</p>
+                <p className="text-[11px] text-chrome-400">Saldo</p>
+                <p className="mt-2 font-display text-xl font-semibold tabular-nums">{balance}</p>
               </div>
               <div className="text-electric-cyan">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-chrome-400">Costo</p>
-                <p className="mt-1 font-display text-xl font-bold tabular-nums">{isOwned ? 0 : `−${cost}`}</p>
+                <p className="text-[11px] text-chrome-400">Costo</p>
+                <p className="mt-2 font-display text-xl font-semibold tabular-nums">{isOwned ? 0 : `−${cost}`}</p>
               </div>
               <div>
-                <p className="text-[11px] uppercase tracking-[0.14em] text-chrome-400">Dopo</p>
-                <p className={cn("mt-1 font-display text-xl font-bold tabular-nums", insufficient && "text-deal")}>
+                <p className="text-[11px] text-chrome-400">Dopo</p>
+                <p className={cn("mt-2 font-display text-xl font-semibold tabular-nums", insufficient && "text-deal")}>
                   {isOwned ? balance : balance - cost}
                 </p>
               </div>
             </div>
 
-            {needsStems && <p className="mt-3 text-xs text-chrome-500">Include gli stems separati: ideali per il mix in studio.</p>}
+            {needsStems && <p className="mt-4 text-xs text-chrome-500">Include gli stems separati: ideali per il mix in studio.</p>}
             {error && error.code !== "INSUFFICIENT_CREDITS" && error.code !== "PLAN_REQUIRED" && (
-              <p role="alert" className="mt-3 rounded-xl bg-deal/10 p-3 text-sm text-deal">
+              <p role="alert" className="mt-4 rounded-xl bg-deal/10 p-4 text-sm text-deal">
                 {error.message}
                 {error.code === "UNAUTHENTICATED" && (
-                  <Link href="/beats/accedi" className="ml-1 font-semibold underline" onClick={close}>
+                  <Link href="/beats/accedi" className="ml-2 font-semibold underline" onClick={close}>
                     Accedi
                   </Link>
                 )}
               </p>
             )}
 
-            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row">
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row">
               <ChromeButton variant="ghost" onClick={() => toggle(beat)}>
                 Riascolta
               </ChromeButton>
@@ -256,8 +256,7 @@ export function UnlockDialog() {
                       <Download className="size-4" /> Scarica di nuovo
                     </>
                   ) : (
-                    <>
-                      <Zap className="size-4 fill-current" /> Sblocca con {pluralCredits(cost)}
+                    <> Sblocca con {pluralCredits(cost)}
                     </>
                   )}
                 </ChromeButton>

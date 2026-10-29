@@ -27,9 +27,9 @@ export default async function MasterPage({ searchParams }: { searchParams: Promi
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Anteprima del master</p>
-        <h1 className="chrome-text mt-1 font-display text-[clamp(2.4rem,7vw,4rem)] font-black leading-none tracking-tight">Prima e dopo</h1>
-        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-chrome-500">
+        <p className="text-[11px] font-semibold text-electric">Anteprima del master</p>
+        <h1 className="chrome-text mt-2 font-display text-[clamp(2.4rem,7vw,4rem)] font-semibold leading-none tracking-tight">Prima e dopo</h1>
+        <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-chrome-500">
           Carica il tuo mix e senti come suonerebbe masterizzato: più forte, più compatto, più brillante. Il file resta sul tuo
           dispositivo, il master si fa qui nel browser.
         </p>
@@ -37,12 +37,12 @@ export default async function MasterPage({ searchParams }: { searchParams: Promi
 
       <MasterStudio beats={beats} autoDemo={sorgente === "demo"} />
 
-      <section className="glass flex flex-wrap items-center gap-4 rounded-[28px] p-5 sm:p-6" aria-labelledby="master-vero">
+      <section className="glass flex flex-wrap items-center gap-4 rounded-[28px] p-6 sm:p-6" aria-labelledby="master-vero">
         <span className="chrome-surface grid size-12 shrink-0 place-items-center rounded-2xl text-electric">
           <Headphones className="size-5" />
         </span>
         <div className="min-w-[200px] flex-1">
-          <h2 id="master-vero" className="font-display text-lg font-bold">
+          <h2 id="master-vero" className="font-display text-lg font-semibold">
             Il master vero, fatto a orecchio
           </h2>
           <p className="text-sm text-chrome-500">

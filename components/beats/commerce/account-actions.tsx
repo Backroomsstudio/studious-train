@@ -30,15 +30,15 @@ export function ReferralCard({ code }: { code: string }) {
   };
 
   return (
-    <section aria-labelledby="inviti" className="glass rounded-[28px] p-5 sm:p-6">
-      <h2 id="inviti" className="flex items-center gap-2 font-display text-xl font-bold">
+    <section aria-labelledby="inviti" className="glass rounded-[28px] p-6 sm:p-6">
+      <h2 id="inviti" className="flex items-center gap-2 font-display text-xl font-semibold">
         <Users className="size-5 text-electric" /> Invita un artista
       </h2>
-      <p className="mt-1 text-sm text-chrome-500">
+      <p className="mt-2 text-sm text-chrome-500">
         Quando si abbona, ricevete {REFERRAL.inviterCredits} crediti a testa nel portafoglio (non scadono).
       </p>
-      <div className="mt-3 flex gap-2">
-        <code className="chrome-surface flex h-12 min-w-0 flex-1 items-center truncate rounded-2xl px-4 font-mono text-sm" suppressHydrationWarning>
+      <div className="mt-4 flex gap-2">
+        <code className="chrome-surface flex h-12 min-w-0 flex-1 items-center truncate rounded-2xl px-4 text-sm" suppressHydrationWarning>
           {origin ? link.replace(/^https?:\/\//, "") : code}
         </code>
         <ChromeButton variant="obsidian" className="h-12" onClick={share} aria-label="Condividi il link d'invito">
@@ -74,7 +74,7 @@ export function PauseButton({ pausedUntil }: { pausedUntil: string | null }) {
         {pausedUntil ? "Riprendi ora" : "Metti in pausa 1 mese"}
       </ChromeButton>
       {error && (
-        <p role="alert" className="mt-1 text-center text-xs text-deal">
+        <p role="alert" className="mt-2 text-center text-xs text-deal">
           {error}
         </p>
       )}

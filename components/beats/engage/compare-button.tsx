@@ -17,7 +17,7 @@ export function CompareButton({
 }) {
   return (
     <ChromeLink href={compareHref(slug, other)} size={size} className={className} aria-label={`${label}: ascolta in A/B con un altro beat`}>
-      <span aria-hidden className="font-display text-[0.95em] font-black text-electric">
+      <span aria-hidden className="font-display text-[0.95em] font-semibold text-electric">
         A/B
       </span>
       {label}

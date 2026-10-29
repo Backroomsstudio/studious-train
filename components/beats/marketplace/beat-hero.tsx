@@ -1,6 +1,6 @@
 "use client";
 
-import { ListPlus, Pause, Play, Wand2, Zap } from "lucide-react";
+import { ListPlus, Pause, Play, SlidersHorizontal } from "lucide-react";
 import { formatTime } from "@/lib/beats/format";
 import { creditCost, LICENSE_ORDER } from "@/lib/beats/licenses";
 import type { BeatSummary } from "@/lib/beats/types";
@@ -38,11 +38,10 @@ export function BeatHero({ beat }: { beat: BeatSummary }) {
           {playing ? "Pausa" : "Ascolta"}
         </ChromeButton>
         <ChromeButton variant="electric" size="lg" onClick={() => open(beat)}>
-          <Zap className="size-4 fill-current" />
           {owned ? "Le tue licenze" : `Sblocca da ${creditCost(LICENSE_ORDER[0], beat.deal?.discountPct)} crediti`}
         </ChromeButton>
         <ChromeButton variant="chrome" size="lg" onClick={() => openCustomize(beat)}>
-          <Wand2 className="size-4" /> Personalizza
+          <SlidersHorizontal className="size-4" /> Personalizza
         </ChromeButton>
         <ChromeButton variant="chrome" size="icon-lg" onClick={() => enqueue(beat)} aria-label="Aggiungi alla coda">
           <ListPlus className="size-5" />

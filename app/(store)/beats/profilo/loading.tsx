@@ -4,7 +4,7 @@ import { Skeleton, SkeletonPage, SkeletonRows, SkeletonStage } from "@/component
 export default function Loading() {
   return (
     <SkeletonPage className="space-y-6">
-      <div className="grid gap-2.5">
+      <div className="grid gap-2">
         <Skeleton w={90} h={10} className="rounded-md" />
         <Skeleton w="min(380px, 78%)" h={52} className="rounded-xl" />
       </div>
@@ -17,7 +17,7 @@ export default function Loading() {
         <Skeleton h={140} className="w-full rounded-[28px]" />
         <Skeleton h={140} className="w-full rounded-[28px]" />
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         <Skeleton w={170} h={22} className="rounded-lg" />
         <SkeletonRows count={4} />
       </div>

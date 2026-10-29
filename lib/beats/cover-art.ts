@@ -10,7 +10,6 @@
  *
  * Funzione pura senza dipendenze dal DOM: testabile con Node e usabile nei Server Component.
  */
-import { GENRE_COLORS } from "./genres";
 import { camelotNumber, type MusicalKey } from "./music";
 
 export interface CoverArtInput {
@@ -80,24 +79,22 @@ function fallbackPeaks(rand: () => number, n: number): number[] {
   });
 }
 
+const PINK = "#e0306c";
+
 export function coverArtSVG(beat: CoverArtInput, detail: CoverDetail = "full"): string {
   const seed = hashSeed(beat.id || beat.slug || beat.title);
   const rand = rng(seed);
-  const top = beat.genres?.[0];
-  const genre = safeColor(GENRE_COLORS[top?.parent ?? top?.slug ?? ""], "#8e8e93");
-  const prod = safeColor(beat.producers[0]?.accentColor, "#0066ff");
+  const prod = safeColor(beat.producers[0]?.accentColor, "#8e8e95");
   const bpm = Math.min(200, Math.max(60, beat.bpm ?? 120));
   const camelot = beat.key ? camelotNumber(beat.key) : 1 + Math.floor(rand() * 12);
   const minor = beat.key ? beat.key.mode === "MINOR" : rand() > 0.5;
 
-  // Luce: posizione dal seme, come gx/gy del prototipo.
-  const gx = Math.round(rand() * 80 + 10);
-  const gy = Math.round(rand() * 60 + 10);
-  // Terza tinta dal seme: due beat dello stesso produttore e genere non si somigliano troppo.
-  const tint = shiftHue(genre, (rand() - 0.5) * 120);
+  // Cromato nero → rosa: l'angolo e quanto rosa entra variano col seme, così le copertine non si somigliano.
+  const angle = Math.round(rand() * 360);
+  const pinkAt = (0.72 + rand() * 0.22).toFixed(2);
   const rot = ((camelot - 1) * 30 + (rand() - 0.5) * 24 - 90) * (Math.PI / 180);
 
-  // Raggi: 64-96 in base al BPM sulle copertine grandi, metà sulle miniature.
+  // Raggi: 64-96 in base al BPM sulle copertine grandi, meno sulle miniature.
   const full = detail === "full";
   const n = Math.round((full ? 64 : 36) + ((bpm - 60) / 140) * (full ? 32 : 12));
   const peaks = beat.peaks?.length ? beat.peaks : fallbackPeaks(rand, 140);
@@ -108,43 +105,37 @@ export function coverArtSVG(beat: CoverArtInput, detail: CoverDetail = "full"): 
     const r1 = 42;
     const r2 = 44 + v * (full ? 44 : 40);
     const c = Math.cos(a);
-    const s = Math.sin(a);
-    rays += `M${f1(100 + c * r1)} ${f1(100 + s * r1)}L${f1(100 + c * r2)} ${f1(100 + s * r2)}`;
+    const sn = Math.sin(a);
+    rays += `M${f1(100 + c * r1)} ${f1(100 + sn * r1)}L${f1(100 + c * r2)} ${f1(100 + sn * r2)}`;
   }
 
   // Anelli interni: 1 a 70 BPM, fino a 4 sopra i 150.
   const ringCount = Math.min(4, Math.max(1, Math.round((bpm - 55) / 30)));
   let rings = "";
   for (let i = 0; i < ringCount; i++) {
-    rings += `<circle cx='100' cy='100' r='${f1(14 + (i * 22) / ringCount)}' fill='none' stroke='${genre}' stroke-opacity='${f1(0.18 + i * 0.08)}' stroke-width='${full ? 1 : 1.6}'/>`;
+    rings += `<circle cx='100' cy='100' r='${f1(14 + (i * 22) / ringCount)}' fill='none' stroke='#fff' stroke-opacity='${f1(0.12 + i * 0.06)}' stroke-width='${full ? 1 : 1.6}'/>`;
   }
 
-  // Ruota Camelot: 12 punti, quello della tonalità acceso.
+  // Ruota Camelot: 12 punti, quello della tonalità in rosa.
   const wheelR = minor ? 88 : 94;
   let wheel = "";
   if (full) {
     for (let i = 0; i < 12; i++) {
       const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
       const on = i === camelot - 1;
-      wheel += `<circle cx='${f1(100 + Math.cos(a) * wheelR)}' cy='${f1(100 + Math.sin(a) * wheelR)}' r='${on ? 3.2 : 1.2}' fill='${on ? "#fff" : genre}' fill-opacity='${on ? 1 : 0.35}'${on ? " filter='url(#b)'" : ""}/>`;
+      wheel += `<circle cx='${f1(100 + Math.cos(a) * wheelR)}' cy='${f1(100 + Math.sin(a) * wheelR)}' r='${on ? 3 : 1.2}' fill='${on ? PINK : "#fff"}' fill-opacity='${on ? 1 : 0.3}'/>`;
     }
   }
 
   const defs =
-    `<radialGradient id='g' cx='${gx}%' cy='${gy}%' r='80%'><stop offset='0' stop-color='${prod}' stop-opacity='.9'/><stop offset='.5' stop-color='${genre}' stop-opacity='.38'/><stop offset='1' stop-color='#05070a' stop-opacity='0'/></radialGradient>` +
-    `<radialGradient id='h' cx='${100 - gx}%' cy='${100 - gy}%' r='62%'><stop offset='0' stop-color='${tint}' stop-opacity='.5'/><stop offset='1' stop-color='${tint}' stop-opacity='0'/></radialGradient>` +
-    `<linearGradient id='s' gradientUnits='userSpaceOnUse' x1='20' y1='20' x2='180' y2='180'><stop offset='0' stop-color='#fff'/><stop offset='.45' stop-color='${tint}'/><stop offset='.7' stop-color='${genre}'/><stop offset='1' stop-color='${prod}'/></linearGradient>` +
-    (full
-      ? `<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/></filter><filter id='b' x='-2' y='-2' width='5' height='5'><feGaussianBlur stdDeviation='1.6'/><feMerge><feMergeNode/><feMergeNode in='SourceGraphic'/></feMerge></filter>`
-      : "");
+    `<linearGradient id='g' gradientTransform='rotate(${angle} .5 .5)'><stop offset='0' stop-color='#0c0c0e'/><stop offset='.38' stop-color='${prod === "#121214" ? "#26262b" : prod}' stop-opacity='.55'/><stop offset='.6' stop-color='#0c0c0e'/><stop offset='${pinkAt}' stop-color='#3b1526'/><stop offset='1' stop-color='${PINK}'/></linearGradient>`;
 
   return (
     `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><defs>${defs}</defs>` +
-    `<rect width='200' height='200' fill='#07090d'/><rect width='200' height='200' fill='url(#g)'/><rect width='200' height='200' fill='url(#h)'/>` +
-    `<circle cx='100' cy='100' r='94' fill='none' stroke='#fff' stroke-opacity='.07'/>${wheel}` +
-    `<circle cx='100' cy='100' r='38' fill='#05070a' fill-opacity='.55' stroke='${genre}' stroke-opacity='.6'/>${rings}` +
-    `<path d='${rays}' fill='none' stroke='url(#s)' stroke-width='${full ? 2.2 : 3.2}' stroke-linecap='round'/>` +
-    (full ? `<rect width='200' height='200' filter='url(#n)' opacity='.15'/>` : "") +
+    `<rect width='200' height='200' fill='url(#g)'/>` +
+    `<circle cx='100' cy='100' r='94' fill='none' stroke='#fff' stroke-opacity='.08'/>${wheel}` +
+    `<circle cx='100' cy='100' r='38' fill='#0c0c0e' fill-opacity='.6' stroke='#fff' stroke-opacity='.18'/>${rings}` +
+    `<path d='${rays}' fill='none' stroke='#fff' stroke-opacity='.82' stroke-width='${full ? 2 : 3}' stroke-linecap='round'/>` +
     `</svg>`
   );
 }

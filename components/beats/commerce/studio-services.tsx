@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, Check, Clock, Crown, Disc3, MessagesSquare, Radio, Rocket, SlidersVertical } from "lucide-react";
+import { CalendarClock, Check, Clock, Disc3, Layers, MessagesSquare, Radio, Send, SlidersVertical } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 import { discounted, findTier, SERVICE_ORDER, SERVICES, type PaidWith, type ServiceKind } from "@/lib/beats/offers";
@@ -12,11 +12,11 @@ import { GlowBadge } from "../ui/glow-badge";
 import { PayChoice } from "./pay-choice";
 
 const ICONS: Record<ServiceKind, typeof Disc3> = {
-  HIT_PACKAGE: Crown,
+  HIT_PACKAGE: Layers,
   MIX_MASTER: SlidersVertical,
   FEEDBACK: MessagesSquare,
   LIVE_SLOT: Radio,
-  RELEASE: Rocket,
+  RELEASE: Send,
 };
 
 type BeatOption = Pick<BeatSummary, "id" | "slug" | "title">;
@@ -31,16 +31,16 @@ function TierPrice({ kind, tierId, discountPct }: Selection & { discountPct: num
   const tier = findTier(kind, tierId)!;
   const pct = SERVICES[kind].levelDiscount ? discountPct : 0;
   return (
-    <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+    <p className="flex flex-wrap items-baseline gap-x-2 gap-y-2">
       {tier.priceCents !== null && (
-        <span className="font-display text-2xl font-black tracking-tight">
+        <span className="font-display text-2xl font-semibold tracking-tight">
           {formatEuro(discounted(tier.priceCents, pct))}
-          {pct > 0 && <s className="ml-1.5 text-sm font-semibold text-chrome-400">{formatEuro(tier.priceCents)}</s>}
+          {pct > 0 && <s className="ml-2 text-sm font-semibold text-chrome-400">{formatEuro(tier.priceCents)}</s>}
         </span>
       )}
       {tier.credits !== null && (
-        <span className="font-mono text-sm font-bold text-electric">
-          {tier.priceCents !== null ? "o " : ""}⚡ {tier.credits}
+        <span className="text-sm font-semibold text-electric">
+          {tier.priceCents !== null ? "o " : ""}{tier.credits} crediti
         </span>
       )}
     </p>
@@ -69,53 +69,53 @@ export function StudioServices({
 
   return (
     <>
-      <div className="space-y-10">
+      <div className="space-y-12">
         {SERVICE_ORDER.map((kind) => {
           const service = SERVICES[kind];
           const Icon = ICONS[kind];
           const hero = kind === "HIT_PACKAGE";
           return (
             <section key={kind} id={`servizio-${kind}`} aria-labelledby={`t-${kind}`} className="scroll-mt-24 space-y-4">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-4">
                 <span className={cn("grid size-11 shrink-0 place-items-center rounded-2xl", hero ? "obsidian text-electric-cyan" : "chrome-surface text-electric")}>
                   <Icon className="size-5" />
                 </span>
                 <div className="min-w-0">
-                  <h2 id={`t-${kind}`} className="font-display text-2xl font-bold tracking-tight">
+                  <h2 id={`t-${kind}`} className="font-display text-2xl font-semibold tracking-tight">
                     {service.name}
                     {hero && <GlowBadge tone="holo" className="ml-2 align-middle">Il più completo</GlowBadge>}
                   </h2>
                   <p className="text-[15px] text-chrome-500">{service.tagline}</p>
                 </div>
               </div>
-              <div className={cn("grid gap-3", service.tiers.length === 3 ? "md:grid-cols-3" : "md:grid-cols-2")}>
+              <div className={cn("grid gap-4", service.tiers.length === 3 ? "md:grid-cols-3" : "md:grid-cols-2")}>
                 {service.tiers.map((tier, i) => {
                   const featured = hero && i === 1;
                   return (
                     <article
                       key={tier.id}
-                      className={cn("flex flex-col rounded-[24px] p-5", featured ? "obsidian ring-1 ring-electric/50 shadow-glow" : "glass")}
+                      className={cn("flex flex-col rounded-[24px] p-6", featured ? "obsidian ring-1 ring-electric/50" : "glass")}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-display text-lg font-bold">{tier.name}</h3>
+                        <h3 className="font-display text-lg font-semibold">{tier.name}</h3>
                         {tier.days !== null ? (
-                          <span className={cn("inline-flex items-center gap-1 text-xs font-semibold", featured ? "text-chrome-300" : "text-chrome-500")}>
+                          <span className={cn("inline-flex items-center gap-2 text-xs font-semibold", featured ? "text-chrome-300" : "text-chrome-500")}>
                             <Clock className="size-3.5" /> {tier.days} gg
                           </span>
                         ) : (
-                          <span className={cn("inline-flex items-center gap-1 text-xs font-semibold", featured ? "text-chrome-300" : "text-chrome-500")}>
+                          <span className={cn("inline-flex items-center gap-2 text-xs font-semibold", featured ? "text-chrome-300" : "text-chrome-500")}>
                             <CalendarClock className="size-3.5" /> su prenotazione
                           </span>
                         )}
                       </div>
-                      <p className={cn("mt-1 text-sm", featured ? "text-chrome-300" : "text-chrome-500")}>{tier.detail}</p>
-                      <div className="mt-3">
+                      <p className={cn("mt-2 text-sm", featured ? "text-chrome-300" : "text-chrome-500")}>{tier.detail}</p>
+                      <div className="mt-4">
                         <TierPrice kind={kind} tierId={tier.id} discountPct={discountPct} />
                       </div>
-                      <ul className="mt-4 flex-1 space-y-1.5 text-sm">
+                      <ul className="mt-4 flex-1 space-y-2 text-sm">
                         {tier.includes.map((inc) => (
                           <li key={inc} className="flex gap-2">
-                            <Check className={cn("mt-0.5 size-4 shrink-0", featured ? "text-electric-cyan" : "text-electric")} /> {inc}
+                            <Check className={cn("mt-0 size-4 shrink-0", featured ? "text-electric-cyan" : "text-electric")} /> {inc}
                           </li>
                         ))}
                       </ul>
@@ -123,8 +123,8 @@ export function StudioServices({
                         type="button"
                         onClick={() => setSelection({ kind, tierId: tier.id })}
                         className={cn(
-                          "sheen mt-5 h-12 rounded-full text-sm font-bold transition active:scale-[0.97]",
-                          featured ? "bg-electric text-white shadow-glow-sm" : "chrome-surface text-graphite hover:shadow-glow-sm",
+                          " mt-6 h-12 rounded-full text-sm font-semibold transition active:scale-[0.97]",
+                          featured ? "bg-electric text-white" : "chrome-surface text-graphite",
                         )}
                       >
                         Prenota {tier.name}
@@ -208,14 +208,14 @@ function ServiceDialog({
           <p className="mx-auto grid size-14 place-items-center rounded-full bg-ok/10 text-ok">
             <Check className="size-7" />
           </p>
-          <p className="font-display text-lg font-bold">{done}</p>
+          <p className="font-display text-lg font-semibold">{done}</p>
           <p className="text-sm text-chrome-500">Trovi l&apos;ordine nella tua Libreria.</p>
         </div>
       ) : (
         <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
           {service.needsBeat && (
             <label className="block">
-              <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.16em] text-chrome-500">
+              <span className="mb-2 block text-[11px] font-semibold text-chrome-500">
                 {selection.kind === "RELEASE" ? "Il pezzo da far uscire (beat con licenza)" : "Il beat da trasformare in hit"}
               </span>
               <select
@@ -231,13 +231,13 @@ function ServiceDialog({
                 ))}
               </select>
               {selection.kind === "RELEASE" && !beats.length && (
-                <span className="mt-1 block text-xs text-chrome-500">Prima sblocca una licenza sul beat che vuoi pubblicare.</span>
+                <span className="mt-2 block text-xs text-chrome-500">Prima sblocca una licenza sul beat che vuoi pubblicare.</span>
               )}
             </label>
           )}
           {service.needsSchedule && (
             <label className="block">
-              <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.16em] text-chrome-500">
+              <span className="mb-2 block text-[11px] font-semibold text-chrome-500">
                 {selection.kind === "LIVE_SLOT" ? "Serata della live" : "Data preferita"}
               </span>
               <input
@@ -250,7 +250,7 @@ function ServiceDialog({
             </label>
           )}
           <label className="block">
-            <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.16em] text-chrome-500">Raccontaci il progetto</span>
+            <span className="mb-2 block text-[11px] font-semibold text-chrome-500">Raccontaci il progetto</span>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -263,11 +263,11 @@ function ServiceDialog({
                     ? "Titolo del pezzo e link (SoundCloud, Drive…)"
                     : "Che pezzo vuoi fare, riferimenti, scadenze…"
               }
-              className="glass w-full rounded-2xl px-4 py-3 text-[15px] outline-none focus:ring-2 focus:ring-electric/40"
+              className="glass w-full rounded-2xl px-4 py-4 text-[15px] outline-none focus:ring-2 focus:ring-electric/40"
             />
           </label>
           {pct > 0 && (
-            <p className="rounded-2xl bg-electric/10 px-4 py-2.5 text-sm font-semibold text-electric">
+            <p className="rounded-2xl bg-electric/10 px-4 py-2 text-sm font-semibold text-electric">
               Sconto Resident {viewer?.level.name}: -{pct}% sul prezzo in euro
             </p>
           )}

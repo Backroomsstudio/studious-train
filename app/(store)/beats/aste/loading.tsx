@@ -5,7 +5,7 @@ export default function Loading() {
   return (
     <SkeletonPage className="space-y-8">
       <SkeletonHeading lines={2} />
-      <div className="space-y-3">
+      <div className="space-y-4">
         <Skeleton w={110} h={22} className="rounded-lg" />
         <SkeletonStage minHeight={150}>
           <div className="flex items-center gap-4">
@@ -18,7 +18,7 @@ export default function Loading() {
           </div>
         </SkeletonStage>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         <Skeleton w={110} h={22} className="rounded-lg" />
         {[0, 1].map((i) => (
           <div key={i} aria-hidden className="glass flex items-center gap-4 rounded-[26px] p-4">

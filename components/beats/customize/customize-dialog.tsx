@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Check, CircleCheck, Clock, Loader2, Wand2, Zap } from "lucide-react";
+import { Check, CircleCheck, Clock, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
@@ -77,7 +77,7 @@ export function CustomizeDialog() {
           : `Il produttore rifà ${beat.title} su misura per te. Include una WAV Lease della versione personalizzata.`
       }
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <BeatCover beat={beat} size="md" />
         <div className="min-w-0 flex-1">
           <p className="truncate font-display text-lg font-semibold">{beat.title}</p>
@@ -88,8 +88,8 @@ export function CustomizeDialog() {
       </div>
 
       {done ? (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-5 space-y-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-ok/10 p-4 text-ok">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 space-y-4">
+          <div className="flex items-center gap-4 rounded-2xl bg-ok/10 p-4 text-ok">
             <CircleCheck className="size-7" />
             <div className="text-sm">
               <p className="font-semibold">{pluralCredits(done.creditsSpent)} scalati</p>
@@ -106,9 +106,9 @@ export function CustomizeDialog() {
           </div>
         </motion.div>
       ) : (
-        <div className="mt-5 space-y-4">
+        <div className="mt-6 space-y-4">
           <fieldset>
-            <legend className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-chrome-500">Cosa vuoi cambiare</legend>
+            <legend className="mb-2 text-[11px] font-semibold text-chrome-500">Cosa vuoi cambiare</legend>
             <div className="grid gap-2 sm:grid-cols-2">
               {CUSTOMIZATION_OPTIONS.map((o) => {
                 const on = options.includes(o.id);
@@ -119,18 +119,18 @@ export function CustomizeDialog() {
                     aria-pressed={on}
                     onClick={() => toggle(o.id)}
                     className={cn(
-                      "flex items-start gap-3 rounded-2xl p-3 text-left transition",
-                      on ? "bg-white shadow-glow-sm ring-2 ring-electric" : "chrome-surface",
+                      "flex items-start gap-4 rounded-2xl p-4 text-left transition",
+                      on ? "bg-white ring-2 ring-electric" : "chrome-surface",
                     )}
                   >
-                    <span className={cn("mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border-2", on ? "border-electric bg-electric text-white" : "border-chrome-300")}>
+                    <span className={cn("mt-0 grid size-5 shrink-0 place-items-center rounded-md border-2", on ? "border-electric bg-electric text-white" : "border-chrome-300")}>
                       {on && <Check className="size-3" strokeWidth={3} />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-semibold">{o.name}</span>
                       <span className="block text-xs text-chrome-500">{o.detail}</span>
                     </span>
-                    <span className="font-mono text-xs font-bold text-electric">+{o.credits}</span>
+                    <span className="text-xs font-semibold text-electric">+{o.credits}</span>
                   </button>
                 );
               })}
@@ -138,21 +138,21 @@ export function CustomizeDialog() {
           </fieldset>
 
           <label className="block">
-            <span className="mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-chrome-500">Spiegaci cosa ti serve</span>
+            <span className="mb-2 block text-[11px] font-semibold text-chrome-500">Spiegaci cosa ti serve</span>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               maxLength={CUSTOMIZATION_NOTES_MAX}
               rows={3}
               placeholder="Es. abbassalo a Sol minore, ritornello di 16 battute, 808 più corto sulle strofe."
-              className="glass w-full resize-none rounded-2xl p-3 text-[15px] outline-none focus:ring-2 focus:ring-electric/50"
+              className="glass w-full resize-none rounded-2xl p-4 text-[15px] outline-none focus:ring-2 focus:ring-electric/50"
             />
-            <span className="mt-1 block text-right text-[11px] text-chrome-400">
+            <span className="mt-2 block text-right text-[11px] text-chrome-400">
               {notes.length}/{CUSTOMIZATION_NOTES_MAX}
             </span>
           </label>
 
-          <label className="glass flex h-12 items-center gap-3 rounded-2xl px-4">
+          <label className="glass flex h-12 items-center gap-4 rounded-2xl px-4">
             <span className="sr-only">Link di riferimento</span>
             <input
               value={reference}
@@ -168,30 +168,30 @@ export function CustomizeDialog() {
             type="button"
             aria-pressed={express}
             onClick={() => setExpress((e) => !e)}
-            className={cn("flex w-full items-center gap-3 rounded-2xl p-3 text-left transition", express ? "bg-white ring-2 ring-electric" : "chrome-surface")}
+            className={cn("flex w-full items-center gap-4 rounded-2xl p-4 text-left transition", express ? "bg-white ring-2 ring-electric" : "chrome-surface")}
           >
-            <Zap className={cn("size-5", express ? "fill-electric text-electric" : "text-chrome-400")} />
+            <Clock className={cn("size-5", express ? "text-electric" : "text-chrome-400")} />
             <span className="flex-1">
               <span className="block text-sm font-semibold">Consegna express</span>
               <span className="block text-xs text-chrome-500">
                 {CUSTOMIZATION_EXPRESS_DAYS} giorni lavorativi invece di {CUSTOMIZATION_DAYS}
               </span>
             </span>
-            <span className="font-mono text-xs font-bold text-electric">+{CUSTOMIZATION_EXPRESS_CREDITS}</span>
+            <span className="text-xs font-semibold text-electric">+{CUSTOMIZATION_EXPRESS_CREDITS}</span>
           </button>
 
           <div className="obsidian grid grid-cols-3 items-center rounded-2xl p-4 text-center">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.14em] text-chrome-400">Costo</p>
-              <p className="mt-1 font-display text-xl font-bold tabular-nums text-electric-cyan">{cost}</p>
+              <p className="text-[11px] text-chrome-400">Costo</p>
+              <p className="mt-2 font-display text-xl font-semibold tabular-nums text-electric-cyan">{cost}</p>
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.14em] text-chrome-400">Dopo</p>
-              <p className={cn("mt-1 font-display text-xl font-bold tabular-nums", short && "text-deal")}>{balance - cost}</p>
+              <p className="text-[11px] text-chrome-400">Dopo</p>
+              <p className={cn("mt-2 font-display text-xl font-semibold tabular-nums", short && "text-deal")}>{balance - cost}</p>
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.14em] text-chrome-400">Consegna</p>
-              <p className="mt-1 flex items-center justify-center gap-1 text-sm font-semibold">
+              <p className="text-[11px] text-chrome-400">Consegna</p>
+              <p className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold">
                 <Clock className="size-3.5" /> {formatDay(due.toISOString())}
               </p>
             </div>
@@ -201,7 +201,7 @@ export function CustomizeDialog() {
           </p>
 
           {error && error.code !== "INSUFFICIENT_CREDITS" && (
-            <p role="alert" className="rounded-xl bg-deal/10 p-3 text-sm text-deal">
+            <p role="alert" className="rounded-xl bg-deal/10 p-4 text-sm text-deal">
               {error.message}
             </p>
           )}
@@ -226,7 +226,7 @@ export function CustomizeDialog() {
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 <>
-                  <Wand2 className="size-4" /> Richiedi con {pluralCredits(cost)}
+                  Richiedi con {pluralCredits(cost)}
                 </>
               )}
             </ChromeButton>

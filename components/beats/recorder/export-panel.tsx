@@ -23,8 +23,8 @@ export function ExportPanel() {
 
   return (
     <>
-      <section aria-labelledby="exp-title" className="glass grid gap-3 rounded-[28px] p-4 sm:p-6">
-        <h2 id="exp-title" className="font-display text-2xl font-bold tracking-tight">
+      <section aria-labelledby="exp-title" className="glass grid gap-4 rounded-[28px] p-4 sm:p-6">
+        <h2 id="exp-title" className="font-display text-2xl font-semibold tracking-tight">
           La tua demo
         </h2>
         <ChromeButton variant="electric" size="lg" className="w-full" onClick={() => void exportZip()} disabled={disabled} data-testid="export-zip">
@@ -54,12 +54,12 @@ export function ExportPanel() {
 
       <Link
         href={`/beats/registra?servizio=MIX_MASTER&beat=${encodeURIComponent(beat.slug)}#servizi`}
-        className="obsidian group flex items-center gap-4 rounded-[28px] p-5 transition hover:shadow-glow-sm"
+        className="obsidian group flex items-center gap-4 rounded-[28px] p-6 transition"
       >
         <span className="min-w-0 flex-1">
-          <span className="block text-[11px] font-bold uppercase tracking-[0.28em] text-electric-cyan">Backrooms Studio</span>
-          <span className="mt-1 block font-display text-xl font-bold leading-tight">Ti piace? Mix &amp; master veri li facciamo noi</span>
-          <span className="mt-1 block text-sm text-chrome-400">Mandaci la demo: Astral, Freya e Plugghe la fanno suonare come un pezzo vero.</span>
+          <span className="block text-[11px] font-semibold text-electric-cyan">Backrooms Studio</span>
+          <span className="mt-2 block font-display text-xl font-semibold leading-tight">Ti piace? Mix &amp; master veri li facciamo noi</span>
+          <span className="mt-2 block text-sm text-chrome-400">Mandaci la demo: Astral, Freya e Plugghe la fanno suonare come un pezzo vero.</span>
         </span>
         <span className="grid size-11 shrink-0 place-items-center rounded-full bg-electric/20 text-electric-cyan transition group-hover:translate-x-0.5">
           <ArrowRight className="size-5" />

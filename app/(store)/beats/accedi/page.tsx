@@ -28,8 +28,8 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
   return (
     <div className="mx-auto max-w-md py-4">
       <div className="glass rounded-[32px] p-6 sm:p-8">
-        <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Backrooms · Beat Store</p>
-        <h1 className="chrome-text mt-2 font-display text-4xl font-black tracking-tight">Il tuo studio, il tuo nome</h1>
+        <p className="text-[11px] font-semibold text-electric">Backrooms · Beat Store</p>
+        <h1 className="chrome-text mt-2 font-display text-4xl font-semibold tracking-tight">Il tuo studio, il tuo nome</h1>
         <p className="mt-2 text-sm text-chrome-500">Entra con la tua password personale: crediti, licenze e progetti ti aspettano.</p>
 
         <div className="mt-6">
@@ -37,7 +37,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
             <div className="rounded-2xl bg-chrome-100 p-4 text-sm text-chrome-500">
               Modalità demo: sei già collegato come utente dimostrativo. Con il database configurato qui compaiono accesso e
               registrazione con password.
-              <ChromeLink href="/beats" variant="obsidian" className="mt-3 w-full">
+              <ChromeLink href="/beats" variant="obsidian" className="mt-4 w-full">
                 Torna al negozio
               </ChromeLink>
             </div>
@@ -47,8 +47,8 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         </div>
 
         {(google || magicLink) && (
-          <div className="mt-6 space-y-3 border-t border-chrome-200 pt-5">
-            <p className="text-center text-xs font-semibold uppercase tracking-[0.16em] text-chrome-400">oppure</p>
+          <div className="mt-6 space-y-4 border-t border-chrome-200 pt-6">
+            <p className="text-center text-xs font-semibold text-chrome-400">oppure</p>
             {google && (
               <form action={withGoogle}>
                 <ChromeButton type="submit" variant="chrome" size="lg" className="w-full normal-case tracking-normal">

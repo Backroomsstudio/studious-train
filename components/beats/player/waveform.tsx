@@ -103,8 +103,8 @@ export function Waveform({
             <rect x={0} y={0} width={bars * buffered} height={100} />
           </clipPath>
           <linearGradient id={`${clipId}-g`} x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0" stopColor="#0066ff" />
-            <stop offset="1" stopColor="#00c8ff" />
+            <stop offset="0" stopColor="#8e8e95" />
+            <stop offset="1" stopColor="#e0306c" />
           </linearGradient>
         </defs>
         {loop && (
@@ -113,8 +113,8 @@ export function Waveform({
             width={bars * Math.max(0, loop.end - loop.start)}
             y={0}
             height={100}
-            fill="rgba(0,102,255,0.1)"
-            stroke="rgba(0,102,255,0.5)"
+            fill="rgba(142, 142, 149,0.1)"
+            stroke="rgba(142, 142, 149,0.5)"
             strokeWidth={0.15}
           />
         )}
@@ -125,7 +125,6 @@ export function Waveform({
         <g
           fill={`url(#${clipId}-g)`}
           clipPath={`url(#${clipId}-p)`}
-          style={active ? { filter: "drop-shadow(0 0 1.5px rgba(0,102,255,0.9))" } : undefined}
         >
           {shape}
         </g>

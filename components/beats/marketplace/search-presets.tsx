@@ -13,7 +13,7 @@ const toggle = (list: string[], value: string) => (list.includes(value) ? list.f
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-chrome-500">{title}</p>
+      <p className="text-[11px] font-semibold text-chrome-500">{title}</p>
       {children}
     </div>
   );
@@ -39,9 +39,9 @@ export function SearchPresets({
     filters.together && filters.producers.length === 2 && pair.slugs.every((s) => filters.producers.includes(s));
 
   return (
-    <div className="glass space-y-5 rounded-3xl p-4 sm:p-5" aria-label="Filtri pronti">
+    <div className="glass space-y-6 rounded-3xl p-4 sm:p-6" aria-label="Filtri pronti">
       <Group title="Per producer">
-        <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap" role="group" aria-label="Produttori">
+        <div className="no-scrollbar -mx-2 flex gap-2 overflow-x-auto px-2 pb-2 sm:flex-wrap" role="group" aria-label="Produttori">
           {residents.map((p) => (
             <Chip
               key={p.slug}
@@ -49,9 +49,9 @@ export function SearchPresets({
               accent={p.accentColor}
               onClick={() => onChange({ producers: filters.together ? [p.slug] : toggle(filters.producers, p.slug), together: false })}
             >
-              <span className="size-2 rounded-full" style={{ background: p.accentColor ?? "#0066ff" }} aria-hidden />
+              <span className="size-2 rounded-full" style={{ background: p.accentColor ?? "#8e8e95" }} aria-hidden />
               {p.name}
-              <span className="text-[11px] font-medium opacity-60">{p.count}</span>
+              <span className="text-[11px] font-normal opacity-60">{p.count}</span>
             </Chip>
           ))}
         </div>
@@ -73,7 +73,7 @@ export function SearchPresets({
 
       {pairs.length > 0 && (
         <Group title="Collab tra producer">
-          <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap" role="group" aria-label="Coppie di produttori">
+          <div className="no-scrollbar -mx-2 flex gap-2 overflow-x-auto px-2 pb-2 sm:flex-wrap" role="group" aria-label="Coppie di produttori">
             {pairs.map((pair) => {
               const on = pairOn(pair);
               return (
@@ -82,13 +82,13 @@ export function SearchPresets({
                   active={on}
                   onClick={() => onChange(on ? { producers: [], together: false } : { producers: [...pair.slugs], together: true, collab: undefined })}
                 >
-                  <span className="flex -space-x-1" aria-hidden>
+                  <span className="flex -space-x-2" aria-hidden>
                     {pair.colors.map((c, i) => (
                       <span key={i} className="size-2.5 rounded-full ring-2 ring-white" style={{ background: c }} />
                     ))}
                   </span>
                   {pair.names[0]} × {pair.names[1]}
-                  <span className="text-[11px] font-medium opacity-60">{pair.count}</span>
+                  <span className="text-[11px] font-normal opacity-60">{pair.count}</span>
                 </Chip>
               );
             })}

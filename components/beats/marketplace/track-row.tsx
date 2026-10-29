@@ -6,7 +6,6 @@ import { memo } from "react";
 import { cn } from "@/lib/cn";
 import { isNewRelease } from "@/lib/beats/drops";
 import { formatTime } from "@/lib/beats/format";
-import { beatColor } from "@/lib/beats/genres";
 import { creditCost, LICENSE_ORDER } from "@/lib/beats/licenses";
 import { camelotCode, keyName } from "@/lib/beats/music";
 import type { BeatSummary } from "@/lib/beats/types";
@@ -19,7 +18,7 @@ import { CreditCost, GlowBadge, ProducerTag } from "../ui/glow-badge";
 /** Equalizzatore animato per la riga in riproduzione. */
 function NowPlayingBars() {
   return (
-    <span aria-hidden className="flex h-3.5 items-end gap-[2px]">
+    <span aria-hidden className="flex h-3.5 items-end gap-0">
       {[0, 0.2, 0.4].map((d) => (
         <span key={d} className="w-[3px] origin-bottom animate-eq rounded-full bg-electric" style={{ height: "100%", animationDelay: `${d}s` }} />
       ))}
@@ -52,9 +51,9 @@ export const TrackRow = memo(function TrackRow({ beat, queue }: { beat: BeatSumm
   return (
     <li
       className={cn(
-        "group relative grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-2 rounded-2xl px-2.5 py-2.5 transition-all duration-200 sm:gap-x-4 sm:px-3",
+        "group relative grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-2 rounded-2xl px-2 py-2 transition-all duration-200 sm:gap-x-4 sm:px-4",
         "lg:grid-cols-[3.5rem_minmax(0,1.3fr)_minmax(0,1.6fr)_4.5rem_5.5rem_3.5rem_7.5rem]",
-        isCurrent ? "glass ring-1 ring-electric/30 shadow-glow-sm" : "hover:bg-white/60 hover:shadow-chrome",
+        isCurrent ? "glass ring-1 ring-electric/30" : "hover:bg-white/60 hover:shadow-chrome",
       )}
     >
       <button
@@ -85,12 +84,12 @@ export const TrackRow = memo(function TrackRow({ beat, queue }: { beat: BeatSumm
           </Link>
           {beat.deal && <GlowBadge tone="deal">-{beat.deal.discountPct}%</GlowBadge>}
           {isNewRelease(beat.releasedAt) && !beat.deal && (
-            <GlowBadge tone="electric" className="bg-electric text-white">
+            <GlowBadge tone="electric">
               Nuovo
             </GlowBadge>
           )}
         </div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+        <div className="mt-0 flex flex-wrap items-center gap-x-4 gap-y-0">
           {main.map((p) => (
             <ProducerTag key={p.slug} name={p.name} color={p.accentColor} />
           ))}
@@ -99,9 +98,9 @@ export const TrackRow = memo(function TrackRow({ beat, queue }: { beat: BeatSumm
           ))}
         </div>
         {/* Meta su mobile: sotto il titolo */}
-        <p className="mt-1 truncate text-xs text-chrome-500 lg:hidden">
-          <span className="font-semibold" style={{ color: beatColor(beat) }}>
-            ● {beat.genres.map((g) => g.name).join(", ")}
+        <p className="mt-2 truncate text-xs text-chrome-500 lg:hidden">
+          <span className="font-semibold text-graphite-700">
+            {beat.genres.map((g) => g.name).join(", ")}
           </span>{" "}
           · {beat.bpm} BPM · {keyName(beat.key)} ({camelotCode(beat.key)})
         </p>
@@ -120,12 +119,12 @@ export const TrackRow = memo(function TrackRow({ beat, queue }: { beat: BeatSumm
           valueText={isCurrent ? formatTime(progress * duration) : undefined}
           onSeek={isCurrent && duration ? (r) => seek(r * duration) : undefined}
         />
-        <div className="mt-1 flex gap-1.5 overflow-hidden">
-          <span className="shrink-0 text-[11px] font-bold" style={{ color: beatColor(beat) }}>
-            ● {beat.genres.map((g) => g.name).join(" · ")}
+        <div className="mt-2 flex gap-2 overflow-hidden">
+          <span className="shrink-0 text-xs font-semibold text-graphite-700">
+            {beat.genres.map((g) => g.name).join(" · ")}
           </span>
           {beat.typeTags.slice(0, 2).map((t) => (
-            <span key={t.slug} className="truncate text-[11px] font-medium text-chrome-500">
+            <span key={t.slug} className="truncate text-[11px] font-normal text-chrome-500">
               #{t.name.replace(/\s+/g, "")}Type
             </span>
           ))}
@@ -137,11 +136,11 @@ export const TrackRow = memo(function TrackRow({ beat, queue }: { beat: BeatSumm
       </div>
       <div className="hidden text-sm lg:block">
         <span className="font-semibold text-graphite-700">{keyName(beat.key)}</span>
-        <span className="ml-1 rounded-md bg-chrome-200 px-1 py-0.5 font-mono text-[10px] font-bold text-chrome-500">{camelotCode(beat.key)}</span>
+        <span className="ml-2 rounded-md bg-chrome-200 px-2 py-0 text-[10px] font-semibold text-chrome-500">{camelotCode(beat.key)}</span>
       </div>
       <div className="hidden text-sm tabular-nums text-chrome-500 lg:block">{formatTime(beat.durationSec)}</div>
 
-      <div className="flex items-center gap-1.5 justify-self-end">
+      <div className="flex items-center gap-2 justify-self-end">
         <button
           type="button"
           onClick={() => enqueue(beat)}
@@ -154,7 +153,7 @@ export const TrackRow = memo(function TrackRow({ beat, queue }: { beat: BeatSumm
           <button
             type="button"
             onClick={() => openUnlock(beat)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-ok/10 px-3 text-xs font-bold text-ok ring-1 ring-inset ring-ok/30"
+            className="inline-flex h-9 items-center gap-2 rounded-full bg-ok/10 px-4 text-xs font-semibold text-ok ring-1 ring-inset ring-ok/30"
           >
             <Check className="size-3.5" /> Tua
           </button>
@@ -165,7 +164,7 @@ export const TrackRow = memo(function TrackRow({ beat, queue }: { beat: BeatSumm
             aria-label={`Sblocca ${beat.title} da ${minCost} crediti`}
             className="rounded-full transition active:scale-95"
           >
-            <CreditCost cost={minCost} original={beat.deal ? baseCost : undefined} className="h-9 px-3 text-xs hover:shadow-glow" />
+            <CreditCost cost={minCost} original={beat.deal ? baseCost : undefined} className="h-9 px-4 text-xs" />
           </button>
         )}
       </div>
@@ -175,7 +174,7 @@ export const TrackRow = memo(function TrackRow({ beat, queue }: { beat: BeatSumm
 
 export function TrackList({ beats, className }: { beats: BeatSummary[]; className?: string }) {
   return (
-    <ul className={cn("flex flex-col gap-1", className)} aria-label="Beat">
+    <ul className={cn("flex flex-col gap-2", className)} aria-label="Beat">
       {beats.map((beat) => (
         <TrackRow key={beat.id} beat={beat} queue={beats} />
       ))}

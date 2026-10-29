@@ -27,7 +27,7 @@ export function GlassPanel({
       className={cn(
         "rounded-3xl transition-shadow duration-300",
         MATERIALS[material],
-        glow && "ring-1 ring-electric/40 shadow-glow",
+        glow && "ring-1 ring-electric/40",
         className,
       )}
       {...props}

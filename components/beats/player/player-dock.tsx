@@ -3,7 +3,7 @@
 import * as Popover from "@radix-ui/react-popover";
 import { AnimatePresence, motion } from "motion/react";
 import { usePathname } from "next/navigation";
-import { Gauge, ListMusic, Loader2, Mic, Pause, Play, Repeat, SkipBack, SkipForward, Volume2, VolumeX, X, Zap } from "lucide-react";
+import { Gauge, ListMusic, Loader2, Mic, Pause, Play, Repeat, SkipBack, SkipForward, Volume2, VolumeX, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, type ComponentProps, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
@@ -32,7 +32,7 @@ function DockButton({
       title={label}
       className={cn(
         "grid size-10 shrink-0 place-items-center rounded-full transition",
-        active ? "bg-electric/10 text-electric shadow-glow-sm" : "text-graphite-700 hover:bg-white/80 hover:text-graphite",
+        active ? "bg-electric/10 text-electric" : "text-graphite-700 hover:bg-white/80 hover:text-graphite",
         className,
       )}
     >
@@ -62,7 +62,7 @@ function SpeedPanel() {
   const setRate = usePlayer((s) => s.setRate);
   const bpm = usePlayer((s) => s.current?.bpm ?? 0);
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-baseline justify-between">
         <p className="text-sm font-semibold">Velocità</p>
         <p className="text-sm tabular-nums text-chrome-500">
@@ -70,9 +70,9 @@ function SpeedPanel() {
         </p>
       </div>
       <RangeSlider value={[rate]} min={0.8} max={1.2} step={0.01} onValueChange={([r]) => setRate(r)} label="Velocità di riproduzione" />
-      <label className="flex items-center justify-between gap-3 text-[13px] text-graphite-700">
+      <label className="flex items-center justify-between gap-4 text-[13px] text-graphite-700">
         Mantieni la tonalità
-        <input type="checkbox" checked={keepPitch} onChange={(e) => setRate(rate, e.target.checked)} className="size-4 accent-[#0066ff]" />
+        <input type="checkbox" checked={keepPitch} onChange={(e) => setRate(rate, e.target.checked)} className="size-4 accent-[#8e8e95]" />
       </label>
       <p className="text-xs text-chrome-500">Senza tonalità fissa la velocità alza o abbassa anche il pitch, come un giradischi.</p>
       <button type="button" onClick={() => setRate(1)} className="text-[13px] font-semibold text-electric hover:underline">
@@ -90,9 +90,9 @@ function QueuePanel() {
   return (
     <div>
       <p className="mb-2 text-sm font-semibold">In coda · {queue.length}</p>
-      <ol className="max-h-72 space-y-1 overflow-y-auto">
+      <ol className="max-h-72 space-y-2 overflow-y-auto">
         {queue.map((b) => (
-          <li key={b.id} className={cn("flex items-center gap-2 rounded-xl p-1.5", b.id === current?.id && "bg-electric/10")}>
+          <li key={b.id} className={cn("flex items-center gap-2 rounded-xl p-2", b.id === current?.id && "bg-electric/10")}>
             <button type="button" onClick={() => play(b, queue)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
               <BeatCover beat={b} size="sm" />
               <span className="min-w-0">
@@ -101,7 +101,7 @@ function QueuePanel() {
               </span>
             </button>
             {b.id !== current?.id && (
-              <button type="button" onClick={() => remove(b.id)} aria-label={`Togli ${b.title} dalla coda`} className="p-1 text-chrome-400 hover:text-graphite">
+              <button type="button" onClick={() => remove(b.id)} aria-label={`Togli ${b.title} dalla coda`} className="p-2 text-chrome-400 hover:text-graphite">
                 <X className="size-4" />
               </button>
             )}
@@ -121,10 +121,10 @@ function VocalPanel() {
   const setVocal = usePlayer((s) => s.setVocal);
   if (!vocal) return null;
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <p className="truncate text-sm font-semibold">{vocal.name}</p>
-        <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} aria-label="Voce attiva" className="size-4 accent-[#0066ff]" />
+        <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} aria-label="Voce attiva" className="size-4 accent-[#8e8e95]" />
       </div>
       <Waveform peaks={vocal.peaks} progress={0} height={28} compact label="Forma d'onda della voce" />
       <RangeSlider value={[volume]} min={0} max={1} step={0.01} onValueChange={([v]) => setVolume(v)} label="Volume voce" />
@@ -186,8 +186,8 @@ export function PlayerDock() {
           role="region"
           aria-label="Player"
         >
-          <div className={cn("beat-dock glass mx-auto max-w-6xl rounded-[26px] bg-white/80 px-3 py-2.5 lg:px-5 lg:py-3", playing && "ring-1 ring-electric/25")}>
-            <div className="flex items-center gap-3">
+          <div className={cn("beat-dock glass mx-auto max-w-6xl rounded-[26px] bg-white/80 px-4 py-2 lg:px-6 lg:py-4", playing && "ring-1 ring-electric/25")}>
+            <div className="flex items-center gap-4">
               <Link href={`/beats/${current.slug}`} className="shrink-0" aria-label={`Apri ${current.title}`}>
                 <BeatCover beat={current} size="sm" playing={playing} />
               </Link>
@@ -199,7 +199,7 @@ export function PlayerDock() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-0.5">
+              <div className="flex items-center gap-0">
                 <DockButton label="Precedente" onClick={previous} className="hidden sm:grid">
                   <SkipBack className="size-4 fill-current" />
                 </DockButton>
@@ -207,7 +207,7 @@ export function PlayerDock() {
                   type="button"
                   onClick={() => toggle()}
                   aria-label={playing ? "Pausa" : "Riproduci"}
-                  className="beat-btn grid size-11 place-items-center rounded-full bg-graphite text-white shadow-glow-sm transition active:scale-95"
+                  className="beat-btn grid size-11 place-items-center rounded-full bg-graphite text-white transition active:scale-95"
                 >
                   {waiting ? (
                     <Loader2 className="size-5 animate-spin" />
@@ -222,7 +222,7 @@ export function PlayerDock() {
                 </DockButton>
               </div>
 
-              <div className="hidden min-w-0 flex-1 items-center gap-3 lg:flex">
+              <div className="hidden min-w-0 flex-1 items-center gap-4 lg:flex">
                 <span className="w-10 text-right text-xs tabular-nums text-chrome-500">{formatTime(position)}</span>
                 <Waveform
                   peaks={current.peaks}
@@ -238,7 +238,7 @@ export function PlayerDock() {
                 <span className="w-10 text-xs tabular-nums text-chrome-500">{formatTime(duration)}</span>
               </div>
 
-              <div className="hidden items-center gap-0.5 sm:flex">
+              <div className="hidden items-center gap-0 sm:flex">
                 <DockButton label={loop ? "Disattiva loop" : "Loop di 4 battute"} active={Boolean(loop)} onClick={() => (loop ? clearLoop() : loopBars(4))}>
                   <Repeat className="size-4" />
                 </DockButton>
@@ -274,7 +274,7 @@ export function PlayerDock() {
                 >
                   <QueuePanel />
                 </PopoverPanel>
-                <div className="hidden items-center gap-1 xl:flex">
+                <div className="hidden items-center gap-2 xl:flex">
                   <DockButton label={muted ? "Riattiva audio" : "Muto"} onClick={toggleMute}>
                     {muted || volume === 0 ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
                   </DockButton>
@@ -287,9 +287,8 @@ export function PlayerDock() {
               <button
                 type="button"
                 onClick={() => openUnlock(current)}
-                className="hidden h-10 items-center gap-1.5 rounded-full bg-electric px-4 text-[13px] font-bold text-white shadow-glow-sm transition hover:shadow-glow md:inline-flex"
-              >
-                <Zap className="size-3.5 fill-current" /> Sblocca
+                className="hidden h-10 items-center gap-2 rounded-full bg-electric px-4 text-[13px] font-semibold text-white transition md:inline-flex"
+              > Sblocca
               </button>
             </div>
 

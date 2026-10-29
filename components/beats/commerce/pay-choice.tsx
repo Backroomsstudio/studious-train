@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, Loader2, Zap } from "lucide-react";
+import { CreditCard, Loader2 } from "lucide-react";
 import { formatEuro } from "@/lib/beats/plans";
 import type { PaidWith } from "@/lib/beats/offers";
 import { ChromeButton } from "../ui/chrome-button";
@@ -42,8 +42,7 @@ export function PayChoice({
           {pending === "CREDITS" ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
-            <>
-              <Zap className="size-4 fill-current" /> {label} con {credits} crediti
+            <> {label} con {credits} crediti
             </>
           )}
         </ChromeButton>
@@ -62,7 +61,7 @@ export function PayChoice({
             <>
               <CreditCard className="size-4" /> {label} {formatEuro(priceCents)}
               {originalCents !== undefined && originalCents !== priceCents && (
-                <s className="text-xs font-medium opacity-60">{formatEuro(originalCents)}</s>
+                <s className="text-xs font-normal opacity-60">{formatEuro(originalCents)}</s>
               )}
             </>
           )}

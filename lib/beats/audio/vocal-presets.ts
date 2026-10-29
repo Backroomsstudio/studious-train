@@ -150,10 +150,10 @@ export function presetGenreOf(genres: ReadonlyArray<{ slug: string; parent?: str
   return "trap";
 }
 
-/** Colore della firma "by …": l'accento del produttore (due in gradiente per le collaborazioni). */
+/** Colore della firma "by …": il tono del produttore (nelle collaborazioni quello del primo). */
 export function signatureColor(by: string): string {
-  const colors = by.split("&").map((n) => DEMO_PRODUCERS.find((p) => p.name === n.trim())?.accentColor ?? "#0066ff");
-  return colors.length > 1 ? `linear-gradient(90deg, ${colors.join(", ")})` : colors[0];
+  const first = by.split("&")[0].trim();
+  return DEMO_PRODUCERS.find((p) => p.name === first)?.accentColor ?? "#8e8e95";
 }
 
 export const DELAY_TIMES: DelayTime[] = ["1/4", "1/8", "1/8d", "1/16"];

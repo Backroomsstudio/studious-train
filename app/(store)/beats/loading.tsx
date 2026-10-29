@@ -5,14 +5,14 @@ export default function Loading() {
   return (
     <SkeletonPage>
       <SkeletonStage minHeight={230} className="rounded-[32px]" />
-      <div aria-hidden className="grid grid-cols-2 gap-3 lg:grid-cols-5 lg:grid-rows-2">
+      <div aria-hidden className="grid grid-cols-2 gap-4 lg:grid-cols-5 lg:grid-rows-2">
         <Skeleton dark className="col-span-2 h-[9.5rem] rounded-[26px] lg:row-span-2 lg:h-auto" />
         {Array.from({ length: 5 }, (_, i) => (
           <Skeleton key={i} className={i === 4 ? "col-span-2 h-[9.5rem] rounded-[26px]" : "h-[9.5rem] rounded-[26px]"} />
         ))}
       </div>
       <SkeletonShelf />
-      <div className="space-y-3">
+      <div className="space-y-4">
         <Skeleton w={150} h={26} className="rounded-lg" />
         <SkeletonRows count={6} />
       </div>

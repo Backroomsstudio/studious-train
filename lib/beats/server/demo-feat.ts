@@ -33,17 +33,17 @@ interface DemoFeatUser {
 
 /** Autori finti degli annunci di esempio (solo demo). */
 const DEMO_BOTS: Record<string, DemoFeatUser> = {
-  "demo-bot-nebbia": { name: "Nebbia", color: "#bf5af2", months: 7 },
-  "demo-bot-tommy": { name: "Tommy K", color: "#ff9f0a", months: 2 },
-  "demo-bot-sara": { name: "Sara V", color: "#30d158", months: 4 },
-  "demo-bot-luce": { name: "Luce", color: "#64d2ff", months: 13 },
-  "demo-bot-dama": { name: "Dama", color: "#ff2d92", months: 1 },
-  "demo-bot-rocco": { name: "Rocco 808", color: "#0a84ff", months: 6 },
+  "demo-bot-nebbia": { name: "Nebbia", color: "#66666d", months: 7 },
+  "demo-bot-tommy": { name: "Tommy K", color: "#c9c9ce", months: 2 },
+  "demo-bot-sara": { name: "Sara V", color: "#8e8e95", months: 4 },
+  "demo-bot-luce": { name: "Luce", color: "#2e2e33", months: 13 },
+  "demo-bot-dama": { name: "Dama", color: "#e0306c", months: 1 },
+  "demo-bot-rocco": { name: "Rocco 808", color: "#121214", months: 6 },
 };
 
 /** SOLO DEMO: risposte automatiche degli autori finti (dal prototipo). */
 export const DEMO_BOT_REPLIES = [
-  "Spacca! Mandami la tua strofa e ci lavoro stasera 🔥",
+  "Spacca! Mandami la tua strofa e ci lavoro stasera.",
   "Ci sto. Ti va di registrarla insieme al Backrooms?",
   "Ascoltata: la tua voce ci sta benissimo. Facciamola!",
   "Bella vibe. Ti giro il mio ritornello entro domani.",
@@ -53,7 +53,7 @@ const isBot = (id: string) => id in DEMO_BOTS;
 
 function demoUser(id: string): DemoFeatUser {
   // Kael (l'utente dimostrativo) è Gold: 7 mesi da Resident, come in demo-backend.
-  if (id === DEMO_USER_ID) return { name: "Kael", color: "#0066ff", months: 7 };
+  if (id === DEMO_USER_ID) return { name: "Kael", color: "#8e8e95", months: 7 };
   return DEMO_BOTS[id] ?? { name: "Artista", color: featAvatarColor(id), months: 0 };
 }
 

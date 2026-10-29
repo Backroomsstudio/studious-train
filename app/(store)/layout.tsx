@@ -51,7 +51,7 @@ export default async function StoreLayout({ children }: Readonly<{ children: Rea
             Vai al contenuto
           </a>
           <StoreHeader demo={storeEnv.demoMode} />
-          <main id="contenuto" className="mx-auto max-w-6xl px-4 pt-5 lg:px-6 lg:pt-8">
+          <main id="contenuto" className="mx-auto max-w-6xl px-4 pt-6 lg:px-6 lg:pt-8">
             {children}
           </main>
           <PlayerDock />

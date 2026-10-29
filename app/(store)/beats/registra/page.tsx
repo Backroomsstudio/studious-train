@@ -51,10 +51,10 @@ export default async function RecordPage({ searchParams }: { searchParams: Promi
       artist={viewer?.artistName ?? viewer?.name ?? "Artista"}
       projectId={progetto && /^[\w-]{1,64}$/.test(progetto) ? progetto : undefined}
     />
-      <section id="servizi" aria-labelledby="servizi-title" className="scroll-mt-24 space-y-5">
+      <section id="servizi" aria-labelledby="servizi-title" className="scroll-mt-24 space-y-6">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Backrooms Studio · Arcugnano</p>
-          <h2 id="servizi-title" className="chrome-text mt-1 font-display text-[clamp(2rem,6vw,3.25rem)] font-black leading-none tracking-tight">
+          <p className="text-[11px] font-semibold text-electric">Backrooms Studio · Arcugnano</p>
+          <h2 id="servizi-title" className="chrome-text mt-2 font-display text-[clamp(2rem,6vw,3.25rem)] font-semibold leading-none tracking-tight">
             Dalla demo alla hit
           </h2>
           <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-chrome-500">

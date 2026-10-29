@@ -18,8 +18,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Uscite, producer e generi</p>
-        <h1 className="chrome-text mt-1 font-display text-4xl font-black tracking-tight">Cerca</h1>
+        <p className="text-[11px] font-semibold text-electric">Uscite, producer e generi</p>
+        <h1 className="chrome-text mt-2 font-display text-4xl font-semibold tracking-tight">Cerca</h1>
       </div>
       <Marketplace initialFilters={filters} initialResult={result} facets={facets} idle={<FeedSections />} pairs={producerPairs(catalog)} />
     </div>

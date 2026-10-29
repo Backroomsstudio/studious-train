@@ -5,12 +5,12 @@
 import type { BeatSummary, Facets } from "./types";
 
 export const GENRE_COLORS: Record<string, string> = {
-  trap: "#0a84ff",
-  drill: "#ff453a",
-  rnb: "#bf5af2",
-  pop: "#ff9f0a",
-  synthwave: "#64d2ff",
-  afro: "#30d158",
+  trap: "#121214",
+  drill: "#e0306c",
+  rnb: "#66666d",
+  pop: "#c9c9ce",
+  synthwave: "#2e2e33",
+  afro: "#8e8e95",
 };
 
 export const genreColor = (slug: string | null | undefined) => (slug && GENRE_COLORS[slug]) || "#8e8e93";

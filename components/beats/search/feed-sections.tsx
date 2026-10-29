@@ -28,16 +28,16 @@ export async function FeedSections() {
   }
 
   return (
-    <RevealList className="space-y-10">
+    <RevealList className="space-y-12">
       <NewArrivals beats={arrivals} daysToNextDrop={daysUntilNextDrop()} />
 
       {arrivals.length > 0 && (
-        <section aria-labelledby="feed-genres" className="space-y-5">
-          <h2 id="feed-genres" className="font-display text-xl font-bold">Il drop diviso per genere</h2>
+        <section aria-labelledby="feed-genres" className="space-y-6">
+          <h2 id="feed-genres" className="font-display text-xl font-semibold">Il drop diviso per genere</h2>
           {groupByGenre(arrivals, facets).map((g) => (
             <div key={g.slug} className="space-y-2">
-              <h3 className="flex items-center gap-2.5 font-display text-lg font-bold">
-                <span className="h-6 w-1.5 rounded-full" style={{ background: g.color, boxShadow: `0 0 10px ${g.color}` }} aria-hidden />
+              <h3 className="flex items-center gap-2 font-display text-lg font-semibold">
+                <span className="h-6 w-1.5 rounded-full" style={{ background: g.color }} aria-hidden />
                 {g.name} <span className="text-chrome-400">· {g.beats.length}</span>
               </h3>
               <TrackList beats={g.beats} />
@@ -47,13 +47,13 @@ export async function FeedSections() {
       )}
 
       <section aria-labelledby="feed-popular" className="space-y-2">
-        <h2 id="feed-popular" className="font-display text-xl font-bold">I più ascoltati</h2>
+        <h2 id="feed-popular" className="font-display text-xl font-semibold">I più ascoltati</h2>
         <TrackList beats={popular.items.slice(0, 6)} />
       </section>
 
       {[...weeks].map(([label, beats]) => (
         <section key={label} aria-label={label} className="space-y-2">
-          <h2 className="font-display text-xl font-bold">
+          <h2 className="font-display text-xl font-semibold">
             {label} <span className="text-chrome-400">· {beats.length}</span>
           </h2>
           <TrackList beats={beats} />

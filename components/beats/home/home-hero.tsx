@@ -1,10 +1,9 @@
 "use client";
 
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
-import { Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
-import { SPRING_FILL, SPRING_PRESS } from "@/lib/beats/motion";
+import { SPRING_FILL } from "@/lib/beats/motion";
 import { sfx } from "@/lib/beats/ui-feedback";
 import type { LevelInfo } from "@/lib/beats/types";
 
@@ -41,24 +40,24 @@ function LevelRing({ level }: { level: LevelInfo }) {
   return (
     <div className="relative grid size-[8.5rem] shrink-0 place-items-center sm:size-40">
       <svg viewBox="0 0 120 120" className="absolute inset-0 -rotate-90" aria-hidden>
-        <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="9" />
+        <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="8" />
         <motion.circle
           cx="60"
           cy="60"
           r={r}
           fill="none"
-          stroke={level.color}
-          strokeWidth="9"
+          stroke="#e0306c"
+          strokeWidth="8"
           strokeLinecap="round"
-          style={{ strokeDasharray: dash, filter: `drop-shadow(0 0 8px ${level.color})` }}
+          style={{ strokeDasharray: dash }}
         />
       </svg>
       <div className="relative text-center leading-none">
-        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/50">Livello</p>
-        <p className="mt-1 font-display text-[1.6rem] font-black sm:text-3xl" style={{ color: level.color, textShadow: `0 0 18px ${level.color}88` }}>
+        <p className="text-xs text-white/56">Livello</p>
+        <p className="mt-2 font-display text-2xl font-semibold text-white sm:text-3xl">
           {level.name}
         </p>
-        <p className="mt-1 text-[11px] font-semibold text-white/60">
+        <p className="mt-2 text-xs text-white/64">
           <SpringNumber value={level.months} /> {level.months === 1 ? "mese" : "mesi"}
         </p>
       </div>
@@ -66,10 +65,7 @@ function LevelRing({ level }: { level: LevelInfo }) {
   );
 }
 
-/**
- * La testata della Home: un corridoio dei Backrooms di notte. Neon fluorescente che si accende
- * (una volta sola), moquette calda sotto, il nome d'artista enorme e l'anello del livello.
- */
+/** La testata della Home: nome d'artista, piano, crediti, prossimo livello e l'anello del livello. */
 export function HomeHero({
   name,
   planName,
@@ -85,55 +81,41 @@ export function HomeHero({
 }) {
   const next = level.next;
   return (
-    <section aria-labelledby="home-title" className="home-hero relative isolate overflow-hidden rounded-[32px] text-white">
-      {/* Strati: carta da parati gialla dei Backrooms, buio, neon, grana */}
-      <div aria-hidden className="home-hero-wall absolute inset-0 -z-30" />
-      <div aria-hidden className="absolute inset-0 -z-20 bg-[radial-gradient(120%_80%_at_20%_0%,rgba(255,214,102,0.32),transparent_55%),linear-gradient(180deg,rgba(14,12,6,0.55),#07080b_78%)]" />
-      <div aria-hidden className="home-hero-neon absolute inset-x-8 top-0 -z-10 h-[3px] rounded-full sm:inset-x-16" />
-      <div aria-hidden className="home-hero-grain absolute inset-0 -z-10 opacity-[0.07] mix-blend-overlay" />
-
-      <div className="flex flex-col gap-6 p-5 pt-8 sm:flex-row sm:items-center sm:justify-between sm:p-8 sm:pt-10">
+    <section aria-labelledby="home-title" className="chrome-pink relative overflow-hidden rounded-[32px]">
+      <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
         <div className="min-w-0">
-          <motion.p
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={SPRING_PRESS}
-            className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#ffd866]"
-          >
-            {welcome ? "Benvenuto al Level 0" : "Bentornato al Level 0"}
-          </motion.p>
+          <p className="text-sm text-white/64">{welcome ? "Benvenuto" : "Bentornato"}</p>
           <motion.h1
             id="home-title"
-            initial={{ opacity: 0, y: 24, filter: "blur(8px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ type: "spring", stiffness: 220, damping: 22, delay: 0.05 }}
-            className="home-hero-name mt-1 truncate font-display text-[clamp(3.2rem,15vw,7rem)] font-black leading-[0.9] tracking-[-0.04em]"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 26 }}
+            className="mt-2 truncate font-display text-[clamp(2.75rem,12vw,5.5rem)] font-semibold leading-none tracking-tight text-white"
           >
             {name}
           </motion.h1>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
+          <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-4 text-white">
             {planName && (
-              <span className="rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] ring-1 ring-white/15 backdrop-blur">
-                {planName}
-              </span>
+              <div>
+                <dt className="text-xs text-white/56">Piano</dt>
+                <dd className="mt-2 text-base font-semibold">{planName}</dd>
+              </div>
             )}
-            <motion.span whileTap={{ scale: 0.94 }} transition={SPRING_PRESS} className="inline-flex">
-              <Link
-                href="/beats/piani"
-                onClick={() => sfx("coin")}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#ffd866] px-3.5 py-1.5 font-mono text-sm font-black text-[#1a1404] shadow-[0_0_24px_rgba(255,216,102,0.45)]"
-              >
-                <Zap className="size-4 fill-current" aria-hidden />
-                <SpringNumber value={credits} /> crediti
-              </Link>
-            </motion.span>
-          </div>
-          <p className="mt-3 max-w-md text-sm text-white/65">
-            {next
-              ? `Ti mancano ${next.monthsToNext} ${next.monthsToNext === 1 ? "mese" : "mesi"} per diventare Resident ${next.name}.`
-              : "Sei al livello massimo: grazie di essere con noi."}
-            {level.perks[0] ? ` Ora hai: ${level.perks.slice(0, 2).join(", ").toLowerCase()}.` : ""}
-          </p>
+            <div>
+              <dt className="text-xs text-white/56">Crediti</dt>
+              <dd className="mt-2 text-base font-semibold tabular-nums">
+                <Link href="/beats/piani" onClick={() => sfx("tap")} className="hover:underline">
+                  <SpringNumber value={credits} />
+                </Link>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-white/56">Prossimo livello</dt>
+              <dd className="mt-2 text-base font-semibold">
+                {next ? `${next.name} tra ${next.monthsToNext} ${next.monthsToNext === 1 ? "mese" : "mesi"}` : "Livello massimo"}
+              </dd>
+            </div>
+          </dl>
         </div>
         <LevelRing level={level} />
       </div>

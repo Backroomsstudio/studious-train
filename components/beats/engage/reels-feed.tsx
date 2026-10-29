@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Bookmark, Heart, Lock, Mic, Pause, Play, Share2, X, Zap } from "lucide-react";
+import { Bookmark, Heart, Lock, Mic, Pause, Play, Share2, X } from "lucide-react";
 import Link from "next/link";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { cn } from "@/lib/cn";
@@ -47,15 +47,15 @@ function RailButton({
         transition={SPRING_PRESS}
         className={cn(
           "grid size-12 place-items-center rounded-full bg-black/25 ring-1 ring-white/15 backdrop-blur-md transition-colors",
-          active && "bg-white/90 text-[#ff2d78] ring-white",
+          active && "bg-white/90 text-[#e0306c] ring-white",
         )}
       >
         {children}
       </motion.span>
-      <span className="text-[11px] font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">{label}</span>
+      <span className="text-[11px] font-semibold">{label}</span>
     </>
   );
-  const cls = "flex flex-col items-center gap-1 text-white";
+  const cls = "flex flex-col items-center gap-2 text-white";
   return href ? (
     <Link href={href} className={cls} aria-label={label} data-no-sfx onClick={() => sfx("tap")}>
       {inner}
@@ -75,7 +75,7 @@ function ReelWave({ beat, progress }: { beat: BeatSummary; progress: number }) {
     return Array.from({ length: n }, (_, i) => src[Math.floor((i / n) * src.length)] ?? 0.3);
   }, [beat.peaks]);
   return (
-    <div aria-hidden className="flex h-8 items-center gap-[3px]">
+    <div aria-hidden className="flex h-8 items-center gap-0">
       {bars.map((v, i) => (
         <span
           key={i}
@@ -178,7 +178,7 @@ const ReelSlide = memo(function ReelSlide({
               animate={{ opacity: [0, 1, 1, 0], scale: [0.2, 1.25, 1, 1.1], y: [0, -10, -16, -60], rotate: [-18, 6, 0, 0] }}
               transition={{ duration: 0.9, times: [0, 0.25, 0.55, 1] }}
               onAnimationComplete={() => setBurst(null)}
-              className="pointer-events-none absolute text-[#ff2d78] drop-shadow-[0_8px_24px_rgba(255,45,120,0.6)]"
+              className="pointer-events-none absolute text-[#e0306c]"
               style={{ left: burst.x - 48, top: burst.y - 48 }}
             >
               <Heart className="size-24 fill-current" />
@@ -205,7 +205,7 @@ const ReelSlide = memo(function ReelSlide({
           <Lock className="size-6" />
         </RailButton>
         <RailButton label="A/B" href={compareHref(beat.slug)}>
-          <span className="font-display text-sm font-black">A/B</span>
+          <span className="font-display text-sm font-semibold">A/B</span>
         </RailButton>
         <RailButton label="Condividi" onClick={() => onShare(beat)}>
           <Share2 className="size-6" />
@@ -213,17 +213,17 @@ const ReelSlide = memo(function ReelSlide({
       </div>
 
       {/* Info del beat in basso a sinistra */}
-      <div className="absolute inset-x-0 bottom-0 space-y-3 p-4 pb-5 pr-20 text-white">
-        <div className="flex flex-wrap items-center gap-1.5">
+      <div className="absolute inset-x-0 bottom-0 space-y-4 p-4 pb-6 pr-20 text-white">
+        <div className="flex flex-wrap items-center gap-2">
           {beat.producers.map((p) => (
-            <span key={p.slug} className="inline-flex items-center gap-1.5 rounded-full bg-black/30 px-2.5 py-1 text-xs font-bold backdrop-blur-md">
-              <span className="size-2 rounded-full" style={{ background: p.accentColor ?? "#0066ff", boxShadow: `0 0 8px ${p.accentColor ?? "#0066ff"}` }} />
+            <span key={p.slug} className="inline-flex items-center gap-2 rounded-full bg-black/30 px-2 py-2 text-xs font-semibold backdrop-blur-md">
+              <span className="size-2 rounded-full" style={{ background: p.accentColor ?? "#8e8e95" }} />
               {p.name}
             </span>
           ))}
-          {isNewRelease(beat.releasedAt) && <span className="rounded-full bg-[#ffd866] px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#1a1404]">Nuovo</span>}
+          {isNewRelease(beat.releasedAt) && <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-graphite">Nuovo</span>}
         </div>
-        <h2 className="font-display text-[clamp(2rem,9vw,2.8rem)] font-black leading-[0.95] tracking-tight drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]">
+        <h2 className="font-display text-[clamp(2rem,9vw,2.8rem)] font-semibold leading-[0.95] tracking-tight">
           {beat.title}
         </h2>
         <p className="text-sm font-semibold text-white/80">
@@ -386,9 +386,9 @@ export function ReelsFeed({ popular, latest, start }: { popular: BeatSummary[]; 
       </div>
 
       {/* In alto: Per te / Novità, e i salvati */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-3 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-4 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
         <span className="w-12" />
-        <div className="pointer-events-auto flex gap-1 rounded-full bg-black/25 p-1 backdrop-blur-md" role="tablist" aria-label="Ordine del feed">
+        <div className="pointer-events-auto flex gap-2 rounded-full bg-black/25 p-2 backdrop-blur-md" role="tablist" aria-label="Ordine del feed">
           {(
             [
               ["popular", "Per te"],
@@ -402,7 +402,7 @@ export function ReelsFeed({ popular, latest, start }: { popular: BeatSummary[]; 
               aria-selected={feed === f}
               data-no-sfx
               onClick={() => switchFeed(f)}
-              className={cn("relative rounded-full px-4 py-1.5 text-sm font-bold transition-colors", feed === f ? "text-black" : "text-white/80")}
+              className={cn("relative rounded-full px-4 py-2 text-sm font-semibold transition-colors", feed === f ? "text-black" : "text-white/80")}
             >
               {feed === f && <motion.span layoutId="reels-tab" transition={SPRING_MOVE} className="absolute inset-0 -z-10 rounded-full bg-white" />}
               {label}
@@ -419,7 +419,7 @@ export function ReelsFeed({ popular, latest, start }: { popular: BeatSummary[]; 
         >
           <Bookmark className="size-5" />
           {saved.length > 0 && (
-            <span data-testid="saved-count" className="absolute -right-0.5 -top-0.5 grid min-w-5 place-items-center rounded-full bg-[#ff2d78] px-1 text-[10px] font-black">
+            <span data-testid="saved-count" className="absolute -right-0.5 -top-0.5 grid min-w-5 place-items-center rounded-full bg-[#e0306c] px-2 text-[10px] font-semibold">
               {saved.length}
             </span>
           )}
@@ -434,7 +434,7 @@ export function ReelsFeed({ popular, latest, start }: { popular: BeatSummary[]; 
             exit={{ opacity: 0, y: 8 }}
             transition={SPRING_PRESS}
             role="status"
-            className="absolute left-1/2 top-20 -translate-x-1/2 rounded-full bg-white px-4 py-2 text-sm font-bold text-graphite shadow-xl"
+            className="absolute left-1/2 top-20 -translate-x-1/2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-graphite shadow-xl"
           >
             {toast}
           </motion.p>
@@ -466,9 +466,9 @@ export function ReelsFeed({ popular, latest, start }: { popular: BeatSummary[]; 
               aria-label="Beat salvati"
               className="absolute inset-x-0 bottom-0 z-20 max-h-[75%] overflow-y-auto rounded-t-[28px] bg-chrome-50 p-4 pb-6"
             >
-              <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-chrome-300" />
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-display text-xl font-black">
+              <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-chrome-300" />
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-display text-xl font-semibold">
                   Salvati <span className="text-chrome-400">· {saved.length}</span>
                 </h2>
                 <button type="button" onClick={() => setSavedOpen(false)} aria-label="Chiudi" className="chrome-surface grid size-9 place-items-center rounded-full">
@@ -483,8 +483,8 @@ export function ReelsFeed({ popular, latest, start }: { popular: BeatSummary[]; 
                 </p>
               )}
               {saved.length >= 2 && (
-                <Link href={compareHref(saved[0].slug, saved[1].slug)} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-electric">
-                  <Zap className="size-4" /> Confronta i primi due in A/B
+                <Link href={compareHref(saved[0].slug, saved[1].slug)} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-electric">
+                  Confronta i primi due in A/B
                 </Link>
               )}
             </motion.section>

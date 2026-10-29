@@ -60,7 +60,7 @@ export function ExperienceEffects() {
       const { pulse, lite } = usePrefs.getState();
       if (playing) root.dataset.beatPlaying = "";
       else delete root.dataset.beatPlaying;
-      root.style.setProperty("--beat-accent", current?.producers[0]?.accentColor ?? "#0066ff");
+      root.style.setProperty("--beat-accent", current?.producers[0]?.accentColor ?? "#8e8e95");
       if (playing && !wasPlaying) haptic("tap");
       wasPlaying = playing;
       const should = playing && pulse && !lite && !motion.matches && Boolean(current);

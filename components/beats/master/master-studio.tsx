@@ -216,8 +216,8 @@ export function MasterStudio({ beats, autoDemo = false }: { beats: MasterBeatOpt
           const bw = W / n;
           const after = sideRef.current === "after";
           const grd = g.createLinearGradient(0, H, 0, 0);
-          grd.addColorStop(0, after ? "#0066ff" : "#8c95a3");
-          grd.addColorStop(1, after ? "#00e5ff" : "#e5e7eb");
+          grd.addColorStop(0, after ? "#8e8e95" : "#8c95a3");
+          grd.addColorStop(1, after ? "#e0306c" : "#e5e7eb");
           g.fillStyle = grd;
           for (let i = 0; i < n; i++) {
             // Scala quasi logaritmica: più barre sui bassi, dove sta il grosso del master.
@@ -300,7 +300,7 @@ export function MasterStudio({ beats, autoDemo = false }: { beats: MasterBeatOpt
   const duration = source?.buffer.duration ?? 0;
 
   return (
-    <section className="obsidian mst-stage relative isolate grid gap-4 overflow-hidden rounded-[32px] p-5 sm:p-7" aria-label="Confronto prima e dopo">
+    <section className="obsidian mst-stage relative isolate grid gap-4 overflow-hidden rounded-[32px] p-6 sm:p-8" aria-label="Confronto prima e dopo">
       {busy && (
         <p className="flex items-center gap-2 text-sm font-semibold text-electric-cyan" role="status">
           <Loader2 className="size-4 animate-spin" /> {busy}
@@ -322,9 +322,9 @@ export function MasterStudio({ beats, autoDemo = false }: { beats: MasterBeatOpt
 
       {ready && (
         <div className={cn("grid gap-4 transition-opacity", busy && "pointer-events-none opacity-50")}>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="truncate font-display text-lg font-bold">{source.name}</p>
+              <p className="truncate font-display text-lg font-semibold">{source.name}</p>
               <p className="text-xs font-semibold text-chrome-400">
                 {formatTime(duration)} · preset {MASTER_PRESETS[preset].name}
               </p>
@@ -332,7 +332,7 @@ export function MasterStudio({ beats, autoDemo = false }: { beats: MasterBeatOpt
             <button
               type="button"
               onClick={reset}
-              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-3.5 text-[13px] font-semibold text-chrome-100 ring-1 ring-inset ring-white/15 transition hover:bg-white/15 hover:text-white"
+              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-white/10 px-4 text-[13px] font-semibold text-chrome-100 ring-1 ring-inset ring-white/15 transition hover:bg-white/15 hover:text-white"
             >
               <RotateCcw className="size-3.5" /> Cambia
             </button>
@@ -366,16 +366,16 @@ export function MasterStudio({ beats, autoDemo = false }: { beats: MasterBeatOpt
             valueText={`${formatTime(position)} di ${formatTime(duration)}`}
           />
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-4">
             <button
               type="button"
               onClick={togglePlay}
               aria-label={playing ? "Pausa" : "Ascolta"}
               className="grid size-14 place-items-center rounded-full bg-white text-graphite shadow-[0_0_30px_rgba(255,255,255,0.25)] transition active:scale-95"
             >
-              {playing ? <Pause className="size-5 fill-current" /> : <Play className="ml-0.5 size-5 fill-current" />}
+              {playing ? <Pause className="size-5 fill-current" /> : <Play className="ml-0 size-5 fill-current" />}
             </button>
-            <span className="font-mono text-sm tabular-nums text-chrome-300">
+            <span className="text-sm tabular-nums text-chrome-300">
               <span ref={timeRef}>{formatTime(position)}</span> / {formatTime(duration)}
             </span>
             <ChromeButton variant="electric" size="md" className="ml-auto" onClick={download}>
@@ -418,7 +418,7 @@ export function MasterStudio({ beats, autoDemo = false }: { beats: MasterBeatOpt
             <span className="mst-switch" aria-hidden />
           </button>
 
-          <p className="rounded-2xl bg-white/[0.06] px-4 py-3 text-sm text-chrome-300">
+          <p className="rounded-2xl bg-white/[0.06] px-4 py-4 text-sm text-chrome-300">
             È un master automatico per le demo. Per l&apos;uscita, il master lo facciamo noi in studio.{" "}
             <Link href="/beats/registra?servizio=MIX_MASTER#servizi" className="font-semibold text-electric-cyan underline-offset-2 hover:underline">
               Scopri il master vero <ArrowRight className="inline size-3.5" />
@@ -428,9 +428,9 @@ export function MasterStudio({ beats, autoDemo = false }: { beats: MasterBeatOpt
       )}
 
       {!ready && !busy && (
-        <div className="grid gap-3">
+        <div className="grid gap-4">
           <p className="text-[15px] text-chrome-300">Scegli cosa masterizzare:</p>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-3">
             <button type="button" className="mst-source mst-source-main" onClick={() => void load("demo")}>
               <Mic className="size-5" />
               <span>
@@ -451,7 +451,7 @@ export function MasterStudio({ beats, autoDemo = false }: { beats: MasterBeatOpt
                 <b>Prova con un beat</b>
                 <small>L&apos;anteprima di un beat del catalogo</small>
                 {beats.length > 0 && (
-                  <span className="mt-2.5 flex flex-wrap gap-1.5" role="group" aria-label="Beat da provare">
+                  <span className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Beat da provare">
                     {beats.map((b) => (
                       <button key={b.id} type="button" className="mst-chip" onClick={() => void load("beat", b)}>
                         {b.title}
@@ -476,7 +476,7 @@ export function MasterStudio({ beats, autoDemo = false }: { beats: MasterBeatOpt
             }}
           />
           {demoMissing && (
-            <p className="rounded-2xl bg-white/[0.06] px-4 py-3 text-sm text-chrome-300" role="status">
+            <p className="rounded-2xl bg-white/[0.06] px-4 py-4 text-sm text-chrome-300" role="status">
               Non trovo nessuna demo su questo dispositivo.{" "}
               <Link href="/beats/registra" className="font-semibold text-electric-cyan underline-offset-2 hover:underline">
                 Registrane una nello studio
@@ -488,7 +488,7 @@ export function MasterStudio({ beats, autoDemo = false }: { beats: MasterBeatOpt
       )}
 
       {error && (
-        <p className="rounded-2xl bg-deal/15 px-4 py-3 text-sm font-semibold text-red-200" role="alert">
+        <p className="rounded-2xl bg-deal/15 px-4 py-4 text-sm font-semibold text-red-200" role="alert">
           {error}
         </p>
       )}
@@ -561,7 +561,7 @@ function MasterWave({
             </g>
           </svg>
           <svg viewBox={`0 0 ${peaks.b.length} 100`} preserveAspectRatio="none" aria-hidden className="absolute inset-0 size-full">
-            <g fill="rgba(0,150,255,0.6)" opacity={side === "after" ? 1 : 0.3}>
+            <g fill="rgba(224, 48, 108,0.6)" opacity={side === "after" ? 1 : 0.3}>
               {bars(peaks.b)}
             </g>
           </svg>

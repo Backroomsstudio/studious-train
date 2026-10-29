@@ -96,14 +96,14 @@ export function Marketplace({
 
       {hub ? (
         engaged && (
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-chrome-500">Filtri pronti, oppure scrivi quello che cerchi</p>
               {unfiltered && (
                 <button
                   type="button"
                   onClick={() => setFocused(false)}
-                  className="inline-flex items-center gap-1 text-sm font-semibold text-electric hover:underline"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-electric hover:underline"
                 >
                   <X className="size-3.5" aria-hidden /> Chiudi
                 </button>
@@ -122,7 +122,7 @@ export function Marketplace({
 
       {!hub && unfiltered && (
         <div className="mt-4 flex justify-end">
-          <div className="inline-flex rounded-xl bg-chrome-200/70 p-1" role="group" aria-label="Vista del catalogo">
+          <div className="inline-flex rounded-xl bg-chrome-200/70 p-2" role="group" aria-label="Vista del catalogo">
             {(["genre", "list"] as const).map((l) => (
               <button
                 key={l}
@@ -130,7 +130,7 @@ export function Marketplace({
                 aria-pressed={layout === l}
                 onClick={() => setLayout(l)}
                 className={cn(
-                  "h-8 rounded-lg px-3 text-xs font-semibold transition",
+                  "h-8 rounded-lg px-4 text-xs font-semibold transition",
                   layout === l ? "bg-white text-graphite shadow-[0_1px_3px_rgba(0,0,0,0.15)]" : "text-chrome-500",
                 )}
               >
@@ -142,7 +142,7 @@ export function Marketplace({
       )}
 
       {engaged && (
-        <div className={cn("mt-3 transition-opacity duration-200", query.isPlaceholderData && "opacity-60")}>
+        <div className={cn("mt-4 transition-opacity duration-200", query.isPlaceholderData && "opacity-60")}>
           {byGenre ? (
             <GenreShelves facets={facets} onSelect={(genres) => onChange({ genres })} />
           ) : query.isError ? (
@@ -150,7 +150,7 @@ export function Marketplace({
           ) : result.items.length ? (
             <TrackList beats={result.items} />
           ) : (
-            <div className="glass flex flex-col items-center gap-3 rounded-3xl px-6 py-12 text-center">
+            <div className="glass flex flex-col items-center gap-4 rounded-3xl px-6 py-12 text-center">
               <SearchX className="size-8 text-chrome-400" aria-hidden />
               <p className="font-display text-lg font-semibold">Nessun beat con questi filtri</p>
               <p className="max-w-sm text-sm text-chrome-500">Allarga l’intervallo di BPM, attiva le tonalità compatibili o togli un genere.</p>
@@ -163,7 +163,7 @@ export function Marketplace({
       )}
 
       {engaged && !byGenre && result.pageCount > 1 && (
-        <nav className="mt-6 flex items-center justify-center gap-3" aria-label="Pagine">
+        <nav className="mt-6 flex items-center justify-center gap-4" aria-label="Pagine">
           <button
             type="button"
             disabled={result.page <= 1}

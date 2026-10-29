@@ -27,7 +27,7 @@ export function KeySelector({
       <Popover.Trigger
         className={cn(
           "inline-flex h-9 items-center gap-2 rounded-full px-4 text-[13px] font-semibold transition",
-          selected ? "bg-graphite text-white shadow-glow-sm" : "chrome-surface text-graphite-700",
+          selected ? "bg-graphite text-white" : "chrome-surface text-graphite-700",
         )}
       >
         <KeyRound className="size-3.5" />
@@ -41,21 +41,21 @@ export function KeySelector({
           collisionPadding={12}
           className="glass z-50 w-[min(92vw,640px)] rounded-3xl bg-white/90 p-4 outline-none"
         >
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-chrome-500">Ruota Camelot</p>
-            <label className="inline-flex cursor-pointer items-center gap-2 text-[13px] font-medium text-graphite-700">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <p className="text-xs font-semibold text-chrome-500">Ruota Camelot</p>
+            <label className="inline-flex cursor-pointer items-center gap-2 text-[13px] font-normal text-graphite-700">
               <input
                 type="checkbox"
                 checked={compatible}
                 disabled={!selected}
                 onChange={(e) => onChange({ compatible: e.target.checked })}
-                className="size-4 accent-[#0066ff]"
+                className="size-4 accent-[#8e8e95]"
               />
               Includi compatibili
             </label>
           </div>
           <div className="no-scrollbar overflow-x-auto">
-            <div className="grid min-w-[560px] grid-cols-12 gap-1.5" role="group" aria-label="Tonalità">
+            <div className="grid min-w-[560px] grid-cols-12 gap-2" role="group" aria-label="Tonalità">
               {rows.flat().map((k) => {
                 const id = keyId(k);
                 const isSelected = value === id;
@@ -67,16 +67,16 @@ export function KeySelector({
                     onClick={() => onChange({ key: isSelected ? undefined : id })}
                     style={{ gridColumn: camelotNumber(k) }}
                     className={cn(
-                      "flex flex-col items-center rounded-xl px-1 py-2 text-center transition",
+                      "flex flex-col items-center rounded-xl px-2 py-2 text-center transition",
                       isSelected
-                        ? "bg-electric text-white shadow-glow"
+                        ? "bg-electric text-white"
                         : highlighted.has(id)
                           ? "bg-electric/10 text-electric ring-1 ring-inset ring-electric/40"
                           : "chrome-surface text-graphite-700 hover:text-graphite",
                     )}
                   >
-                    <span className="font-mono text-[11px] font-bold">{camelotCode(k)}</span>
-                    <span className="text-[11px] font-medium opacity-80">{keyName(k).replace(" maj", "").replace(" min", "m")}</span>
+                    <span className="text-[11px] font-semibold">{camelotCode(k)}</span>
+                    <span className="text-[11px] font-normal opacity-80">{keyName(k).replace(" maj", "").replace(" min", "m")}</span>
                   </button>
                 );
               })}
@@ -86,7 +86,7 @@ export function KeySelector({
             <button
               type="button"
               onClick={() => onChange({ key: undefined, compatible: false })}
-              className="mt-3 text-[13px] font-semibold text-electric hover:underline"
+              className="mt-4 text-[13px] font-semibold text-electric hover:underline"
             >
               Qualsiasi tonalità
             </button>

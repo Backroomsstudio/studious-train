@@ -17,7 +17,7 @@ function ArrivalCard({ beat, queue }: { beat: BeatSummary; queue: BeatSummary[] 
     <li className="w-44 shrink-0 snap-start sm:w-52">
       <div className="group relative">
         <BeatCover beat={beat} size="xl" playing={playing} className="size-44! sm:size-52!" />
-        <GlowBadge tone="electric" className="absolute left-2.5 top-2.5 bg-electric text-white">
+        <GlowBadge tone="graphite" className="absolute left-2 top-2">
           Nuovo
         </GlowBadge>
         <button
@@ -29,14 +29,14 @@ function ArrivalCard({ beat, queue }: { beat: BeatSummary; queue: BeatSummary[] 
           {playing ? <Pause className="size-5 fill-current" /> : <Play className="size-5 translate-x-px fill-current" />}
         </button>
       </div>
-      <Link href={`/beats/${beat.slug}`} className="mt-2.5 block truncate font-display text-[15px] font-semibold hover:underline">
+      <Link href={`/beats/${beat.slug}`} className="mt-2 block truncate font-display text-[15px] font-semibold hover:underline">
         {beat.title}
       </Link>
       <p className="truncate text-[13px] text-chrome-500">{beat.producers.map((p) => p.name).join(" & ")}</p>
-      <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold" style={{ color }}>
+      <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-graphite-700">
         <span className="size-2 rounded-full" style={{ background: color }} aria-hidden />
         {beat.genres[0]?.name}
-        <span className="font-medium text-chrome-400">· {formatRelativeDay(beat.releasedAt)}</span>
+        <span className="font-normal text-chrome-400">· {formatRelativeDay(beat.releasedAt)}</span>
       </p>
     </li>
   );
@@ -51,15 +51,15 @@ export function NewArrivals({
   daysToNextDrop: number;
 }) {
   return (
-    <section aria-labelledby="new-title" className="space-y-3">
+    <section aria-labelledby="new-title" className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-electric">Drop settimanale</p>
-          <h2 id="new-title" className="font-display text-2xl font-bold tracking-tight">
+          <p className="text-[11px] font-semibold text-electric">Drop settimanale</p>
+          <h2 id="new-title" className="font-display text-2xl font-semibold tracking-tight">
             Nuove entrate <span className="text-chrome-400">· {beats.length}</span>
           </h2>
         </div>
-        <p className="flex items-center gap-1.5 text-[13px] font-medium text-chrome-500">
+        <p className="flex items-center gap-2 text-[13px] font-normal text-chrome-500">
           <CalendarClock className="size-4" /> Nuovi beat ogni lunedì · prossimo drop{" "}
           {daysToNextDrop <= 1 ? "domani" : `tra ${daysToNextDrop} giorni`}
         </p>
@@ -71,7 +71,7 @@ export function NewArrivals({
           ))}
         </ul>
       ) : (
-        <p className="glass rounded-3xl p-5 text-sm text-chrome-500">Il drop di questa settimana arriva lunedì.</p>
+        <p className="glass rounded-3xl p-6 text-sm text-chrome-500">Il drop di questa settimana arriva lunedì.</p>
       )}
     </section>
   );

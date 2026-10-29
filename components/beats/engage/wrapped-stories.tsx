@@ -49,8 +49,8 @@ function Rise({ delay = 0, className, children, style }: { delay?: number; class
   );
 }
 
-const kicker = "text-xs font-extrabold uppercase tracking-[0.3em]";
-const big = "font-display text-[clamp(3.5rem,18vw,6.5rem)] font-black leading-[0.9] tracking-tight";
+const kicker = "text-xs font-semibold";
+const big = "font-display text-[clamp(3.5rem,18vw,6.5rem)] font-semibold leading-[0.9] tracking-tight";
 
 /** Disegna la locandina finale (1080×1920, formato storie) e la restituisce come PNG. */
 async function renderPoster(profile: WrappedProfile, stats: ListeningStats, year: number, badges: number): Promise<Blob> {
@@ -60,18 +60,18 @@ async function renderPoster(profile: WrappedProfile, stats: ListeningStats, year
   ctx.fillStyle = "#05070a";
   ctx.fillRect(0, 0, W, H);
   const glowTop = ctx.createRadialGradient(W / 2, 120, 0, W / 2, 120, 900);
-  glowTop.addColorStop(0, "rgba(255,45,146,0.45)");
+  glowTop.addColorStop(0, "rgba(224, 48, 108,0.45)");
   glowTop.addColorStop(1, "transparent");
   ctx.fillStyle = glowTop;
   ctx.fillRect(0, 0, W, H);
   const glowBottom = ctx.createRadialGradient(W / 2, H, 0, W / 2, H, 1000);
-  glowBottom.addColorStop(0, "rgba(0,102,255,0.55)");
+  glowBottom.addColorStop(0, "rgba(142, 142, 149,0.55)");
   glowBottom.addColorStop(1, "transparent");
   ctx.fillStyle = glowBottom;
   ctx.fillRect(0, 0, W, H);
 
   ctx.textAlign = "center";
-  ctx.fillStyle = "#00f0ff";
+  ctx.fillStyle = "#8e8e95";
   ctx.font = `800 40px ${FONT_DISPLAY}`;
   ctx.fillText(`BACKROOMS WRAPPED ${year}`, W / 2, 230);
   ctx.fillStyle = "#ffffff";
@@ -144,11 +144,11 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
 
   const slides: Array<{ bg: string; light?: boolean; body: ReactNode }> = [
     {
-      bg: "radial-gradient(70% 50% at 50% 30%, rgba(0,102,255,0.6), transparent 70%), #05070a",
+      bg: "linear-gradient(135deg, #0c0c0e 0%, #26262b 34%, #0c0c0e 58%, #3b1526 82%, #e0306c 130%)",
       body: (
         <>
           <Rise className={cn(kicker, "text-electric-cyan")}>Backrooms Wrapped</Rise>
-          <Rise delay={0.15} className="font-display text-3xl font-bold text-white">
+          <Rise delay={0.15} className="font-display text-3xl font-semibold text-white">
             Il tuo anno su Backrooms
           </Rise>
           <Rise delay={0.3} className={cn(big, "chrome-text-light break-words")}>
@@ -161,7 +161,7 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
       ),
     },
     {
-      bg: "linear-gradient(160deg, #0066ff, #00b8ff 60%, #00e5ff)",
+      bg: "#e0306c",
       body: empty ? (
         <>
           <Rise className={cn(kicker, "text-white/80")}>Hai ascoltato</Rise>
@@ -178,7 +178,7 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
           <Rise delay={0.15} className={cn(big, "text-white")}>
             <span data-testid="wrapped-hours">{listened.big}</span> {listened.unit}
           </Rise>
-          <Rise delay={0.3} className="font-display text-2xl font-bold text-white">
+          <Rise delay={0.3} className="font-display text-2xl font-semibold text-white">
             di beat Backrooms.
           </Rise>
           <Rise delay={0.45} className="text-lg text-white/90">
@@ -188,14 +188,14 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
       ),
     },
     {
-      bg: `radial-gradient(80% 60% at 30% 20%, ${stats.topProducer?.accentColor ?? "#ec4899"}, transparent 70%), #05070a`,
+      bg: "linear-gradient(315deg, #0c0c0e 0%, #26262b 34%, #0c0c0e 58%, #3b1526 82%, #e0306c 130%)",
       body: (
         <>
           <Rise className={cn(kicker, "text-white/80")}>Il tuo produttore</Rise>
           <Rise
             delay={0.15}
             className={big}
-            style={{ color: stats.topProducer?.accentColor ?? "#fff", textShadow: `0 0 40px ${stats.topProducer?.accentColor ?? "#0066ff"}` }}
+            style={{ color: stats.topProducer?.accentColor ?? "#fff" }}
           >
             {stats.topProducer?.name ?? "Tutti e tre"}
           </Rise>
@@ -208,16 +208,16 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
       ),
     },
     {
-      bg: `linear-gradient(170deg, ${stats.topGenre ? genreColor(stats.topGenre.slug) : "#bf5af2"}, #05070a 85%)`,
+      bg: "#121214",
       body: (
         <>
           <Rise className={cn(kicker, "text-white/80")}>Il tuo genere</Rise>
           <Rise delay={0.15} className={cn(big, "text-white")}>
             {stats.topGenre?.name ?? "Da scoprire"}
           </Rise>
-          <Rise delay={0.3} className="w-full space-y-2.5">
+          <Rise delay={0.3} className="w-full space-y-2">
             {stats.genres.map((g, i) => (
-              <div key={g.slug} className="grid grid-cols-[6rem_1fr_3rem] items-center gap-3 text-sm font-bold text-white">
+              <div key={g.slug} className="grid grid-cols-[6rem_1fr_3rem] items-center gap-4 text-sm font-semibold text-white">
                 <span className="truncate">{g.name}</span>
                 <span className="h-2.5 overflow-hidden rounded-full bg-white/15">
                   <motion.span
@@ -236,14 +236,14 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
       ),
     },
     {
-      bg: "radial-gradient(70% 50% at 50% 35%, rgba(0,240,255,0.28), transparent 70%), #05070a",
+      bg: "linear-gradient(135deg, #0c0c0e 0%, #26262b 34%, #0c0c0e 58%, #3b1526 82%, #e0306c 130%)",
       body: stats.topBeat ? (
         <>
           <Rise className={cn(kicker, "text-white/80")}>Il beat che hai consumato</Rise>
           <Rise delay={0.15} className="grid place-items-center">
             <BeatCover beat={stats.topBeat.beat} size="xl" playing />
           </Rise>
-          <Rise delay={0.3} className="font-display text-4xl font-black text-white">
+          <Rise delay={0.3} className="font-display text-4xl font-semibold text-white">
             {stats.topBeat.beat.title}
           </Rise>
           <Rise delay={0.4} className="text-chrome-300">
@@ -276,12 +276,12 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
       ),
     },
     {
-      bg: "linear-gradient(180deg, #f6f7f9, #c9ced6 45%, #eef0f3)",
+      bg: "#f6f6f7",
       light: true,
       body: (
         <>
           <Rise className={cn(kicker, "text-graphite-700")}>In numeri</Rise>
-          <Rise delay={0.15} className="grid w-full grid-cols-2 gap-3 text-left">
+          <Rise delay={0.15} className="grid w-full grid-cols-2 gap-4 text-left">
             {[
               [fmt(profile.unlocked), profile.unlocked === 1 ? "beat sbloccato" : "beat sbloccati"],
               [String(stats.streak), stats.streak === 1 ? "giorno di fila (ora)" : "giorni di fila (ora)"],
@@ -289,13 +289,13 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
               [`${badgeCount}/${badges.length}`, "badge"],
             ].map(([value, label]) => (
               <div key={label} className="glass rounded-3xl p-4">
-                <b className="block font-display text-4xl font-black text-graphite">{value}</b>
+                <b className="block font-display text-4xl font-semibold text-graphite">{value}</b>
                 <span className="text-sm text-graphite-700">{label}</span>
               </div>
             ))}
           </Rise>
           <Rise delay={0.35} className="text-graphite-700">
-            Livello Resident: <b style={{ color: profile.levelColor === "#e5f0ff" ? "#5b7fb0" : undefined }}>{profile.levelName}</b>
+            Livello Resident: <b style={{ color: profile.levelColor === "#e0306c" ? "#e0306c" : undefined }}>{profile.levelName}</b>
           </Rise>
         </>
       ),
@@ -322,13 +322,13 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
   };
 
   slides.push({
-    bg: "radial-gradient(60% 40% at 50% 10%, rgba(255,45,146,0.35), transparent 70%), radial-gradient(60% 40% at 50% 100%, rgba(0,102,255,0.45), transparent 70%), #05070a",
+    bg: "linear-gradient(135deg, #0c0c0e 0%, #26262b 34%, #0c0c0e 58%, #3b1526 82%, #e0306c 130%)",
     body: (
       <>
-        <Rise className="w-full rounded-[28px] border border-white/15 bg-white/5 p-5 text-left backdrop-blur" >
+        <Rise className="w-full rounded-[28px] border border-white/15 bg-white/5 p-6 text-left backdrop-blur" >
           <p className={cn(kicker, "text-electric-cyan")}>Backrooms Wrapped {year}</p>
-          <p className="mt-1 truncate font-display text-4xl font-black text-white">{profile.artistName}</p>
-          <dl className="mt-3 divide-y divide-white/10 text-[15px]">
+          <p className="mt-2 truncate font-display text-4xl font-semibold text-white">{profile.artistName}</p>
+          <dl className="mt-4 divide-y divide-white/10 text-[15px]">
             {[
               [`${listened.unit[0].toUpperCase()}${listened.unit.slice(1)} di ascolto`, listened.big],
               ["Produttore", stats.topProducer?.name ?? "—"],
@@ -339,7 +339,7 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
             ].map(([label, value]) => (
               <div key={label} className="flex items-baseline justify-between gap-4 py-2">
                 <dt className="text-chrome-400">{label}</dt>
-                <dd className="truncate font-bold text-white">{value}</dd>
+                <dd className="truncate font-semibold text-white">{value}</dd>
               </div>
             ))}
           </dl>
@@ -349,7 +349,7 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
             type="button"
             onClick={() => void share("share")}
             disabled={busy !== null}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[linear-gradient(180deg,#3b82f6,#0066ff_55%,#0052cc)] px-4 text-sm font-semibold text-white shadow-glow-sm"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-electric px-4 text-sm font-semibold text-white"
           >
             {busy === "share" ? <Loader2 className="size-4 animate-spin" /> : <Share2 className="size-4" />} Condividi
           </button>
@@ -427,7 +427,7 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-[#05070a]" role="dialog" aria-modal="true" aria-label="Il tuo anno su Backrooms">
       <div
-        className="wrapped-stage relative h-dvh w-full overflow-hidden sm:h-[min(100dvh-2rem,860px)] sm:w-auto sm:aspect-[9/16] sm:rounded-[32px] sm:shadow-glow-lg"
+        className="wrapped-stage relative h-dvh w-full overflow-hidden sm:h-[min(100dvh-2rem,860px)] sm:w-auto sm:aspect-[9/16] sm:rounded-[32px]"
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         onPointerCancel={() => setHeld(false)}
@@ -435,7 +435,7 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
         data-testid="wrapped"
         data-slide={index}
       >
-        <div className="absolute inset-x-3 top-[calc(0.75rem+env(safe-area-inset-top))] z-10 flex gap-1" aria-hidden>
+        <div className="absolute inset-x-3 top-[calc(0.75rem+env(safe-area-inset-top))] z-10 flex gap-2" aria-hidden>
           {slides.map((_, i) => (
             <span key={i} className={cn("h-[3px] flex-1 overflow-hidden rounded-full", slide.light ? "bg-graphite/15" : "bg-white/30")}>
               {i < index && <span className={cn("block h-full", slide.light ? "bg-graphite" : "bg-white")} />}
@@ -466,7 +466,7 @@ export function WrappedStories({ profile }: { profile: WrappedProfile }) {
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div
             key={index}
-            className="absolute inset-0 flex flex-col items-center justify-center gap-5 px-7 pb-16 pt-20 text-center"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-8 pb-16 pt-20 text-center"
             style={{ background: slide.bg }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

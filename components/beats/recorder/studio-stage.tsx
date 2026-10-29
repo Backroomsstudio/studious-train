@@ -1,6 +1,6 @@
 "use client";
 
-import { Headphones, Pause, Play, RotateCcw, SkipBack, Upload, Wand2 } from "lucide-react";
+import { Headphones, Pause, Play, RotateCcw, SkipBack, Upload, AudioLines } from "lucide-react";
 import { useEffect, useMemo, useRef, type PointerEvent } from "react";
 import { BeatCover } from "@/components/beats/ui/beat-cover";
 import { cn } from "@/lib/cn";
@@ -33,10 +33,10 @@ function TakeLane({ track, index, selected, seconds }: { track: StudioTrack; ind
       aria-pressed={selected}
       className={cn(
         "relative block h-10 w-full overflow-hidden rounded-xl bg-white/5 text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.07)]",
-        selected && "shadow-[inset_0_0_0_1.5px_#00f0ff,0_0_16px_-6px_#00f0ff]",
+        selected && "",
       )}
     >
-      <span className="absolute left-2 top-1 z-[1] text-[10px] font-extrabold uppercase tracking-[0.12em] text-chrome-400">{track.name}</span>
+      <span className="absolute left-2 top-1 z-[1] text-[10px] font-semibold text-chrome-400">{track.name}</span>
       {take && (
         <span
           className={cn("absolute inset-y-0 rounded-[10px]", track.mute && "opacity-35")}
@@ -44,7 +44,6 @@ function TakeLane({ track, index, selected, seconds }: { track: StudioTrack; ind
             left: `${left}%`,
             width: `${width}%`,
             background: `color-mix(in srgb, ${track.color} 22%, transparent)`,
-            boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${track.color} 70%, transparent)`,
           }}
         >
           <LaneWave peaks={peaks} color={track.color} />
@@ -109,11 +108,11 @@ export function StudioStage({ onPickBeat, onUpload }: { onPickBeat: () => void; 
     <section
       aria-label="Registratore"
       className={cn(
-        "obsidian studio-stage relative grid gap-3.5 overflow-hidden rounded-[28px] p-4 sm:p-5",
+        "obsidian studio-stage relative grid gap-4 overflow-hidden rounded-[28px] p-4 sm:p-6",
         transport === "rec" && "studio-recording",
       )}
     >
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 items-center gap-4">
         <BeatCover beat={beat} size="sm" playing={transport !== "idle"} />
         <span className="min-w-0 flex-1">
           <b className="block truncate font-display text-[17px]">{beat.title}</b>
@@ -125,15 +124,15 @@ export function StudioStage({ onPickBeat, onUpload }: { onPickBeat: () => void; 
           type="button"
           onClick={onPickBeat}
           disabled={recording}
-          className="h-9 shrink-0 rounded-full bg-white/10 px-3.5 text-[13px] font-semibold text-white ring-1 ring-inset ring-white/15 transition hover:bg-white/15 disabled:opacity-40"
+          className="h-9 shrink-0 rounded-full bg-white/10 px-4 text-[13px] font-semibold text-white ring-1 ring-inset ring-white/15 transition hover:bg-white/15 disabled:opacity-40"
         >
           Cambia beat
         </button>
       </div>
 
-      <div className="flex items-center gap-1.5 whitespace-nowrap font-mono text-[13px] font-bold tracking-[0.06em] text-chrome-300">
-        <i aria-hidden className={cn("size-2.5 rounded-full bg-chrome-500", transport === "rec" && "animate-pulse bg-[#ff3b30] shadow-[0_0_10px_#ff3b30]")} />
-        <span ref={tcRef} className={cn(transport === "rec" && "text-[#ff453a]")} data-testid="timecode">
+      <div className="flex items-center gap-2 whitespace-nowrap text-[13px] font-semibold text-chrome-300">
+        <i aria-hidden className={cn("size-2.5 rounded-full bg-chrome-500", transport === "rec" && "animate-pulse bg-[#e0306c]")} />
+        <span ref={tcRef} className={cn(transport === "rec" && "text-[#e0306c]")} data-testid="timecode">
           STOP 0:00.0
         </span>
         <span ref={barRef} className="ml-auto text-chrome-500">
@@ -142,13 +141,13 @@ export function StudioStage({ onPickBeat, onUpload }: { onPickBeat: () => void; 
       </div>
 
       <div
-        className="relative grid touch-none select-none gap-1.5 py-1"
+        className="relative grid touch-none select-none gap-2 py-2"
         onPointerDown={ready ? onTimeline : undefined}
         role="group"
         aria-label="Timeline: tocca per spostarti"
       >
         <div className="relative h-[46px] overflow-hidden rounded-xl bg-white/5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.07)]">
-          <span className="absolute left-2 top-1 z-[1] text-[10px] font-extrabold uppercase tracking-[0.12em] text-chrome-400">Beat</span>
+          <span className="absolute left-2 top-1 z-[1] text-[10px] font-semibold text-chrome-400">Beat</span>
           {status === "loading" && <span className="studio-skel absolute inset-0" aria-label="Carico il beat…" />}
           {status !== "loading" && <LaneWave peaks={beatPeaks} color="rgba(255,255,255,0.35)" />}
         </div>
@@ -159,15 +158,15 @@ export function StudioStage({ onPickBeat, onUpload }: { onPickBeat: () => void; 
           ref={phRef}
           aria-hidden
           className={cn(
-            "pointer-events-none absolute inset-y-0 left-0 z-[3] w-0.5 bg-white shadow-[0_0_10px_#fff]",
-            transport === "rec" && "bg-[#ff3b30] shadow-[0_0_12px_#ff3b30]",
+            "pointer-events-none absolute inset-y-0 left-0 z-[3] w-0.5 bg-white",
+            transport === "rec" && "bg-[#e0306c]",
           )}
         />
         {transport === "count" && (
           <div
             ref={countRef}
             aria-live="assertive"
-            className="pointer-events-none absolute inset-0 z-[4] grid place-items-center rounded-xl bg-[#05070a]/45 font-display text-[96px] font-black text-white [text-shadow:0_0_40px_rgba(0,102,255,0.8)]"
+            className="pointer-events-none absolute inset-0 z-[4] grid place-items-center rounded-xl bg-[#05070a]/45 font-display text-[96px] font-semibold text-white"
           >
             4
           </div>
@@ -175,15 +174,15 @@ export function StudioStage({ onPickBeat, onUpload }: { onPickBeat: () => void; 
       </div>
 
       {status === "error" && (
-        <p className="flex flex-wrap items-center gap-2 text-sm text-[#ff8a80]">
+        <p className="flex flex-wrap items-center gap-2 text-sm text-[#f27ba4]">
           Non riesco a caricare l&apos;anteprima del beat.
-          <button type="button" className="inline-flex items-center gap-1 font-semibold text-white underline" onClick={() => setBeat(beat)}>
+          <button type="button" className="inline-flex items-center gap-2 font-semibold text-white underline" onClick={() => setBeat(beat)}>
             <RotateCcw className="size-3.5" /> Riprova
           </button>
         </p>
       )}
 
-      <div className="flex items-center justify-center gap-3 sm:gap-4">
+      <div className="flex items-center justify-center gap-4 sm:gap-4">
         <button
           type="button"
           aria-label="Torna all'inizio"
@@ -199,7 +198,7 @@ export function StudioStage({ onPickBeat, onUpload }: { onPickBeat: () => void; 
           disabled={!ready || recording}
           className="grid size-[58px] place-items-center rounded-full bg-white text-[#05070a] transition active:scale-95 disabled:opacity-40"
         >
-          {transport === "play" ? <Pause className="size-6 fill-current" /> : <Play className="ml-0.5 size-6 fill-current" />}
+          {transport === "play" ? <Pause className="size-6 fill-current" /> : <Play className="ml-0 size-6 fill-current" />}
         </button>
         <button
           type="button"
@@ -228,30 +227,30 @@ export function StudioStage({ onPickBeat, onUpload }: { onPickBeat: () => void; 
           aria-label="Conto alla rovescia di una battuta"
           aria-pressed={countIn}
           onClick={toggleCountIn}
-          className={cn("grid size-12 place-items-center rounded-full bg-white/10 text-[13px] font-extrabold text-white transition", countIn && "bg-electric-cyan/15 text-electric-cyan")}
+          className={cn("grid size-12 place-items-center rounded-full bg-white/10 text-[13px] font-semibold text-white transition", countIn && "bg-electric-cyan/15 text-electric-cyan")}
         >
           1-4
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-chrome-300">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-chrome-300">
         {mic === "error" ? (
-          <span className="text-[#ff8a80]">Microfono non disponibile</span>
+          <span className="text-[#f27ba4]">Microfono non disponibile</span>
         ) : mic === "ready" ? (
-          <span className="text-[#30d158]">● Microfono pronto</span>
+          <span className="text-[#8e8e95]">Microfono pronto</span>
         ) : (
           <span>Il microfono si attiva quando premi REC</span>
         )}
         <span className="h-1.5 min-w-[100px] flex-1 overflow-hidden rounded-full bg-white/10" aria-hidden>
-          <i ref={meterRef} className="block h-full w-0 rounded-full bg-[linear-gradient(90deg,#30d158,#ffd60a_70%,#ff3b30)] transition-[width] duration-75" />
+          <i ref={meterRef} className="block h-full w-0 rounded-full bg-electric transition-[width] duration-75" />
         </span>
-        <span className="inline-flex items-center gap-1 text-chrome-400">
+        <span className="inline-flex items-center gap-2 text-chrome-400">
           <Headphones className="size-3.5" /> Usa le cuffie
         </span>
       </div>
 
       {micError && (
-        <div className="grid gap-3 rounded-2xl bg-white/5 p-3.5 ring-1 ring-inset ring-white/10" role="alert">
+        <div className="grid gap-4 rounded-2xl bg-white/5 p-4 ring-1 ring-inset ring-white/10" role="alert">
           <p className="text-sm leading-relaxed text-chrome-200">{micError}</p>
           <div className="flex flex-wrap gap-2">
             <button
@@ -264,9 +263,9 @@ export function StudioStage({ onPickBeat, onUpload }: { onPickBeat: () => void; 
             <button
               type="button"
               onClick={() => void useDemoVoice(sel)}
-              className="inline-flex h-10 items-center gap-2 rounded-full bg-[linear-gradient(180deg,#3b82f6_0%,#0066ff_55%,#0052cc_100%)] px-4 text-[13px] font-semibold text-white shadow-glow-sm"
+              className="inline-flex h-10 items-center gap-2 rounded-full bg-electric px-4 text-[13px] font-semibold text-white"
             >
-              <Wand2 className="size-4" /> Usa la voce demo
+              <AudioLines className="size-4" /> Usa la voce demo
             </button>
           </div>
         </div>

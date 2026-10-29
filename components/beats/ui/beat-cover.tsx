@@ -34,7 +34,7 @@ export function BeatCover({
   playing?: boolean;
   className?: string;
 }) {
-  const accent = beat.producers[0]?.accentColor ?? "#0066ff";
+  const accent = beat.producers[0]?.accentColor ?? "#8e8e95";
   const dims = DIMS[size];
   const playingStyle = playing ? ({ "--cover-glow": accent } as CSSProperties) : undefined;
 
@@ -68,11 +68,10 @@ export function BeatCover({
         decoding="async"
         className="absolute inset-0 size-full select-none"
       />
-      {/* Riflesso cromato in alto, come le superfici del negozio */}
-      <span className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[linear-gradient(160deg,rgba(255,255,255,0.16),transparent_38%)] ring-1 ring-inset ring-white/10" />
+      <span className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-white/10" />
       <span
-        className={cn("relative font-display font-bold leading-none text-white/95", LETTER[size])}
-        style={{ textShadow: `0 0 10px ${accent}, 0 1px 2px rgba(0,0,0,0.6)` }}
+        className={cn("relative font-display font-semibold leading-none text-white/95", LETTER[size])}
+       
       >
         {beat.title.charAt(0)}
       </span>

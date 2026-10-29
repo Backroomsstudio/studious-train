@@ -50,20 +50,20 @@ function VocalTakeUploader() {
 
   if (vocal) {
     return (
-      <div className="rounded-2xl border border-electric/30 bg-electric-50/80 p-3">
-        <div className="flex items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-electric text-white shadow-glow-sm">
+      <div className="rounded-2xl border border-electric/30 bg-electric-50/80 p-4">
+        <div className="flex items-center gap-4">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-electric text-white">
             <Mic className="size-4" />
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{vocal.name}</p>
             <p className="text-xs text-chrome-500">Suona sopra ogni beat che ascolti</p>
           </div>
-          <label className="flex items-center gap-1.5 text-xs font-semibold text-graphite-700">
-            <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="size-4 accent-[#0066ff]" />
+          <label className="flex items-center gap-2 text-xs font-semibold text-graphite-700">
+            <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="size-4 accent-[#8e8e95]" />
             Attiva
           </label>
-          <button type="button" onClick={() => setVocal(null)} aria-label="Rimuovi la traccia vocale" className="p-1.5 text-chrome-400 hover:text-deal">
+          <button type="button" onClick={() => setVocal(null)} aria-label="Rimuovi la traccia vocale" className="p-2 text-chrome-400 hover:text-deal">
             <Trash2 className="size-4" />
           </button>
         </div>
@@ -78,7 +78,7 @@ function VocalTakeUploader() {
         type="button"
         onClick={() => input.current?.click()}
         disabled={busy}
-        className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-electric/40 bg-electric-50/50 text-[15px] font-semibold text-electric transition hover:border-electric hover:bg-electric-50 hover:shadow-glow-sm"
+        className="flex h-16 w-full items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-electric/40 bg-electric-50/50 text-[15px] font-semibold text-electric transition hover:border-electric hover:bg-electric-50"
       >
         {busy ? <Loader2 className="size-5 animate-spin" /> : <Upload className="size-5" />}
         Carica traccia vocale di prova
@@ -88,7 +88,7 @@ function VocalTakeUploader() {
         MP3 o WAV. Il file resta sul tuo telefono: lo ascolti sopra il beat prima di comprarlo.
       </p>
       {error && (
-        <p role="alert" className="mt-1 text-[13px] font-medium text-deal">
+        <p role="alert" className="mt-2 text-[13px] font-normal text-deal">
           {error}
         </p>
       )}
@@ -120,34 +120,34 @@ export function ResumeCard({ lastLicense }: { lastLicense: { beat: BeatSummary; 
       : "Ultimo ascolto";
 
   return (
-    <GlassPanel className="p-4 sm:p-5">
-      <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-electric">Riprendi da dove eri rimasto</p>
+    <GlassPanel className="p-4 sm:p-6">
+      <p className="text-[11px] font-semibold text-electric">Riprendi da dove eri rimasto</p>
       {beat ? (
-        <div className="mt-3 flex items-center gap-4">
+        <div className="mt-4 flex items-center gap-4">
           <BeatCover beat={beat} size="lg" playing={Boolean(isCurrent && playing)} />
           <div className="min-w-0 flex-1">
-            <p className="truncate font-display text-xl font-bold tracking-tight">{beat.title}</p>
-            <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[13px] text-chrome-500">
+            <p className="truncate font-display text-xl font-semibold tracking-tight">{beat.title}</p>
+            <p className="mt-0 flex flex-wrap items-center gap-x-2 text-[13px] text-chrome-500">
               {subtitle} · prod. by
               {beat.producers.map((p) => (
                 <ProducerTag key={p.slug} name={p.name} color={p.accentColor} />
               ))}
             </p>
-            <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-chrome-200">
-              <div className="h-full rounded-full bg-gradient-to-r from-electric to-electric-cyan shadow-glow-sm transition-[width]" style={{ width: `${progress * 100}%` }} />
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-chrome-200">
+              <div className="h-full rounded-full bg-electric transition-[width]" style={{ width: `${progress * 100}%` }} />
             </div>
           </div>
           <button
             type="button"
             onClick={() => toggle(beat)}
             aria-label={isCurrent && playing ? "Pausa" : `Riprendi ${beat.title}`}
-            className={cn("chrome-surface grid size-14 shrink-0 place-items-center rounded-full transition active:scale-95", isCurrent && playing && "shadow-glow")}
+            className={cn("chrome-surface grid size-14 shrink-0 place-items-center rounded-full transition active:scale-95", isCurrent && playing && "")}
           >
             {isCurrent && playing ? <Pause className="size-6 fill-current" /> : <Play className="size-6 translate-x-0.5 fill-current" />}
           </button>
         </div>
       ) : (
-        <p className="mt-3 text-sm text-chrome-500">Ascolta un beat dal catalogo: lo ritroverai qui.</p>
+        <p className="mt-4 text-sm text-chrome-500">Ascolta un beat dal catalogo: lo ritroverai qui.</p>
       )}
       <div className="mt-4">
         <VocalTakeUploader />

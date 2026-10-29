@@ -1,59 +1,57 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ */
-/* Backrooms Beat Store · design tokens "Apple Chrome + Electric Blue" */
-/* Tailwind v4: la configurazione dei token vive qui (@theme), non in   */
-/* tailwind.config.js. Ogni token genera le utility corrispondenti:     */
-/* --color-electric → bg-electric, text-electric, ring-electric …       */
+/* Backrooms Beat Store · sistema di design                            */
+/* - Una sola palette neutra (grigi "zinco") + un accento rosa.         */
+/* - L'unico gradiente ammesso è il cromato nero → rosa (chrome-pink,   */
+/*   obsidian). Niente glow, niente ombre colorate, niente vetro.       */
+/* - Due pesi: 400 e 600. Niente maiuscolo. Spaziature multiple di 8.   */
+/* I nomi dei token restano quelli storici (electric = accento rosa)    */
+/* così le utility esistenti seguono il nuovo sistema senza riscritture. */
 /* ------------------------------------------------------------------ */
 @theme {
-  /* Cromo spazzolato: dal bianco all'argento */
-  --color-chrome-50: #f8f9fa;
-  --color-chrome-100: #f1f3f5;
-  --color-chrome-200: #e9ecef;
-  --color-chrome-300: #d1d5db;
-  --color-chrome-400: #9ca3af;
-  --color-chrome-500: #6b7280;
-  /* Ossidiana / grafite metallica per testo e contenitori ad alto contrasto */
-  --color-graphite: #111827;
-  --color-graphite-800: #1f2937;
-  --color-graphite-700: #374151;
-  /* Accento: blu elettrico */
-  --color-electric: #0066ff;
-  --color-electric-soft: #3b82f6;
-  --color-electric-cyan: #00f0ff;
-  --color-electric-50: #eff5ff;
-  /* Stati */
-  --color-deal: #ef4444;
-  --color-ok: #16a34a;
-  --color-studio: #ec4899;
+  --color-chrome-50: #f6f6f7;
+  --color-chrome-100: #ededef;
+  --color-chrome-200: #e2e2e5;
+  --color-chrome-300: #c9c9ce;
+  --color-chrome-400: #8e8e95;
+  --color-chrome-500: #66666d;
+  --color-graphite: #121214;
+  --color-graphite-800: #1c1c1f;
+  --color-graphite-700: #2e2e33;
+  /* Accento: rosa (unico colore oltre ai neutri) */
+  --color-electric: #e0306c;
+  --color-electric-soft: #e95b8c;
+  --color-electric-cyan: #e95b8c;
+  --color-electric-50: #fdeef3;
+  /* Stati (solo per esiti: errore, conferma) */
+  --color-deal: #e0306c;
+  --color-ok: #66666d;
+  --color-studio: #e0306c;
 
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Inter, system-ui, sans-serif;
   --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Inter, system-ui, sans-serif;
-  --font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: var(--font-sans);
 
-  --shadow-chrome: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-  --shadow-chrome-lg: 0 30px 60px -12px rgba(17, 24, 39, 0.12), 0 12px 24px -8px rgba(17, 24, 39, 0.06);
-  --shadow-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(17, 24, 39, 0.04);
-  --shadow-glow: 0 0 20px rgba(0, 102, 255, 0.5);
-  --shadow-glow-sm: 0 0 12px rgba(0, 102, 255, 0.35);
-  --shadow-glow-lg: 0 0 40px rgba(0, 102, 255, 0.45), 0 0 80px rgba(0, 240, 255, 0.15);
+  --font-weight-medium: 400;
+  --font-weight-bold: 600;
+  --font-weight-extrabold: 600;
+  --font-weight-black: 600;
+
+  --shadow-chrome: 0 1px 2px rgba(18, 18, 20, 0.06), 0 8px 24px -16px rgba(18, 18, 20, 0.16);
+  --shadow-chrome-lg: 0 1px 2px rgba(18, 18, 20, 0.06), 0 24px 48px -24px rgba(18, 18, 20, 0.24);
+  --shadow-highlight: 0 0 #0000;
+  --shadow-glow: 0 0 #0000;
+  --shadow-glow-sm: 0 0 #0000;
+  --shadow-glow-lg: 0 0 #0000;
 
   --ease-apple: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  --animate-sheen: sheen 3.2s var(--ease-apple) infinite;
-  --animate-glow-pulse: glow-pulse 2.4s ease-in-out infinite;
+  --animate-sheen: none;
+  --animate-glow-pulse: none;
   --animate-eq: eq 0.9s ease-in-out infinite alternate;
 
-  @keyframes sheen {
-    0% { transform: translateX(-120%) skewX(-18deg); }
-    60%, 100% { transform: translateX(220%) skewX(-18deg); }
-  }
-  @keyframes glow-pulse {
-    0%, 100% { box-shadow: 0 0 12px rgba(0, 102, 255, 0.35); }
-    50% { box-shadow: 0 0 26px rgba(0, 102, 255, 0.6); }
-  }
   @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -68,68 +66,46 @@
 /* Materiali                                                           */
 /* ------------------------------------------------------------------ */
 
-/* Vetro satinato con bordo cromato traslucido */
+/* Superficie chiara: bianco pieno, bordo sottile, ombra neutra minima */
 @utility glass {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.52));
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: var(--shadow-chrome), var(--shadow-highlight);
+  background: #ffffff;
+  border: 1px solid var(--color-chrome-200);
+  box-shadow: var(--shadow-chrome);
 }
 
-/* Metallo spazzolato: gradiente a bande + micro-righe orizzontali */
+/* Controlli chiari (tasti secondari, pillole): grigio pieno */
 @utility chrome-surface {
-  background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, rgba(17, 24, 39, 0.015) 1px 2px),
-    linear-gradient(180deg, #ffffff 0%, #f1f3f5 38%, #dfe3e8 52%, #eef0f3 68%, #ffffff 100%);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.08), 0 6px 16px -6px rgba(17, 24, 39, 0.12), var(--shadow-highlight);
+  background: #ffffff;
+  border: 1px solid var(--color-chrome-200);
+  box-shadow: 0 1px 2px rgba(18, 18, 20, 0.06);
 }
 
-/* Ossidiana: contenitore scuro ad alto contrasto con riflesso radiale */
+/* Il gradiente di marca: cromato nero → rosa */
+@utility chrome-pink {
+  background: linear-gradient(135deg, #0c0c0e 0%, #26262b 34%, #0c0c0e 58%, #3b1526 82%, #e0306c 130%);
+  color: #ffffff;
+}
+
+/* Contenitore scuro: lo stesso cromato nero → rosa */
 @utility obsidian {
-  background:
-    radial-gradient(120% 80% at 0% 0%, rgba(255, 255, 255, 0.09), transparent 55%),
-    radial-gradient(90% 60% at 100% 100%, rgba(0, 102, 255, 0.16), transparent 60%),
-    linear-gradient(180deg, #1f2937, #111827);
+  background: linear-gradient(135deg, #0c0c0e 0%, #26262b 34%, #0c0c0e 58%, #3b1526 82%, #e0306c 130%);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: var(--shadow-chrome-lg), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  color: #f8f9fa;
+  box-shadow: var(--shadow-chrome-lg);
+  color: #f6f6f7;
 }
 
-/* Testo con riflesso cromato */
+/* Titoli: testo pieno, niente riflessi */
 @utility chrome-text {
-  background: linear-gradient(180deg, #111827 0%, #374151 45%, #6b7280 55%, #111827 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--color-graphite);
 }
 
 @utility chrome-text-light {
-  background: linear-gradient(180deg, #ffffff 0%, #e9ecef 45%, #9ca3af 58%, #f8f9fa 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #ffffff;
 }
 
-/* Riflesso obliquo che scorre sulle superfici cromate (usato con ::after via componente) */
+/* Nessun riflesso animato sulle superfici */
 @utility sheen {
   position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  &::after {
-    content: "";
-    position: absolute;
-    inset: -20% auto -20% 0;
-    width: 40%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
-    transform: translateX(-120%) skewX(-18deg);
-    pointer-events: none;
-    z-index: 1;
-  }
-  &:hover::after {
-    animation: var(--animate-sheen);
-  }
 }
 
 @utility no-scrollbar {
@@ -151,23 +127,30 @@
   body {
     min-height: 100dvh;
     font-family: var(--font-sans);
+    font-weight: 400;
     color: var(--color-graphite);
-    background:
-      radial-gradient(1200px 520px at 0% -8%, #ffffff 0%, transparent 60%),
-      radial-gradient(900px 480px at 100% 0%, rgba(0, 102, 255, 0.06) 0%, transparent 60%),
-      linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
-    background-attachment: fixed;
+    background: var(--color-chrome-50);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: "ss01", "cv11";
-    letter-spacing: -0.005em;
+  }
+  /* Due soli pesi anche per i grassetti di default del browser */
+  b,
+  strong,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  th {
+    font-weight: 600;
   }
   :focus-visible {
     outline: 2px solid var(--color-electric);
     outline-offset: 2px;
   }
   ::selection {
-    background: rgba(0, 102, 255, 0.18);
+    background: rgba(224, 48, 108, 0.18);
   }
   @media (prefers-reduced-motion: reduce) {
     *,
@@ -194,7 +177,7 @@
     z-index: -1;
     pointer-events: none;
     opacity: 0.5;
-    background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 4px);
+    background: none;
   }
 
   /* Skeleton cromato scuro con riflesso che scorre */
@@ -203,7 +186,7 @@
     display: block;
     overflow: hidden;
     border-radius: 16px;
-    background: linear-gradient(180deg, #1d222c, #0b0d11);
+    background: #1d222c;
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
   }
   .mst-skel::after {
@@ -211,7 +194,7 @@
     position: absolute;
     inset: 0;
     transform: translateX(-100%);
-    background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.16) 45%, rgba(0, 229, 255, 0.16) 55%, transparent 80%);
+    background: none;
     animation: mst-shimmer 1.35s var(--ease-apple) infinite;
   }
   @keyframes mst-shimmer {
@@ -224,8 +207,8 @@
   .mst-ab {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4px;
-    padding: 5px;
+    gap: 8px;
+    padding: 8px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.08);
   }
@@ -233,22 +216,21 @@
     height: 56px;
     border-radius: 999px;
     font-family: var(--font-display);
-    font-weight: 900;
+    font-weight: 600;
     font-size: 19px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    
     color: #c9ced6;
     transition: background-color 0.2s var(--ease-apple), box-shadow 0.2s var(--ease-apple), color 0.2s;
   }
   .mst-ab button[aria-pressed="true"] {
     background: #fff;
     color: #05070a;
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+    
   }
   .mst-ab button.after[aria-pressed="true"] {
-    background: linear-gradient(180deg, #3b82f6, #0066ff);
+    background: #e0306c;
     color: #fff;
-    box-shadow: var(--shadow-glow);
+    
   }
 
   .mst-spec {
@@ -273,9 +255,9 @@
     top: 0;
     bottom: 0;
     width: 2px;
-    margin-left: -1px;
+    margin-left: 0px;
     background: var(--color-electric-cyan);
-    box-shadow: 0 0 10px var(--color-electric-cyan);
+    
     pointer-events: none;
   }
 
@@ -287,8 +269,8 @@
   .mst-stats > div {
     display: flex;
     flex-direction: column-reverse;
-    gap: 2px;
-    padding: 12px 8px;
+    gap: 0px;
+    padding: 16px 8px;
     border-radius: 16px;
     background: rgba(255, 255, 255, 0.06);
     text-align: center;
@@ -303,7 +285,7 @@
   }
   .mst-stats dd {
     font-family: var(--font-display);
-    font-weight: 900;
+    font-weight: 600;
     font-size: clamp(15px, 4vw, 20px);
     font-variant-numeric: tabular-nums;
   }
@@ -315,7 +297,7 @@
 
   .mst-chip {
     height: 36px;
-    padding: 0 14px;
+    padding: 0 16px;
     border-radius: 999px;
     font-size: 13px;
     font-weight: 600;
@@ -328,17 +310,17 @@
     background: rgba(255, 255, 255, 0.14);
   }
   .mst-chip[aria-pressed="true"] {
-    background: linear-gradient(180deg, #3b82f6, #0066ff);
+    background: #e0306c;
     color: #fff;
-    box-shadow: var(--shadow-glow-sm);
+    
   }
 
   .mst-toggle {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
     width: 100%;
-    padding: 12px 16px;
+    padding: 16px 16px;
     border-radius: 18px;
     text-align: left;
     background: rgba(255, 255, 255, 0.06);
@@ -374,7 +356,7 @@
   .mst-source {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
+    gap: 16px;
     min-width: 0;
     padding: 16px;
     border-radius: 22px;
@@ -386,7 +368,7 @@
   }
   .mst-source > svg {
     flex-shrink: 0;
-    margin-top: 2px;
+    margin-top: 0px;
     color: var(--color-electric-cyan);
   }
   .mst-source b {
@@ -403,25 +385,25 @@
     background: rgba(255, 255, 255, 0.1);
   }
   .mst-source-main {
-    background: linear-gradient(180deg, rgba(59, 130, 246, 0.35), rgba(0, 102, 255, 0.25));
-    box-shadow: inset 0 0 0 1px rgba(0, 240, 255, 0.35), var(--shadow-glow-sm);
+    background: rgba(224, 48, 108, 0.35);
+    box-shadow: inset 0 0 0 1px rgba(142, 142, 149, 0.35);
   }
   .mst-source-main small {
-    color: #c9d8f2;
+    color: #f27ba4;
   }
 
   /* Mixer degli stems: quattro canali con fader verticale e meter */
   .mxr-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
+    gap: 8px;
   }
   .mxr-strip {
     display: grid;
     justify-items: center;
     gap: 8px;
     min-width: 0;
-    padding: 12px 4px;
+    padding: 16px 8px;
     border-radius: 20px;
     transition: opacity 0.2s;
   }
@@ -432,7 +414,7 @@
     position: relative;
     display: flex;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     width: 44px;
     height: 150px;
   }
@@ -459,16 +441,16 @@
     bottom: 0;
     height: 0;
     border-radius: 9px;
-    background: linear-gradient(0deg, var(--sc, #30d158), #ffd60a 80%, #ff3b30);
+    background: #8e8e95;
   }
   .mxr-btn {
     width: 30px;
     height: 32px;
     border-radius: 10px;
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 600;
     color: var(--color-graphite-700);
-    background: linear-gradient(180deg, #ffffff 0%, #f1f3f5 45%, #dfe3e8 55%, #ffffff 100%);
+    background: #ffffff;
     box-shadow: 0 1px 2px rgba(17, 24, 39, 0.08), var(--shadow-highlight);
   }
   .mxr-btn[aria-pressed="true"] {
@@ -476,7 +458,7 @@
     color: #fff;
   }
   .mxr-solo[aria-pressed="true"] {
-    background: #ffd60a;
+    background: #8e8e95;
     color: #1a1400;
   }
   .mxr-progress {
@@ -492,7 +474,7 @@
     position: absolute;
     inset: 0 auto 0 0;
     border-radius: 999px;
-    background: linear-gradient(90deg, var(--color-electric), var(--color-electric-cyan));
+    background: var(--color-electric);
   }
 }
 
@@ -505,40 +487,40 @@
   place-items: center;
   min-width: 1.25rem;
   height: 1.25rem;
-  padding: 0 0.375rem;
+  padding: 0 8px;
   border-radius: 9999px;
   background: var(--color-electric);
   color: #fff;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 0 10px rgba(0, 102, 255, 0.55);
+  
 }
 /* Chat: colonna di bolle che scorre, la mia a destra in blu */
 .feat-chat {
   display: grid;
   align-content: start;
-  gap: 0.5rem;
+  gap: 8px;
   max-height: min(46dvh, 26rem);
   min-height: 8rem;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0.25rem 0.125rem;
+  padding: 8px 0px;
 }
 .feat-bubble {
   max-width: 82%;
-  padding: 0.625rem 0.875rem;
+  padding: 8px 16px;
   border-radius: 1.125rem;
   font-size: 14px;
   line-height: 1.4;
 }
 .feat-bubble-me {
   justify-self: end;
-  background: linear-gradient(180deg, #3b82f6 0%, #0066ff 100%);
+  background: #e0306c;
   color: #fff;
   border-bottom-right-radius: 0.375rem;
-  box-shadow: 0 6px 16px -8px rgba(0, 102, 255, 0.6);
+  box-shadow: 0 6px 16px -8px rgba(142, 142, 149, 0.6);
 }
 .feat-bubble-them {
   justify-self: start;
@@ -549,7 +531,7 @@
 }
 .feat-bubble-time {
   display: block;
-  margin-top: 0.1875rem;
+  margin-top: 0px;
   font-size: 11px;
   opacity: 0.7;
 }
@@ -559,7 +541,6 @@
 /* (/beats/registra: palco nero, tasto REC, scheletri cromati)         */
 /* ------------------------------------------------------------------ */
 .studio-stage.studio-recording {
-  box-shadow: 0 0 0 2px rgba(255, 59, 48, 0.75), 0 0 60px -10px rgba(255, 59, 48, 0.6);
 }
 .studio-stage.studio-recording::before {
   content: "";
@@ -567,23 +548,22 @@
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px);
+  background: none;
   mix-blend-mode: screen;
 }
 .studio-recbtn {
-  background: radial-gradient(circle at 35% 30%, #ff7a70, #ff3b30 45%, #a3001a);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12), 0 0 34px rgba(255, 59, 48, 0.55);
+  background: #e95b8c;
 }
 /* Scheletro: scuro sul palco, cromato chiaro altrove */
 .studio-skel {
   position: relative;
   display: block;
   overflow: hidden;
-  background: linear-gradient(180deg, #1d222c, #0b0d11);
+  background: #1d222c;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
 }
 .studio-skel.studio-skel-light {
-  background: linear-gradient(180deg, #ffffff, #eef0f3 45%, #dfe3e8 55%, #ffffff);
+  background: #ffffff;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
 }
 .studio-skel::after {
@@ -591,11 +571,11 @@
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.16) 45%, rgba(0, 240, 255, 0.16) 55%, transparent 80%);
+  background: none;
   animation: studio-skel 1.35s var(--ease-apple) infinite;
 }
 .studio-skel.studio-skel-light::after {
-  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.8) 45%, rgba(170, 215, 255, 0.4) 55%, transparent 80%);
+  background: none;
 }
 @keyframes studio-skel {
   to {
@@ -623,9 +603,7 @@
 
 /* Swipe: alone del colore del genere sulla carta, copertina grande */
 .swipe-glow {
-  background:
-    radial-gradient(80% 55% at 50% 38%, color-mix(in srgb, var(--swipe-color, #0066ff) 45%, transparent), transparent 70%),
-    radial-gradient(60% 40% at 50% 100%, rgba(0, 102, 255, 0.25), transparent 70%);
+  background: none;
 }
 .swipe-cover {
   width: clamp(9rem, 42vw, 13rem);
@@ -635,7 +613,6 @@
 }
 .swipe-stamp {
   background: rgba(5, 7, 10, 0.45);
-  text-shadow: 0 0 14px currentColor;
 }
 
 /* Wrapped: barra della storia in corso (la durata arriva dallo style inline) */
@@ -657,10 +634,7 @@
 
 /* Stanza: i temi del prototipo (Level 0, Pool Rooms, Neon, Chrome, Notte) */
 .room-t-level0 {
-  background:
-    repeating-linear-gradient(90deg, rgba(110, 90, 25, 0.16) 0 2px, transparent 2px 26px),
-    radial-gradient(70% 55% at 50% 0%, rgba(255, 255, 225, 0.95), transparent 70%),
-    linear-gradient(180deg, #e2d283, #b39b45 58%, #6f5e22);
+  background: none;
 }
 .room-hero.room-t-level0::before {
   content: "";
@@ -672,36 +646,20 @@
   height: 12px;
   border-radius: 4px;
   background: #fffbe8;
-  box-shadow: 0 0 34px 12px rgba(255, 250, 215, 0.85);
+  
   animation: room-flicker 5s infinite;
 }
 .room-t-pool {
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px) 0 0 / 30px 30px,
-    linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px) 0 0 / 30px 30px,
-    radial-gradient(60% 50% at 70% 20%, rgba(255, 255, 255, 0.7), transparent 70%),
-    linear-gradient(180deg, #a7eef5, #3cbad0 60%, #0f7390);
+  background: none;
 }
 .room-t-neon {
-  background:
-    linear-gradient(transparent 0 calc(100% - 1px), rgba(0, 140, 255, 0.45) 0) 0 0 / 100% 34px,
-    linear-gradient(90deg, transparent 0 calc(100% - 1px), rgba(0, 140, 255, 0.45) 0) 0 0 / 34px 100%,
-    radial-gradient(70% 60% at 50% 110%, rgba(0, 102, 255, 0.6), transparent 70%),
-    #05070a;
+  background: none;
 }
 .room-t-chrome {
-  background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, rgba(0, 0, 0, 0.02) 1px 3px),
-    linear-gradient(180deg, #f6f7f9, #c9ced6 42%, #eef0f3 58%, #9aa2ae);
+  background: none;
 }
 .room-t-notte {
-  background:
-    radial-gradient(1px 1px at 20% 30%, #fff, transparent),
-    radial-gradient(1px 1px at 70% 20%, #fff, transparent),
-    radial-gradient(1.5px 1.5px at 40% 60%, #fff, transparent),
-    radial-gradient(1px 1px at 85% 55%, #fff, transparent),
-    radial-gradient(60% 60% at 80% 10%, rgba(191, 90, 242, 0.55), transparent 70%),
-    linear-gradient(180deg, #1a0f2e, #05030a);
+  background: none;
 }
 .room-hero {
   box-shadow: var(--shadow-chrome-lg);
@@ -716,13 +674,13 @@
 /* Badge: medaglie sbloccate (blu elettrico o oro) */
 .badge-medal-on {
   color: #fff;
-  background: linear-gradient(145deg, #3b82f6, #0052cc);
-  box-shadow: 0 0 16px rgba(0, 102, 255, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  background: #e0306c;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 .badge-medal-gold {
-  color: #3b2a05;
-  background: linear-gradient(145deg, #fde68a, #d4a017 55%, #fbbf24);
-  box-shadow: 0 0 16px rgba(212, 160, 23, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  color: #121214;
+  background: #c9c9ce;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 /* Fine blocco Swipe, confronto, wrapped, stanza, badge */
 
@@ -738,24 +696,17 @@
   transition: box-shadow 0.3s var(--ease-apple);
 }
 [data-beat-cover][data-playing] {
-  box-shadow:
-    0 0 calc(14px + var(--beat, 0) * 26px) color-mix(in srgb, var(--cover-glow, #0066ff) calc(45% + var(--beat, 0) * 40%), transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transform: scale(calc(1 + var(--beat, 0) * 0.06));
 }
 
 /* ---- Pulsazione su header, player e tasto play ---- */
 :root[data-beat-playing] .beat-header {
-  box-shadow: 0 calc(var(--beat, 0) * 8px) calc(var(--beat, 0) * 30px) -14px color-mix(in srgb, var(--beat-accent, #0066ff) 70%, transparent);
 }
 :root[data-beat-playing] .beat-dock {
-  box-shadow:
-    var(--shadow-chrome),
-    var(--shadow-highlight),
-    0 0 calc(var(--beat, 0) * 42px) color-mix(in srgb, var(--beat-accent, #0066ff) calc(var(--beat, 0) * 55%), transparent);
+  box-shadow: var(--shadow-chrome), var(--shadow-highlight);
 }
 :root[data-beat-playing] .beat-btn {
-  box-shadow: 0 0 calc(10px + var(--beat, 0) * 20px) color-mix(in srgb, var(--beat-accent, #0066ff) calc(35% + var(--beat, 0) * 50%), transparent);
   transform: scale(calc(1 + var(--beat, 0) * 0.05));
 }
 
@@ -793,8 +744,6 @@
   filter: brightness(calc(0.45 + var(--b) * 0.6)) saturate(0.6);
 }
 .logo3d i.front {
-  filter: drop-shadow(0 1px 1.5px rgba(17, 24, 39, 0.35))
-    drop-shadow(0 0 calc(3px + var(--beat, 0) * 10px) color-mix(in srgb, var(--beat-accent, #0066ff) 60%, transparent)) brightness(1.04);
 }
 .logo3d i.front::after,
 .logo3d i.glint {
@@ -806,12 +755,12 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.95) 45%, rgba(160, 220, 255, 0.6) 50%, transparent 62%) 0 0 / 250% 100% no-repeat;
+  background: none;
   animation: logo-shine 5.5s ease-in-out infinite;
 }
 .logo3d i.glint {
   filter: none;
-  background: radial-gradient(38% 46% at var(--gx, 35%) var(--gy, 30%), rgba(255, 255, 255, 0.95), rgba(150, 215, 255, 0.35) 42%, transparent 72%);
+  background: none;
   opacity: 0.8;
 }
 .logo3d.spin .l3-float {
@@ -863,7 +812,7 @@ body.gyro .logo3d .l3-float {
 }
 .settings-toggle[data-on] {
   background: var(--color-electric);
-  box-shadow: var(--shadow-glow-sm);
+  
 }
 .settings-toggle[data-on]::after {
   transform: translateX(19px);
@@ -876,7 +825,7 @@ body.gyro .logo3d .l3-float {
     display: block;
     overflow: hidden;
     border-radius: 14px;
-    background: linear-gradient(180deg, #ffffff, #eef1f5 45%, #d9dee6 55%, #ffffff);
+    background: #ffffff;
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(17, 24, 39, 0.05);
   }
   .skel::after {
@@ -884,15 +833,15 @@ body.gyro .logo3d .l3-float {
     position: absolute;
     inset: 0;
     transform: translateX(-100%);
-    background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.85) 45%, rgba(170, 215, 255, 0.45) 55%, transparent 80%);
+    background: none;
     animation: skel-shine 1.35s var(--ease-apple) infinite;
   }
   .skel-dark {
-    background: linear-gradient(180deg, #2a303b, #12151b);
+    background: #2a303b;
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
   }
   .skel-dark::after {
-    background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.16) 45%, rgba(0, 240, 255, 0.16) 55%, transparent 80%);
+    background: none;
   }
   /* Appare dopo un istante: sulle navigazioni veloci non lampeggia. */
   .skel-page {
@@ -942,7 +891,7 @@ body.lite .glass {
   backdrop-filter: none !important;
 }
 body.lite .glass {
-  background: linear-gradient(180deg, #ffffff, #f3f4f6);
+  background: #ffffff;
 }
 body.lite .beat-header {
   background: #f8f9fa;
@@ -958,132 +907,12 @@ body.lite .beat-btn { transform: none; }
 body.lite [data-parallax] { translate: none; }
 
 /* ------------------------------------------------------------------ */
-/* Home "Level 0": testata dei Backrooms e zone a griglia bento         */
+/* Barra in basso: pillola della sezione attiva (si sposta con una molla) */
 /* ------------------------------------------------------------------ */
 @layer components {
-  .home-hero {
-    box-shadow:
-      0 40px 80px -30px rgba(10, 8, 2, 0.55),
-      0 18px 30px -18px rgba(255, 196, 64, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
-  /* Carta da parati gialla a righe, come le stanze del Level 0 */
-  .home-hero-wall {
-    background:
-      repeating-linear-gradient(90deg, rgba(120, 96, 30, 0.35) 0 2px, transparent 2px 22px),
-      repeating-linear-gradient(90deg, rgba(255, 236, 160, 0.12) 0 1px, transparent 1px 11px),
-      linear-gradient(180deg, #b79a48, #6e5a22 55%, #2a2310);
-  }
-  /* Tubo al neon: si accende una volta tremolando, poi resta fisso */
-  .home-hero-neon {
-    background: linear-gradient(90deg, transparent, #fff6d0 12%, #ffffff 50%, #fff6d0 88%, transparent);
-    box-shadow:
-      0 0 18px 4px rgba(255, 236, 170, 0.75),
-      0 0 70px 18px rgba(255, 214, 102, 0.35);
-    animation: neon-on 1.4s steps(1, end) both;
-  }
-  @keyframes neon-on {
-    0% { opacity: 0; }
-    12% { opacity: 1; }
-    16% { opacity: 0.15; }
-    24% { opacity: 1; }
-    30% { opacity: 0.4; }
-    36%, 100% { opacity: 1; }
-  }
-  .home-hero-grain {
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-  }
-  .home-hero-name {
-    background: linear-gradient(180deg, #ffffff 0%, #f4ecd2 45%, #c9b98a 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    filter: drop-shadow(0 6px 22px rgba(255, 214, 102, 0.25));
-  }
-
-  /* Zone: ogni sezione ha la sua materia */
-  .zone-tile {
-    transform-style: preserve-3d;
-    will-change: transform;
-  }
-  .zone-tile > a {
-    box-shadow:
-      0 24px 40px -24px rgba(17, 24, 39, 0.45),
-      inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  }
-  .zone-swipe {
-    background:
-      radial-gradient(90% 120% at 100% 0%, rgba(255, 84, 189, 0.85), transparent 55%),
-      radial-gradient(80% 100% at 0% 100%, rgba(108, 63, 255, 0.9), transparent 60%),
-      linear-gradient(160deg, #2a0f3d, #0b0614);
-  }
-  .zone-rec {
-    background:
-      radial-gradient(100% 120% at 0% 0%, rgba(255, 140, 120, 0.55), transparent 55%),
-      linear-gradient(160deg, #ff3b30, #a3000d);
-  }
-  .zone-search {
-    background:
-      radial-gradient(circle at 1px 1px, rgba(17, 24, 39, 0.12) 1px, transparent 1.5px) 0 0 / 14px 14px,
-      linear-gradient(160deg, #ffffff, #e6e9ee);
-  }
-  .zone-search > span:first-child > span:first-child {
-    background: rgba(17, 24, 39, 0.06);
-  }
-  .zone-auction {
-    background:
-      radial-gradient(100% 120% at 100% 0%, rgba(255, 255, 255, 0.65), transparent 50%),
-      linear-gradient(160deg, #ffe08a, #e3a82b 70%, #b07a12);
-  }
-  .zone-kit {
-    background:
-      radial-gradient(100% 120% at 0% 0%, rgba(0, 240, 255, 0.55), transparent 55%),
-      linear-gradient(160deg, #0066ff, #001f73);
-  }
-  .zone-profile {
-    background:
-      radial-gradient(100% 120% at 100% 100%, rgba(255, 216, 102, 0.35), transparent 55%),
-      linear-gradient(160deg, #1f2937, #07080b);
-  }
-  /* Ventaglio di copertine: si apre quando la scheda viene puntata */
-  .zone-fan-card {
-    transform: rotate(calc((var(--i) - 1) * 9deg)) translateY(calc(var(--i) * 4px));
-    transition: transform 0.6s var(--ease-spring);
-  }
-  .zone-tile:hover .zone-fan-card {
-    transform: rotate(calc((var(--i) - 1) * 16deg)) translateX(calc((var(--i) - 1) * 10px)) translateY(-6px);
-  }
-  .zone-rec-dot {
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
-    animation: rec-pulse 1.6s ease-out infinite;
-  }
-  .zone-live {
-    animation: rec-pulse 1.6s ease-out infinite;
-  }
-  @keyframes rec-pulse {
-    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.65); }
-    70%, 100% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
-  }
-
-  /* Barra in basso: pillola attiva che scivola con una molla (framer-motion) */
   .tab-active-pill {
-    background: linear-gradient(180deg, rgba(0, 102, 255, 0.14), rgba(0, 102, 255, 0.06));
-    box-shadow: inset 0 0 0 1px rgba(0, 102, 255, 0.18);
+    background: var(--color-electric-50);
   }
-
-  @media (prefers-reduced-motion: reduce) {
-    .home-hero-neon,
-    .zone-rec-dot,
-    .zone-live {
-      animation: none;
-    }
-    .zone-fan-card {
-      transition: none;
-    }
-  }
-}
-body.lite .home-hero-grain {
-  display: none;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1102,7 +931,7 @@ body.lite .home-hero-grain {
     position: absolute;
     inset: -14%;
     border-radius: 48px;
-    background: radial-gradient(closest-side, var(--reel), transparent 70%);
+    background: none;
     opacity: calc(0.35 + var(--beat, 0) * 0.5);
     filter: blur(18px);
     z-index: -1;

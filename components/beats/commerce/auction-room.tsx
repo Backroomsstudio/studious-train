@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Crown, Gavel, Loader2, Radio, ShieldCheck, Timer } from "lucide-react";
+import { Gavel, Loader2, Radio, ShieldCheck, Timer } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { AUCTION } from "@/lib/beats/offers";
@@ -61,18 +61,17 @@ export function AuctionRoom({ initial }: { initial: AuctionSummary }) {
   };
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
-      <section className={cn("relative overflow-hidden rounded-[32px] p-6 sm:p-8", live ? "obsidian ring-1 ring-electric/50 shadow-glow" : "glass")}>
-        {live && <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-electric/30 blur-3xl" />}
+    <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+      <section className={cn("relative overflow-hidden rounded-[32px] p-6 sm:p-8", live ? "obsidian ring-1 ring-electric/50" : "glass")}>
         <div className="relative flex items-center gap-4">
           <button type="button" onClick={() => play(auction.beat)} aria-label={`Ascolta ${auction.beat.title}`}>
             <BeatCover beat={auction.beat} size="lg" />
           </button>
           <div className="min-w-0">
-            <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em]">
+            <p className="flex items-center gap-2 text-[11px] font-semibold">
               {live ? (
-                <span className="inline-flex items-center gap-1.5 text-deal">
-                  <span className="size-2 animate-pulse rounded-full bg-deal shadow-[0_0_10px_#ef4444]" /> {auction.live ? "In diretta su TikTok" : "Asta aperta"}
+                <span className="inline-flex items-center gap-2 text-deal">
+                  <span className="size-2 animate-pulse rounded-full bg-deal" /> {auction.live ? "In diretta su TikTok" : "Asta aperta"}
                 </span>
               ) : (
                 <span className={live ? "text-chrome-400" : "text-chrome-500"}>
@@ -81,7 +80,7 @@ export function AuctionRoom({ initial }: { initial: AuctionSummary }) {
               )}
               {auction.live && <Radio className="size-3.5" />}
             </p>
-            <h1 className="truncate font-display text-3xl font-black tracking-tight">{auction.beat.title}</h1>
+            <h1 className="truncate font-display text-3xl font-semibold tracking-tight">{auction.beat.title}</h1>
             <p className={cn("text-sm", live ? "text-chrome-300" : "text-chrome-500")}>
               Esclusiva · {auction.beat.bpm} BPM · {auction.beat.producers.map((p) => p.name).join(" & ")}
             </p>
@@ -90,34 +89,34 @@ export function AuctionRoom({ initial }: { initial: AuctionSummary }) {
 
         <div className="relative mt-8 grid grid-cols-2 gap-4">
           <div>
-            <p className={cn("text-[11px] font-bold uppercase tracking-[0.18em]", live ? "text-chrome-400" : "text-chrome-500")}>
+            <p className={cn("text-[11px] font-semibold", live ? "text-chrome-400" : "text-chrome-500")}>
               {auction.topBidCents ? "Offerta più alta" : "Base d'asta"}
             </p>
-            <p className={cn("font-display text-4xl font-black tabular-nums sm:text-5xl", live && "text-white")}>
+            <p className={cn("font-display text-4xl font-semibold tabular-nums sm:text-5xl", live && "text-white")}>
               {formatEuro(auction.topBidCents ?? auction.startPriceCents)}
             </p>
             {auction.leader && (
-              <p className={cn("mt-1 inline-flex items-center gap-1.5 text-sm font-semibold", live ? "text-electric-cyan" : "text-electric")}>
-                <Crown className="size-4" /> {auction.viewer?.isLeader || auction.viewer?.isWinner ? "Tu" : auction.leader}
+              <p className={cn("mt-2 inline-flex items-center gap-2 text-sm font-semibold", live ? "text-electric-cyan" : "text-electric")}>
+                {auction.viewer?.isLeader || auction.viewer?.isWinner ? "Tu" : auction.leader}
               </p>
             )}
           </div>
           <div className="text-right">
-            <p className={cn("text-[11px] font-bold uppercase tracking-[0.18em]", live ? "text-chrome-400" : "text-chrome-500")}>
+            <p className={cn("text-[11px] font-semibold", live ? "text-chrome-400" : "text-chrome-500")}>
               {open ? (auction.phase === "SCHEDULED" ? "Apre tra" : "Chiude tra") : "Stato"}
             </p>
             {open ? (
               <Countdown
                 to={auction.phase === "SCHEDULED" ? auction.startsAt : auction.endsAt}
-                className={cn("font-mono text-4xl font-black tabular-nums sm:text-5xl", live && endsIn < 60 ? "text-deal" : live ? "text-electric-cyan" : "")}
+                className={cn(" text-4xl font-semibold tabular-nums sm:text-5xl", live && endsIn < 60 ? "text-deal" : live ? "text-electric-cyan" : "")}
               />
             ) : (
-              <p className="font-display text-2xl font-bold">
+              <p className="font-display text-2xl font-semibold">
                 {auction.status === "PAID" ? "Venduta" : auction.status === "UNSOLD" ? "Invenduta" : "In attesa di pagamento"}
               </p>
             )}
             {live && endsIn < AUCTION.antiSnipeSeconds && (
-              <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-deal">
+              <p className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-deal">
                 <Timer className="size-3.5" /> Ogni offerta allunga di {AUCTION.antiSnipeSeconds}s
               </p>
             )}
@@ -126,9 +125,9 @@ export function AuctionRoom({ initial }: { initial: AuctionSummary }) {
 
         <div className="relative mt-8">
           {auction.viewer?.payBy ? (
-            <div className="space-y-3">
-              <p className="rounded-2xl bg-ok/15 px-4 py-3 text-sm font-semibold text-ok">
-                Hai vinto l&apos;esclusiva! Completa il pagamento entro <Countdown to={auction.viewer.payBy} className="font-mono" />, poi passa
+            <div className="space-y-4">
+              <p className="rounded-2xl bg-ok/15 px-4 py-4 text-sm font-semibold text-ok">
+                Hai vinto l&apos;esclusiva! Completa il pagamento entro <Countdown to={auction.viewer.payBy} className="" />, poi passa
                 al secondo offerente.
               </p>
               <ChromeButton
@@ -143,16 +142,16 @@ export function AuctionRoom({ initial }: { initial: AuctionSummary }) {
               {pay.error && <p className="text-center text-sm text-deal">{pay.error.message}</p>}
             </div>
           ) : auction.viewer?.isWinner && auction.status === "PAID" ? (
-            <p className="rounded-2xl bg-ok/15 px-4 py-3 text-sm font-semibold text-ok">
+            <p className="rounded-2xl bg-ok/15 px-4 py-4 text-sm font-semibold text-ok">
               L&apos;esclusiva è tua: trovi il beat con licenza Unlimited in Libreria. Ti mandiamo il contratto via email.
             </p>
           ) : canBid ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {auction.viewer?.isLeader && (
-                <p className="rounded-2xl bg-electric/15 px-4 py-2.5 text-sm font-semibold text-electric-cyan">Sei in testa: resta sintonizzato.</p>
+                <p className="rounded-2xl bg-electric/15 px-4 py-2 text-sm font-semibold text-electric-cyan">Sei in testa: resta sintonizzato.</p>
               )}
               {!live && auction.viewer?.earlyAccess && (
-                <p className="rounded-2xl bg-electric/10 px-4 py-2.5 text-sm font-semibold text-electric">
+                <p className="rounded-2xl bg-electric/10 px-4 py-2 text-sm font-semibold text-electric">
                   Prelazione {viewer?.level.name}: puoi offrire prima dell&apos;apertura.
                 </p>
               )}
@@ -165,8 +164,8 @@ export function AuctionRoom({ initial }: { initial: AuctionSummary }) {
                       type="button"
                       onClick={() => setAmount(value)}
                       className={cn(
-                        "h-10 flex-1 rounded-full text-[13px] font-bold tabular-nums transition",
-                        bid === value ? "bg-electric text-white shadow-glow-sm" : live ? "bg-white/10 text-chrome-100" : "chrome-surface text-graphite-700",
+                        "h-10 flex-1 rounded-full text-[13px] font-semibold tabular-nums transition",
+                        bid === value ? "bg-electric text-white" : live ? "bg-white/10 text-chrome-100" : "chrome-surface text-graphite-700",
                       )}
                     >
                       {formatEuro(value).replace(",00", "")}
@@ -194,7 +193,7 @@ export function AuctionRoom({ initial }: { initial: AuctionSummary }) {
               )}
             </div>
           ) : auction.phase === "SCHEDULED" ? (
-            <p className="rounded-2xl bg-chrome-100 px-4 py-3 text-sm text-chrome-500">
+            <p className="rounded-2xl bg-chrome-100 px-4 py-4 text-sm text-chrome-500">
               L&apos;asta apre il {new Date(auction.startsAt).toLocaleString("it-IT", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}.
               Dal livello Gold puoi offrire con 24 ore di anticipo.
             </p>
@@ -207,27 +206,27 @@ export function AuctionRoom({ initial }: { initial: AuctionSummary }) {
       </section>
 
       <aside className="space-y-4">
-        <section className="glass rounded-[28px] p-5" aria-labelledby="offerte">
-          <h2 id="offerte" className="font-display text-lg font-bold">
+        <section className="glass rounded-[28px] p-6" aria-labelledby="offerte">
+          <h2 id="offerte" className="font-display text-lg font-semibold">
             Offerte <span className="text-chrome-400">· {auction.bidCount}</span>
           </h2>
-          <ol className="mt-3 space-y-2" aria-live="polite">
+          <ol className="mt-4 space-y-2" aria-live="polite">
             {auction.bids.map((b, i) => (
-              <li key={`${b.at}-${b.amountCents}`} className={cn("flex items-center justify-between rounded-2xl px-3 py-2.5", i === 0 ? "bg-electric/10" : "bg-white/50")}>
+              <li key={`${b.at}-${b.amountCents}`} className={cn("flex items-center justify-between rounded-2xl px-4 py-2", i === 0 ? "bg-electric/10" : "bg-white/50")}>
                 <span className="flex items-center gap-2 font-semibold">
-                  {i === 0 && <Crown className="size-4 text-electric" />} {b.artist}
+                  {b.artist}
                 </span>
-                <span className="font-mono font-bold tabular-nums">{formatEuro(b.amountCents)}</span>
+                <span className="font-semibold tabular-nums">{formatEuro(b.amountCents)}</span>
               </li>
             ))}
             {!auction.bids.length && <li className="text-sm text-chrome-500">Nessuna offerta: la prima parte da {formatEuro(auction.startPriceCents)}.</li>}
           </ol>
         </section>
-        <section className="glass rounded-[28px] p-5 text-sm text-chrome-500">
-          <h2 className="flex items-center gap-2 font-display text-base font-bold text-graphite">
+        <section className="glass rounded-[28px] p-6 text-sm text-chrome-500">
+          <h2 className="flex items-center gap-2 font-display text-base font-semibold text-graphite">
             <ShieldCheck className="size-4 text-electric" /> Come funziona
           </h2>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
+          <ul className="mt-2 list-disc space-y-2 pl-6">
             <li>Rilancio minimo {formatEuro(auction.minIncrementCents)}.</li>
             <li>Un&apos;offerta nell&apos;ultimo minuto allunga l&apos;asta di {AUCTION.antiSnipeSeconds} secondi.</li>
             <li>Chi vince paga entro {AUCTION.paymentHours} ore, altrimenti l&apos;esclusiva passa al secondo.</li>

@@ -32,7 +32,7 @@ export function GenreTabs({
 
   return (
     <div className="space-y-2">
-      <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1 lg:mx-0 lg:grid lg:grid-cols-6 lg:px-0" role="tablist" aria-label="Generi">
+      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:grid lg:grid-cols-6 lg:px-0" role="tablist" aria-label="Generi">
         {parents.map((g) => {
           const on = active?.slug === g.slug;
           const color = genreColor(g.slug);
@@ -45,24 +45,24 @@ export function GenreTabs({
               onClick={() => onSelect(on ? [] : [g.slug])}
               style={{ "--g": color } as React.CSSProperties}
               className={cn(
-                "relative flex h-20 w-36 shrink-0 flex-col justify-between overflow-hidden rounded-2xl p-3 text-left transition active:scale-[0.97] lg:w-auto",
-                "bg-[radial-gradient(120%_120%_at_100%_0%,color-mix(in_srgb,var(--g)_55%,transparent),transparent_60%),linear-gradient(160deg,#1d222c,#05070a)] text-white",
-                on ? "ring-2 ring-[var(--g)] shadow-[0_0_24px_color-mix(in_srgb,var(--g)_55%,transparent)]" : "opacity-90 hover:opacity-100",
+                "relative flex h-20 w-36 shrink-0 flex-col justify-between overflow-hidden rounded-2xl p-4 text-left transition active:scale-[0.97] lg:w-auto",
+                "chrome-pink",
+                on ? "ring-2 ring-electric ring-offset-2 ring-offset-chrome-50" : "opacity-90 hover:opacity-100",
               )}
             >
-              <span className="font-display text-lg font-bold tracking-tight">{g.name}</span>
+              <span className="font-display text-lg font-semibold tracking-tight">{g.name}</span>
               <span className="text-xs font-semibold text-white/70">{countFor(facets, g.slug)} beat</span>
             </button>
           );
         })}
       </div>
       {subs.length > 0 && active && (
-        <div className="flex flex-wrap items-center gap-2 pl-1" role="group" aria-label={`Sottogeneri di ${active.name}`}>
+        <div className="flex flex-wrap items-center gap-2 pl-2" role="group" aria-label={`Sottogeneri di ${active.name}`}>
           <button
             type="button"
             onClick={() => onSelect([active.slug])}
             className={cn(
-              "h-8 rounded-full px-3 text-xs font-semibold transition",
+              "h-8 rounded-full px-4 text-xs font-semibold transition",
               selected.includes(active.slug) ? "bg-graphite text-white" : "chrome-surface text-graphite-700",
             )}
           >
@@ -74,7 +74,7 @@ export function GenreTabs({
               type="button"
               onClick={() => onSelect([s.slug])}
               className={cn(
-                "h-8 rounded-full px-3 text-xs font-semibold transition",
+                "h-8 rounded-full px-4 text-xs font-semibold transition",
                 selected.includes(s.slug) ? "bg-graphite text-white" : "chrome-surface text-graphite-700",
               )}
             >
@@ -98,18 +98,18 @@ export function GenreShelves({ facets, onSelect }: { facets: Facets; onSelect: (
   });
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-8">
       {parents.map((g, i) => {
         const result = queries[i]?.data;
         const color = genreColor(g.slug);
         const subs = facets.genres.filter((s) => s.parent === g.slug).map((s) => s.name);
         return (
           <section key={g.slug} aria-labelledby={`shelf-${g.slug}`} className="space-y-2">
-            <div className="flex items-end justify-between gap-3 border-b border-chrome-300/60 pb-2">
-              <div className="flex items-center gap-3">
-                <span className="h-9 w-1.5 rounded-full" style={{ background: color, boxShadow: `0 0 12px ${color}` }} aria-hidden />
+            <div className="flex items-end justify-between gap-4 border-b border-chrome-300/60 pb-2">
+              <div className="flex items-center gap-4">
+                <span className="h-9 w-1.5 rounded-full" style={{ background: color }} aria-hidden />
                 <div>
-                  <h3 id={`shelf-${g.slug}`} className="font-display text-xl font-bold tracking-tight">
+                  <h3 id={`shelf-${g.slug}`} className="font-display text-xl font-semibold tracking-tight">
                     {g.name} <span className="text-chrome-400">· {result?.total ?? countFor(facets, g.slug)}</span>
                   </h3>
                   {subs.length > 0 && <p className="text-xs text-chrome-500">anche {subs.join(", ")}</p>}
@@ -118,7 +118,7 @@ export function GenreShelves({ facets, onSelect }: { facets: Facets; onSelect: (
               <button
                 type="button"
                 onClick={() => onSelect([g.slug])}
-                className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-electric hover:underline"
+                className="inline-flex shrink-0 items-center gap-2 text-[13px] font-semibold text-electric hover:underline"
               >
                 Vedi tutti <ArrowRight className="size-3.5" />
               </button>

@@ -54,7 +54,7 @@ function SearchField({
   }, [value]);
 
   return (
-    <label className="glass flex h-12 min-w-0 flex-1 items-center gap-3 rounded-full px-4 focus-within:ring-2 focus-within:ring-electric/50 focus-within:shadow-glow-sm">
+    <label className="glass flex h-12 min-w-0 flex-1 items-center gap-4 rounded-full px-4 focus-within:ring-2 focus-within:ring-electric/50">
       <Search className="size-4 shrink-0 text-chrome-500" aria-hidden />
       <span className="sr-only">Cerca beat</span>
       <input
@@ -80,7 +80,7 @@ function SearchField({
 function Section({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={className}>
-      <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-chrome-500">{title}</p>
+      <p className="mb-2 text-[11px] font-semibold text-chrome-500">{title}</p>
       {children}
     </div>
   );
@@ -125,7 +125,7 @@ export function FilterBar({
   const residents = facets.producers.filter((p) => p.isResident);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center gap-2">
         <SearchField value={filters.q ?? ""} onChange={(q) => onChange({ q: q.trim() || undefined })} autoFocus={autoFocusSearch} onFocus={onSearchFocus} />
         <button
@@ -135,20 +135,20 @@ export function FilterBar({
           aria-controls="beat-filters"
           className={cn(
             "relative inline-flex h-12 items-center gap-2 rounded-full px-4 text-sm font-semibold transition lg:hidden",
-            open || active ? "bg-graphite text-white shadow-glow-sm" : "chrome-surface text-graphite-700",
+            open || active ? "bg-graphite text-white" : "chrome-surface text-graphite-700",
           )}
         >
           <SlidersHorizontal className="size-4" />
           <span className="sr-only sm:not-sr-only">Filtri</span>
           {active > 0 && (
-            <span className="grid size-5 place-items-center rounded-full bg-electric text-[11px] font-bold text-white">{active}</span>
+            <span className="grid size-5 place-items-center rounded-full bg-electric text-[11px] font-semibold text-white">{active}</span>
           )}
         </button>
       </div>
 
       {/* Produttori resident: sempre visibili, come le pillole del mockup */}
       {quickChips && (
-        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0" role="group" aria-label="Produttori">
+        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-wrap lg:px-0" role="group" aria-label="Produttori">
           <Chip active={!filters.producers.length} onClick={() => onChange({ producers: [] })}>
             Tutti
           </Chip>
@@ -159,9 +159,9 @@ export function FilterBar({
               accent={p.accentColor}
               onClick={() => onChange({ producers: toggle(filters.producers, p.slug) })}
             >
-              <span className="size-2 rounded-full" style={{ background: p.accentColor ?? "#0066ff" }} aria-hidden />
+              <span className="size-2 rounded-full" style={{ background: p.accentColor ?? "#8e8e95" }} aria-hidden />
               {p.name}
-              <span className="text-[11px] font-medium opacity-60">{p.count}</span>
+              <span className="text-[11px] font-normal opacity-60">{p.count}</span>
             </Chip>
           ))}
           <Chip
@@ -176,7 +176,7 @@ export function FilterBar({
 
       <div
         id="beat-filters"
-        className={cn("glass grid gap-5 rounded-3xl p-4 sm:p-5 lg:grid lg:grid-cols-[1.1fr_1fr] lg:gap-x-8", open ? "grid" : "hidden")}
+        className={cn("glass grid gap-6 rounded-3xl p-4 sm:p-6 lg:grid lg:grid-cols-[1.1fr_1fr] lg:gap-x-8", open ? "grid" : "hidden")}
       >
         <Section title={`BPM · ${bpm[0]}–${bpm[1]}`}>
           <RangeSlider
@@ -188,7 +188,7 @@ export function FilterBar({
             label="Intervallo BPM"
             thumbLabels={["BPM minimo", "BPM massimo"]}
           />
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-2">
             {[
               ["Lento", 60, 95],
               ["Medio", 95, 125],
@@ -200,7 +200,7 @@ export function FilterBar({
                 type="button"
                 onClick={() => onChange({ bpmMin: Number(lo), bpmMax: Number(hi) })}
                 className={cn(
-                  "rounded-full px-2.5 py-1 text-[11px] font-semibold transition",
+                  "rounded-full px-2 py-2 text-[11px] font-semibold transition",
                   filters.bpmMin === lo && filters.bpmMax === hi ? "bg-electric text-white" : "bg-white/70 text-chrome-500 hover:text-graphite",
                 )}
               >
@@ -218,7 +218,7 @@ export function FilterBar({
               <select
                 value={filters.sort}
                 onChange={(e) => onChange({ sort: e.target.value as SortOrder })}
-                className="cursor-pointer bg-transparent pr-1 outline-none"
+                className="cursor-pointer bg-transparent pr-2 outline-none"
               >
                 {SORTS.filter((s) => s !== "relevance" || filters.q).map((s) => (
                   <option key={s} value={s}>
@@ -238,7 +238,7 @@ export function FilterBar({
 
         <Section title="Type beat" className="lg:col-span-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <label className="chrome-surface flex h-9 items-center gap-2 rounded-full px-3 sm:w-56">
+            <label className="chrome-surface flex h-9 items-center gap-2 rounded-full px-4 sm:w-56">
               <Search className="size-3.5 text-chrome-400" aria-hidden />
               <span className="sr-only">Cerca artista di riferimento</span>
               <input
@@ -248,13 +248,13 @@ export function FilterBar({
                 className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-chrome-400"
               />
             </label>
-            <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Type beat">
+            <div className="no-scrollbar flex gap-2 overflow-x-auto pb-2" role="group" aria-label="Type beat">
               {typeTags.slice(0, 12).map((t) => (
                 <Chip
                   key={t.slug}
                   active={filters.types.includes(t.slug)}
                   onClick={() => onChange({ types: toggle(filters.types, t.slug) })}
-                  className="h-8 px-3 text-xs"
+                  className="h-8 px-4 text-xs"
                 >
                   {t.name} Type
                 </Chip>
@@ -266,13 +266,13 @@ export function FilterBar({
       </div>
 
       {showCount && (
-        <div className="flex items-center justify-between px-1 text-[13px] text-chrome-500" aria-live="polite">
+        <div className="flex items-center justify-between px-2 text-[13px] text-chrome-500" aria-live="polite">
           <span>
             {fetching ? "Ricerca…" : `${total} beat`}
             {filters.q && !fetching && ` per “${filters.q}”`}
           </span>
           {(active > 0 || filters.q) && (
-            <button type="button" onClick={onReset} className="inline-flex items-center gap-1 font-semibold text-electric hover:underline">
+            <button type="button" onClick={onReset} className="inline-flex items-center gap-2 font-semibold text-electric hover:underline">
               <RotateCcw className="size-3.5" /> Azzera filtri
             </button>
           )}

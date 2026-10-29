@@ -1,6 +1,5 @@
 "use client";
 
-import { Zap } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -27,32 +26,32 @@ export function StoreHeader({ demo }: { demo: boolean }) {
   const initial = (name || "?").charAt(0).toUpperCase();
 
   return (
-    <header className="beat-header sticky top-0 z-30 border-b border-white/60 bg-white/55 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 lg:h-[72px] lg:gap-4 lg:px-6">
-        <Link href="/beats" aria-label="Backrooms Beat Store, home" className="-my-1 shrink-0 rounded-xl p-0.5">
+    <header className="beat-header sticky top-0 z-30 border-b border-chrome-200 bg-white pt-[env(safe-area-inset-top)]">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 lg:h-[72px] lg:gap-4 lg:px-6">
+        <Link href="/beats" aria-label="Backrooms Beat Store, home" className="-my-2 shrink-0 rounded-xl p-0">
           <Logo3D width={46} />
         </Link>
 
         {/* Mobile: il nome d'artista è il protagonista della barra */}
         {viewer ? (
-          <Link href="/beats/profilo" className="flex min-w-0 flex-1 items-center gap-2.5 lg:hidden" aria-label="Il tuo profilo">
-            <span className="chrome-surface grid size-10 shrink-0 place-items-center rounded-full font-display text-base font-bold text-graphite ring-2 ring-electric/40">
+          <Link href="/beats/profilo" className="flex min-w-0 flex-1 items-center gap-2 lg:hidden" aria-label="Il tuo profilo">
+            <span className="chrome-surface grid size-10 shrink-0 place-items-center rounded-full font-display text-base font-semibold text-graphite ring-2 ring-electric/40">
               {initial}
             </span>
             <span className="min-w-0">
-              <span className="block truncate font-display text-[17px] font-bold leading-tight text-graphite">{name}</span>
-              <span className="block truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-chrome-500">
+              <span className="block truncate font-display text-[17px] font-semibold leading-tight text-graphite">{name}</span>
+              <span className="block truncate text-[11px] font-semibold text-chrome-500">
                 {plan ? plan.name : "Nessun piano"}
               </span>
             </span>
           </Link>
         ) : (
-          <Link href="/beats" className="min-w-0 flex-1 truncate font-display text-sm font-bold uppercase tracking-[0.2em] lg:hidden">
+          <Link href="/beats" className="min-w-0 flex-1 truncate font-display text-sm font-semibold lg:hidden">
             Backrooms <span className="text-electric">Beats</span>
           </Link>
         )}
 
-        <nav aria-label="Sezioni" className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 lg:flex xl:gap-1">
+        <nav aria-label="Sezioni" className="hidden min-w-0 flex-1 items-center justify-center gap-0 lg:flex xl:gap-2">
           {NAV_ITEMS.map((item) => {
             const active = item.match(pathname);
             return (
@@ -61,8 +60,8 @@ export function StoreHeader({ demo }: { demo: boolean }) {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative isolate inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition-colors xl:px-3.5",
-                  active ? "text-white" : item.center ? "text-[#d70015] hover:bg-white/70" : "text-graphite-700 hover:bg-white/70",
+                  "relative isolate inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors xl:px-4",
+                  active ? "text-white" : item.center ? "text-[#c0245a] hover:bg-white/70" : "text-graphite-700 hover:bg-white/70",
                 )}
               >
                 {active && (
@@ -72,7 +71,7 @@ export function StoreHeader({ demo }: { demo: boolean }) {
                     aria-hidden
                     className={cn(
                       "absolute inset-0 -z-10 rounded-full",
-                      item.center ? "bg-[#ff3b30] shadow-[0_0_16px_rgba(255,59,48,0.45)]" : "bg-graphite shadow-glow-sm",
+                      item.center ? "bg-[#e0306c]" : "bg-graphite",
                     )}
                   />
                 )}
@@ -94,14 +93,14 @@ export function StoreHeader({ demo }: { demo: boolean }) {
             <Link
               href="/beats/profilo"
               aria-label="Il tuo profilo"
-              className="glass hidden h-11 max-w-[15rem] items-center gap-2.5 rounded-full py-1 pl-1 pr-4 transition hover:shadow-glow-sm lg:flex"
+              className="glass hidden h-11 max-w-[15rem] items-center gap-2 rounded-full py-2 pl-2 pr-4 transition lg:flex"
             >
-              <span className="chrome-surface grid size-9 shrink-0 place-items-center rounded-full font-display text-sm font-bold text-graphite ring-2 ring-electric/40">
+              <span className="chrome-surface grid size-9 shrink-0 place-items-center rounded-full font-display text-sm font-semibold text-graphite ring-2 ring-electric/40">
                 {initial}
               </span>
               <span className="min-w-0 leading-tight">
-                <span className="block truncate font-display text-[15px] font-bold text-graphite">{name}</span>
-                {plan && <span className="block truncate text-[10px] font-bold uppercase tracking-[0.12em] text-electric">{plan.name}</span>}
+                <span className="block truncate font-display text-[15px] font-semibold text-graphite">{name}</span>
+                {plan && <span className="block truncate text-[10px] font-semibold text-electric">{plan.name}</span>}
               </span>
             </Link>
           )}
@@ -110,9 +109,8 @@ export function StoreHeader({ demo }: { demo: boolean }) {
             <Link
               href="/beats/piani"
               aria-label={`${viewer.creditBalance} crediti disponibili`}
-              className="chrome-surface inline-flex h-11 items-center gap-1.5 rounded-full px-3.5 font-mono text-[15px] font-bold tabular-nums text-graphite ring-1 ring-electric/30 shadow-glow-sm transition hover:shadow-glow"
+              className="chrome-surface inline-flex h-11 items-center gap-2 rounded-full px-4 text-[15px] font-semibold tabular-nums text-graphite ring-1 ring-electric/30 transition"
             >
-              <Zap className="size-4 fill-electric text-electric" aria-hidden />
               {viewer.creditBalance}
             </Link>
           ) : (

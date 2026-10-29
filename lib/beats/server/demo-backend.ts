@@ -62,7 +62,7 @@ export function demoLedger(s: DemoState, entry: Omit<LedgerEntry, "id" | "create
 export function state(): DemoState {
   if (globalForDemo.beatsDemoState) return globalForDemo.beatsDemoState;
   const now = Date.now();
-  // Saldo iniziale come nel mockup (45 ⚡): rinnovo VIP Resident + rollover, meno un WAV Lease,
+  // Saldo iniziale come nel mockup (45 crediti): rinnovo VIP Resident + rollover, meno un WAV Lease,
   // più 5 crediti di un invito nel portafoglio.
   const grant = planCycleGrant({ tier: DEMO_TIER, balance: 9, reason: "renewal", grantedThisPeriod: 0 });
   const spent = LICENSES.WAV_LEASE.credits;

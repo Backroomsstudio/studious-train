@@ -1,4 +1,4 @@
-import { DoorOpen, Download, Gift, Package, Sparkles, Zap } from "lucide-react";
+import { DoorOpen, Download, Gift, Package, CalendarDays } from "lucide-react";
 import { BadgesGrid } from "@/components/beats/engage/badges-grid";
 import { MembershipPass } from "@/components/beats/engage/membership-pass";
 import { MyDemos } from "@/components/beats/recorder/my-demos";
@@ -81,18 +81,17 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       <div className="flex items-end justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
           <span
-            className="grid size-16 shrink-0 place-items-center rounded-[22px] font-display text-3xl font-black text-white sm:size-20"
-            style={{ background: `linear-gradient(145deg, ${viewer.level.color}, #111827)`, boxShadow: `0 12px 30px -10px ${viewer.level.color}` }}
-            aria-hidden
+            className="chrome-pink grid size-16 shrink-0 place-items-center rounded-[24px] font-display text-3xl font-semibold sm:size-20"
+                        aria-hidden
           >
             {(viewer.artistName ?? viewer.name).charAt(0).toUpperCase()}
           </span>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-electric">Il tuo profilo</p>
-            <h1 className="chrome-text truncate font-display text-[clamp(2.4rem,9vw,4.5rem)] font-black leading-none tracking-tight">
+            <p className="text-[11px] font-semibold text-electric">Il tuo profilo</p>
+            <h1 className="chrome-text truncate font-display text-[clamp(2.4rem,9vw,4.5rem)] font-semibold leading-none tracking-tight">
               {viewer.artistName ?? viewer.name}
             </h1>
-            <p className="mt-1 text-sm text-chrome-500">
+            <p className="mt-2 text-sm text-chrome-500">
               {plan?.name ?? "Nessun piano"} · Resident {viewer.level.name} · {new Set(library.map((e) => e.beat.id)).size} beat sbloccati
             </p>
           </div>
@@ -120,17 +119,17 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       </nav>
 
       {notice && (
-        <p role="status" className="rounded-2xl bg-ok/10 px-4 py-3 text-sm font-semibold text-ok">
+        <p role="status" className="rounded-2xl bg-ok/10 px-4 py-4 text-sm font-semibold text-ok">
           {NOTICES[notice]}
         </p>
       )}
 
-      <section id="piano" className="obsidian grid scroll-mt-24 gap-5 rounded-[28px] p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6" aria-label="Piano e crediti">
+      <section id="piano" className="obsidian grid scroll-mt-24 gap-6 rounded-[28px] p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6" aria-label="Piano e crediti">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-chrome-400">Il tuo piano</p>
-          <p className="mt-1 font-display text-2xl font-bold">{plan?.name ?? "Nessun abbonamento"}</p>
+          <p className="text-[11px] font-semibold text-chrome-400">Il tuo piano</p>
+          <p className="mt-2 font-display text-2xl font-semibold">{plan?.name ?? "Nessun abbonamento"}</p>
           {viewer.plan && (
-            <p className="mt-1 text-sm text-chrome-300">
+            <p className="mt-2 text-sm text-chrome-300">
               {viewer.plan.pausedUntil
                 ? `In pausa fino al ${formatDay(viewer.plan.pausedUntil)}`
                 : `${viewer.plan.cancelAtPeriodEnd ? "Termina" : "Si rinnova"} il ${formatDay(viewer.plan.renewsAt)}`}
@@ -138,11 +137,10 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
               {viewer.plan.interval === "YEAR" && " · annuale"}
             </p>
           )}
-          <p className="mt-4 inline-flex items-center gap-2 font-mono text-3xl font-black text-electric-cyan drop-shadow-[0_0_12px_rgba(0,240,255,0.5)]">
-            <Zap className="size-6 fill-current" /> {viewer.creditBalance}
-            <span className="font-sans text-sm font-medium text-chrome-400">crediti</span>
+          <p className="mt-4 inline-flex items-center gap-2 text-3xl font-semibold text-electric-cyan"> {viewer.creditBalance}
+            <span className="font-sans text-sm font-normal text-chrome-400">crediti</span>
           </p>
-          <p className="mt-1 text-xs text-chrome-400">
+          <p className="mt-2 text-xs text-chrome-400">
             {viewer.credits.subscription} del piano (rollover) · {viewer.credits.wallet} nel portafoglio (non scadono)
           </p>
         </div>
@@ -173,22 +171,22 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
 
       <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr] [&>*]:min-w-0">
         <MembershipPass />
-        <div className="grid gap-3">
-          <Link href="/beats/wrapped" className="obsidian group flex items-center gap-4 rounded-[24px] p-4 transition hover:shadow-glow-sm">
+        <div className="grid gap-4">
+          <Link href="/beats/wrapped" className="obsidian group flex items-center gap-4 rounded-[24px] p-4 transition">
             <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-electric/20 text-electric-cyan">
-              <Sparkles className="size-5" aria-hidden />
+              <CalendarDays className="size-5" aria-hidden />
             </span>
             <span className="min-w-0">
-              <span className="block font-display font-bold">Il tuo anno su Backrooms</span>
+              <span className="block font-display font-semibold">Il tuo anno su Backrooms</span>
               <span className="text-sm text-chrome-400">Ore di ascolto, produttore e genere preferiti, da condividere</span>
             </span>
           </Link>
-          <Link href="/beats/stanza" className="glass group flex items-center gap-4 rounded-[24px] p-4 transition hover:shadow-glow-sm">
+          <Link href="/beats/stanza" className="glass group flex items-center gap-4 rounded-[24px] p-4 transition">
             <span className="chrome-surface grid size-12 shrink-0 place-items-center rounded-2xl text-electric">
               <DoorOpen className="size-5" aria-hidden />
             </span>
             <span className="min-w-0">
-              <span className="block font-display font-bold">La tua stanza</span>
+              <span className="block font-display font-semibold">La tua stanza</span>
               <span className="text-sm text-chrome-500">Il tuo profilo d&apos;artista, con il tema che scegli tu</span>
             </span>
           </Link>
@@ -204,8 +202,8 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       </div>
 
       {orders.length > 0 && (
-        <section aria-labelledby="ordini-title" className="space-y-3">
-          <h2 id="ordini-title" className="font-display text-xl font-bold">
+        <section aria-labelledby="ordini-title" className="space-y-4">
+          <h2 id="ordini-title" className="font-display text-xl font-semibold">
             Ordini allo studio <span className="text-chrome-400">· {orders.length}</span>
           </h2>
           <ul className="space-y-2">
@@ -234,13 +232,13 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       {(ownedProducts.length > 0 || giftCards.length > 0) && (
         <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
           {ownedProducts.length > 0 && (
-            <section aria-labelledby="kit-title" className="glass rounded-[28px] p-5">
-              <h2 id="kit-title" className="flex items-center gap-2 font-display text-xl font-bold">
+            <section aria-labelledby="kit-title" className="glass rounded-[28px] p-6">
+              <h2 id="kit-title" className="flex items-center gap-2 font-display text-xl font-semibold">
                 <Package className="size-5 text-electric" /> Kit e preset
               </h2>
-              <ul className="mt-3 space-y-2">
+              <ul className="mt-4 space-y-2">
                 {ownedProducts.map((p) => (
-                  <li key={p.id} className="flex items-center justify-between gap-3">
+                  <li key={p.id} className="flex items-center justify-between gap-4">
                     <span className="min-w-0">
                       <span className="block truncate font-semibold">{p.title}</span>
                       <span className="text-xs text-chrome-500">{PRODUCT_KINDS[p.kind]}</span>
@@ -248,7 +246,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
                     <a
                       href={`/api/products/${encodeURIComponent(p.id)}/download`}
                       download
-                      className="chrome-surface inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold hover:shadow-glow-sm"
+                      className="chrome-surface inline-flex h-9 items-center gap-2 rounded-full px-4 text-xs font-semibold"
                     >
                       <Download className="size-3.5 text-electric" /> ZIP
                     </a>
@@ -258,15 +256,15 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
             </section>
           )}
           {giftCards.length > 0 && (
-            <section aria-labelledby="gift-title" className="glass rounded-[28px] p-5">
-              <h2 id="gift-title" className="flex items-center gap-2 font-display text-xl font-bold">
+            <section aria-labelledby="gift-title" className="glass rounded-[28px] p-6">
+              <h2 id="gift-title" className="flex items-center gap-2 font-display text-xl font-semibold">
                 <Gift className="size-5 text-studio" /> Gift card comprate
               </h2>
-              <ul className="mt-3 space-y-2">
+              <ul className="mt-4 space-y-2">
                 {giftCards.map((g) => (
-                  <li key={g.id} className="flex items-center justify-between gap-3">
+                  <li key={g.id} className="flex items-center justify-between gap-4">
                     <span className="min-w-0">
-                      <code className="block font-mono text-sm font-bold tracking-wider">{g.code}</code>
+                      <code className="block text-sm font-semibold">{g.code}</code>
                       <span className="text-xs text-chrome-500">
                         {g.credits} crediti{g.recipientName ? ` · per ${g.recipientName}` : ""}
                       </span>
@@ -281,14 +279,14 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       )}
 
       {customizations.length > 0 && (
-        <section aria-labelledby="custom-title" className="space-y-3">
-          <h2 id="custom-title" className="font-display text-xl font-bold">
+        <section aria-labelledby="custom-title" className="space-y-4">
+          <h2 id="custom-title" className="font-display text-xl font-semibold">
             Le tue personalizzazioni <span className="text-chrome-400">· {customizations.length}</span>
           </h2>
           <ul className="space-y-2">
             {customizations.map((c) => (
-              <li key={c.id} className="glass flex flex-col gap-3 rounded-2xl p-3 sm:flex-row sm:items-center">
-                <Link href={`/beats/${c.beat.slug}`} className="flex min-w-0 flex-1 items-center gap-3">
+              <li key={c.id} className="glass flex flex-col gap-4 rounded-2xl p-4 sm:flex-row sm:items-center">
+                <Link href={`/beats/${c.beat.slug}`} className="flex min-w-0 flex-1 items-center gap-4">
                   <BeatCover beat={c.beat} />
                   <span className="min-w-0">
                     <span className="block truncate font-display font-semibold">{c.beat.title} · su misura</span>
@@ -312,15 +310,15 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         </section>
       )}
 
-      <section id="licenze" aria-labelledby="licenze-title" className="scroll-mt-24 space-y-3">
-        <h2 id="licenze-title" className="font-display text-xl font-bold">
+      <section id="licenze" aria-labelledby="licenze-title" className="scroll-mt-24 space-y-4">
+        <h2 id="licenze-title" className="font-display text-xl font-semibold">
           Le tue licenze <span className="text-chrome-400">· {library.length}</span>
         </h2>
         {library.length ? (
           <ul className="space-y-2">
             {library.map(({ beat, license }) => (
-              <li key={license.id} className="glass flex flex-col gap-3 rounded-2xl p-3 sm:flex-row sm:items-center">
-                <Link href={`/beats/${beat.slug}`} className="flex min-w-0 flex-1 items-center gap-3">
+              <li key={license.id} className="glass flex flex-col gap-4 rounded-2xl p-4 sm:flex-row sm:items-center">
+                <Link href={`/beats/${beat.slug}`} className="flex min-w-0 flex-1 items-center gap-4">
                   <BeatCover beat={beat} />
                   <span className="min-w-0">
                     <span className="block truncate font-display font-semibold">{beat.title}</span>
@@ -335,7 +333,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
                       key={asset}
                       download
                       href={`/api/downloads?grant=${issueDownloadGrant({ userId: viewer.id, licenseId: license.id, asset })}`}
-                      className="chrome-surface inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold transition hover:shadow-glow-sm"
+                      className="chrome-surface inline-flex h-9 items-center gap-2 rounded-full px-4 text-xs font-semibold transition"
                     >
                       <Download className="size-3.5 text-electric" /> {asset}
                     </a>
@@ -345,17 +343,17 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
             ))}
           </ul>
         ) : (
-          <p className="glass rounded-2xl p-5 text-sm text-chrome-500">
+          <p className="glass rounded-2xl p-6 text-sm text-chrome-500">
             Non hai ancora sbloccato beat. <Link href="/beats/cerca" className="font-semibold text-electric">Esplora il catalogo</Link>.
           </p>
         )}
       </section>
 
-      <section id="movimenti" aria-labelledby="movimenti-title" className="glass scroll-mt-24 rounded-[28px] p-5">
-        <h2 id="movimenti-title" className="font-display text-xl font-bold">Movimenti crediti</h2>
-        <ul className="mt-3 divide-y divide-chrome-200">
+      <section id="movimenti" aria-labelledby="movimenti-title" className="glass scroll-mt-24 rounded-[28px] p-6">
+        <h2 id="movimenti-title" className="font-display text-xl font-semibold">Movimenti crediti</h2>
+        <ul className="mt-4 divide-y divide-chrome-200">
           {ledger.map((t) => (
-            <li key={t.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+            <li key={t.id} className="flex items-center justify-between gap-4 py-2 text-sm">
               <span className="min-w-0">
                 <span className="block truncate font-semibold">{t.description ?? LEDGER_LABELS[t.type]}</span>
                 <span className="text-xs text-chrome-500">
@@ -363,19 +361,19 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
                 </span>
               </span>
               <span className="text-right">
-                <GlowBadge tone={t.amount > 0 ? "ok" : "chrome"} className={cn("font-mono", t.amount < 0 && "text-graphite")}>
+                <GlowBadge tone={t.amount > 0 ? "ok" : "chrome"} className={cn("", t.amount < 0 && "text-graphite")}>
                   {t.amount > 0 ? `+${t.amount}` : t.amount}
                 </GlowBadge>
-                <span className="mt-1 block text-[11px] text-chrome-500">saldo {t.balanceAfter}</span>
+                <span className="mt-2 block text-[11px] text-chrome-500">saldo {t.balanceAfter}</span>
               </span>
             </li>
           ))}
-          {!ledger.length && <li className="py-3 text-sm text-chrome-500">Nessun movimento.</li>}
+          {!ledger.length && <li className="py-4 text-sm text-chrome-500">Nessun movimento.</li>}
         </ul>
       </section>
 
-      <section id="impostazioni" aria-labelledby="impostazioni-title" className="scroll-mt-24 space-y-3">
-        <h2 id="impostazioni-title" className="font-display text-xl font-bold">
+      <section id="impostazioni" aria-labelledby="impostazioni-title" className="scroll-mt-24 space-y-4">
+        <h2 id="impostazioni-title" className="font-display text-xl font-semibold">
           Impostazioni
         </h2>
         <SettingsCard />

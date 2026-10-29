@@ -37,7 +37,7 @@ export function SkeletonPage({ children, className }: { children: ReactNode; cla
 /** Intestazione di pagina: etichetta, titolo cromato grande e riga di testo. */
 export function SkeletonHeading({ lines = 1, className }: { lines?: number; className?: string }) {
   return (
-    <div className={cn("grid max-w-2xl gap-2.5", className)}>
+    <div className={cn("grid max-w-2xl gap-2", className)}>
       <Skeleton w={110} h={10} className="rounded-md" />
       <Skeleton w="min(420px, 72%)" h={44} className="rounded-xl" />
       {Array.from({ length: lines }, (_, i) => (
@@ -50,9 +50,9 @@ export function SkeletonHeading({ lines = 1, className }: { lines?: number; clas
 /** Righe di beat con la stessa sagoma di TrackRow: copertina, titolo e produttori, prezzo. */
 export function SkeletonRows({ count = 5, className }: { count?: number; className?: string }) {
   return (
-    <ul aria-hidden className={cn("flex flex-col gap-1", className)}>
+    <ul aria-hidden className={cn("flex flex-col gap-2", className)}>
       {Array.from({ length: count }, (_, i) => (
-        <li key={i} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl px-2.5 py-2.5 sm:gap-4 sm:px-3 lg:grid-cols-[3.5rem_minmax(0,1.3fr)_minmax(0,1.6fr)_auto]">
+        <li key={i} className="grid grid-cols-[auto_1fr_auto] items-center gap-4 rounded-2xl px-2 py-2 sm:gap-4 sm:px-4 lg:grid-cols-[3.5rem_minmax(0,1.3fr)_minmax(0,1.6fr)_auto]">
           <Skeleton className="size-14 rounded-2xl" />
           <span className="grid min-w-0 gap-2">
             <Skeleton w={`${48 + ((i * 17) % 30)}%`} h={14} className="rounded-md" />
@@ -69,7 +69,7 @@ export function SkeletonRows({ count = 5, className }: { count?: number; classNa
 /** Scaffale orizzontale di copertine (Nuove entrate). */
 export function SkeletonShelf({ count = 5 }: { count?: number }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="grid gap-2">
         <Skeleton w={120} h={10} className="rounded-md" />
         <Skeleton w={220} h={26} className="rounded-lg" />
@@ -92,12 +92,12 @@ export function SkeletonCards({ count = 3, className, media = true }: { count?: 
   return (
     <div aria-hidden className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}>
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="glass grid gap-3 rounded-[26px] p-5">
+        <div key={i} className="glass grid gap-4 rounded-[26px] p-6">
           {media && <Skeleton h={130} className="w-full rounded-[18px]" />}
           <Skeleton w="60%" h={18} className="rounded-md" />
           <Skeleton w="88%" h={11} className="rounded-md" />
           <Skeleton w="72%" h={11} className="rounded-md" />
-          <Skeleton h={44} className="mt-1 w-full rounded-full" />
+          <Skeleton h={44} className="mt-2 w-full rounded-full" />
         </div>
       ))}
     </div>
@@ -107,7 +107,7 @@ export function SkeletonCards({ count = 3, className, media = true }: { count?: 
 /** Pannello in ossidiana (beat del giorno, piano e crediti, asta in corso). */
 export function SkeletonStage({ className, minHeight = 220, children }: { className?: string; minHeight?: number; children?: ReactNode }) {
   return (
-    <div aria-hidden className={cn("obsidian grid content-end gap-3 rounded-[28px] p-5 sm:p-6", className)} style={{ minHeight }}>
+    <div aria-hidden className={cn("obsidian grid content-end gap-4 rounded-[28px] p-6 sm:p-6", className)} style={{ minHeight }}>
       {children ?? (
         <>
           <Skeleton dark w={110} h={10} className="rounded-md" />

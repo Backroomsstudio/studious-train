@@ -6,17 +6,17 @@ type Variant = "chrome" | "electric" | "obsidian" | "ghost";
 type Size = "sm" | "md" | "lg" | "icon" | "icon-lg";
 
 const VARIANTS: Record<Variant, string> = {
-  chrome: "chrome-surface sheen text-graphite hover:shadow-chrome-lg",
+  chrome: "chrome-surface  text-graphite hover:shadow-chrome-lg",
   electric:
-    "sheen bg-[linear-gradient(180deg,#3b82f6_0%,#0066ff_55%,#0052cc_100%)] text-white shadow-glow-sm ring-1 ring-inset ring-white/25 hover:shadow-glow",
-  obsidian: "obsidian sheen text-chrome-50 hover:shadow-glow-sm",
+    "bg-electric text-white hover:bg-electric-soft",
+  obsidian: "obsidian  text-chrome-50",
   ghost: "text-graphite-700 hover:bg-white/70 hover:text-graphite",
 };
 
 const SIZES: Record<Size, string> = {
-  sm: "h-9 px-3.5 text-[13px] gap-1.5 rounded-full",
-  md: "h-11 px-5 text-sm gap-2 rounded-full",
-  lg: "h-14 px-7 text-[15px] gap-2.5 rounded-full tracking-[0.06em] uppercase",
+  sm: "h-9 px-4 text-[13px] gap-2 rounded-full",
+  md: "h-11 px-6 text-sm gap-2 rounded-full",
+  lg: "h-14 px-8 text-[15px] gap-2 rounded-full",
   icon: "size-10 rounded-full",
   "icon-lg": "size-14 rounded-full",
 };

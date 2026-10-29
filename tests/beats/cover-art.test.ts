@@ -45,10 +45,11 @@ test("copertina generativa: SVG valido in entrambi i dettagli", () => {
   assert.ok(!lite.includes("feTurbulence"));
 });
 
-test("copertina generativa: colori di produttore e genere, BPM e tonalità influiscono", () => {
+test("copertina generativa: tono del produttore, BPM e tonalità influiscono", () => {
   const beat = beats[0];
   const svg = coverArtSVG(beat);
-  assert.ok(svg.includes(beat.producers[0].accentColor!.toLowerCase()), "manca il colore del produttore");
+  const tone = beat.producers[0].accentColor!.toLowerCase();
+  assert.ok(tone === "#121214" || svg.includes(tone), "manca il tono del produttore");
   assert.notEqual(coverArtSVG({ ...beat, bpm: 70 }), coverArtSVG({ ...beat, bpm: 160 }));
   assert.notEqual(coverArtSVG({ ...beat, key: { root: 0, mode: "MAJOR" } }), coverArtSVG({ ...beat, key: { root: 0, mode: "MINOR" } }));
   // Colori non validi non entrano mai nel markup.

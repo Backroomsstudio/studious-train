@@ -17,7 +17,7 @@ export function producerPairs(beats: Array<{ producers: Array<{ slug: string; na
         const entry = map.get(key) ?? {
           slugs: [ps[i].slug, ps[j].slug] as [string, string],
           names: [ps[i].name, ps[j].name] as [string, string],
-          colors: [ps[i].accentColor ?? "#0066ff", ps[j].accentColor ?? "#0066ff"] as [string, string],
+          colors: [ps[i].accentColor ?? "#8e8e95", ps[j].accentColor ?? "#8e8e95"] as [string, string],
           count: 0,
         };
         entry.count++;

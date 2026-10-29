@@ -57,7 +57,7 @@ async function renderPassPng(v: PassViewer, code: QrCode, link: string): Promise
   ctx.fillText("BACKROOMS BEAT STORE", 72, 120);
   ctx.textAlign = "right";
   ctx.fillText("CREDITI", W - 72, 120);
-  ctx.fillStyle = "#00f0ff";
+  ctx.fillStyle = "#8e8e95";
   ctx.font = `900 64px ${FONT_DISPLAY}`;
   ctx.fillText(String(v.creditBalance), W - 72, 190);
   ctx.textAlign = "left";
@@ -114,10 +114,10 @@ export function MembershipPass({ viewer: given, className }: { viewer?: PassView
 
   if (!viewer) {
     return (
-      <section className={cn("glass rounded-[28px] p-5 text-sm text-chrome-500", className)} aria-label="Tessera Resident">
-        <p className="font-display text-lg font-bold text-graphite">La tua tessera Resident</p>
-        <p className="mt-1">Accedi per avere la tessera con il tuo codice invito.</p>
-        <ChromeLink href="/beats/accedi" variant="electric" size="sm" className="mt-3">
+      <section className={cn("glass rounded-[28px] p-6 text-sm text-chrome-500", className)} aria-label="Tessera Resident">
+        <p className="font-display text-lg font-semibold text-graphite">La tua tessera Resident</p>
+        <p className="mt-2">Accedi per avere la tessera con il tuo codice invito.</p>
+        <ChromeLink href="/beats/accedi" variant="electric" size="sm" className="mt-4">
           Accedi
         </ChromeLink>
       </section>
@@ -138,45 +138,44 @@ export function MembershipPass({ viewer: given, className }: { viewer?: PassView
 
   const plan = viewer.plan ? PLANS[viewer.plan.tier].name : "Nessun piano";
   return (
-    <section className={cn("space-y-3", className)} aria-labelledby="pass-title">
+    <section className={cn("space-y-4", className)} aria-labelledby="pass-title">
       <div
-        className="obsidian relative overflow-hidden rounded-[28px] p-5 sm:p-6"
+        className="obsidian relative overflow-hidden rounded-[28px] p-6 sm:p-6"
         data-testid="membership-pass"
       >
-        <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 size-48 rounded-full blur-3xl" style={{ background: `${viewer.level.color}55` }} />
-        <div className="relative flex items-start justify-between gap-3">
+        <div className="relative flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-chrome-400">Backrooms Beat Store</p>
-            <h2 id="pass-title" className="mt-3 text-[10px] font-extrabold uppercase tracking-[0.2em] text-chrome-300">
+            <p className="text-[10px] font-semibold text-chrome-400">Backrooms Beat Store</p>
+            <h2 id="pass-title" className="mt-4 text-[10px] font-semibold text-chrome-300">
               Tessera Resident
             </h2>
-            <p className="truncate font-display text-3xl font-black" style={{ color: viewer.level.color }}>
+            <p className="truncate font-display text-3xl font-semibold" style={{ color: viewer.level.color }}>
               {viewer.level.name}
             </p>
           </div>
           <p className="shrink-0 text-right">
-            <span className="block text-[10px] font-extrabold uppercase tracking-[0.2em] text-chrome-400">Crediti</span>
-            <span className="font-mono text-2xl font-black text-electric-cyan">{viewer.creditBalance}</span>
+            <span className="block text-[10px] font-semibold text-chrome-400">Crediti</span>
+            <span className="text-2xl font-semibold text-electric-cyan">{viewer.creditBalance}</span>
           </p>
         </div>
-        <dl className="relative mt-4 grid grid-cols-[1.4fr_1fr_auto] gap-3 text-sm">
+        <dl className="relative mt-4 grid grid-cols-[1.4fr_1fr_auto] gap-4 text-sm">
           {[
             ["Artista", viewer.artistName ?? viewer.name],
             ["Piano", plan],
             ["Mesi", String(viewer.level.months)],
           ].map(([label, value]) => (
             <div key={label} className="min-w-0">
-              <dt className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-chrome-400">{label}</dt>
+              <dt className="text-[10px] font-semibold text-chrome-400">{label}</dt>
               <dd className="truncate font-semibold text-chrome-50">{value}</dd>
             </div>
           ))}
         </dl>
-        <div className="relative mt-5 flex items-center gap-4 rounded-2xl bg-white p-3 text-graphite">
+        <div className="relative mt-6 flex items-center gap-4 rounded-2xl bg-white p-4 text-graphite">
           {qr ? <QrSvg code={qr} className="size-32 shrink-0 sm:size-36" /> : <span className="size-32 shrink-0 rounded-lg bg-chrome-100 sm:size-36" aria-hidden />}
           <div className="min-w-0">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-chrome-500">Codice invito</p>
-            <p className="font-mono text-xl font-black tracking-wider">{code}</p>
-            <p className="mt-1 text-xs text-chrome-500">Fallo inquadrare: chi si abbona con il tuo invito riceve crediti in regalo, e anche tu.</p>
+            <p className="text-[10px] font-semibold text-chrome-500">Codice invito</p>
+            <p className="text-xl font-semibold">{code}</p>
+            <p className="mt-2 text-xs text-chrome-500">Fallo inquadrare: chi si abbona con il tuo invito riceve crediti in regalo, e anche tu.</p>
           </div>
         </div>
       </div>

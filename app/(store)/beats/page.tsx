@@ -50,8 +50,8 @@ export default async function BeatsHomePage({ searchParams }: { searchParams: Pr
       ) : (
         <section className="obsidian flex flex-col gap-4 rounded-[32px] p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#ffd866]">Backrooms · Beat Store</p>
-            <h1 className="mt-1 font-display text-4xl font-black tracking-tight text-white sm:text-5xl">Beat dai produttori resident</h1>
+            <p className="text-[11px] font-semibold text-[#c9c9ce]">Backrooms · Beat Store</p>
+            <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight text-white sm:text-5xl">Beat dai produttori resident</h1>
             <p className="mt-2 text-[15px] text-chrome-300">
               Da <strong className="text-white">29,90 €/mese</strong>: crediti ogni mese, rollover dei non usati, stems in WAV.
             </p>
@@ -79,9 +79,9 @@ export default async function BeatsHomePage({ searchParams }: { searchParams: Pr
 
       <NewArrivals beats={arrivals} daysToNextDrop={daysUntilNextDrop()} />
 
-      <section aria-labelledby="ultimi-title" className="space-y-3">
-        <div className="flex items-end justify-between gap-3">
-          <h2 id="ultimi-title" className="font-display text-2xl font-black tracking-tight">
+      <section aria-labelledby="ultimi-title" className="space-y-4">
+        <div className="flex items-end justify-between gap-4">
+          <h2 id="ultimi-title" className="font-display text-2xl font-semibold tracking-tight">
             Ultimi beat
           </h2>
           <Link href="/beats/cerca" className="text-sm font-semibold text-electric hover:underline">

@@ -58,9 +58,9 @@ export interface StudioTrack extends TrackSettings {
 }
 
 export const TRACK_DEFS: Array<{ id: TrackId; name: string; role: VocalRole; color: string }> = [
-  { id: "lead", name: "Main", role: "main", color: "#00e5ff" },
-  { id: "dbl", name: "Doppie", role: "doppie", color: "#bf5af2" },
-  { id: "adlib", name: "Sporche", role: "sporche", color: "#ff9f0a" },
+  { id: "lead", name: "Main", role: "main", color: "#e0306c" },
+  { id: "dbl", name: "Doppie", role: "doppie", color: "#66666d" },
+  { id: "adlib", name: "Sporche", role: "sporche", color: "#c9c9ce" },
 ];
 
 /** Applica una catena Backrooms (fx, autotune, panorama) senza toccare la take. */

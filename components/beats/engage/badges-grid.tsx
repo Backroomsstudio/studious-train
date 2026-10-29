@@ -3,15 +3,15 @@
 import {
   Clock,
   Disc3,
-  Flame,
+  CalendarCheck,
   Heart,
   KeyRound,
   Lock,
   Mic,
   Moon,
-  Rocket,
+  Send,
   Share2,
-  Star,
+  Award,
   UserPlus,
   Users,
   type LucideIcon,
@@ -29,13 +29,13 @@ const ICONS: Record<Exclude<BadgeIcon, "ab">, LucideIcon> = {
   disc: Disc3,
   heart: Heart,
   clock: Clock,
-  flame: Flame,
+  flame: CalendarCheck,
   moon: Moon,
-  star: Star,
+  star: Award,
   mic: Mic,
   users: Users,
   share: Share2,
-  rocket: Rocket,
+  rocket: Send,
   invite: UserPlus,
 };
 
@@ -76,7 +76,7 @@ function Medal({ badge }: { badge: BadgeState }) {
         unlocked ? (def.gold ? "badge-medal-gold" : "badge-medal-on") : "chrome-surface text-chrome-400",
       )}
     >
-      {Icon ? <Icon className="size-6" /> : <span className="font-display text-sm font-black">A/B</span>}
+      {Icon ? <Icon className="size-6" /> : <span className="font-display text-sm font-semibold">A/B</span>}
     </span>
   );
 }
@@ -86,8 +86,8 @@ export function BadgesGrid({ unlocked, className, title = "I tuoi badge" }: { un
   const badges = useBadgeStates({ unlocked });
   const done = badges.filter((b) => b.unlocked).length;
   return (
-    <section aria-labelledby="badges-title" className={cn("space-y-3", className)}>
-      <h2 id="badges-title" className="font-display text-xl font-bold">
+    <section aria-labelledby="badges-title" className={cn("space-y-4", className)}>
+      <h2 id="badges-title" className="font-display text-xl font-semibold">
         {title}{" "}
         <span className="text-chrome-400" data-testid="badges-count">
           · {done}/{badges.length}
@@ -97,18 +97,18 @@ export function BadgesGrid({ unlocked, className, title = "I tuoi badge" }: { un
         {badges.map((b) => (
           <li
             key={b.def.id}
-            className={cn("glass flex min-w-0 items-center gap-3 rounded-2xl p-3", !b.unlocked && "opacity-80")}
+            className={cn("glass flex min-w-0 items-center gap-4 rounded-2xl p-4", !b.unlocked && "opacity-80")}
             data-unlocked={b.unlocked || undefined}
           >
             <Medal badge={b} />
             <div className="min-w-0 flex-1">
-              <p className="flex items-center gap-1.5 truncate font-display text-[15px] font-bold">
+              <p className="flex items-center gap-2 truncate font-display text-[15px] font-semibold">
                 {!b.unlocked && <Lock aria-label="Bloccato" className="size-3.5 shrink-0 text-chrome-400" />}
                 <span className="truncate">{b.def.name}</span>
               </p>
               <p className="truncate text-xs text-chrome-500">{b.def.goal}</p>
               {!b.unlocked && b.def.target > 1 && (
-                <div className="mt-1.5 flex items-center gap-2">
+                <div className="mt-2 flex items-center gap-2">
                   <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-chrome-200">
                     <span className="block h-full rounded-full bg-electric" style={{ width: `${Math.round(b.progress * 100)}%` }} />
                   </span>

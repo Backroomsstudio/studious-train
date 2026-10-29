@@ -13,18 +13,17 @@ export function AuctionCard({ auction, large = false }: { auction: AuctionSummar
     <Link
       href={`/beats/aste/${auction.id}`}
       className={cn(
-        "group relative flex items-center gap-4 overflow-hidden rounded-[26px] p-4 transition hover:shadow-glow",
+        "group relative flex items-center gap-4 overflow-hidden rounded-[26px] p-4 transition",
         live ? "obsidian ring-1 ring-electric/50" : "glass",
         large && "sm:p-6",
       )}
     >
-      {live && <span aria-hidden className="pointer-events-none absolute -left-10 -top-10 size-40 rounded-full bg-electric/30 blur-3xl" />}
       <BeatCover beat={auction.beat} size={large ? "lg" : "md"} />
       <div className="relative min-w-0 flex-1">
-        <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em]">
+        <p className="flex items-center gap-2 text-[11px] font-semibold">
           {live ? (
-            <span className="inline-flex items-center gap-1.5 text-deal">
-              <span className="size-2 animate-pulse rounded-full bg-deal shadow-[0_0_10px_#ef4444]" />
+            <span className="inline-flex items-center gap-2 text-deal">
+              <span className="size-2 animate-pulse rounded-full bg-deal" />
               {auction.live ? "In diretta" : "Aperta"}
             </span>
           ) : auction.phase === "SCHEDULED" ? (
@@ -34,7 +33,7 @@ export function AuctionCard({ auction, large = false }: { auction: AuctionSummar
           )}
           {auction.live && <Radio className="size-3.5 text-chrome-400" aria-label="Asta in live TikTok" />}
         </p>
-        <p className={cn("truncate font-display font-bold", large ? "text-2xl" : "text-lg")}>Esclusiva · {auction.beat.title}</p>
+        <p className={cn("truncate font-display font-semibold", large ? "text-2xl" : "text-lg")}>Esclusiva · {auction.beat.title}</p>
         <p className={cn("truncate text-sm", live ? "text-chrome-300" : "text-chrome-500")}>
           {auction.topBidCents ? `${formatEuro(auction.topBidCents)} · ${auction.leader}` : `Base ${formatEuro(auction.startPriceCents)}`}
           {" · "}
@@ -49,7 +48,7 @@ export function AuctionCard({ auction, large = false }: { auction: AuctionSummar
             </p>
             <Countdown
               to={auction.phase === "SCHEDULED" ? auction.startsAt : auction.endsAt}
-              className={cn("font-mono text-lg font-black tabular-nums", live ? "text-electric-cyan" : "text-graphite")}
+              className={cn(" text-lg font-semibold tabular-nums", live ? "text-electric-cyan" : "text-graphite")}
             />
           </>
         ) : (

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Mic, Pencil, Rocket, Sparkles } from "lucide-react";
+import { Check, Mic, Pencil, Send, CalendarDays } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
@@ -53,29 +53,29 @@ export function ArtistRoom({ profile }: { profile: RoomProfile }) {
     <div className="space-y-6">
       <section
         aria-labelledby="room-name"
-        className={cn("room-hero relative isolate grid min-h-[20rem] content-end gap-4 overflow-hidden rounded-[32px] p-5 sm:p-7", `room-t-${current.id}`, dark ? "text-white" : "text-[#15120a]")}
+        className={cn("room-hero relative isolate grid min-h-[20rem] content-end gap-4 overflow-hidden rounded-[32px] p-6 sm:p-8", `room-t-${current.id}`, dark ? "text-white" : "text-[#15120a]")}
         data-theme={current.id}
         data-testid="room-hero"
       >
         <div className="flex min-w-0 items-center gap-4">
           <span
             aria-hidden
-            className={cn("grid size-16 shrink-0 place-items-center rounded-2xl font-display text-3xl font-black ring-1", dark ? "bg-white/10 ring-white/25" : "bg-white/50 ring-black/10")}
+            className={cn("grid size-16 shrink-0 place-items-center rounded-2xl font-display text-3xl font-semibold ring-1", dark ? "bg-white/10 ring-white/25" : "bg-white/50 ring-black/10")}
           >
             {profile.artistName.charAt(0).toUpperCase()}
           </span>
           <div className="min-w-0">
-            <p className={cn("truncate font-mono text-xs", dark ? "text-white/70" : "text-black/60")}>backrooms.studio/@{handleOf(profile.artistName)}</p>
-            <h1 id="room-name" className="truncate font-display text-[clamp(2.4rem,9vw,4rem)] font-black leading-none tracking-tight">
+            <p className={cn("truncate text-xs", dark ? "text-white/70" : "text-black/60")}>backrooms.studio/@{handleOf(profile.artistName)}</p>
+            <h1 id="room-name" className="truncate font-display text-[clamp(2.4rem,9vw,4rem)] font-semibold leading-none tracking-tight">
               {profile.artistName}
             </h1>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <span className="rounded-full px-3 py-1 text-xs font-bold text-graphite" style={{ background: profile.level.color }}>
+          <span className="rounded-full px-4 py-2 text-xs font-semibold text-graphite" style={{ background: profile.level.color }}>
             Resident {profile.level.name}
           </span>
-          {profile.planName && <span className={cn("rounded-full px-3 py-1 text-xs font-bold", dark ? "bg-white/15" : "bg-white/60")}>{profile.planName}</span>}
+          {profile.planName && <span className={cn("rounded-full px-4 py-2 text-xs font-semibold", dark ? "bg-white/15" : "bg-white/60")}>{profile.planName}</span>}
         </div>
         {editing ? (
           <form
@@ -95,7 +95,7 @@ export function ArtistRoom({ profile }: { profile: RoomProfile }) {
                 rows={2}
                 autoFocus
                 placeholder="Chi sei, che musica fai, dove ti trovano."
-                className="w-full resize-none rounded-2xl bg-white/90 p-3 text-sm text-graphite outline-none ring-1 ring-black/10"
+                className="w-full resize-none rounded-2xl bg-white/90 p-4 text-sm text-graphite outline-none ring-1 ring-black/10"
               />
             </label>
             <ChromeButton type="submit" size="sm" className="self-start">
@@ -118,7 +118,7 @@ export function ArtistRoom({ profile }: { profile: RoomProfile }) {
       </section>
 
       <section aria-labelledby="room-themes" className="space-y-2">
-        <h2 id="room-themes" className="font-display text-lg font-bold">
+        <h2 id="room-themes" className="font-display text-lg font-semibold">
           Ambiente <span className="text-chrome-400">· {current.name}</span>
         </h2>
         <div className="grid grid-cols-2 gap-2 min-[480px]:grid-cols-3 lg:grid-cols-5" role="radiogroup" aria-label="Tema della stanza">
@@ -132,12 +132,12 @@ export function ArtistRoom({ profile }: { profile: RoomProfile }) {
               data-testid={`room-theme-${t.id}`}
               className={cn(
                 `room-t-${t.id}`,
-                "relative isolate flex h-20 flex-col justify-end overflow-hidden rounded-2xl p-3 text-left ring-2 transition",
+                "relative isolate flex h-20 flex-col justify-end overflow-hidden rounded-2xl p-4 text-left ring-2 transition",
                 t.tone === "dark" ? "text-white" : "text-[#15120a]",
-                t.id === current.id ? "ring-electric shadow-glow-sm" : "ring-transparent",
+                t.id === current.id ? "ring-electric" : "ring-transparent",
               )}
             >
-              <span className="text-sm font-bold">{t.name}</span>
+              <span className="text-sm font-semibold">{t.name}</span>
               <span className="truncate text-[11px] opacity-75">{t.hint}</span>
             </button>
           ))}
@@ -152,18 +152,18 @@ export function ArtistRoom({ profile }: { profile: RoomProfile }) {
           [stats.longestStreak, "giorni di fila"],
         ].map(([value, label]) => (
           <div key={label} className="glass rounded-2xl p-4">
-            <b className="block font-display text-3xl font-black">{Number(value).toLocaleString("it-IT")}</b>
+            <b className="block font-display text-3xl font-semibold">{Number(value).toLocaleString("it-IT")}</b>
             <span className="text-xs text-chrome-500">{label}</span>
           </div>
         ))}
       </div>
 
       <section aria-labelledby="room-favs" className="space-y-2">
-        <h2 id="room-favs" className="font-display text-xl font-bold">I miei beat del momento</h2>
+        <h2 id="room-favs" className="font-display text-xl font-semibold">I miei beat del momento</h2>
         {favourites.length ? (
           <TrackList beats={favourites} />
         ) : (
-          <p className="glass rounded-2xl p-5 text-sm text-chrome-500">
+          <p className="glass rounded-2xl p-6 text-sm text-chrome-500">
             Ascolta e salva qualche beat: qui compaiono i tuoi preferiti.{" "}
             <Link href="/beats/swipe" className="font-semibold text-electric">
               Apri la modalità Swipe
@@ -173,9 +173,9 @@ export function ArtistRoom({ profile }: { profile: RoomProfile }) {
       </section>
 
       <section aria-labelledby="room-releases" className="space-y-2">
-        <h2 id="room-releases" className="font-display text-xl font-bold">Pezzi e demo</h2>
+        <h2 id="room-releases" className="font-display text-xl font-semibold">Pezzi e demo</h2>
         <ul className="grid gap-2 sm:grid-cols-2">
-          <li className="glass flex items-center gap-3 rounded-2xl p-4">
+          <li className="glass flex items-center gap-4 rounded-2xl p-4">
             <span className="chrome-surface grid size-11 shrink-0 place-items-center rounded-xl">
               <Mic className="size-5 text-electric" />
             </span>
@@ -184,9 +184,9 @@ export function ArtistRoom({ profile }: { profile: RoomProfile }) {
               <span className="block text-[13px] text-chrome-500">Registra una voce su un beat: le demo compariranno qui.</span>
             </span>
           </li>
-          <li className="glass flex items-center gap-3 rounded-2xl p-4">
+          <li className="glass flex items-center gap-4 rounded-2xl p-4">
             <span className="chrome-surface grid size-11 shrink-0 place-items-center rounded-xl">
-              <Rocket className="size-5 text-studio" />
+              <Send className="size-5 text-studio" />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block font-semibold">Pezzi usciti</span>
@@ -200,13 +200,13 @@ export function ArtistRoom({ profile }: { profile: RoomProfile }) {
       </section>
 
       <section aria-labelledby="room-library" className="space-y-2">
-        <h2 id="room-library" className="font-display text-xl font-bold">
+        <h2 id="room-library" className="font-display text-xl font-semibold">
           Beat sbloccati <span className="text-chrome-400">· {profile.library.length}</span>
         </h2>
         {profile.library.length ? (
           <TrackList beats={profile.library} />
         ) : (
-          <p className="glass rounded-2xl p-5 text-sm text-chrome-500">
+          <p className="glass rounded-2xl p-6 text-sm text-chrome-500">
             Ancora nessuno.{" "}
             <Link href="/beats/cerca" className="font-semibold text-electric">
               Esplora il catalogo
@@ -217,10 +217,10 @@ export function ArtistRoom({ profile }: { profile: RoomProfile }) {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] [&>*]:min-w-0">
         <BadgesGrid unlocked={profile.library.length} title="Bacheca badge" />
-        <div className="space-y-3">
+        <div className="space-y-4">
           <MembershipPass />
           <ChromeLink href="/beats/wrapped" variant="obsidian" className="w-full">
-            <Sparkles className="size-4 text-electric-cyan" /> Il tuo anno su Backrooms
+            <CalendarDays className="size-4" /> Il tuo anno su Backrooms
           </ChromeLink>
         </div>
       </div>

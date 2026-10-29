@@ -38,9 +38,9 @@ export interface DemoBeat {
 }
 
 export const DEMO_PRODUCERS: DemoProducer[] = [
-  { slug: "astral", name: "Astral", isResident: true, accentColor: "#22C55E", bio: "Trap melodica e atmosfere spaziali." },
-  { slug: "freya", name: "Freya", isResident: true, accentColor: "#EC4899", bio: "R&B, pop e mix & master in studio." },
-  { slug: "plugghe", name: "Plugghe", isResident: true, accentColor: "#0066FF", bio: "Plugg, rage e 808 che spingono." },
+  { slug: "astral", name: "Astral", isResident: true, accentColor: "#121214", bio: "Trap melodica e atmosfere spaziali." },
+  { slug: "freya", name: "Freya", isResident: true, accentColor: "#e0306c", bio: "R&B, pop e mix & master in studio." },
+  { slug: "plugghe", name: "Plugghe", isResident: true, accentColor: "#8e8e95", bio: "Plugg, rage e 808 che spingono." },
 ];
 
 export const DEMO_GENRES: DemoGenre[] = [
@@ -192,7 +192,7 @@ export const DEMO_PRODUCTS: DemoProduct[] = [
     producer: "astral",
     priceCents: 2490,
     credits: 8,
-    coverColor: "#22c55e",
+    coverColor: "#121214",
   },
   {
     slug: "plugghe-808-arsenal",
@@ -203,7 +203,7 @@ export const DEMO_PRODUCTS: DemoProduct[] = [
     producer: "plugghe",
     priceCents: 2490,
     credits: 8,
-    coverColor: "#0066ff",
+    coverColor: "#8e8e95",
   },
   {
     slug: "fluorescent-melodies",
@@ -214,7 +214,7 @@ export const DEMO_PRODUCTS: DemoProduct[] = [
     producer: "astral",
     priceCents: 2990,
     credits: 10,
-    coverColor: "#64d2ff",
+    coverColor: "#2e2e33",
   },
   {
     slug: "freya-rnb-sessions",
@@ -225,7 +225,7 @@ export const DEMO_PRODUCTS: DemoProduct[] = [
     producer: "freya",
     priceCents: 2990,
     credits: 10,
-    coverColor: "#bf5af2",
+    coverColor: "#66666d",
   },
   {
     slug: "voce-chrome",
@@ -236,7 +236,7 @@ export const DEMO_PRODUCTS: DemoProduct[] = [
     producer: "freya",
     priceCents: 1990,
     credits: 6,
-    coverColor: "#ec4899",
+    coverColor: "#e0306c",
   },
   {
     slug: "autotune-notturno",
@@ -247,6 +247,6 @@ export const DEMO_PRODUCTS: DemoProduct[] = [
     producer: "plugghe",
     priceCents: 1990,
     credits: 6,
-    coverColor: "#ff9f0a",
+    coverColor: "#c9c9ce",
   },
 ];

@@ -56,7 +56,7 @@ export function BeatPicker({
           className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-chrome-400"
         />
       </label>
-      <ul className="mt-4 grid max-h-[55dvh] gap-1.5 overflow-y-auto pr-1">
+      <ul className="mt-4 grid max-h-[55dvh] gap-2 overflow-y-auto pr-2">
         {list.map((b) => (
           <li key={b.id}>
             <button
@@ -64,7 +64,7 @@ export function BeatPicker({
               onClick={() => onPick(b)}
               aria-current={b.id === currentId}
               className={cn(
-                "flex w-full min-w-0 items-center gap-3 rounded-2xl p-2 text-left transition hover:bg-white/80",
+                "flex w-full min-w-0 items-center gap-4 rounded-2xl p-2 text-left transition hover:bg-white/80",
                 b.id === currentId && "bg-electric-50 ring-1 ring-electric/30",
               )}
             >
