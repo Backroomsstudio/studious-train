@@ -6,6 +6,7 @@ import { TabBar } from "@/components/beats/home/tab-bar";
 import { PlayerDock } from "@/components/beats/player/player-dock";
 import { BeatsProviders } from "@/components/beats/providers";
 import { UnlockDialog } from "@/components/beats/unlock/unlock-dialog";
+import { isStaffRole, storeOpen } from "@/lib/beats/launch";
 import { storeEnv } from "@/lib/beats/server/env";
 import { getViewer } from "@/lib/beats/server/queries";
 import { SITE_URL } from "@/lib/studio";
@@ -40,6 +41,21 @@ export const viewport: Viewport = {
  */
 export default async function StoreLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const viewer = await getViewer();
+  // Prima del lancio il pubblico vede solo l'accesso e la pagina d'attesa (il proxy riscrive il resto
+  // su /beats/presto): niente header, player o barra con i link al negozio.
+  if (!storeOpen(storeEnv.launchAt) && !isStaffRole(viewer?.role)) {
+    return (
+      <html lang="it">
+        <body>
+          <BeatsProviders viewer={viewer}>
+            <main id="contenuto" className="mx-auto max-w-xl px-4 py-8">
+              {children}
+            </main>
+          </BeatsProviders>
+        </body>
+      </html>
+    );
+  }
   return (
     <html lang="it">
       <body className="pb-[calc(10.5rem+env(safe-area-inset-bottom))] lg:pb-32">

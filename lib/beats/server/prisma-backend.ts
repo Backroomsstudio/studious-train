@@ -10,6 +10,7 @@ import { StoreError } from "./errors";
 import { levelInfo } from "../offers";
 import { ensureReferralCode, residentMonths } from "./commerce";
 import { activeTier, requestCustomization, unlockWithCredits } from "./ledger";
+import { liveBeatWhere } from "./live";
 import { getDb } from "./prisma";
 import { createPrismaCommerce } from "./prisma-commerce";
 import { createPrismaFeat } from "./prisma-feat";
@@ -52,7 +53,7 @@ export function toSummary(row: BeatRow): BeatSummary {
 }
 
 function whereFor(f: BeatFilters): Prisma.BeatWhereInput {
-  const and: Prisma.BeatWhereInput[] = [{ status: "PUBLISHED" }];
+  const and: Prisma.BeatWhereInput[] = [liveBeatWhere()];
   if (f.bpmMin !== BPM_RANGE.min || f.bpmMax !== BPM_RANGE.max) and.push({ bpm: { gte: f.bpmMin, lte: f.bpmMax } });
   if (f.producers.length) and.push({ producers: { some: { producer: { slug: { in: f.producers } } } } });
   if (f.together) for (const slug of f.producers) and.push({ producers: { some: { producer: { slug } } } });
@@ -86,6 +87,7 @@ async function rankedIds(q: string): Promise<string[]> {
     SELECT "id"
     FROM "Beat"
     WHERE "status" = 'PUBLISHED'
+      AND "releasedAt" <= now()
       AND ("searchVector" @@ to_tsquery('simple', ${tsQuery}) OR word_similarity(${plain}, "searchDocument") > 0.35)
     ORDER BY ts_rank("searchVector", to_tsquery('simple', ${tsQuery})) + word_similarity(${plain}, "searchDocument") DESC
     LIMIT 500`;
@@ -173,7 +175,7 @@ export function createPrismaBackend(): StoreBackend {
     },
 
     async facets(): Promise<Facets> {
-      const published = { status: "PUBLISHED" } as const;
+      const published = liveBeatWhere();
       const [producers, genres, typeTags, bpm] = await Promise.all([
         db.producer.findMany({
           include: { _count: { select: { beats: { where: { beat: published } } } } },
@@ -198,7 +200,7 @@ export function createPrismaBackend(): StoreBackend {
     },
 
     async beatBySlug(slug): Promise<BeatDetail | null> {
-      const row = await db.beat.findFirst({ where: { slug, status: "PUBLISHED" }, include: beatInclude(new Date()) });
+      const row = await db.beat.findFirst({ where: { slug, ...liveBeatWhere() }, include: beatInclude(new Date()) });
       if (!row) return null;
       return {
         ...toSummary(row),
@@ -209,7 +211,7 @@ export function createPrismaBackend(): StoreBackend {
 
     async beatOfTheDay(now = new Date()) {
       const deal = await db.dailyDeal.findFirst({
-        where: { startsAt: { lte: now }, endsAt: { gt: now }, beat: { status: "PUBLISHED" } },
+        where: { startsAt: { lte: now }, endsAt: { gt: now }, beat: liveBeatWhere(now) },
         orderBy: { endsAt: "asc" },
         include: { beat: { include: beatInclude(now) } },
       });
@@ -219,7 +221,7 @@ export function createPrismaBackend(): StoreBackend {
     async similar(base, limit = 6) {
       const rows = await db.beat.findMany({
         where: {
-          status: "PUBLISHED",
+          ...liveBeatWhere(),
           id: { not: base.id },
           bpm: { gte: Math.floor(base.bpm * 0.9), lte: Math.ceil(base.bpm * 1.1) },
           OR: compatibleKeys(base.key).map((k) => ({ keyRoot: k.root, keyMode: k.mode })),
@@ -237,6 +239,7 @@ export function createPrismaBackend(): StoreBackend {
         include: {
           licenses: { where: { status: "ACTIVE" }, select: { beatId: true, type: true } },
           subscriptions: { orderBy: { currentPeriodEnd: "desc" }, take: 1 },
+          producer: { select: { slug: true } },
         },
       });
       if (!user) return null;
@@ -253,6 +256,8 @@ export function createPrismaBackend(): StoreBackend {
         name: user.name ?? user.email ?? "Artista",
         artistName: user.artistName,
         image: user.image,
+        role: user.role,
+        producerSlug: user.producer?.slug ?? null,
         creditBalance: user.creditBalance + user.walletCredits,
         credits: { subscription: user.creditBalance, wallet: user.walletCredits },
         level: levelInfo(months),
@@ -367,7 +372,7 @@ export function createPrismaBackend(): StoreBackend {
     },
 
     async preview(beatId) {
-      const beat = await db.beat.findFirst({ where: { id: beatId, status: "PUBLISHED" }, select: { previewObjectKey: true, slug: true } });
+      const beat = await db.beat.findFirst({ where: { id: beatId, ...liveBeatWhere() }, select: { previewObjectKey: true, slug: true } });
       if (!beat) return null;
       // Conteggio ascolti senza bloccare la risposta.
       void db.beat.update({ where: { id: beatId }, data: { playCount: { increment: 1 } } }).catch(() => undefined);
@@ -376,7 +381,7 @@ export function createPrismaBackend(): StoreBackend {
 
     async stemPreview(beatId, stem) {
       const beat = await db.beat.findFirst({
-        where: { id: beatId, status: "PUBLISHED" },
+        where: { id: beatId, ...liveBeatWhere() },
         select: { slug: true, stemsObjectKey: true, stemPreviewPrefix: true },
       });
       // Anteprime degli stems generate all'upload in `${prefix}/${stem}.mp3`, accanto all'anteprima.

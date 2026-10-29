@@ -5,6 +5,8 @@
  * dimostrativo in memoria con audio sintetizzato. Nessun file reale viene mai servito in demo.
  */
 
+import { parseLaunchAt, parseStaffInvites } from "../launch";
+
 const read = (name: string): string | undefined => {
   const value = process.env[name]?.trim();
   return value ? value : undefined;
@@ -19,6 +21,14 @@ export const storeEnv = {
   },
   get siteUrl() {
     return read("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3000";
+  },
+  /** Apertura pubblica (`STORE_LAUNCH_AT`, ISO): prima entra solo lo staff. Vuota = negozio aperto. */
+  get launchAt() {
+    return parseLaunchAt(read("STORE_LAUNCH_AT"));
+  },
+  /** Codici d'invito dello staff (`STAFF_INVITES=astral:CODICE,…`): codice → slug del produttore. */
+  get staffInvites() {
+    return parseStaffInvites(read("STAFF_INVITES"));
   },
   get downloadGrantSecret() {
     return read("DOWNLOAD_GRANT_SECRET") ?? read("AUTH_SECRET");
@@ -54,14 +64,28 @@ export const storeEnv = {
   get overlayOrigins() {
     return (read("LIVE_OVERLAY_ORIGINS") ?? "*").split(",").map((o) => o.trim());
   },
+  /**
+   * Archivio file compatibile S3. Di base Cloudflare R2 (endpoint dall'account); con `R2_ENDPOINT`
+   * va bene qualunque S3 (es. Supabase Storage: `https://<ref>.storage.supabase.co/storage/v1/s3`).
+   */
   r2: {
     get config() {
       const accountId = read("R2_ACCOUNT_ID");
+      const customEndpoint = read("R2_ENDPOINT");
       const accessKeyId = read("R2_ACCESS_KEY_ID");
       const secretAccessKey = read("R2_SECRET_ACCESS_KEY");
       const bucket = read("R2_BUCKET");
-      if (!accountId || !accessKeyId || !secretAccessKey || !bucket) return null;
-      return { accountId, accessKeyId, secretAccessKey, bucket };
+      const endpoint = customEndpoint ?? (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined);
+      if (!endpoint || !accessKeyId || !secretAccessKey || !bucket) return null;
+      return {
+        endpoint,
+        region: read("R2_REGION") ?? "auto",
+        // Gli S3 diversi da R2 vogliono quasi sempre gli indirizzi "bucket nel percorso".
+        forcePathStyle: Boolean(customEndpoint),
+        accessKeyId,
+        secretAccessKey,
+        bucket,
+      };
     },
   },
 };

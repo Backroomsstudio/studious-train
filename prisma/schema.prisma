@@ -538,6 +538,7 @@ enum ProductKind {
   DRUM_KIT
   SAMPLE_PACK
   VOCAL_PRESET
+  LOOP_KIT
 }
 
 enum PaymentMethod {
@@ -819,4 +820,22 @@ model FeatReport {
   message  FeatMessage? @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@index([createdAt(sort: Desc)])
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Lancio: lista d'attesa prima dell'apertura pubblica (STORE_LAUNCH_AT)
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+/// Solo l'email (e un nome facoltativo) di chi vuole l'avviso di apertura.
+model WaitlistEntry {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  artistName String?
+  createdAt  DateTime @default(now())
 }

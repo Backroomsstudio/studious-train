@@ -139,11 +139,12 @@ export function findTier(kind: ServiceKind, tierId: string): ServiceTier | undef
 /* Prodotti digitali                                                   */
 /* ------------------------------------------------------------------ */
 
-export type ProductKind = "DRUM_KIT" | "SAMPLE_PACK" | "VOCAL_PRESET";
+export type ProductKind = "LOOP_KIT" | "DRUM_KIT" | "SAMPLE_PACK" | "VOCAL_PRESET";
 
 export const PRODUCT_KINDS: Record<ProductKind, string> = {
+  LOOP_KIT: "Loop kit",
   DRUM_KIT: "Drum kit",
-  SAMPLE_PACK: "Sample pack",
+  SAMPLE_PACK: "Sample kit",
   VOCAL_PRESET: "Preset voce",
 };
 

@@ -188,6 +188,7 @@ type CommerceBackend = Pick<
   | "products"
   | "buyProduct"
   | "productDownload"
+  | "productPreview"
   | "orderService"
   | "orders"
   | "checkout"
@@ -218,6 +219,7 @@ export function createDemoCommerce(): CommerceBackend {
           coverColor: p.coverColor,
           producer: producer ? { name: producer.name, accentColor: producer.accentColor } : null,
           owned: owned.includes(productId(p.slug)),
+          hasPreview: false,
         };
       });
     },
@@ -237,6 +239,10 @@ export function createDemoCommerce(): CommerceBackend {
         balance: totalCredits(s.credits),
         message: paidWith === "CARD" ? "Pagamento simulato (demo): scaricalo quando vuoi." : "Acquistato: scaricalo quando vuoi.",
       };
+    },
+
+    async productPreview() {
+      return null;
     },
 
     async productDownload(userId, id) {

@@ -4,6 +4,7 @@ import { AuthError } from "next-auth";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { signIn } from "@/lib/beats/server/auth";
+import { launchLabel, storeOpen } from "@/lib/beats/launch";
 import { storeEnv } from "@/lib/beats/server/env";
 import { hashPassword, PASSWORD_MIN_LENGTH } from "@/lib/beats/server/password";
 import { getDb } from "@/lib/beats/server/prisma";
@@ -94,23 +95,46 @@ export async function signupAction(_prev: AuthFormState, formData: FormData): Pr
   const existing = await db.user.findUnique({ where: { email }, select: { id: true } });
   if (existing) return { error: "Esiste già un profilo con questa email: accedi.", fields };
 
-  // Invito: si collega a chi ha invitato; i crediti arrivano al primo pagamento (vedi rewardReferral).
   const inviteCode = String(formData.get("invite") ?? "").trim().toUpperCase().slice(0, 16);
-  const inviter = inviteCode ? await db.user.findUnique({ where: { referralCode: inviteCode }, select: { id: true } }) : null;
+  // Codice dello staff: l'account diventa admin e firma i beat del suo profilo producer.
+  const staffSlug = inviteCode ? storeEnv.staffInvites.get(inviteCode) : undefined;
+  const launchAt = storeEnv.launchAt;
+  if (!staffSlug && !storeOpen(launchAt)) {
+    return {
+      error: `Le registrazioni aprono il ${launchLabel(launchAt!)}. Lascia l'email nella lista d'attesa: ti avvisiamo noi.`,
+      fields,
+    };
+  }
+  const producer = staffSlug ? await db.producer.findUnique({ where: { slug: staffSlug }, select: { id: true, userId: true } }) : null;
+  if (staffSlug && !producer) return { error: "Profilo producer non trovato: va creato prima di usare il codice.", fields };
+  if (producer?.userId) return { error: "Questo codice staff è già stato usato.", fields };
+
+  // Invito di un artista: si collega a chi ha invitato; i crediti arrivano al primo pagamento (vedi rewardReferral).
+  const inviter =
+    inviteCode && !staffSlug ? await db.user.findUnique({ where: { referralCode: inviteCode }, select: { id: true } }) : null;
 
   try {
-    await db.user.create({
-      data: {
-        email,
-        artistName,
-        name: artistName,
-        passwordHash: await hashPassword(password),
-        referredById: inviter?.id,
-      },
+    await db.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email,
+          artistName,
+          name: artistName,
+          passwordHash: await hashPassword(password),
+          referredById: inviter?.id,
+          role: producer ? "ADMIN" : "ARTIST",
+        },
+      });
+      if (producer) {
+        // Condizionato: due registrazioni con lo stesso codice non possono prendere lo stesso profilo.
+        const linked = await tx.producer.updateMany({ where: { id: producer.id, userId: null }, data: { userId: user.id } });
+        if (linked.count !== 1) throw new Error("STAFF_CODE_TAKEN");
+      }
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "STAFF_CODE_TAKEN") return { error: "Questo codice staff è già stato usato.", fields };
     // Due registrazioni contemporanee con la stessa email: vince la prima (email unica nel DB).
     return { error: "Esiste già un profilo con questa email: accedi.", fields };
   }
-  return signInWithPassword(email, password, "/beats?benvenuto=1");
+  return signInWithPassword(email, password, producer ? "/beats/gestione" : "/beats?benvenuto=1");
 }

@@ -35,7 +35,7 @@ function providers(): NextAuthConfig["providers"] {
           if (!parsed.success) return null;
           const user = await getDb().user.findUnique({ where: { email: parsed.data.email } });
           if (!(await verifyPassword(parsed.data.password, user?.passwordHash))) return null;
-          return { id: user!.id, name: user!.artistName ?? user!.name, email: user!.email };
+          return { id: user!.id, name: user!.artistName ?? user!.name, email: user!.email, role: user!.role };
         },
       }),
     );
@@ -56,6 +56,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
   callbacks: {
     jwt({ token, user }) {
       if (user?.id) token.sub = user.id;
+      // Il ruolo viaggia nel token: il proxy del lancio lo legge senza interrogare il database.
+      if (user && "role" in user) token.role = user.role;
       return token;
     },
     session({ session, token }) {

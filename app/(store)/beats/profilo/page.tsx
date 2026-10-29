@@ -1,4 +1,4 @@
-import { DoorOpen, Download, Gift, Package, CalendarDays } from "lucide-react";
+import { DoorOpen, Download, Gift, Package, CalendarDays, SlidersHorizontal, ChevronRight } from "lucide-react";
 import { BadgesGrid } from "@/components/beats/engage/badges-grid";
 import { MembershipPass } from "@/components/beats/engage/membership-pass";
 import { MyDemos } from "@/components/beats/recorder/my-demos";
@@ -24,6 +24,7 @@ import { storeEnv } from "@/lib/beats/server/env";
 import { getBackend } from "@/lib/beats/server/backend";
 import { issueDownloadGrant } from "@/lib/beats/server/download-grant";
 import { getViewer } from "@/lib/beats/server/queries";
+import { isStaffRole } from "@/lib/beats/launch";
 
 export const metadata = { title: "Profilo" };
 
@@ -109,6 +110,17 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
           </form>
         )}
       </div>
+
+      {isStaffRole(viewer.role) && (
+        <Link href="/beats/gestione" className="obsidian flex items-center gap-4 rounded-[24px] px-6 py-4 text-white">
+          <SlidersHorizontal className="size-5 shrink-0 text-electric-cyan" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">Gestione catalogo</span>
+            <span className="block text-sm text-chrome-300">Carica beat, loop kit e sample kit, programma le uscite</span>
+          </span>
+          <ChevronRight className="size-4 shrink-0 text-chrome-300" aria-hidden />
+        </Link>
+      )}
 
       <nav aria-label="Sezioni del profilo" className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 lg:mx-0 lg:flex-wrap lg:px-0">
         {SECTIONS.map(([id, label]) => (

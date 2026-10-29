@@ -1,4 +1,5 @@
 /** DTO condivisi tra server e client (serializzabili in JSON). */
+import type { UserRole } from "./launch";
 import type { LicenseType } from "./licenses";
 import type { MusicalKey } from "./music";
 import type { ProductKind, ServiceKind } from "./offers";
@@ -82,6 +83,10 @@ export interface Viewer {
   name: string;
   artistName: string | null;
   image: string | null;
+  /** ARTIST per tutti; PRODUCER e ADMIN sono lo staff (area Gestione, accesso prima del lancio). */
+  role: UserRole;
+  /** Profilo producer collegato all'account dello staff (firma dei beat caricati). */
+  producerSlug: string | null;
   /** Totale spendibile (abbonamento + portafoglio). */
   creditBalance: number;
   /** Le due borse: `subscription` segue rollover e scadenza, `wallet` non scade. */
@@ -144,6 +149,8 @@ export interface ProductSummary {
   coverColor: string;
   producer: { name: string; accentColor: string | null } | null;
   owned: boolean;
+  /** C'è una demo d'ascolto (`/api/products/<id>/preview`). */
+  hasPreview: boolean;
 }
 
 export type OrderStatus = "PENDING_PAYMENT" | "PAID" | "IN_PROGRESS" | "DELIVERED" | "CANCELED" | "REFUNDED";

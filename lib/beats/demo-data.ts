@@ -4,6 +4,7 @@
  * sostituire con il catalogo reale prima del lancio.
  */
 import type { KeyMode } from "./music";
+import type { ProductKind } from "./offers";
 
 export interface DemoProducer {
   slug: string;
@@ -171,7 +172,7 @@ export function searchDocumentFor(beat: DemoBeat): string {
 
 export interface DemoProduct {
   slug: string;
-  kind: "DRUM_KIT" | "SAMPLE_PACK" | "VOCAL_PRESET";
+  kind: ProductKind;
   title: string;
   description: string;
   contents: string[];

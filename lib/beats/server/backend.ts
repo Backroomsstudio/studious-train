@@ -100,6 +100,8 @@ export interface StoreBackend {
   products(userId: string | null): Promise<ProductSummary[]>;
   buyProduct(userId: string, productId: string, paidWith: PaidWith, origin: string): Promise<PurchaseResponse>;
   productDownload(userId: string, productId: string): Promise<FileTarget>;
+  /** Demo d'ascolto di un kit in vendita (null se non c'è). */
+  productPreview(productId: string): Promise<FileTarget | null>;
   orderService(userId: string, input: ServiceRequest, origin: string): Promise<PurchaseResponse>;
   orders(userId: string): Promise<ServiceOrderSummary[]>;
   checkout(userId: string, item: CheckoutItem, origin: string): Promise<PurchaseResponse>;

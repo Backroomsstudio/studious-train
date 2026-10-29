@@ -37,6 +37,7 @@ type CommerceBackend = Pick<
   | "products"
   | "buyProduct"
   | "productDownload"
+  | "productPreview"
   | "orderService"
   | "orders"
   | "checkout"
@@ -131,6 +132,7 @@ export function createPrismaCommerce(): CommerceBackend {
         coverColor: p.coverColor,
         producer: p.producer ? { name: p.producer.name, accentColor: p.producer.accentColor } : null,
         owned: p.purchases.length > 0,
+        hasPreview: Boolean(p.previewObjectKey),
       }));
     },
 
@@ -158,6 +160,12 @@ export function createPrismaCommerce(): CommerceBackend {
         origin,
       );
       return { kind: "redirect", url };
+    },
+
+    async productPreview(productId) {
+      const product = await db.product.findFirst({ where: { id: productId, published: true }, select: { previewObjectKey: true, slug: true } });
+      if (!product?.previewObjectKey) return null;
+      return { kind: "r2", objectKey: product.previewObjectKey, contentType: "audio/mpeg", filename: `${product.slug}-demo.mp3` };
     },
 
     async productDownload(userId, productId) {

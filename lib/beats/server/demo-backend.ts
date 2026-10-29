@@ -238,6 +238,8 @@ export function createDemoBackend(): StoreBackend {
         name: "Marco “Kael” Rossi",
         artistName: "Kael",
         image: null,
+        role: "ARTIST",
+        producerSlug: null,
         creditBalance: totalCredits(s.credits),
         credits: { ...s.credits },
         level: levelInfo(DEMO_MONTHS),

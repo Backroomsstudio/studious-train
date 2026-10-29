@@ -1,7 +1,9 @@
 /**
- * Popola il database con il catalogo dimostrativo (idempotente: si può rilanciare).
- * Le chiavi R2 seguono la convenzione `beats/<slug>/{preview.mp3,master.mp3,master.wav,stems.zip}`:
- * caricando i file reali con questi nomi il catalogo diventa subito scaricabile.
+ * Popola il database (idempotente: si può rilanciare).
+ * - Sempre: i tre producer resident, i generi e i type beat di base. I profili già esistenti non
+ *   vengono toccati (nome, bio e colore li curano i producer dalla Gestione).
+ * - Con `SEED_DEMO_CATALOG=1`: anche il catalogo dimostrativo (beat, offerta, kit e asta), utile per i
+ *   test su database. Le sue chiavi R2 (`beats/<slug>/...`) non hanno file veri: in produzione no.
  */
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../lib/generated/prisma/client";
@@ -12,22 +14,34 @@ const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL non impostato");
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
-async function main() {
+/** Generi in più per il catalogo vero, oltre a quelli della demo. */
+const EXTRA_GENRES = [
+  { slug: "boom-bap", name: "Boom bap", parent: null },
+  { slug: "reggaeton", name: "Reggaeton", parent: null },
+  { slug: "lofi", name: "Lo-fi", parent: null },
+  { slug: "jersey", name: "Jersey club", parent: null },
+];
+
+async function seedBase() {
   for (const p of DEMO_PRODUCERS) {
     await db.producer.upsert({
       where: { slug: p.slug },
       create: { slug: p.slug, name: p.name, bio: p.bio, isResident: p.isResident, accentColor: p.accentColor },
-      update: { name: p.name, bio: p.bio, isResident: p.isResident, accentColor: p.accentColor },
+      update: { isResident: p.isResident },
     });
   }
-  for (const g of DEMO_GENRES.filter((g) => !g.parent).concat(DEMO_GENRES.filter((g) => g.parent))) {
+  const genres = [...DEMO_GENRES, ...EXTRA_GENRES];
+  for (const g of genres.filter((g) => !g.parent).concat(genres.filter((g) => g.parent))) {
     const parent = g.parent ? { connect: { slug: g.parent } } : undefined;
     await db.genre.upsert({ where: { slug: g.slug }, create: { slug: g.slug, name: g.name, parent }, update: { name: g.name, parent } });
   }
   for (const t of DEMO_TYPE_TAGS) {
     await db.typeTag.upsert({ where: { slug: t.slug }, create: t, update: { name: t.name } });
   }
+  console.log(`Base pronta: ${DEMO_PRODUCERS.length} produttori, ${genres.length} generi, ${DEMO_TYPE_TAGS.length} type beat.`);
+}
 
+async function seedDemoCatalog() {
   const producers = new Map((await db.producer.findMany()).map((p) => [p.slug, p.id]));
   for (const b of DEMO_BEATS) {
     const released = new Date(Date.now() - b.daysAgo * 86_400_000);
@@ -99,7 +113,12 @@ async function main() {
     });
   }
 
-  console.log(`Seed completato: ${DEMO_BEATS.length} beat, ${DEMO_PRODUCERS.length} produttori, ${DEMO_PRODUCTS.length} prodotti.`);
+  console.log(`Catalogo demo: ${DEMO_BEATS.length} beat, ${DEMO_PRODUCTS.length} prodotti.`);
+}
+
+async function main() {
+  await seedBase();
+  if (process.env.SEED_DEMO_CATALOG === "1") await seedDemoCatalog();
 }
 
 main()

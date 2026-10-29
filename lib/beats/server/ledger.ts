@@ -22,6 +22,7 @@ import {
 import { LICENSES } from "../licenses";
 import { checkUnlock, planCycleGrant, splitDebit, totalCredits, type CycleReason, type Wallet } from "../ledger-rules";
 import { StoreError } from "./errors";
+import { liveBeatWhere } from "./live";
 import type { Db } from "./prisma";
 
 export type Tx = Prisma.TransactionClient;
@@ -96,7 +97,7 @@ export async function unlockWithCredits(
       }
 
       const beat = await tx.beat.findFirst({
-        where: { id: input.beatId, status: "PUBLISHED" },
+        where: { id: input.beatId, ...liveBeatWhere() },
         select: {
           id: true,
           stemsObjectKey: true,
@@ -271,7 +272,7 @@ export async function requestCustomization(db: Db, input: CustomizationInput) {
   const now = input.now ?? new Date();
   const cost = customizationCost(input.options, input.express);
   return db.$transaction(async (tx) => {
-    const beat = await tx.beat.findFirst({ where: { id: input.beatId, status: "PUBLISHED" }, select: { id: true, title: true } });
+    const beat = await tx.beat.findFirst({ where: { id: input.beatId, ...liveBeatWhere() }, select: { id: true, title: true } });
     if (!beat) throw new StoreError("NOT_FOUND", "Beat non disponibile.");
     if (!(await activeTier(tx, input.userId, now))) throw new StoreError("PLAN_REQUIRED", "Serve un abbonamento attivo per le personalizzazioni.");
 

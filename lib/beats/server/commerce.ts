@@ -28,6 +28,7 @@ import {
 } from "../offers";
 import { StoreError } from "./errors";
 import { debit, isUniqueViolation, lockWallet, type Tx } from "./ledger";
+import { liveBeatWhere } from "./live";
 import type { Db } from "./prisma";
 
 const HOUR = 3_600_000;
@@ -217,7 +218,7 @@ async function validateServiceBeat(tx: Tx, input: ServiceInput) {
   const service = SERVICES[input.kind];
   if (!service.needsBeat) return null;
   if (!input.beatId) throw new StoreError("BAD_REQUEST", "Scegli il beat su cui lavorare.");
-  const beat = await tx.beat.findFirst({ where: { id: input.beatId, status: "PUBLISHED" }, select: { id: true, title: true } });
+  const beat = await tx.beat.findFirst({ where: { id: input.beatId, ...liveBeatWhere() }, select: { id: true, title: true } });
   if (!beat) throw new StoreError("NOT_FOUND", "Beat non disponibile.");
   if (input.kind === "RELEASE") {
     // Si distribuisce solo un pezzo con una licenza valida sul beat.

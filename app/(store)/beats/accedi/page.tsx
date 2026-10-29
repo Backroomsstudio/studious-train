@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AuthForms } from "@/components/beats/auth/auth-forms";
 import { ChromeButton, ChromeLink } from "@/components/beats/ui/chrome-button";
+import { launchLabel, storeOpen } from "@/lib/beats/launch";
 import { availableProviders, signIn } from "@/lib/beats/server/auth";
 import { storeEnv } from "@/lib/beats/server/env";
 import { getViewer } from "@/lib/beats/server/queries";
@@ -14,6 +15,8 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
   const providers = availableProviders();
   const google = providers.some((p) => p.id === "google");
   const magicLink = providers.some((p) => p.id === "resend");
+  const launchAt = storeEnv.launchAt;
+  const open = storeOpen(launchAt);
 
   async function withGoogle() {
     "use server";
@@ -30,7 +33,11 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
       <div className="glass rounded-[32px] p-6 sm:p-8">
         <p className="text-[11px] font-semibold text-electric">Backrooms · Beat Store</p>
         <h1 className="chrome-text mt-2 font-display text-4xl font-semibold tracking-tight">Il tuo studio, il tuo nome</h1>
-        <p className="mt-2 text-sm text-chrome-500">Entra con la tua password personale: crediti, licenze e progetti ti aspettano.</p>
+        <p className="mt-2 text-sm text-chrome-500">
+          {open
+            ? "Entra con la tua password personale: crediti, licenze e progetti ti aspettano."
+            : `Il negozio apre il ${launchLabel(launchAt!)}. Fino ad allora qui entrano i producer dello studio: per registrarti serve il codice staff.`}
+        </p>
 
         <div className="mt-6">
           {storeEnv.demoMode ? (
@@ -42,7 +49,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
               </ChromeLink>
             </div>
           ) : (
-            <AuthForms initialMode={nuovo || invite ? "signup" : "login"} invite={invite} />
+            <AuthForms initialMode={nuovo || invite ? "signup" : "login"} invite={open ? invite : undefined} staffOnly={!open} />
           )}
         </div>
 

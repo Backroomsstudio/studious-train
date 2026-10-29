@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, Loader2, Lock, Mail, UserRound } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, Ticket, UserRound } from "lucide-react";
 import { useActionState, useState, type ComponentProps } from "react";
 import { cn } from "@/lib/cn";
 import { loginAction, signupAction, type AuthFormState } from "@/app/(store)/beats/accedi/actions";
@@ -64,7 +64,16 @@ function ErrorLine({ state }: { state: AuthFormState }) {
   );
 }
 
-export function AuthForms({ initialMode = "login", invite }: { initialMode?: "login" | "signup"; invite?: string }) {
+export function AuthForms({
+  initialMode = "login",
+  invite,
+  staffOnly = false,
+}: {
+  initialMode?: "login" | "signup";
+  invite?: string;
+  /** Prima del lancio si registra solo lo staff: il codice diventa obbligatorio. */
+  staffOnly?: boolean;
+}) {
   const [mode, setMode] = useState(initialMode);
   const [loginState, login, loggingIn] = useActionState(loginAction, {});
   const [signupState, signup, signingUp] = useActionState(signupAction, {});
@@ -154,6 +163,15 @@ export function AuthForms({ initialMode = "login", invite }: { initialMode?: "lo
             <span className="w-24 text-right text-xs text-chrome-500">{pw ? STRENGTH[score] : ""}</span>
           </div>
           <PasswordField id="confirm" label="Ripeti la password" autoComplete="new-password" />
+          {!invite &&
+            (staffOnly ? (
+              <Field icon={<Ticket className="size-4" />} name="invite" required autoComplete="off" aria-label="Codice staff" placeholder="Codice staff" />
+            ) : (
+              <details className="group rounded-2xl px-2">
+                <summary className="cursor-pointer list-none text-sm text-chrome-500 group-open:mb-2">Hai un codice d&apos;invito?</summary>
+                <Field icon={<Ticket className="size-4" />} name="invite" autoComplete="off" aria-label="Codice d'invito" placeholder="Codice d'invito" />
+              </details>
+            ))}
           <ErrorLine state={signupState} />
           <ChromeButton type="submit" variant="electric" size="lg" className="w-full" disabled={signingUp}>
             {signingUp ? <Loader2 className="size-4 animate-spin" /> : "Crea il profilo"}
