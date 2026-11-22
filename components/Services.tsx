@@ -76,7 +76,7 @@ export function Services() {
                         service={s.id}
                         className="press inline-flex min-h-11 w-full items-center justify-center rounded-full border border-white/25 px-5 py-3 text-xs font-bold uppercase tracking-[0.16em] text-white transition-colors duration-300 hover:border-white hover:bg-white hover:text-obsidian sm:w-auto"
                       >
-                        Richiedi <span className="sr-only">{s.title}</span> →
+                        Prenota <span className="sr-only">{s.title}</span> →
                       </BookingTrigger>
                     </div>
                   </article>
