@@ -234,3 +234,58 @@ export function passCovers(pass: Pass, service: BookableService, units: number):
 export function passesFor(service: BookableService, units: number): Pass[] {
   return passes.filter((p) => passCovers(p, service, units));
 }
+
+/* ------------------------------------------------------------------ */
+/* Scelta a cascata nel checkout: Sessione → Beat → Mix & Master        */
+/* ------------------------------------------------------------------ */
+
+export type GroupId = "sessione" | "beat" | "mix";
+
+export interface ServiceGroup {
+  id: GroupId;
+  title: string;
+  text: string;
+  /** Le opzioni dentro la famiglia, con l'etichetta breve mostrata nel secondo livello */
+  options: { serviceId: ServiceId; label: string; hint: string }[];
+}
+
+export const serviceGroups: ServiceGroup[] = [
+  {
+    id: "sessione",
+    title: "Sessione",
+    text: "Registri in sala con l'engineer, provi lo studio o lo affitti senza fonico.",
+    options: [
+      { serviceId: "registrazione", label: "Registrazione con engineer", hint: "50 € l'ora · da 3 ore −10%, da 5 −20%" },
+      { serviceId: "prova", label: "Sessione di prova", hint: "20 € invece di 50 € · prima volta · si paga in studio" },
+      { serviceId: "noleggio", label: "Sala senza fonico", hint: "35 € l'ora · prezzo fisso" },
+    ],
+  },
+  {
+    id: "beat",
+    title: "Beat",
+    text: "Un beat su misura, costruito da zero sulla tua voce.",
+    options: [
+      { serviceId: "beat-studio", label: "In presenza", hint: "60 € a sessione da 1 ora e 30 in studio" },
+      { serviceId: "beat-remoto", label: "A distanza", hint: "60 € a beat · consegna online" },
+    ],
+  },
+  {
+    id: "mix",
+    title: "Mix & Master",
+    text: "Il tuo brano pronto per le piattaforme.",
+    options: [
+      { serviceId: "mix-studio", label: "In presenza", hint: "70 € a brano · lo ascolti crescere in sala" },
+      { serviceId: "mix-remoto", label: "A distanza", hint: "70 € a brano · carichi le tracce, ricevi il master" },
+    ],
+  },
+];
+
+export function groupOf(serviceId: ServiceId): ServiceGroup {
+  return serviceGroups.find((g) => g.options.some((o) => o.serviceId === serviceId))!;
+}
+
+/** Regola di cancellazione dei pagamenti online per le sessioni in studio. */
+export const CANCELLATION_HOURS = 24;
+export const CANCELLATION_POLICY =
+  `Puoi spostare o annullare la sessione avvisandoci almeno ${CANCELLATION_HOURS} ore prima dell'inizio. ` +
+  `Se avvisi meno di ${CANCELLATION_HOURS} ore prima, o non ti presenti, il pagamento online non è rimborsabile.`;

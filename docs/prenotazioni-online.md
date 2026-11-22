@@ -22,7 +22,11 @@ Questi aprono ancora la richiesta su WhatsApp: Singolo/EP/Album, Corsi, Live e V
 
 ## Come funziona
 
-1. Il cliente apre **/prenota/** e sceglie servizio e quantità. Il prezzo si aggiorna subito.
+1. Il cliente apre **/prenota/** e sceglie a cascata. Prima uno dei tre bottoni **Sessione**, **Beat** o **Mix & Master**. Dentro si apre il secondo livello:
+   - Sessione: registrazione con engineer, sessione di prova o sala senza fonico;
+   - Beat e Mix & Master: in presenza o a distanza.
+
+   Poi si aprono, uno dopo l'altro, quantità, calendario, dati, pagamento e, in fondo, riepilogo e pagamento.
 2. Per i servizi **in studio** vede il calendario dei prossimi 60 giorni, con gli orari liberi e quelli occupati. Il calendario legge in tempo reale il Google Calendar dello studio, ma mostra solo "occupato": nessun nome né dettaglio esce dal sito.
 3. Sceglie come pagare:
    - **Online** (carta, PayPal, Apple Pay, Google Pay): va sulla pagina sicura di Stripe. Intanto lo slot compare nel calendario in **grigio** ("⏳ IN ATTESA DI PAGAMENTO") e resta bloccato al massimo 30 minuti.
@@ -50,7 +54,8 @@ Si modifica tutto in `sito-online/src/booking/catalog.ts`:
 - **Catalogo BeatStars**: link al negozio in `BEATSTARS_URL` (https://beatstars.com/backroomss), beat già pronti con licenza base a 30 €.
 - **Pass**: contenuti e prezzi in `passes`, ulteriore sconto dal checkout in `PASS_CHECKOUT_EXTRA_DISCOUNT` (oggi 10%).
 - **Caparra**: il checkout non chiede caparre: si paga tutto online oppure tutto in contanti in studio.
-- **Preavviso minimo** (3 ore), **giorni prenotabili** (60) e **fascia oraria prenotabile online** (`openHour`/`closeHour`, oggi dalle 14:00 alle 02:00 della notte dopo: l'ultima sessione finisce alle 02:00): li trovi in `DEFAULT_RULES`, nel file `sito-online/src/booking/slots.ts`.
+- **Cancellazioni**: per pagare online una sessione in studio il cliente spunta le condizioni. Può spostare o annullare avvisando almeno 24 ore prima; se avvisa meno di 24 ore prima, o non si presenta, il pagamento online non è rimborsabile. Il testo è in `CANCELLATION_POLICY` (`catalog.ts`). La pagina completa è `/prenota/condizioni/`. L'accettazione viene scritta nell'evento del calendario e ricordata nell'email e nella pagina di Stripe.
+- **Preavviso minimo** (24 ore), **giorni prenotabili** (60) e **fascia oraria prenotabile online** (`openHour`/`closeHour`, oggi dalle 14:00 alle 02:00 della notte dopo: l'ultima sessione finisce alle 02:00): li trovi in `DEFAULT_RULES`, nel file `sito-online/src/booking/slots.ts`.
 - **Cosa rende occupato uno slot**: ogni evento del calendario dello studio, tranne quelli segnati come **"Disponibile"** in Google Calendar (utile per promemoria come "FATTURE" o compleanni).
 
 ## Attivazione (una volta sola)

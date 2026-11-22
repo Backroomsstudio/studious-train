@@ -4,7 +4,7 @@ import { bookableServices, getService, maxUnitsFor, bookingMinutes } from "../sr
 import { quote, discountFor, formatEuro } from "../src/booking/pricing.ts";
 import { slotsForDay, romeToUtc, romeDay, isBookable, addDays, isValidDay, DEFAULT_RULES } from "../src/booking/slots.ts";
 
-const ALL_DAY = { ...DEFAULT_RULES, openHour: 0, closeHour: 0 };
+const ALL_DAY = { ...DEFAULT_RULES, minNoticeMinutes: 3 * 60, openHour: 0, closeHour: 0 };
 
 const reg = getService("registrazione")!;
 const beat = getService("beat-studio")!;
@@ -165,4 +165,13 @@ test("il server accetta gli inizi dopo mezzanotte e rifiuta quelli fuori fascia"
   assert.equal(isBookable("2026-12-11T01:00:00.000Z", 60, [], now), false); // 02:00: studio chiuso
   assert.equal(isBookable("2026-12-10T12:00:00.000Z", 60, [], now), false); // 13:00: prima dell'apertura
   assert.equal(isBookable("2026-12-10T13:00:00.000Z", 60, [], now), true); // 14:00
+});
+
+test("non si prenota a meno di 24 ore dall'inizio", () => {
+  const now = new Date("2026-12-10T13:00:00Z"); // 14:00 a Roma
+  const today = slotsForDay("2026-12-10", 60, [], now).filter((s) => s.state === "libero");
+  assert.equal(today.length, 0);
+  const tomorrow = slotsForDay("2026-12-11", 60, [], now);
+  assert.equal(tomorrow.find((s) => s.label === "14:00")?.state, "libero"); // esattamente 24 ore dopo
+  assert.equal(isBookable("2026-12-11T12:00:00.000Z", 60, [], now), false); // 13:00 di domani: fuori fascia
 });

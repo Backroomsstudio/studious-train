@@ -24,7 +24,8 @@ export interface BookingRules {
 }
 
 export const DEFAULT_RULES: BookingRules = {
-  minNoticeMinutes: 3 * 60,
+  // Si prenota online almeno 24 ore prima dell'inizio.
+  minNoticeMinutes: 24 * 60,
   horizonDays: 60,
   stepMinutes: 60,
   // Disponibilità online dalle 14:00 alle 02:00 della notte dopo: l'ultima sessione finisce alle 02:00.

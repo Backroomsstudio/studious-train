@@ -73,6 +73,8 @@ function book(body: Record<string, unknown>): string {
   const payment = service.onlineAllowed === false ? "contanti" : pass ? "online" : body.pagamento === "contanti" ? "contanti" : "online";
   if (payment === "contanti" && !service.cashAllowed) throw new DemoError("Questo servizio si paga solo online");
   if (payment === "contanti" && phone.replace(/\D/g, "").length < 6) throw new DemoError("Per pagare in studio serve un numero di telefono");
+  const policyRequired = payment === "online" && service.where === "studio";
+  if (policyRequired && body.policy !== true) throw new DemoError("Per pagare online accetta le condizioni di cancellazione (avviso entro 24 ore)");
 
   if (service.oncePerCustomer) {
     const tel = phone.replace(/\D/g, "").replace(/^(00)?39(?=\d{9,10}$)/, "");
@@ -106,6 +108,7 @@ function book(body: Record<string, unknown>): string {
     payment,
     monthly: Boolean(pass),
     ...(pass ? { passId: pass.id } : {}),
+    ...(policyRequired ? { policy: true } : {}),
     totalCents: pass ? passCheckoutCents(pass) : q.totalCents,
     fullCents: pass ? pass.monthlyCents : q.fullCents,
   };

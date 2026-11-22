@@ -1,6 +1,6 @@
 import type Stripe from "stripe";
 import { createHash } from "node:crypto";
-import { bookingMinutes, getPass, getService, maxUnitsFor, passCheckoutCents, passCovers } from "./catalog.ts";
+import { bookingMinutes, CANCELLATION_HOURS, CANCELLATION_POLICY, getPass, getService, maxUnitsFor, passCheckoutCents, passCovers } from "./catalog.ts";
 import { quote, unitLabel } from "./pricing.ts";
 import { DEFAULT_RULES, isBookable, TIME_ZONE } from "./slots.ts";
 import { busyIntervals, deleteEvent, eventsBetween, eventsWithPrivate, getEvent, insertEvent, patchEvent, CalendarError, type CalendarEvent } from "./google-calendar.ts";
@@ -48,6 +48,11 @@ export function parseOrder(body: Record<string, unknown>): Order {
   // Servizi solo in presenza (sessione di prova): si paga sempre in studio.
   const payment = service.onlineAllowed === false ? "contanti" : pass ? "online" : body.pagamento === "contanti" ? "contanti" : "online";
   if (payment === "contanti" && !service.cashAllowed) throw new BookingError("Questo servizio si paga solo online");
+  // Pagamento online di una sessione in studio: serve l'accettazione della regola di cancellazione.
+  const policyRequired = payment === "online" && service.where === "studio";
+  if (policyRequired && body.policy !== true) {
+    throw new BookingError(`Per pagare online accetta le condizioni di cancellazione (avviso entro ${CANCELLATION_HOURS} ore)`);
+  }
   if (payment === "contanti" && phone.replace(/\D/g, "").length < 6) throw new BookingError("Per pagare in studio serve un numero di telefono");
 
   let start: string | undefined;
@@ -61,10 +66,10 @@ export function parseOrder(body: Record<string, unknown>): Order {
 
   if (pass) {
     const totalCents = passCheckoutCents(pass);
-    return { serviceId: service.id, units, start, end, name, email, phone, notes, payment, monthly, passId: pass.id, totalCents, fullCents: pass.monthlyCents };
+    return { serviceId: service.id, units, start, end, name, email, phone, notes, payment, monthly, passId: pass.id, totalCents, fullCents: pass.monthlyCents, ...(policyRequired ? { policy: true } : {}) };
   }
   const q = quote(service, units);
-  return { serviceId: service.id, units, start, end, name, email, phone, notes, payment, monthly, totalCents: q.totalCents, fullCents: q.fullCents };
+  return { serviceId: service.id, units, start, end, name, email, phone, notes, payment, monthly, totalCents: q.totalCents, fullCents: q.fullCents, ...(policyRequired ? { policy: true } : {}) };
 }
 
 /** Lo slot è ancora libero su tutti i calendari? */
@@ -177,6 +182,7 @@ async function createCheckoutSession(order: Order, origin: string, eventId?: str
     metadata,
     success_url: `${origin}/prenota/confermata/?stato=pagato&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: eventId ? `${origin}/api/prenota/annulla?evento=${encodeURIComponent(eventId)}` : `${origin}/prenota/?annullato=1`,
+    ...(order.policy ? { custom_text: { submit: { message: CANCELLATION_POLICY } } } : {}),
     // Lo slot resta bloccato al massimo ~30 minuti (minimo consentito da Stripe).
     expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
   };
