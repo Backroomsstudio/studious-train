@@ -3,11 +3,14 @@
   "private": true,
   "description": "Sito statico di backroomsstudio.it con checkout (calendario Google, Stripe, contanti) su Netlify Functions",
   "type": "module",
-  "engines": { "node": "22.x" },
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "build": "esbuild src/prenota/main.ts --bundle --minify --format=iife --target=es2019 --outfile=public/js/prenota.js",
     "dev": "npm run build && node --experimental-strip-types scripts/dev.mjs",
-    "test": "node --test tests/*.test.ts"
+    "test": "node --test tests/*.test.ts",
+    "demo": "node scripts/build-demo.mjs"
   },
   "dependencies": {
     "nodemailer": "10.6.1",

@@ -506,6 +506,14 @@ function init() {
   });
   // Tornando sulla scheda il calendario si aggiorna.
   window.addEventListener("focus", () => void loadAvailability());
+  // Usato dalla demo navigabile per ricominciare dopo un pagamento simulato.
+  window.addEventListener("br:reset", (e) => {
+    state.submitting = false;
+    state.slotStart = null;
+    $("co-cancelled").hidden = !(e as CustomEvent<{ annullato?: boolean }>).detail?.annullato;
+    renderAll();
+    void loadAvailability();
+  });
 
   renderAll();
   void loadAvailability();
