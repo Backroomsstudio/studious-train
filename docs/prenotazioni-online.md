@@ -36,7 +36,7 @@ Si modifica tutto in `lib/booking/catalog.ts`:
 Le variabili vanno inserite in **Netlify → Site configuration → Environment variables**. Dopo averle inserite serve un nuovo deploy. Trovi l'elenco completo in `.env.example`.
 
 ### 1. Stripe (carta, PayPal, abbonamenti)
-1. Crea l'account su stripe.com. L'intestatario è chi emette la fattura (una delle P.IVA).
+1. Crea l'account su stripe.com intestato a **Luca Cappellari (P.IVA 04596940249)**: è lui che incassa ed emette le ricevute. Il nome compare anche nel checkout e nelle email (`studio.payee` in `lib/studio.ts`).
 2. Vai su **Impostazioni → Metodi di pagamento** e attiva Carte, **PayPal**, Apple Pay e Google Pay.
 3. Vai su **Sviluppatori → Chiavi API** e copia la chiave segreta in `STRIPE_SECRET_KEY`.
 4. Vai su **Sviluppatori → Webhook** e aggiungi l'endpoint `https://www.backroomsstudio.it/api/stripe/webhook` con questi eventi:

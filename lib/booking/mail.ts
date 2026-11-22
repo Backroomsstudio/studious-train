@@ -58,6 +58,7 @@ export async function confirmToCustomer(order: Order, paid: boolean) {
     `Per qualsiasi cosa scrivici su WhatsApp al ${studio.phone} o rispondi a questa email.`,
     "",
     studio.name,
+    `${studio.payee.name} · P.IVA ${studio.payee.vatId}`,
   ];
   await send(order.email, `Prenotazione confermata · ${studio.name}`, lines.join("\n"), studio.email);
 }

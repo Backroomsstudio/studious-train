@@ -562,6 +562,9 @@ export function Checkout({ initialService, cancelled }: { initialService?: Servi
               ? "Lo slot viene riservato subito: porta i contanti il giorno della sessione."
               : "Sarai portato sulla pagina di pagamento sicura di Stripe. Lo slot resta bloccato per te per 30 minuti."}
           </p>
+          <p className="mt-3 text-xs leading-relaxed text-mist/60">
+            Venditore: {studio.payee.name} · P.IVA {studio.payee.vatId}
+          </p>
         </div>
       </aside>
 
