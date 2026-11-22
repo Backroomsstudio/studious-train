@@ -50,7 +50,7 @@ Si modifica tutto in `sito-online/src/booking/catalog.ts`:
 - **Catalogo BeatStars**: link al negozio in `BEATSTARS_URL` (https://beatstars.com/backroomss), beat già pronti con licenza base a 30 €.
 - **Pass**: contenuti e prezzi in `passes`, ulteriore sconto dal checkout in `PASS_CHECKOUT_EXTRA_DISCOUNT` (oggi 10%).
 - **Caparra**: il checkout non chiede caparre: si paga tutto online oppure tutto in contanti in studio.
-- **Preavviso minimo** (3 ore), **giorni prenotabili** (60) e **fascia oraria prenotabile online** (`firstStartHour`/`lastStartHour`, oggi inizio dalle 14:00 alle 02:00): li trovi in `DEFAULT_RULES`, nel file `sito-online/src/booking/slots.ts`.
+- **Preavviso minimo** (3 ore), **giorni prenotabili** (60) e **fascia oraria prenotabile online** (`openHour`/`closeHour`, oggi dalle 14:00 alle 02:00 della notte dopo: l'ultima sessione finisce alle 02:00): li trovi in `DEFAULT_RULES`, nel file `sito-online/src/booking/slots.ts`.
 - **Cosa rende occupato uno slot**: ogni evento del calendario dello studio, tranne quelli segnati come **"Disponibile"** in Google Calendar (utile per promemoria come "FATTURE" o compleanni).
 
 ## Attivazione (una volta sola)
