@@ -1,4 +1,3 @@
-import type Stripe from "stripe";
 import { confirmPaidSession, handleRenewal, releaseExpiredSession } from "@/lib/booking/book";
 import { serverConfig } from "@/lib/booking/server-config";
 import { stripe } from "@/lib/booking/stripe";
@@ -12,7 +11,7 @@ export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
   if (!signature || !serverConfig.stripeWebhookSecret) return new Response("Firma mancante", { status: 400 });
 
-  let event: Stripe.Event;
+  let event: ReturnType<ReturnType<typeof stripe>["webhooks"]["constructEvent"]>;
   try {
     event = stripe().webhooks.constructEvent(await request.text(), signature, serverConfig.stripeWebhookSecret);
   } catch {

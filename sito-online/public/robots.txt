@@ -1,0 +1,5 @@
+User-Agent: *
+Allow: /
+Disallow: /listino/
+Host: https://backroomsstudio.it
+Sitemap: https://backroomsstudio.it/sitemap.xml

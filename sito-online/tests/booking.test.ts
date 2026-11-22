@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { bookableServices, getService, maxUnitsFor, bookingMinutes } from "../lib/booking/catalog.ts";
-import { quote, discountFor, formatEuro } from "../lib/booking/pricing.ts";
-import { slotsForDay, romeToUtc, romeDay, isBookable, addDays, isValidDay } from "../lib/booking/slots.ts";
+import { bookableServices, getService, maxUnitsFor, bookingMinutes } from "../src/booking/catalog.ts";
+import { quote, discountFor, formatEuro } from "../src/booking/pricing.ts";
+import { slotsForDay, romeToUtc, romeDay, isBookable, addDays, isValidDay } from "../src/booking/slots.ts";
 
 const reg = getService("registrazione")!;
 const beat = getService("beat-studio")!;
@@ -100,7 +100,7 @@ test("utilità sulle date", () => {
   assert.equal(isValidDay("2026-02-28"), true);
 });
 
-import { passes, passesFor, passCheckoutCents, getPass, BEATSTARS_URL } from "../lib/booking/catalog.ts";
+import { passes, passesFor, passCheckoutCents, getPass, BEATSTARS_URL } from "../src/booking/catalog.ts";
 
 test("noleggio studio: 35 € l'ora, mai sconti", () => {
   const nol = getService("noleggio")!;

@@ -1,8 +1,26 @@
-# Prenotazioni e pagamenti online (`/prenota`)
+# Prenotazioni e pagamenti online (backroomsstudio.it/prenota/)
+
+## Dove sta
+
+Il sito online di backroomsstudio.it è il **sito statico** nella cartella `sito-online/`:
+
+| Percorso | Cosa contiene |
+| --- | --- |
+| `sito-online/public/` | Le pagine del sito (home, /preventivo/, /listino/, pagine servizio) e il checkout `/prenota/` |
+| `sito-online/src/booking/` | Listino, sconti, Pass, slot, calendario, Stripe, email. È l'**unica fonte dei prezzi**, usata anche dalla versione Next.js |
+| `sito-online/src/prenota/main.ts` | La pagina del checkout lato browser (diventa `public/js/prenota.js` con `npm run build`) |
+| `sito-online/netlify/functions/` | Le funzioni del server: `/api/disponibilita`, `/api/prenota`, `/api/prenota/annulla`, `/api/stripe/webhook` |
+| `sito-online/netlify.toml` | La configurazione di Netlify |
+
+Sul sito, questi pulsanti "Prenota" portano al checkout:
+- Sessione di registrazione, Beat su misura, Mix & Master e Affitto sala;
+- "Attiva" dei tre Pass, con il Pass già scelto.
+
+Questi aprono ancora la richiesta su WhatsApp: Prima sessione a 20 €, Singolo/EP/Album, Corsi, Live e Visita.
 
 ## Come funziona
 
-1. Il cliente apre **/prenota** (da qualsiasi pulsante "Prenota" del sito) e sceglie servizio e quantità. Il prezzo si aggiorna subito.
+1. Il cliente apre **/prenota/** e sceglie servizio e quantità. Il prezzo si aggiorna subito.
 2. Per i servizi **in studio** vede il calendario dei prossimi 60 giorni, con gli orari liberi e quelli occupati. Il calendario legge in tempo reale il Google Calendar dello studio, ma mostra solo "occupato": nessun nome né dettaglio esce dal sito.
 3. Sceglie come pagare:
    - **Online** (carta, PayPal, Apple Pay, Google Pay): va sulla pagina sicura di Stripe. Intanto lo slot compare nel calendario in **grigio** ("⏳ IN ATTESA DI PAGAMENTO") e resta bloccato al massimo 30 minuti.
@@ -14,7 +32,7 @@
 
 ## Listino
 
-Si modifica tutto in `lib/booking/catalog.ts`:
+Si modifica tutto in `sito-online/src/booking/catalog.ts`:
 
 | Servizio | Prezzo | In calendario | Massimo |
 | --- | --- | --- | --- |
@@ -29,17 +47,23 @@ Si modifica tutto in `lib/booking/catalog.ts`:
 - **Catalogo BeatStars**: link al negozio in `BEATSTARS_URL` (https://beatstars.com/backroomss), beat già pronti con licenza base a 30 €.
 - **Pass**: contenuti e prezzi in `passes`, ulteriore sconto dal checkout in `PASS_CHECKOUT_EXTRA_DISCOUNT` (oggi 10%).
 - **Caparra**: il checkout non chiede caparre: si paga tutto online oppure tutto in contanti in studio.
-- **Preavviso minimo** (3 ore) e **giorni prenotabili** (60): li trovi in `DEFAULT_RULES`, nel file `lib/booking/slots.ts`.
+- **Preavviso minimo** (3 ore) e **giorni prenotabili** (60): li trovi in `DEFAULT_RULES`, nel file `sito-online/src/booking/slots.ts`.
 
 ## Attivazione (una volta sola)
 
-Le variabili vanno inserite in **Netlify → Site configuration → Environment variables**. Dopo averle inserite serve un nuovo deploy. Trovi l'elenco completo in `.env.example`.
+### 0. Netlify: pubblicare il sito da GitHub
+Il checkout ha bisogno delle funzioni Netlify, quindi il sito va pubblicato **da GitHub**. Trascinando la cartella su Netlify le funzioni non partono.
+1. Vai su **Netlify → il sito backroomsstudio.it → Site configuration → Build & deploy → Continuous deployment** e collega il repository `Backroomsstudio/studious-train`, con il branch scelto.
+2. Imposta **Base directory = `sito-online`**. Comando di build, cartella da pubblicare e funzioni li legge da `sito-online/netlify.toml` (`npm run build`, `public`, `netlify/functions`).
+3. Prima di pubblicare controlla che `sito-online/public/` sia identico al sito online. È stato allineato il 22/11/2026 scaricando backroomsstudio.it: se nel frattempo avete pubblicato modifiche da un'altra parte, vanno riportate qui.
+
+Le variabili qui sotto vanno inserite in **Netlify → Site configuration → Environment variables**. Dopo averle inserite serve un nuovo deploy. Trovi l'elenco completo in `.env.example`.
 
 ### 1. Stripe (carta, PayPal, abbonamenti)
-1. Crea l'account su stripe.com intestato a **Luca Cappellari (P.IVA 04596940249)**: è lui che incassa ed emette le ricevute. Il nome compare anche nel checkout e nelle email (`studio.payee` in `lib/studio.ts`).
+1. Crea l'account su stripe.com intestato a **Luca Cappellari (P.IVA 04596940249)**: è lui che incassa ed emette le ricevute. Il nome compare anche nel checkout e nelle email (`payee` in `sito-online/src/booking/studio.ts`).
 2. Vai su **Impostazioni → Metodi di pagamento** e attiva Carte, **PayPal**, Apple Pay e Google Pay.
 3. Vai su **Sviluppatori → Chiavi API** e copia la chiave segreta in `STRIPE_SECRET_KEY`.
-4. Vai su **Sviluppatori → Webhook** e aggiungi l'endpoint `https://www.backroomsstudio.it/api/stripe/webhook` con questi eventi:
+4. Vai su **Sviluppatori → Webhook** e aggiungi l'endpoint `https://backroomsstudio.it/api/stripe/webhook` con questi eventi:
    - `checkout.session.completed`
    - `checkout.session.async_payment_succeeded`
    - `checkout.session.async_payment_failed`
@@ -68,6 +92,8 @@ Senza email il sistema funziona lo stesso: le prenotazioni restano comunque nel 
 
 ## Prova in locale
 ```bash
-BOOKING_DEMO=1 npm run dev   # calendario finto, per vedere la grafica senza Google
-npm test                     # prezzi, sconti, slot, cambio d'ora, eventi
+cd sito-online
+npm install
+BOOKING_DEMO=1 npm run dev   # http://localhost:8888 con calendario finto, senza Google
+npm test                     # prezzi, sconti, Pass, slot, cambio d'ora, eventi
 ```

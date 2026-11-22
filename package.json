@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/*.test.ts",
+    "test": "node --test sito-online/tests/*.test.ts",
     "audio:demo": "node scripts/generate-demo-audio.mjs"
   },
   "engines": {

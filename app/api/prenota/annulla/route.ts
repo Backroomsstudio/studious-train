@@ -12,5 +12,5 @@ export async function GET(request: NextRequest) {
       console.error("[annulla]", e);
     }
   }
-  return Response.redirect(new URL("/prenota?annullato=1", request.nextUrl.origin), 303);
+  return Response.redirect(new URL("/prenota/?annullato=1", request.nextUrl.origin), 303);
 }

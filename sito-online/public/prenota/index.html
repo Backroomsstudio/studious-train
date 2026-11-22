@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prenota e paga online | Backrooms Studio</title>
+<meta name="description" content="Prenota la tua sessione da Backrooms Studio ad Arcugnano (Vicenza): calendario aggiornato in tempo reale, pagamento con carta, PayPal o in contanti in studio.">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#050507"><meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://backroomsstudio.it/prenota/">
+<link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png?v=20261027"><link rel="apple-touch-icon" href="/apple-icon.png?v=20261027"><link rel="manifest" href="/manifest.webmanifest">
+<meta property="og:type" content="website"><meta property="og:locale" content="it_IT"><meta property="og:site_name" content="Backrooms Studio">
+<meta property="og:url" content="https://backroomsstudio.it/prenota/"><meta property="og:title" content="Prenota e paga online | Backrooms Studio"><meta property="og:description" content="Scegli il servizio, guarda gli orari liberi e paga con carta, PayPal o in contanti in studio.">
+<meta property="og:image" content="https://backroomsstudio.it/og-image-silver.png"><meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="/fonts/cinzel.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/montserrat.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/main.css?v=20261027"><link rel="stylesheet" href="/css/fx.css?v=20261120"><link rel="stylesheet" href="/css/prenota.css?v=20261122">
+<script>document.documentElement.classList.add('js')</script>
+</head>
+<body class="svc-page">
+<header class="hdr solid"><a class="brand" href="/" aria-label="Backrooms Studio, torna alla home"><img src="/brand/logo-silver-120.webp" width="44" height="34" alt=""><span>Backrooms <small class="t2">Studio</small></span></a><div class="acts"><a class="btn-ghost co-hdr-wa" href="https://wa.me/393248911607" target="_blank" rel="noopener" data-track="whatsapp_prenota">WhatsApp</a></div></header>
+<main id="contenuto">
+<section class="intro" aria-labelledby="page-title"><div class="wrap">
+  <nav class="crumbs" aria-label="Percorso"><a href="/">Backrooms Studio</a> / <span>Prenota</span></nav>
+  <div class="eyebrow">Prenotazione · Aperto 24/7</div>
+  <h1 id="page-title" class="gold-text t3d">Prenota e paga la tua sessione</h1>
+  <p class="lead">Scegli il servizio, guarda gli orari liberi nel calendario aggiornato e paga online con carta o PayPal, oppure <b>in contanti</b> il giorno della sessione.</p>
+</div></section>
+
+<section class="sec co" aria-label="Checkout" style="padding-top:clamp(30px,5vw,60px)"><div class="wrap">
+  <noscript><p class="co-note-box">Per prenotare online serve JavaScript. Puoi sempre scriverci su <a href="https://wa.me/393248911607">WhatsApp</a>.</p></noscript>
+  <form id="co-form" class="co-grid" novalidate>
+    <div class="co-steps">
+      <p id="co-cancelled" class="co-note-box" role="status" hidden>Pagamento annullato: non ti è stato addebitato nulla e l'orario è di nuovo libero.</p>
+      <p id="co-pass-banner" class="co-note-box co-note-pass" role="status" hidden></p>
+
+      <section aria-labelledby="st-servizio">
+        <div class="eyebrow"><span data-step="0">01</span> · Servizio</div>
+        <h2 id="st-servizio" class="co-h">Cosa vuoi fare?</h2>
+        <div id="co-services" class="co-cards" role="radiogroup" aria-labelledby="st-servizio"></div>
+        <div id="co-beatstars" hidden></div>
+      </section>
+
+      <section aria-labelledby="co-qty-title">
+        <div class="eyebrow"><span data-step="1">02</span> · Quantità</div>
+        <h2 id="co-qty-title" class="co-h">Quante ore?</h2>
+        <div id="co-qty" class="co-chips" role="radiogroup" aria-labelledby="co-qty-title"></div>
+        <p id="co-qty-note" class="co-small"></p>
+      </section>
+
+      <section id="co-when" aria-labelledby="st-quando">
+        <div class="co-when-head">
+          <div><div class="eyebrow"><span data-step="2">03</span> · Data e ora</div><h2 id="st-quando" class="co-h">Quando?</h2></div>
+          <div class="co-arrows"><button type="button" id="co-prev" class="co-arrow" aria-label="Settimana precedente">←</button><button type="button" id="co-next" class="co-arrow" aria-label="Settimana successiva">→</button></div>
+        </div>
+        <div id="co-days" class="co-days" role="tablist" aria-label="Giorno"></div>
+        <div class="co-day-head"><p id="co-day-label" class="co-day-label"></p><p class="co-legend"><span><i class="free"></i>Libero</span><span><i class="busy"></i>Occupato</span></p></div>
+        <div id="co-cal-status" class="co-small" aria-live="polite"></div>
+        <div id="co-slots" class="co-slots" role="tabpanel" aria-live="polite"></div>
+        <p class="co-small">Gli orari barrati sono già occupati, o il blocco che hai scelto non ci sta. Il calendario si aggiorna in tempo reale.</p>
+      </section>
+
+      <section aria-labelledby="st-dati" class="co-fields">
+        <div class="eyebrow"><span data-step="3">04</span> · I tuoi dati</div>
+        <h2 id="st-dati" class="co-h">Chi sei?</h2>
+        <div class="co-two">
+          <label>Nome / Nome d'arte *<input id="co-nome" name="nome" required minlength="2" maxlength="80" autocomplete="name"></label>
+          <label>Email *<input id="co-email" name="email" type="email" required maxlength="120" autocomplete="email" placeholder="Per la conferma"></label>
+        </div>
+        <label>Telefono <span id="co-tel-star" hidden>*</span><input id="co-tel" name="telefono" type="tel" maxlength="30" autocomplete="tel" placeholder="Per contattarti se serve"></label>
+        <label>Note sul progetto<textarea id="co-note" name="note" rows="3" maxlength="450" placeholder="Genere, reference, quante persone porti…"></textarea></label>
+        <div hidden aria-hidden="true"><label>Sito<input id="co-sito" name="sito" tabindex="-1" autocomplete="off"></label></div>
+      </section>
+
+      <section aria-labelledby="st-pagamento">
+        <div class="eyebrow"><span data-step="4">05</span> · Pagamento</div>
+        <h2 id="st-pagamento" class="co-h">Come paghi?</h2>
+        <div class="co-cards" role="radiogroup" aria-labelledby="st-pagamento">
+          <button type="button" role="radio" id="co-pay-online" class="co-card on" aria-checked="true"><span class="co-card-title">Online</span><span class="co-card-text">Carta, PayPal, Apple Pay o Google Pay. Pagamento sicuro con Stripe.</span></button>
+          <button type="button" role="radio" id="co-pay-cash" class="co-card" aria-checked="false"><span class="co-card-title">Contanti in studio</span><span class="co-card-text" id="co-pay-cash-text">Prenoti ora e paghi il giorno della sessione.</span></button>
+        </div>
+        <label class="co-check"><input type="checkbox" name="privacy" id="co-privacy" required><span>Ho letto l'<a href="/privacy/" target="_blank">informativa privacy</a> e acconsento al trattamento dei miei dati per gestire la prenotazione. *</span></label>
+      </section>
+    </div>
+
+    <aside class="co-aside" aria-label="Riepilogo">
+      <div class="slab receipt"><div class="face">
+        <h4>Riepilogo</h4>
+        <p id="co-sum-title" class="co-sum-title"></p>
+        <div class="rl"><span>Quantità</span><span class="v"><b id="co-sum-qty"></b></span></div>
+        <div class="rl" id="co-sum-when-row"><span>Quando</span><span class="v"><b id="co-sum-when"></b></span></div>
+        <div class="rl" id="co-sum-disc-row" hidden><span id="co-sum-disc-label"></span><span class="v" id="co-sum-disc"></span></div>
+        <div class="rtotal"><div><div class="lb">Totale</div></div><div class="big gold-text"><span id="co-sum-total"></span><small id="co-sum-per" class="co-per"></small></div></div>
+        <p id="co-error" class="co-error" role="alert" hidden></p>
+        <button type="submit" id="co-submit" class="btn co-submit">Vai al pagamento →</button>
+        <p id="co-sum-note" class="co-small"></p>
+        <p id="co-payee" class="co-small co-dim"></p>
+      </div></div>
+    </aside>
+
+    <dialog class="book co-pass-dialog" id="co-pass-dialog" aria-labelledby="co-pass-title">
+      <div class="slab"><div class="face">
+        <button class="x" type="button" id="co-pass-close" aria-label="Chiudi">✕</button>
+        <div class="eyebrow" id="co-pass-eyebrow"></div>
+        <h2 id="co-pass-title" class="gold-text">Fallo diventare un Pass</h2>
+        <p class="lead" id="co-pass-intro" style="font-size:15px"></p>
+        <div id="co-pass-cards" class="co-pass-grid"></div>
+        <div class="co-pass-skip"><p id="co-pass-skip-text" class="co-small"></p><button type="button" class="btn-ghost" id="co-pass-skip">No grazie, continua</button></div>
+      </div></div>
+    </dialog>
+  </form>
+</div></section>
+</main>
+<footer class="foot"><div class="wrap"><div class="legal"><div>© 2026 Backrooms Studio · Via Galileo Galilei, 3, 36057 Arcugnano (VI)<br>Luca Cappellari · P.IVA 04596940249<br>Freya Michelazzo · P.IVA 04627790241</div><div class="l2"><a href="/">Home</a><a href="tel:+393248911607" data-track="telefono">+39 324 891 1607</a><a href="/privacy/">Privacy e cookie</a><a href="/termini/">Termini</a></div></div></div></footer>
+<script>
+// Google Analytics (solo se l'utente l'ha già accettato sulla home)
+(function(){var ok=null;try{ok=localStorage.getItem('bs_consent')}catch(e){}if(ok!=='yes')return;var s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id=G-VTL6MDD9VZ';document.head.appendChild(s);window.dataLayer=window.dataLayer||[];window.gtag=function(){dataLayer.push(arguments)};gtag('js',new Date());gtag('config','G-VTL6MDD9VZ',{anonymize_ip:true,allow_google_signals:false,allow_ad_personalization_signals:false});
+document.addEventListener('click',function(e){var a=e.target.closest('[data-track]');if(a)gtag('event','click_'+a.getAttribute('data-track'))})})();
+</script>
+<script src="/js/prenota.js?v=20261122" defer></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { deserializeOrder, orderEvent, serializeOrder, CALENDAR_COLORS, type Order } from "../lib/booking/order.ts";
+import { deserializeOrder, orderEvent, serializeOrder, CALENDAR_COLORS, type Order } from "../src/booking/order.ts";
 
 const order: Order = {
   serviceId: "registrazione",
