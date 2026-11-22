@@ -32,3 +32,16 @@ test("stesso cliente riconosciuto con email in maiuscolo o telefono con +39", ()
   assert.notEqual(a.prova_email, customerKeys({ email: "altro@example.com", phone: "" }).prova_email);
   assert.ok(!a.prova_email.includes("giulia")); // nel calendario non finisce l'email in chiaro
 });
+
+const reg = { servizio: "registrazione", quantita: 2, nome: "Giulia", email: "giulia@example.com", privacy: true, inizio: "2026-12-10T14:00:00.000Z" };
+
+test("pagamento online di una sessione in studio: serve la regola di cancellazione", () => {
+  assert.throws(() => parseOrder({ ...reg, pagamento: "online" }), /condizioni di cancellazione/);
+  const ok = parseOrder({ ...reg, pagamento: "online", policy: true });
+  assert.equal(ok.policy, true);
+});
+
+test("in contanti o a distanza la regola online non serve", () => {
+  assert.equal(parseOrder({ ...reg, pagamento: "contanti", telefono: "3331234567" }).policy, undefined);
+  assert.equal(parseOrder({ servizio: "mix-remoto", quantita: 1, nome: "Giulia", email: "giulia@example.com", privacy: true }).policy, undefined);
+});

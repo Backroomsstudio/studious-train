@@ -6,10 +6,11 @@
 import {
   BEATSTARS_LICENSE_PRICE,
   BEATSTARS_URL,
-  bookableServices,
   bookingMinutes,
+  CANCELLATION_POLICY,
   getPass,
   getService,
+  groupOf,
   maxUnitsFor,
   PASS_CHECKOUT_EXTRA_DISCOUNT,
   PASS_PERKS,
@@ -17,6 +18,9 @@ import {
   passCheckoutCents,
   passCovers,
   passesFor,
+  serviceGroups,
+  type BookableService,
+  type GroupId,
   type Pass,
   type PassId,
   type PassUnit,
@@ -67,8 +71,14 @@ const params = new URLSearchParams(location.search);
 const today = romeDay(new Date());
 const lastDay = addDays(today, DEFAULT_RULES.horizonDays);
 
+const presetPass = getPass(params.get("pass") ?? "") ?? null;
+const presetService = getService(params.get("servizio") ?? "")?.id ?? (presetPass ? "registrazione" : null);
+
 const state = {
-  serviceId: (getService(params.get("servizio") ?? "")?.id ?? "registrazione") as ServiceId,
+  /** Primo livello della scelta: Sessione, Beat o Mix & Master */
+  groupId: (presetService ? groupOf(presetService).id : null) as GroupId | null,
+  /** Secondo livello: il servizio vero e proprio (null finché non si sceglie) */
+  serviceId: presetService as ServiceId | null,
   units: 1,
   pageStart: today,
   day: today,
@@ -76,23 +86,26 @@ const state = {
   payment: "online" as "online" | "contanti",
   availability: { status: "loading" } as { status: "loading" } | { status: "error"; message: string } | { status: "ready"; busy: Interval[]; now: Date },
   /** Pass scelto dalla sezione prezzi del sito (?pass=pro): il primo appuntamento si prenota qui */
-  presetPass: getPass(params.get("pass") ?? "") ?? null,
+  presetPass,
   submitting: false,
   pending: null as Record<string, unknown> | null,
 };
 let fetchCtrl: AbortController | null = null;
 
-const service = () => getService(state.serviceId)!;
+/** Il servizio scelto. Le parti del checkout che lo usano compaiono solo dopo la scelta. */
+const service = (): BookableService => getService(state.serviceId ?? "registrazione")!;
+const chosen = () => state.serviceId !== null;
 const minutes = () => bookingMinutes(service(), state.units);
 const inStudio = () => service().where === "studio";
 const canPayCash = () => service().cashAllowed && !activePresetPass();
 const canPayOnline = () => service().onlineAllowed !== false;
-const activePresetPass = (): Pass | null => (state.presetPass && passCovers(state.presetPass, service(), state.units) ? state.presetPass : null);
+const activePresetPass = (): Pass | null => (state.presetPass && chosen() && passCovers(state.presetPass, service(), state.units) ? state.presetPass : null);
+const policyNeeded = () => state.payment === "online" && inStudio();
 
 /* ---------- disponibilità ---------- */
 
 async function loadAvailability() {
-  if (!inStudio()) return;
+  if (!chosen() || !inStudio()) return;
   fetchCtrl?.abort();
   fetchCtrl = new AbortController();
   state.availability = { status: "loading" };
@@ -128,46 +141,72 @@ function dropSlotIfTaken() {
 
 /* ---------- render ---------- */
 
+function chooseService(id: ServiceId) {
+  const s = getService(id)!;
+  state.serviceId = id;
+  state.units = 1;
+  state.slotStart = null;
+  if (!s.cashAllowed) state.payment = "online";
+  if (s.onlineAllowed === false) state.payment = "contanti";
+  track("checkout_servizio", { servizio: id });
+  renderAll(true);
+  void loadAvailability();
+}
+
 function renderServices() {
-  const box = $("co-services");
-  box.replaceChildren(
-    ...bookableServices.map((s) => {
-      const active = s.id === state.serviceId;
+  $("co-groups").replaceChildren(
+    ...serviceGroups.map((g) => {
+      const active = g.id === state.groupId;
       return h(
         "button",
         {
           type: "button",
           role: "radio",
           "aria-checked": String(active),
-          class: "co-card" + (active ? " on" : ""),
+          class: "co-group" + (active ? " on" : ""),
           onclick: () => {
-            state.serviceId = s.id;
-            state.units = 1;
+            if (state.groupId === g.id) return;
+            state.groupId = g.id;
+            // Con una sola opzione (non succede oggi) si sceglie da sola; altrimenti si apre il secondo livello.
+            state.serviceId = g.options.length === 1 ? g.options[0].serviceId : null;
             state.slotStart = null;
-            if (!s.cashAllowed) state.payment = "online";
-            if (s.onlineAllowed === false) state.payment = "contanti";
-            track("checkout_servizio", { servizio: s.id });
-            renderAll();
-            loadAvailability();
+            track("checkout_famiglia", { famiglia: g.id });
+            renderAll(true);
           },
         },
-        h("span", { class: "co-card-top" }, h("span", { class: "co-tag" }, s.where === "studio" ? "In studio" : "A distanza"), h("b", {}, `${formatEuro(s.unitPriceCents)}/${s.unit.one}`)),
+        h("b", {}, g.title),
+        h("span", {}, g.text),
+        h("i", {}, active ? "Scelto ✓" : "Scegli →"),
+      );
+    }),
+  );
+
+  const sub = $("co-sub");
+  const group = serviceGroups.find((g) => g.id === state.groupId);
+  sub.hidden = !group;
+  if (!group) return;
+  $("co-sub-title").textContent = group.id === "sessione" ? "Che tipo di sessione?" : "In presenza o a distanza?";
+  $("co-options").replaceChildren(
+    ...group.options.map((o) => {
+      const s = getService(o.serviceId)!;
+      const active = o.serviceId === state.serviceId;
+      return h(
+        "button",
+        { type: "button", role: "radio", "aria-checked": String(active), class: "co-card" + (active ? " on" : ""), onclick: () => chooseService(o.serviceId) },
         s.badge ? h("span", { class: "co-badge" }, s.badge) : null,
-        h("span", { class: "co-card-title" }, s.title),
-        h("span", { class: "co-card-text" }, s.summary),
-        s.showDuration && s.minutesPerUnit > 0 ? h("span", { class: "co-tag" }, `${formatDuration(s.minutesPerUnit)} a ${s.unit.one}`) : null,
-        s.noDiscount ? h("span", { class: "co-tag" }, "Prezzo fisso, senza sconti") : null,
+        h("span", { class: "co-card-title" }, o.label),
+        h("span", { class: "co-card-text" }, o.hint),
       );
     }),
   );
   const bs = $("co-beatstars");
-  bs.hidden = !BEATSTARS_URL;
-  if (BEATSTARS_URL) {
+  bs.hidden = !(group.id === "beat" && BEATSTARS_URL);
+  if (!bs.hidden) {
     bs.replaceChildren(
       h(
         "a",
         { href: BEATSTARS_URL, target: "_blank", rel: "noopener", class: "co-card co-wide", "data-track": "beatstars" },
-        h("span", { class: "co-card-title" }, "Catalogo beat già pronti"),
+        h("span", { class: "co-card-title" }, "Oppure un beat già pronto"),
         h("span", { class: "co-card-text" }, `Licenza base a ${BEATSTARS_LICENSE_PRICE}: scegli e acquisti direttamente sul nostro BeatStars.`),
         h("span", { class: "co-tag" }, "Apri BeatStars ↗"),
       ),
@@ -207,9 +246,7 @@ function renderQty() {
 }
 
 function renderCalendar() {
-  const section = $("co-when");
-  section.hidden = !inStudio();
-  if (!inStudio()) return;
+  if (!chosen() || !inStudio()) return;
 
   ($("co-prev") as HTMLButtonElement).disabled = state.pageStart <= today;
   ($("co-next") as HTMLButtonElement).disabled = addDays(state.pageStart, DAYS_PER_PAGE) > lastDay;
@@ -279,8 +316,7 @@ function renderCalendar() {
           class: "co-slot" + (active ? " on" : "") + (free ? "" : " busy"),
           onclick: () => {
             state.slotStart = s.start;
-            renderCalendar();
-            renderSummary();
+            renderAll(true);
           },
         },
         s.label,
@@ -311,6 +347,11 @@ function renderPay() {
   const tel = $("co-tel") as HTMLInputElement;
   tel.required = state.payment === "contanti";
   $("co-tel-star").hidden = state.payment !== "contanti";
+  // Regola di cancellazione: da accettare per pagare online una sessione in studio.
+  const policy = $("co-policy") as HTMLInputElement;
+  $("co-policy-row").hidden = !policyNeeded();
+  policy.required = policyNeeded();
+  $("co-policy-text").textContent = CANCELLATION_POLICY;
 }
 
 function renderSummary() {
@@ -326,6 +367,7 @@ function renderSummary() {
     $("co-sum-when").textContent = `${dayLabel(romeDay(new Date(state.slotStart))).long}, ${s.showDuration ? `${timeLabel(state.slotStart)} – ${timeLabel(end)}` : `dalle ${timeLabel(state.slotStart)}`}`;
   } else $("co-sum-when").textContent = "da scegliere";
 
+  $("co-sum-pay").textContent = state.payment === "contanti" ? "In studio, il giorno della sessione" : "Online (carta, PayPal, Apple Pay, Google Pay)";
   const disc = $("co-sum-disc-row");
   disc.hidden = pass ? false : q.discountPercent === 0;
   if (pass) {
@@ -346,27 +388,62 @@ function renderSummary() {
   $("co-sum-note").textContent =
     state.payment === "contanti"
       ? "Lo slot viene riservato subito: paghi in studio il giorno della sessione."
-      : "Pagherai sulla pagina sicura di Stripe (carta, PayPal, Apple Pay, Google Pay). Lo slot resta bloccato per te 30 minuti.";
+      : "Pagherai sulla pagina sicura di Stripe. Lo slot resta bloccato per te 30 minuti." + (policyNeeded() ? ` ${CANCELLATION_POLICY}` : "");
 
   const banner = $("co-pass-banner");
   banner.hidden = !pass;
   if (pass) banner.textContent = `Stai attivando il ${pass.title} a ${formatEuro(passCheckoutCents(pass))} al mese: scegli qui la prima sessione.`;
 }
 
-function renderSteps() {
-  const nums = inStudio() ? ["01", "02", "03", "04", "05"] : ["01", "02", "", "03", "04"];
-  document.querySelectorAll<HTMLElement>("[data-step]").forEach((el) => {
-    el.textContent = nums[Number(el.dataset.step)];
-  });
+/** Quali passaggi si vedono: si aprono uno dopo l'altro, come una matrioska. */
+function visibleSteps(): Record<string, boolean> {
+  const one = chosen();
+  const two = one && (!inStudio() || Boolean(state.slotStart));
+  return {
+    "st-qty": one && maxUnitsFor(service()) > 1,
+    "co-when": one && inStudio(),
+    "st-dati": two,
+    "st-pay": two,
+    "st-sum": two,
+  };
 }
 
-function renderAll() {
+let firstRender = true;
+
+function renderSteps(scroll: boolean) {
+  let newlyShown: HTMLElement | null = null;
+  for (const [id, show] of Object.entries(visibleSteps())) {
+    const el = $(id);
+    if (show && el.hidden) {
+      el.hidden = false;
+      if (!firstRender) {
+        el.classList.remove("reveal");
+        void el.offsetWidth;
+        el.classList.add("reveal");
+        newlyShown ??= el;
+      }
+    } else if (!show) el.hidden = true;
+  }
+  // Numeri dei passaggi in ordine, solo per quelli visibili.
+  let n = 0;
+  document.querySelectorAll<HTMLElement>(".co-step").forEach((step) => {
+    if (step.hidden) return;
+    n++;
+    step.querySelectorAll<HTMLElement>("[data-step]").forEach((el) => (el.textContent = String(n).padStart(2, "0")));
+  });
+  if (scroll && newlyShown) newlyShown.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderAll(scroll = false) {
   renderServices();
-  renderQty();
-  renderCalendar();
-  renderPay();
-  renderSummary();
-  renderSteps();
+  if (chosen()) {
+    renderQty();
+    renderCalendar();
+    renderPay();
+    renderSummary();
+  }
+  renderSteps(scroll);
+  firstRender = false;
 }
 
 /* ---------- Pass proposto prima di pagare ---------- */
@@ -407,6 +484,15 @@ function openPassOffer(eligible: Pass[]) {
 function choosePass(passId: PassId | null) {
   ($("co-pass-dialog") as HTMLDialogElement).close();
   if (!state.pending) return;
+  // Il Pass si paga online: se il cliente aveva scelto "in studio" deve prima accettare le condizioni di cancellazione.
+  if (passId && state.pending.policy !== true) {
+    state.payment = "online";
+    renderPay();
+    renderSummary();
+    showError("Il Pass si paga online: accetta le condizioni di cancellazione e premi di nuovo «Vai al pagamento».");
+    $("co-policy-row").scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
   track(passId ? "checkout_pass_scelto" : "checkout_pass_rifiutato", { pass: passId ?? "" });
   void send(passId ? { ...state.pending, pass: passId, pagamento: "online" } : state.pending);
 }
@@ -445,6 +531,11 @@ async function send(payload: Record<string, unknown>) {
 function onSubmit(e: Event) {
   e.preventDefault();
   showError(null);
+  if (!chosen()) {
+    showError("Scegli cosa vuoi prenotare.");
+    $("st-1").scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
   if (inStudio() && !state.slotStart) {
     showError("Scegli giorno e orario della sessione.");
     $("co-when").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -464,7 +555,8 @@ function onSubmit(e: Event) {
     note: data.get("note"),
     sito: data.get("sito"),
     privacy: data.get("privacy") === "on",
-    pagamento: canPayCash() ? state.payment : "online",
+    policy: data.get("policy") === "on",
+    pagamento: state.payment,
   };
   // Pass già scelto dalla sezione prezzi: niente proposta, si va dritti al pagamento mensile.
   if (pass) return void send({ ...payload, pass: pass.id, pagamento: "online" });
@@ -481,7 +573,6 @@ function onSubmit(e: Event) {
 /* ---------- avvio ---------- */
 
 function init() {
-  if (state.presetPass && !params.get("servizio")) state.serviceId = "registrazione";
   $("co-cancelled").hidden = params.get("annullato") !== "1";
   $("co-payee").textContent = `Venditore: ${studio.payee.name} · P.IVA ${studio.payee.vatId}`;
 
@@ -510,6 +601,7 @@ function init() {
   window.addEventListener("br:reset", (e) => {
     state.submitting = false;
     state.slotStart = null;
+    window.scrollTo({ top: 0 });
     $("co-cancelled").hidden = !(e as CustomEvent<{ annullato?: boolean }>).detail?.annullato;
     renderAll();
     void loadAvailability();

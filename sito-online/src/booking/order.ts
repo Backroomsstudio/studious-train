@@ -2,7 +2,7 @@
  * L'ordine e la sua rappresentazione nel calendario (titolo, colore, promemoria, descrizione).
  * Modulo puro: testabile senza Google né Stripe.
  */
-import { getPass, getService, PASS_UNIT_LABELS, type BookableService, type Pass, type PassId, type PassUnit, type ServiceId } from "./catalog.ts";
+import { CANCELLATION_HOURS, getPass, getService, PASS_UNIT_LABELS, type BookableService, type Pass, type PassId, type PassUnit, type ServiceId } from "./catalog.ts";
 import { formatEuro, formatDuration, unitLabel } from "./pricing.ts";
 import { TIME_ZONE } from "./slots.ts";
 
@@ -24,6 +24,8 @@ export interface Order {
   monthly: boolean;
   /** Pass attivato al checkout: l'acquisto diventa la prima sessione del Pass */
   passId?: PassId;
+  /** Il cliente ha accettato la regola di cancellazione (pagamenti online di sessioni in studio) */
+  policy?: boolean;
   totalCents: number;
   fullCents: number;
 }
@@ -63,6 +65,7 @@ export function orderDescription(order: Order, status: OrderStatus, extra: strin
     `Email: ${order.email}`,
     order.phone ? `Telefono: ${order.phone}` : null,
     order.notes ? `Note: ${order.notes}` : null,
+    order.policy ? `Ha accettato la regola di cancellazione: avviso entro ${CANCELLATION_HOURS} ore, altrimenti non rimborsabile.` : null,
     ...(extra.length ? ["", ...extra] : []),
     "",
     "Prenotato dal sito backroomsstudio.it",
@@ -100,6 +103,7 @@ export function serializeOrder(order: Order): string {
     p: order.phone.slice(0, 30),
     m: order.monthly ? 1 : 0,
     k: order.passId ?? "",
+    pc: order.policy ? 1 : 0,
     t: order.totalCents,
     f: order.fullCents,
     y: order.payment === "contanti" ? "c" : "o",
@@ -123,6 +127,7 @@ export function deserializeOrder(raw: string, notes = ""): Order | null {
       payment: c.y === "c" ? "contanti" : "online",
       monthly: c.m === 1,
       ...(c.k && getPass(c.k) ? { passId: c.k as PassId } : {}),
+      ...(c.pc === 1 ? { policy: true } : {}),
       totalCents: Number(c.t),
       fullCents: Number(c.f),
     };
@@ -141,6 +146,7 @@ export function describeOrderForHumans(order: Order, service: BookableService = 
     when ? `Quando: ${when}${service.showDuration && order.end ? ` (${formatDuration((Date.parse(order.end) - Date.parse(order.start!)) / 60000)})` : ""}` : "A distanza: ti scriviamo noi per i dettagli e il materiale.",
     `Totale: ${formatEuro(order.totalCents)}${order.monthly ? " al mese" : ""}`,
     order.payment === "contanti" ? "Pagamento: in contanti in studio, il giorno della sessione." : "Pagamento: online.",
+    order.policy ? `Cancellazioni: avvisaci almeno ${CANCELLATION_HOURS} ore prima; dopo, il pagamento non è rimborsabile.` : null,
   ].filter((l): l is string => l !== null);
 }
 

@@ -16,20 +16,34 @@ export default async () => {
       const busy = await busyIntervals(now, new Date(now.getTime() + 7 * 24 * 3600_000));
       out.calendario = `ok: letti ${serverConfig.busyCalendarIds.length} calendari, ${busy.length} impegni nei prossimi 7 giorni`;
     } catch (e) {
-      out.calendario = `errore: ${(e as Error).message.slice(0, 200)} (il calendario è condiviso con l'account di servizio?)`;
+      const msg = (e as Error).message;
+      out.calendario = msg.includes("notFound") || msg.includes("404")
+        ? "errore: calendario non trovato (è condiviso con l'email dell'account di servizio?)"
+        : msg.includes("Google token")
+          ? "errore: Google rifiuta l'account di servizio (GOOGLE_CLIENT_EMAIL o GOOGLE_PRIVATE_KEY copiati male)"
+          : "errore: calendario non leggibile (controlla la condivisione con l'account di servizio)";
     }
   }
 
+  // Mai riportare messaggi d'errore di Stripe: possono contenere pezzi della chiave.
+  const key = serverConfig.stripeSecretKey;
+  const hook = serverConfig.stripeWebhookSecret;
   if (!stripeConfigured) out.stripe = "manca: STRIPE_SECRET_KEY";
+  else if (key.startsWith("whsec_")) out.stripe = "errore: in STRIPE_SECRET_KEY c'è il segreto del webhook (whsec_…). Serve la chiave segreta sk_test_… o sk_live_… (Stripe → Sviluppatori → Chiavi API)";
+  else if (key.startsWith("pk_")) out.stripe = "errore: in STRIPE_SECRET_KEY c'è la chiave pubblicabile (pk_…). Serve la chiave segreta sk_test_… o sk_live_…";
+  else if (!/^(sk|rk)_(test|live)_/.test(key)) out.stripe = "errore: STRIPE_SECRET_KEY non sembra una chiave segreta Stripe (deve iniziare con sk_test_ o sk_live_)";
   else {
     try {
       await stripe().balance.retrieve();
-      out.stripe = serverConfig.stripeSecretKey.startsWith("sk_live_") ? "ok: modalità LIVE (incassi veri)" : "ok: modalità TEST (nessun incasso vero)";
+      out.stripe = key.includes("_live_") ? "ok: modalità LIVE (incassi veri)" : "ok: modalità TEST (nessun incasso vero)";
     } catch (e) {
-      out.stripe = `errore: ${(e as Error).message.slice(0, 200)}`;
+      const status = (e as { statusCode?: number }).statusCode;
+      out.stripe = status === 401 ? "errore: Stripe rifiuta la chiave (revocata o copiata male)" : "errore: Stripe non raggiungibile, riprova tra poco";
     }
   }
-  out.webhook = serverConfig.stripeWebhookSecret ? "ok: segreto impostato" : "manca: STRIPE_WEBHOOK_SECRET (senza, i pagamenti non diventano verdi in calendario)";
+  if (!hook) out.webhook = "manca: STRIPE_WEBHOOK_SECRET (senza, i pagamenti non diventano verdi in calendario)";
+  else if (!hook.startsWith("whsec_")) out.webhook = "errore: STRIPE_WEBHOOK_SECRET deve iniziare con whsec_ (Stripe → Sviluppatori → Webhook → Segreto di firma)";
+  else out.webhook = "ok: segreto impostato";
   out.email = mailConfigured ? `ok: notifiche a ${serverConfig.notifyEmails.length} indirizzi` : "manca: SMTP_USER e SMTP_PASS (le prenotazioni funzionano, ma senza email)";
 
   const pronto = [out.calendario, out.stripe, out.webhook].every((v) => String(v).startsWith("ok"));
