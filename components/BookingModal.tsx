@@ -11,6 +11,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import Link from "next/link";
 import { services } from "@/lib/content";
 import { mailtoLink, studio, whatsappLink } from "@/lib/studio";
 import { buttonStyles, cn } from "@/lib/cn";
@@ -48,6 +49,14 @@ export function BookingTrigger({
   cursorLabel?: string;
 }) {
   const { open } = useBooking();
+  // Senza note libere (visita, live) il pulsante porta al checkout con calendario e pagamento online.
+  if (!notes) {
+    return (
+      <Link href={service ? `/prenota?servizio=${encodeURIComponent(service)}` : "/prenota"} className={className} data-cursor={cursorLabel}>
+        {children}
+      </Link>
+    );
+  }
   return (
     <button
       type="button"

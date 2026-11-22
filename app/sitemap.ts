@@ -17,6 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.8,
     })),
+    { url: `${SITE_URL}/prenota`, lastModified: new Date(), changeFrequency: "weekly" as const, priority: 0.9 },
     { url: `${SITE_URL}/privacy`, lastModified: new Date(), changeFrequency: "yearly" as const, priority: 0.2 },
     { url: `${SITE_URL}/termini`, lastModified: new Date(), changeFrequency: "yearly" as const, priority: 0.2 },
   ];

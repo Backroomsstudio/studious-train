@@ -1,0 +1,13 @@
+# Sito di backroomsstudio.it.
+# In Netlify: Site configuration → Build & deploy → Base directory = "sito-online".
+[build]
+  base = "sito-online"
+  command = "npm run build"
+  publish = "public"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  node_bundler = "esbuild"

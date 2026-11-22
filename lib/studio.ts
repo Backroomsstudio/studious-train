@@ -47,6 +47,9 @@ export const studio = {
     { name: "Freya Michelazzo", vatId: "04627790241" },
   ] as { name: string; vatId: string }[],
 
+  /** Chi incassa i pagamenti online (account Stripe) ed emette la ricevuta/fattura. */
+  payee: { name: "Luca Cappellari", vatId: "04596940249" },
+
   address: {
     street: "Via Galileo Galilei, 3",
     postalCode: "36057",
