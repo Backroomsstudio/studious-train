@@ -95,13 +95,13 @@ export const bookableServices: BookableService[] = [
 ];
 
 /**
- * Sconti per quantità, in percentuale sul prezzo pieno (es. 3 unità → 5 = −5%).
+ * Sconti per quantità, in percentuale sul prezzo pieno: { quantità minima: percentuale }.
  *
- * DA COMPILARE con le percentuali del calcolatore dello studio. Finché una quantità non è
- * presente qui, si paga il prezzo pieno (nessuno sconto inventato).
+ * Stessa scala del calcolatore del sito (sito-online/js/main.js, funzione `sconto`):
+ * 1–2 listino · 3+ −10% · 5+ −20% · 10+ −30%.
  * Si può impostare una tabella diversa per servizio in DISCOUNTS_BY_SERVICE.
  */
-export const DISCOUNTS: Record<number, number> = {};
+export const DISCOUNTS: Record<number, number> = { 3: 10, 5: 20, 10: 30 };
 
 export const DISCOUNTS_BY_SERVICE: Partial<Record<ServiceId, Record<number, number>>> = {};
 

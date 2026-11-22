@@ -24,7 +24,7 @@ Si modifica tutto in `lib/booking/catalog.ts`:
 | Mix & Master in Studio | 70 € a brano | 2 h per brano (non mostrato al cliente) | 3 brani (6 h) |
 | Mix & Master a Distanza | 70 € a brano | — | 6 |
 
-- **Sconti per quantità**: si mettono in `DISCOUNTS`, che vale per tutti i servizi, o in `DISCOUNTS_BY_SERVICE`, che vale per un servizio solo. Il formato è `{ quantità minima: percentuale }`, ad esempio `{ 2: 5, 3: 10 }`. Finché sono vuoti si paga il prezzo pieno.
+- **Sconti per quantità**: stessa scala del calcolatore del sito (1–2 a listino, da 3 −10%, da 5 −20%, da 10 −30%), arrotondati all'euro. Si cambiano in `DISCOUNTS`, che vale per tutti i servizi, o in `DISCOUNTS_BY_SERVICE`, che vale per un servizio solo.
 - **Catalogo BeatStars**: incolla il link del negozio in `BEATSTARS_URL`. Da vuoto, il riquadro resta nascosto.
 - **Preavviso minimo** (3 ore) e **giorni prenotabili** (60): li trovi in `DEFAULT_RULES`, nel file `lib/booking/slots.ts`.
 

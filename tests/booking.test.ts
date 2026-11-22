@@ -25,11 +25,16 @@ test("tetto di 6 ore per i servizi in studio", () => {
   }
 });
 
-test("senza tabella sconti si paga il prezzo pieno", () => {
-  const q = quote(reg, 3);
-  assert.equal(q.fullCents, 15000);
-  assert.equal(q.totalCents, 15000);
-  assert.equal(q.discountPercent, 0);
+test("scala sconti del calcolatore: 1–2 listino, 3+ −10%, 5+ −20%", () => {
+  assert.equal(quote(reg, 1).totalCents, 5000);
+  assert.equal(quote(reg, 2).totalCents, 10000);
+  assert.equal(quote(reg, 3).totalCents, 13500); // 150 € − 10%
+  assert.equal(quote(reg, 4).totalCents, 18000); // 200 € − 10%
+  assert.equal(quote(reg, 5).totalCents, 20000); // 250 € − 20%
+  assert.equal(quote(reg, 6).totalCents, 24000); // 300 € − 20%
+  assert.equal(quote(beat, 4).totalCents, 21600); // 240 € − 10%
+  assert.equal(quote(mix, 3).totalCents, 18900); // 210 € − 10%
+  assert.equal(quote(getService("mix-remoto")!, 5).totalCents, 28000); // 350 € − 20%
 });
 
 test("sconto a scaglioni, arrotondato all'euro", () => {
