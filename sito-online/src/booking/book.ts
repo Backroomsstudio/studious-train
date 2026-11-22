@@ -1,8 +1,9 @@
 import type Stripe from "stripe";
+import { createHash } from "node:crypto";
 import { bookingMinutes, getPass, getService, maxUnitsFor, passCheckoutCents, passCovers } from "./catalog.ts";
 import { quote, unitLabel } from "./pricing.ts";
 import { DEFAULT_RULES, isBookable, TIME_ZONE } from "./slots.ts";
-import { busyIntervals, deleteEvent, eventsBetween, getEvent, insertEvent, patchEvent, CalendarError, type CalendarEvent } from "./google-calendar.ts";
+import { busyIntervals, deleteEvent, eventsBetween, eventsWithPrivate, getEvent, insertEvent, patchEvent, CalendarError, type CalendarEvent } from "./google-calendar.ts";
 import { deserializeOrder, orderEvent, passContents, serializeOrder, type Order } from "./order.ts";
 import { stripe } from "./stripe.ts";
 import { confirmToCustomer, notifyRenewal, notifyStudio } from "./mail.ts";
@@ -44,9 +45,10 @@ export function parseOrder(body: Record<string, unknown>): Order {
   if (rawPass && !pass) throw new BookingError("Pass non valido");
   if (pass && !passCovers(pass, service, units)) throw new BookingError("Questo Pass non include l'acquisto scelto");
   const monthly = Boolean(pass);
-  const payment = pass ? "online" : body.pagamento === "contanti" ? "contanti" : "online";
+  // Servizi solo in presenza (sessione di prova): si paga sempre in studio.
+  const payment = service.onlineAllowed === false ? "contanti" : pass ? "online" : body.pagamento === "contanti" ? "contanti" : "online";
   if (payment === "contanti" && !service.cashAllowed) throw new BookingError("Questo servizio si paga solo online");
-  if (payment === "contanti" && phone.length < 6) throw new BookingError("Per pagare in contanti serve un numero di telefono");
+  if (payment === "contanti" && phone.replace(/\D/g, "").length < 6) throw new BookingError("Per pagare in studio serve un numero di telefono");
 
   let start: string | undefined;
   let end: string | undefined;
@@ -93,6 +95,22 @@ async function assertNoRace(created: CalendarEvent, order: Order) {
   }
 }
 
+/** Impronte (non reversibili) di email e telefono, per riconoscere chi ha già fatto la prova. */
+export function customerKeys(order: Pick<Order, "email" | "phone">): { prova_email: string; prova_tel: string } {
+  const digits = order.phone.replace(/\D/g, "").replace(/^(00)?39(?=\d{9,10}$)/, "");
+  const hash = (v: string) => createHash("sha256").update(`backrooms:${v}`).digest("hex").slice(0, 32);
+  return { prova_email: hash(order.email.trim().toLowerCase()), prova_tel: hash(digits) };
+}
+
+/** La sessione di prova si fa una volta sola: se email o telefono l'hanno già prenotata, si blocca. */
+async function assertFirstTime(order: Order) {
+  const keys = customerKeys(order);
+  const [byEmail, byPhone] = await Promise.all([eventsWithPrivate("prova_email", keys.prova_email), eventsWithPrivate("prova_tel", keys.prova_tel)]);
+  if (byEmail.length || byPhone.length) {
+    throw new BookingError("Hai già usato la sessione di prova: scegli una sessione di registrazione normale.", 409);
+  }
+}
+
 export interface BookingResult {
   /** Pagina su cui mandare il cliente: Stripe Checkout o la conferma */
   redirectUrl: string;
@@ -102,9 +120,13 @@ export async function createBooking(order: Order, origin: string): Promise<Booki
   const service = getService(order.serviceId)!;
   let hold: CalendarEvent | null = null;
 
+  if (service.oncePerCustomer) await assertFirstTime(order);
+
   if (service.where === "studio") {
     await assertSlotFree(order);
-    hold = await insertEvent(orderEvent(order, order.payment === "contanti" ? "da-saldare" : "in-attesa"));
+    const event = orderEvent(order, order.payment === "contanti" ? "da-saldare" : "in-attesa");
+    if (service.oncePerCustomer) Object.assign(event.extendedProperties.private, customerKeys(order));
+    hold = await insertEvent(event);
     await assertNoRace(hold, order);
   }
 

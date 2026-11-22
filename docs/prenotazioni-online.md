@@ -16,7 +16,9 @@ Sul sito, questi pulsanti "Prenota" portano al checkout:
 - Sessione di registrazione, Beat su misura, Mix & Master e Affitto sala;
 - "Attiva" dei tre Pass, con il Pass già scelto.
 
-Questi aprono ancora la richiesta su WhatsApp: Prima sessione a 20 €, Singolo/EP/Album, Corsi, Live e Visita.
+- "Prima sessione a 20 €", con la sessione di prova già scelta.
+
+Questi aprono ancora la richiesta su WhatsApp: Singolo/EP/Album, Corsi, Live e Visita.
 
 ## Come funziona
 
@@ -36,6 +38,7 @@ Si modifica tutto in `sito-online/src/booking/catalog.ts`:
 
 | Servizio | Prezzo | In calendario | Massimo |
 | --- | --- | --- | --- |
+| Prima Sessione di Prova | 20 € (invece di 50 €), **si paga solo in studio**, una volta per cliente (stessa email o telefono) | 1 h | 1 |
 | Sessione di Registrazione | 50 € l'ora | 1 h per ora | 6 ore |
 | Sessione di Beat in Studio | 60 € a sessione | 1 h 30 per sessione | 4 sessioni (6 h) |
 | Beat a Distanza su Commissione | 60 € a beat | — | 6 |

@@ -111,6 +111,7 @@
   }
   // servizi che si prenotano e pagano online: portano al checkout con calendario (/prenota/)
   var CHECKOUT = {
+    'Prima sessione': '?servizio=prova',
     'Sessione di registrazione': '?servizio=registrazione',
     'Beat su misura': '?servizio=beat-studio',
     'Mix & Master': '?servizio=mix-studio',
@@ -124,11 +125,11 @@
     e.preventDefault();
     var svc = b.getAttribute('data-svc'), q = CHECKOUT[svc];
     if (q) { track('vai_checkout', { servizio: svc }); location.href = '/prenota/' + q; return; }
-    openBook(svc); // prima sessione, progetti, corsi, live, visita: richiesta su WhatsApp
+    openBook(svc); // progetti, corsi, live, visita: richiesta su WhatsApp
   });
   // le pagine servizio rimandano qui con #prenota
   if (location.hash === '#prenota') location.replace('/prenota/?servizio=registrazione');
-  if (location.hash === '#prima') openBook('Prima sessione');
+  if (location.hash === '#prima') location.replace('/prenota/?servizio=prova');
   $('#bookx').addEventListener('click', function () { dlg.close(); });
   dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
   function bookText() {

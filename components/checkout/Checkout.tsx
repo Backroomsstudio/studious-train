@@ -142,6 +142,10 @@ export function Checkout({ initialService, cancelled }: { initialService?: Servi
   }, [slotStart, minutes, service.showDuration]);
 
   const canPayCash = service.cashAllowed;
+  const canPayOnline = service.onlineAllowed !== false;
+  useEffect(() => {
+    if (!canPayOnline) setPayment("contanti");
+  }, [canPayOnline]);
   const ready = !inStudio || Boolean(slotStart);
 
   const send = async (payload: Record<string, unknown>) => {
@@ -489,10 +493,11 @@ export function Checkout({ initialService, cancelled }: { initialService?: Servi
           </h2>
           <div className="mt-6 grid gap-3 sm:grid-cols-2" role="radiogroup" aria-labelledby="step-pagamento">
             <PayOption
-              active={payment === "online" || !canPayCash}
+              active={canPayOnline && (payment === "online" || !canPayCash)}
+              disabled={!canPayOnline}
               onSelect={() => setPayment("online")}
               title="Online"
-              text="Carta, PayPal, Apple Pay o Google Pay. Pagamento sicuro con Stripe."
+              text={canPayOnline ? "Carta, PayPal, Apple Pay o Google Pay. Pagamento sicuro con Stripe." : "La sessione di prova si paga solo in studio."}
             />
             <PayOption
               active={payment === "contanti" && canPayCash}

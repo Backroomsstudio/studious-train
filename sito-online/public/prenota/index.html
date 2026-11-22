@@ -66,7 +66,7 @@
           <label>Nome / Nome d'arte *<input id="co-nome" name="nome" required minlength="2" maxlength="80" autocomplete="name"></label>
           <label>Email *<input id="co-email" name="email" type="email" required maxlength="120" autocomplete="email" placeholder="Per la conferma"></label>
         </div>
-        <label>Telefono <span id="co-tel-star" hidden>*</span><input id="co-tel" name="telefono" type="tel" maxlength="30" autocomplete="tel" placeholder="Per contattarti se serve"></label>
+        <label><span>Telefono <span id="co-tel-star" hidden>*</span></span><input id="co-tel" name="telefono" type="tel" maxlength="30" autocomplete="tel" placeholder="Per contattarti se serve"></label>
         <label>Note sul progetto<textarea id="co-note" name="note" rows="3" maxlength="450" placeholder="Genere, reference, quante persone porti…"></textarea></label>
         <div hidden aria-hidden="true"><label>Sito<input id="co-sito" name="sito" tabindex="-1" autocomplete="off"></label></div>
       </section>
@@ -75,8 +75,8 @@
         <div class="eyebrow"><span data-step="4">05</span> · Pagamento</div>
         <h2 id="st-pagamento" class="co-h">Come paghi?</h2>
         <div class="co-cards" role="radiogroup" aria-labelledby="st-pagamento">
-          <button type="button" role="radio" id="co-pay-online" class="co-card on" aria-checked="true"><span class="co-card-title">Online</span><span class="co-card-text">Carta, PayPal, Apple Pay o Google Pay. Pagamento sicuro con Stripe.</span></button>
-          <button type="button" role="radio" id="co-pay-cash" class="co-card" aria-checked="false"><span class="co-card-title">Contanti in studio</span><span class="co-card-text" id="co-pay-cash-text">Prenoti ora e paghi il giorno della sessione.</span></button>
+          <button type="button" role="radio" id="co-pay-online" class="co-card on" aria-checked="true"><span class="co-card-title">Online</span><span class="co-card-text" id="co-pay-online-text">Carta, PayPal, Apple Pay o Google Pay. Pagamento sicuro con Stripe.</span></button>
+          <button type="button" role="radio" id="co-pay-cash" class="co-card" aria-checked="false"><span class="co-card-title">In studio</span><span class="co-card-text" id="co-pay-cash-text">Prenoti ora e paghi in contanti il giorno della sessione.</span></button>
         </div>
         <label class="co-check"><input type="checkbox" name="privacy" id="co-privacy" required><span>Ho letto l'<a href="/privacy/" target="_blank">informativa privacy</a> e acconsento al trattamento dei miei dati per gestire la prenotazione. *</span></label>
       </section>

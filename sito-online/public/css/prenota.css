@@ -106,3 +106,4 @@ dialog.co-pass-dialog{width:min(980px,calc(100% - 24px))}
 @media(max-width:760px){.co-pass-grid.n2,.co-pass-grid.n3{grid-template-columns:1fr}.co-slots{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:600px){.co-cards,.co-two{grid-template-columns:1fr}.co-days{gap:4px}.co-day{padding:10px 0;border-radius:12px}.co-day b{font-size:19px}.co-day em{font-size:9px}.co-hdr-wa{display:none}}
 .co-pass-dialog .eyebrow{padding-right:52px}
+.co-badge{align-self:flex-start;padding:5px 10px;border-radius:999px;background:var(--gold-grad);color:#0d0f14;font:800 10px/1.2 var(--sans);letter-spacing:.12em;text-transform:uppercase}

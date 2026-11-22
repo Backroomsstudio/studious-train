@@ -86,6 +86,7 @@ const service = () => getService(state.serviceId)!;
 const minutes = () => bookingMinutes(service(), state.units);
 const inStudio = () => service().where === "studio";
 const canPayCash = () => service().cashAllowed && !activePresetPass();
+const canPayOnline = () => service().onlineAllowed !== false;
 const activePresetPass = (): Pass | null => (state.presetPass && passCovers(state.presetPass, service(), state.units) ? state.presetPass : null);
 
 /* ---------- disponibilità ---------- */
@@ -144,12 +145,14 @@ function renderServices() {
             state.units = 1;
             state.slotStart = null;
             if (!s.cashAllowed) state.payment = "online";
+            if (s.onlineAllowed === false) state.payment = "contanti";
             track("checkout_servizio", { servizio: s.id });
             renderAll();
             loadAvailability();
           },
         },
         h("span", { class: "co-card-top" }, h("span", { class: "co-tag" }, s.where === "studio" ? "In studio" : "A distanza"), h("b", {}, `${formatEuro(s.unitPriceCents)}/${s.unit.one}`)),
+        s.badge ? h("span", { class: "co-badge" }, s.badge) : null,
         h("span", { class: "co-card-title" }, s.title),
         h("span", { class: "co-card-text" }, s.summary),
         s.showDuration && s.minutesPerUnit > 0 ? h("span", { class: "co-tag" }, `${formatDuration(s.minutesPerUnit)} a ${s.unit.one}`) : null,
@@ -290,12 +293,17 @@ function renderPay() {
   const cash = $("co-pay-cash") as HTMLButtonElement;
   const online = $("co-pay-online") as HTMLButtonElement;
   if (!canPayCash()) state.payment = "online";
+  if (!canPayOnline()) state.payment = "contanti";
   cash.disabled = !canPayCash();
+  online.disabled = !canPayOnline();
+  $("co-pay-online-text").textContent = canPayOnline()
+    ? "Carta, PayPal, Apple Pay o Google Pay. Pagamento sicuro con Stripe."
+    : "La sessione di prova si paga solo in studio, il giorno della sessione.";
   $("co-pay-cash-text").textContent = !service().cashAllowed
     ? "Non disponibile per i servizi a distanza."
     : activePresetPass()
       ? "Il Pass si paga online."
-      : "Prenoti ora e paghi il giorno della sessione.";
+      : "Prenoti ora e paghi in contanti il giorno della sessione.";
   online.setAttribute("aria-checked", String(state.payment === "online"));
   cash.setAttribute("aria-checked", String(state.payment === "contanti"));
   online.classList.toggle("on", state.payment === "online");
@@ -337,7 +345,7 @@ function renderSummary() {
   submit.textContent = state.submitting ? "Un attimo…" : state.payment === "contanti" ? "Conferma prenotazione" : "Vai al pagamento →";
   $("co-sum-note").textContent =
     state.payment === "contanti"
-      ? "Lo slot viene riservato subito: porta i contanti il giorno della sessione."
+      ? "Lo slot viene riservato subito: paghi in studio il giorno della sessione."
       : "Pagherai sulla pagina sicura di Stripe (carta, PayPal, Apple Pay, Google Pay). Lo slot resta bloccato per te 30 minuti.";
 
   const banner = $("co-pass-banner");
@@ -480,6 +488,7 @@ function init() {
   $("co-prev").addEventListener("click", () => movePage(-1));
   $("co-next").addEventListener("click", () => movePage(1));
   $("co-pay-online").addEventListener("click", () => {
+    if (!canPayOnline()) return;
     state.payment = "online";
     renderPay();
     renderSummary();

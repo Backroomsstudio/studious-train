@@ -121,6 +121,13 @@ export async function deleteEvent(eventId: string): Promise<void> {
   }
 }
 
+/** Eventi del calendario delle prenotazioni con una certa proprietà privata (es. chi ha già fatto la prova). */
+export async function eventsWithPrivate(key: string, value: string): Promise<CalendarEvent[]> {
+  const q = new URLSearchParams({ privateExtendedProperty: `${key}=${value}`, maxResults: "5", singleEvents: "true" });
+  const json = await call<{ items?: CalendarEvent[] }>(`/calendars/${enc(serverConfig.calendarId)}/events?${q}`);
+  return (json.items ?? []).filter((e) => e.status !== "cancelled");
+}
+
 /** Eventi del calendario delle prenotazioni che si sovrappongono a un intervallo. */
 export async function eventsBetween(timeMin: Date, timeMax: Date): Promise<CalendarEvent[]> {
   const q = new URLSearchParams({ timeMin: timeMin.toISOString(), timeMax: timeMax.toISOString(), singleEvents: "true", maxResults: "50" });

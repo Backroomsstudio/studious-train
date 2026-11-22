@@ -5,7 +5,7 @@
  * Modulo "puro" (nessuna dipendenza da Next o Node): lo usano sia il browser sia il server sia i test.
  */
 
-export type ServiceId = "registrazione" | "beat-studio" | "beat-remoto" | "mix-studio" | "mix-remoto" | "noleggio";
+export type ServiceId = "prova" | "registrazione" | "beat-studio" | "beat-remoto" | "mix-studio" | "mix-remoto" | "noleggio";
 
 export interface BookableService {
   id: ServiceId;
@@ -28,6 +28,12 @@ export interface BookableService {
   cashAllowed: boolean;
   /** true = mai sconti per quantità (es. noleggio studio) */
   noDiscount?: boolean;
+  /** false = non si paga online: si paga solo in studio, il giorno della sessione */
+  onlineAllowed?: boolean;
+  /** true = una sola volta per cliente (stessa email o stesso telefono) */
+  oncePerCustomer?: boolean;
+  /** Etichetta in evidenza nella scheda del servizio */
+  badge?: string;
   /** Quanto conta dentro il Pass mensile (null = non incluso nel Pass) */
   passUnit: PassUnit | null;
 }
@@ -38,6 +44,23 @@ export type PassUnit = "sessions" | "beats" | "mixes";
 export const MAX_BOOKING_MINUTES = 6 * 60;
 
 export const bookableServices: BookableService[] = [
+  {
+    id: "prova",
+    title: "Prima Sessione di Prova",
+    summary: "La tua prima ora in sala con l'engineer a prezzo di benvenuto: 20 € invece di 50 €. Si paga in studio.",
+    where: "studio",
+    unitPriceCents: 2000,
+    unit: { one: "sessione", many: "sessioni" },
+    minutesPerUnit: 60,
+    showDuration: true,
+    maxUnits: 1,
+    cashAllowed: true,
+    onlineAllowed: false, // solo in presenza
+    oncePerCustomer: true,
+    noDiscount: true,
+    passUnit: null,
+    badge: "Prima volta · 20 € invece di 50 €",
+  },
   {
     id: "registrazione",
     title: "Sessione di Registrazione",
