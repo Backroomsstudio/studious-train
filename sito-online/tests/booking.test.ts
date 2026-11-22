@@ -4,7 +4,7 @@ import { bookableServices, getService, maxUnitsFor, bookingMinutes } from "../sr
 import { quote, discountFor, formatEuro } from "../src/booking/pricing.ts";
 import { slotsForDay, romeToUtc, romeDay, isBookable, addDays, isValidDay, DEFAULT_RULES } from "../src/booking/slots.ts";
 
-const ALL_DAY = { ...DEFAULT_RULES, firstStartHour: 0, lastStartHour: 23 };
+const ALL_DAY = { ...DEFAULT_RULES, openHour: 0, closeHour: 0 };
 
 const reg = getService("registrazione")!;
 const beat = getService("beat-studio")!;
@@ -69,7 +69,7 @@ test("ora di Roma: inverno ed estate", () => {
 
 test("giorni del cambio d'ora: 23 e 24 inizi da orologio, nessun doppione", () => {
   const now = new Date("2026-01-01T00:00:00Z");
-  const rules = { minNoticeMinutes: 0, horizonDays: 400, stepMinutes: 60, firstStartHour: 0, lastStartHour: 23 };
+  const rules = { minNoticeMinutes: 0, horizonDays: 400, stepMinutes: 60, openHour: 0, closeHour: 0 };
   assert.equal(slotsForDay("2027-03-28", 60, [], now, rules).length, 23);
   assert.equal(slotsForDay("2026-10-25", 60, [], now, rules).length, 24);
 });
@@ -138,14 +138,31 @@ test("link BeatStars impostato", () => {
 test("fascia oraria prenotabile, anche oltre la mezzanotte", () => {
   const now = new Date("2026-01-01T00:00:00Z");
   const base = { minNoticeMinutes: 0, horizonDays: 400, stepMinutes: 60 };
-  const day = slotsForDay("2026-12-10", 60, [], now, { ...base, firstStartHour: 10, lastStartHour: 2 }).map((s) => s.label);
-  assert.equal(day[0], "00:00");
-  assert.ok(day.includes("02:00") && !day.includes("03:00") && !day.includes("09:00") && day.includes("10:00") && day.includes("23:00"));
-  assert.equal(slotsForDay("2026-12-10", 60, [], now, { ...base, firstStartHour: 0, lastStartHour: 23 }).length, 24);
+  const day = slotsForDay("2026-12-10", 60, [], now, { ...base, openHour: 10, closeHour: 3 }).map((s) => s.label);
+  assert.equal(day[0], "10:00");
+  assert.equal(day.at(-1), "02:00");
+  assert.ok(!day.includes("03:00") && !day.includes("09:00") && day.includes("23:00") && day.includes("00:00"));
+  assert.equal(slotsForDay("2026-12-10", 60, [], now, { ...base, openHour: 0, closeHour: 0 }).length, 24);
 });
 
-test("orari online dello studio: inizio dalle 14:00 alle 02:00", () => {
+test("orari online dello studio: dalle 14:00 alle 02:00 della notte dopo", () => {
   const now = new Date("2026-01-01T00:00:00Z");
-  const labels = slotsForDay("2026-12-10", 60, [], now).map((s) => s.label);
-  assert.deepEqual(labels, ["00:00", "01:00", "02:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"]);
+  const slots = slotsForDay("2026-12-10", 60, [], now);
+  assert.deepEqual(
+    slots.map((s) => s.label),
+    ["14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "00:00", "01:00"],
+  );
+  // 00:00 e 01:00 sono la notte tra giovedì 10 e venerdì 11
+  assert.equal(slots.at(-1)!.start, "2026-12-11T00:00:00.000Z");
+  // Un blocco di 2 ore finisce entro le 02:00: ultimo inizio a mezzanotte
+  assert.equal(slotsForDay("2026-12-10", 120, [], now).at(-1)!.label, "00:00");
+});
+
+test("il server accetta gli inizi dopo mezzanotte e rifiuta quelli fuori fascia", () => {
+  const now = new Date("2026-12-01T00:00:00Z");
+  assert.equal(isBookable("2026-12-11T00:00:00.000Z", 60, [], now), true); // 01:00 di venerdì, fascia di giovedì
+  assert.equal(isBookable("2026-12-11T00:00:00.000Z", 120, [], now), false); // finirebbe alle 03:00
+  assert.equal(isBookable("2026-12-11T01:00:00.000Z", 60, [], now), false); // 02:00: studio chiuso
+  assert.equal(isBookable("2026-12-10T12:00:00.000Z", 60, [], now), false); // 13:00: prima dell'apertura
+  assert.equal(isBookable("2026-12-10T13:00:00.000Z", 60, [], now), true); // 14:00
 });

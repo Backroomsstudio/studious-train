@@ -13,28 +13,24 @@ export interface BookingRules {
   /** Passo tra un inizio e l'altro, in minuti */
   stepMinutes: number;
   /**
-   * Primo e ultimo orario di inizio prenotabile online (ore di Roma, 0–23).
-   * Se l'ultimo è minore del primo la fascia passa la mezzanotte (es. 10 → 2 = dalle 10:00 alle 02:00).
-   * 0 → 23 = tutto il giorno (studio aperto 24/7).
+   * Fascia oraria prenotabile online (ore di Roma, 0–23): apertura e chiusura.
+   * Ogni sessione deve iniziare dopo l'apertura e finire entro la chiusura.
+   * Se la chiusura è minore o uguale all'apertura la fascia passa la mezzanotte e appartiene
+   * al giorno in cui apre: con 14 → 2 il "venerdì" va da venerdì 14:00 a sabato 02:00.
+   * Apertura = chiusura = 24 ore (studio aperto 24/7).
    */
-  firstStartHour: number;
-  lastStartHour: number;
-}
-
-/** true se un inizio alle `hour` (ora di Roma) cade nella fascia prenotabile. */
-export function inBookableHours(hour: number, rules: BookingRules): boolean {
-  const a = rules.firstStartHour ?? 0;
-  const b = rules.lastStartHour ?? 23;
-  return a <= b ? hour >= a && hour <= b : hour >= a || hour <= b;
+  openHour: number;
+  closeHour: number;
 }
 
 export const DEFAULT_RULES: BookingRules = {
   minNoticeMinutes: 3 * 60,
   horizonDays: 60,
   stepMinutes: 60,
-  // Sessioni prenotabili online dalle 14:00 alle 02:00 (inizio). Le altre ore si concordano su WhatsApp.
-  firstStartHour: 14,
-  lastStartHour: 2,
+  // Disponibilità online dalle 14:00 alle 02:00 della notte dopo: l'ultima sessione finisce alle 02:00.
+  // Le altre ore si concordano su WhatsApp.
+  openHour: 14,
+  closeHour: 2,
 };
 
 export interface Interval {
@@ -117,8 +113,17 @@ export function overlaps(aStart: number, aEnd: number, bStart: number, bEnd: num
   return aStart < bEnd && bStart < aEnd;
 }
 
+/** Inizio e fine (UTC) della fascia prenotabile del giorno di Roma `day`. */
+export function bookableWindow(day: string, rules: BookingRules = DEFAULT_RULES): { open: Date; close: Date } {
+  const open = romeToUtc(day, rules.openHour);
+  const close = rules.closeHour > rules.openHour ? romeToUtc(day, rules.closeHour) : romeToUtc(addDays(day, 1), rules.closeHour);
+  return { open, close };
+}
+
 /**
- * Tutti gli inizi possibili di un giorno di Roma, con il loro stato.
+ * Tutti gli inizi possibili nella fascia di un giorno di Roma, con il loro stato, in ordine di orario.
+ * La fascia può passare la mezzanotte (es. 14:00 → 02:00): gli inizi dopo mezzanotte stanno nel giorno in cui la fascia apre.
+ * Si propongono solo i blocchi che finiscono entro la chiusura.
  * Uno slot è "libero" solo se l'intero blocco [inizio, inizio + durata) non tocca nessun impegno.
  */
 export function slotsForDay(
@@ -131,17 +136,18 @@ export function slotsForDay(
   const busyMs = busy.map((b) => [Date.parse(b.start), Date.parse(b.end)] as const);
   const earliest = now.getTime() + rules.minNoticeMinutes * 60000;
   const latest = now.getTime() + rules.horizonDays * 24 * 60 * 60000;
-  const seen = new Set<number>();
+  const { open, close } = bookableWindow(day, rules);
+  const closeMs = close.getTime();
   const out: Slot[] = [];
+  const labels = new Set<string>();
 
-  for (let minutes = 0; minutes < 24 * 60; minutes += rules.stepMinutes) {
-    const start = romeToUtc(day, Math.floor(minutes / 60), minutes % 60);
-    const startMs = start.getTime();
-    // Nel giorno del cambio d'ora alcune ore "da orologio" non esistono o coincidono: si saltano i doppioni
-    // e gli istanti che in realtà cadono in un altro giorno.
-    if (seen.has(startMs) || romeDay(start) !== day) continue;
-    seen.add(startMs);
-    if (!inBookableHours(Math.floor(minutes / 60), rules)) continue;
+  // Si avanza in tempo reale (UTC): nei giorni del cambio d'ora non ci sono doppioni né ore mancanti.
+  for (let startMs = open.getTime(); startMs + durationMinutes * 60000 <= closeMs; startMs += rules.stepMinutes * 60000) {
+    const start = new Date(startMs);
+    const label = romeTimeLabel(start);
+    // La notte del ritorno all'ora solare un'ora "da orologio" si ripete: si propone una volta sola.
+    if (labels.has(label)) continue;
+    labels.add(label);
     const endMs = startMs + durationMinutes * 60000;
 
     let state: SlotState = "libero";
@@ -149,7 +155,7 @@ export function slotsForDay(
     else if (startMs > latest) state = "fuori-orizzonte";
     else if (busyMs.some(([bs, be]) => overlaps(startMs, endMs, bs, be))) state = "occupato";
 
-    out.push({ start: start.toISOString(), end: new Date(endMs).toISOString(), label: romeTimeLabel(start), state });
+    out.push({ start: start.toISOString(), end: new Date(endMs).toISOString(), label, state });
   }
   return out;
 }
@@ -159,5 +165,8 @@ export function isBookable(startIso: string, durationMinutes: number, busy: Inte
   const start = new Date(startIso);
   if (Number.isNaN(start.getTime())) return false;
   const day = romeDay(start);
-  return slotsForDay(day, durationMinutes, busy, now, rules).some((s) => s.start === start.toISOString() && s.state === "libero");
+  // Un inizio dopo mezzanotte appartiene alla fascia del giorno prima.
+  return [day, addDays(day, -1)].some((d) =>
+    slotsForDay(d, durationMinutes, busy, now, rules).some((s) => s.start === start.toISOString() && s.state === "libero"),
+  );
 }
