@@ -81,6 +81,16 @@
 .offer.star{border-color:rgba(142,156,255,.7);background:linear-gradient(165deg,rgba(110,128,255,.16),rgba(110,128,255,.03));box-shadow:0 0 50px rgba(110,128,255,.15)}
 .badge-top{position:absolute;top:-13px;left:50%;translate:-50% 0;white-space:nowrap;font:800 11px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;padding:8px 14px;border-radius:99px;background:var(--gold-grad);color:#0d0f14}
 @media(max-width:900px){.offers,.offers.two{grid-template-columns:1fr;max-width:480px;margin-inline:auto}.offers .star{order:-1}}
+/* prima sessione: €50 barrato in rosso → €20 */
+.pill.free s{opacity:.8;text-decoration-color:var(--red);text-decoration-thickness:1.5px;margin:0 2px}
+/* sala senza fonico: card orizzontale sotto i servizi singoli */
+.offer.wide{margin-top:clamp(14px,2vw,24px);display:grid;grid-template-columns:auto 1fr auto;gap:10px 32px;align-items:center}
+.offer.wide .ic{margin:0}
+.offer.wide ul{margin:14px 0 0;grid-template-columns:repeat(3,auto);justify-content:start;gap:9px 24px}
+.offer.wide .price{margin:0;padding:0;border:0;justify-content:center}
+.offer.wide .btn{margin-top:14px}
+@media(max-width:1000px){.offer.wide ul{grid-template-columns:1fr}}
+@media(max-width:900px){.offer.wide{grid-template-columns:1fr;max-width:480px;margin-inline:auto}.offer.wide .price{justify-content:flex-start;padding-top:18px;border-top:1px solid rgba(255,255,255,.1)}}
 .free-band{margin-top:clamp(30px,4vw,48px);display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-content:center;text-align:center;font:500 15px/1.5 var(--sans);color:var(--soft)}
 .free-band a{color:#fff;text-decoration:underline;text-underline-offset:3px}
 
