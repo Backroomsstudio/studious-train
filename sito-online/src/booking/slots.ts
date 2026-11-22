@@ -12,12 +12,28 @@ export interface BookingRules {
   horizonDays: number;
   /** Passo tra un inizio e l'altro, in minuti */
   stepMinutes: number;
+  /**
+   * Primo e ultimo orario di inizio prenotabile online (ore di Roma, 0–23).
+   * Se l'ultimo è minore del primo la fascia passa la mezzanotte (es. 10 → 2 = dalle 10:00 alle 02:00).
+   * 0 → 23 = tutto il giorno (studio aperto 24/7).
+   */
+  firstStartHour: number;
+  lastStartHour: number;
+}
+
+/** true se un inizio alle `hour` (ora di Roma) cade nella fascia prenotabile. */
+export function inBookableHours(hour: number, rules: BookingRules): boolean {
+  const a = rules.firstStartHour ?? 0;
+  const b = rules.lastStartHour ?? 23;
+  return a <= b ? hour >= a && hour <= b : hour >= a || hour <= b;
 }
 
 export const DEFAULT_RULES: BookingRules = {
   minNoticeMinutes: 3 * 60,
   horizonDays: 60,
   stepMinutes: 60,
+  firstStartHour: 0,
+  lastStartHour: 23,
 };
 
 export interface Interval {
@@ -124,6 +140,7 @@ export function slotsForDay(
     // e gli istanti che in realtà cadono in un altro giorno.
     if (seen.has(startMs) || romeDay(start) !== day) continue;
     seen.add(startMs);
+    if (!inBookableHours(Math.floor(minutes / 60), rules)) continue;
     const endMs = startMs + durationMinutes * 60000;
 
     let state: SlotState = "libero";

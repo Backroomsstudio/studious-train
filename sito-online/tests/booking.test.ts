@@ -67,7 +67,7 @@ test("ora di Roma: inverno ed estate", () => {
 
 test("giorni del cambio d'ora: 23 e 24 inizi da orologio, nessun doppione", () => {
   const now = new Date("2026-01-01T00:00:00Z");
-  const rules = { minNoticeMinutes: 0, horizonDays: 400, stepMinutes: 60 };
+  const rules = { minNoticeMinutes: 0, horizonDays: 400, stepMinutes: 60, firstStartHour: 0, lastStartHour: 23 };
   assert.equal(slotsForDay("2027-03-28", 60, [], now, rules).length, 23);
   assert.equal(slotsForDay("2026-10-25", 60, [], now, rules).length, 24);
 });
@@ -131,4 +131,13 @@ test("si propongono solo i Pass che includono l'acquisto", () => {
 
 test("link BeatStars impostato", () => {
   assert.equal(BEATSTARS_URL, "https://beatstars.com/backroomss");
+});
+
+test("fascia oraria prenotabile, anche oltre la mezzanotte", () => {
+  const now = new Date("2026-01-01T00:00:00Z");
+  const base = { minNoticeMinutes: 0, horizonDays: 400, stepMinutes: 60 };
+  const day = slotsForDay("2026-12-10", 60, [], now, { ...base, firstStartHour: 10, lastStartHour: 2 }).map((s) => s.label);
+  assert.equal(day[0], "00:00");
+  assert.ok(day.includes("02:00") && !day.includes("03:00") && !day.includes("09:00") && day.includes("10:00") && day.includes("23:00"));
+  assert.equal(slotsForDay("2026-12-10", 60, [], now, { ...base, firstStartHour: 0, lastStartHour: 23 }).length, 24);
 });

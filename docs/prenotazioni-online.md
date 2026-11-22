@@ -50,7 +50,8 @@ Si modifica tutto in `sito-online/src/booking/catalog.ts`:
 - **Catalogo BeatStars**: link al negozio in `BEATSTARS_URL` (https://beatstars.com/backroomss), beat già pronti con licenza base a 30 €.
 - **Pass**: contenuti e prezzi in `passes`, ulteriore sconto dal checkout in `PASS_CHECKOUT_EXTRA_DISCOUNT` (oggi 10%).
 - **Caparra**: il checkout non chiede caparre: si paga tutto online oppure tutto in contanti in studio.
-- **Preavviso minimo** (3 ore) e **giorni prenotabili** (60): li trovi in `DEFAULT_RULES`, nel file `sito-online/src/booking/slots.ts`.
+- **Preavviso minimo** (3 ore), **giorni prenotabili** (60) e **fascia oraria prenotabile online** (`firstStartHour`/`lastStartHour`, oggi tutto il giorno): li trovi in `DEFAULT_RULES`, nel file `sito-online/src/booking/slots.ts`.
+- **Cosa rende occupato uno slot**: ogni evento del calendario dello studio, tranne quelli segnati come **"Disponibile"** in Google Calendar (utile per promemoria come "FATTURE" o compleanni).
 
 ## Attivazione (una volta sola)
 
@@ -92,6 +93,9 @@ Le variabili qui sotto vanno inserite in **Netlify → Site configuration → En
 4. Se le notifiche devono arrivare a più persone, elenca gli indirizzi in `NOTIFY_EMAILS`.
 
 Senza email il sistema funziona lo stesso: le prenotazioni restano comunque nel calendario.
+
+## Controllo dopo la messa online
+Apri **https://backroomsstudio.it/api/stato**: dice se calendario, Stripe, webhook ed email sono collegati (`"pronto": true` quando i primi tre sono ok). Non mostra chiavi né dati dei clienti.
 
 ## Prova in locale
 ```bash

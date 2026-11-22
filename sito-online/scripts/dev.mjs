@@ -11,7 +11,7 @@ const port = Number(process.env.PORT ?? 8888);
 const TYPES = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/javascript", ".json": "application/json", ".webp": "image/webp", ".png": "image/png", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".xml": "application/xml", ".txt": "text/plain", ".webmanifest": "application/manifest+json" };
 
 const routes = {};
-for (const name of ["disponibilita", "prenota", "prenota-annulla", "stripe-webhook"]) {
+for (const name of ["disponibilita", "prenota", "prenota-annulla", "stripe-webhook", "stato"]) {
   const mod = await import(pathToFileURL(join(root, "netlify/functions", `${name}.mts`)).href);
   routes[mod.config.path] = mod.default;
 }
