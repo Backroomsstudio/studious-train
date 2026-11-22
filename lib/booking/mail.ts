@@ -2,7 +2,8 @@ import "server-only";
 import nodemailer from "nodemailer";
 import { studio } from "@/lib/studio";
 import { mailConfigured, serverConfig } from "./server-config";
-import { describeOrderForHumans, type Order } from "./order";
+import { getPass } from "./catalog";
+import { describeOrderForHumans, passContents, type Order } from "./order";
 
 /**
  * Email di notifica tramite Gmail (SMTP con "password per le app").
@@ -63,15 +64,16 @@ export async function confirmToCustomer(order: Order, paid: boolean) {
 
 export async function notifyRenewal(order: Order, amountCents: number) {
   const euro = (amountCents / 100).toLocaleString("it-IT", { style: "currency", currency: "EUR" });
+  const pass = order.passId ? getPass(order.passId) : undefined;
   await send(
     serverConfig.notifyEmails,
-    `Rinnovo mensile pagato · ${order.name}`,
+    `Rinnovo ${pass?.title ?? "mensile"} pagato · ${order.name}`,
     [
       `Rinnovo mensile incassato: ${euro}.`,
       "",
-      ...describeOrderForHumans({ ...order, start: undefined, end: undefined }),
+      pass ? `${pass.title}: questo mese il cliente ha di nuovo ${passContents(pass)}.` : describeOrderForHumans({ ...order, start: undefined, end: undefined }).join("\n"),
       "",
-      `Il cliente ha di nuovo il pacchetto disponibile: contattalo per fissare la prossima sessione.`,
+      `Contattalo per fissare le sessioni del mese.`,
       `Email: ${order.email}${order.phone ? ` · Telefono: ${order.phone}` : ""}`,
     ].join("\n"),
     order.email,

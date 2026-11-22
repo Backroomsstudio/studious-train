@@ -9,7 +9,7 @@
      - Se paga, l'evento diventa **verde** ("✅ PAGATO") e partono le email, al cliente e a voi.
      - Se annulla o non paga entro 30 minuti, lo slot si libera da solo.
    - **Contanti in studio** (solo per i servizi in studio): l'evento viene creato subito in **rosso** ("💵 DA SALDARE"), con la cifra da incassare nella descrizione e **una notifica 30 minuti prima** della sessione.
-   - **Rinnova ogni mese** (spunta, solo online): Stripe addebita lo stesso pacchetto ogni mese. A ogni rinnovo vi arriva un'email per fissare la sessione del mese con il cliente.
+   - **Backrooms Pass**: quando il cliente clicca per pagare, prima di andare su Stripe gli viene proposto il Pass mensile con un ulteriore −10% su ogni mese (Start 225 €, Pro 270 €, Label 405 € invece di 250, 300 e 450). Vengono proposti solo i Pass che includono l'acquisto in corso, che diventa la prima sessione del Pass. Il Pass si paga solo online, con rinnovo automatico. A ogni rinnovo vi arriva un'email per fissare le sessioni del mese. Se il cliente rifiuta, paga normalmente il singolo acquisto.
 4. I servizi **a distanza** (beat su commissione, mix & master) non occupano il calendario: si pagano online e vi arriva l'email con i dati del cliente.
 
 ## Listino
@@ -23,9 +23,12 @@ Si modifica tutto in `lib/booking/catalog.ts`:
 | Beat a Distanza su Commissione | 60 € a beat | — | 6 |
 | Mix & Master in Studio | 70 € a brano | 2 h per brano (non mostrato al cliente) | 3 brani (6 h) |
 | Mix & Master a Distanza | 70 € a brano | — | 6 |
+| Noleggio Studio | 35 € l'ora, **mai scontato** | 1 h per ora | 6 ore |
 
 - **Sconti per quantità**: stessa scala del calcolatore del sito (1–2 a listino, da 3 −10%, da 5 −20%, da 10 −30%), arrotondati all'euro. Si cambiano in `DISCOUNTS`, che vale per tutti i servizi, o in `DISCOUNTS_BY_SERVICE`, che vale per un servizio solo.
-- **Catalogo BeatStars**: incolla il link del negozio in `BEATSTARS_URL`. Da vuoto, il riquadro resta nascosto.
+- **Catalogo BeatStars**: link al negozio in `BEATSTARS_URL` (https://beatstars.com/backroomss), beat già pronti con licenza base a 30 €.
+- **Pass**: contenuti e prezzi in `passes`, ulteriore sconto dal checkout in `PASS_CHECKOUT_EXTRA_DISCOUNT` (oggi 10%).
+- **Caparra**: il checkout non chiede caparre: si paga tutto online oppure tutto in contanti in studio.
 - **Preavviso minimo** (3 ore) e **giorni prenotabili** (60): li trovi in `DEFAULT_RULES`, nel file `lib/booking/slots.ts`.
 
 ## Attivazione (una volta sola)

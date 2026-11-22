@@ -1,10 +1,10 @@
 import "server-only";
 import type Stripe from "stripe";
-import { bookingMinutes, getService, maxUnitsFor } from "./catalog";
+import { bookingMinutes, getPass, getService, maxUnitsFor, passCheckoutCents, passCovers } from "./catalog";
 import { quote, unitLabel } from "./pricing";
 import { DEFAULT_RULES, isBookable, TIME_ZONE } from "./slots";
 import { busyIntervals, deleteEvent, eventsBetween, getEvent, insertEvent, patchEvent, CalendarError, type CalendarEvent } from "./google-calendar";
-import { deserializeOrder, orderEvent, serializeOrder, type Order } from "./order";
+import { deserializeOrder, orderEvent, passContents, serializeOrder, type Order } from "./order";
 import { stripe } from "./stripe";
 import { confirmToCustomer, notifyRenewal, notifyStudio } from "./mail";
 
@@ -40,10 +40,14 @@ export function parseOrder(body: Record<string, unknown>): Order {
   if (!EMAIL_RE.test(email)) throw new BookingError("Email non valida");
   if (body.privacy !== true) throw new BookingError("Serve il consenso al trattamento dei dati");
 
-  const payment = body.pagamento === "contanti" ? "contanti" : "online";
-  const monthly = body.mensile === true;
+  // Pass mensile scelto subito prima di pagare: si paga sempre online, ogni mese.
+  const rawPass = str(body.pass, 20);
+  const pass = rawPass ? getPass(rawPass) : undefined;
+  if (rawPass && !pass) throw new BookingError("Pass non valido");
+  if (pass && !passCovers(pass, service, units)) throw new BookingError("Questo Pass non include l'acquisto scelto");
+  const monthly = Boolean(pass);
+  const payment = pass ? "online" : body.pagamento === "contanti" ? "contanti" : "online";
   if (payment === "contanti" && !service.cashAllowed) throw new BookingError("Questo servizio si paga solo online");
-  if (payment === "contanti" && monthly) throw new BookingError("Il rinnovo mensile si paga solo online");
   if (payment === "contanti" && phone.length < 6) throw new BookingError("Per pagare in contanti serve un numero di telefono");
 
   let start: string | undefined;
@@ -55,6 +59,10 @@ export function parseOrder(body: Record<string, unknown>): Order {
     end = new Date(d.getTime() + bookingMinutes(service, units) * 60000).toISOString();
   }
 
+  if (pass) {
+    const totalCents = passCheckoutCents(pass);
+    return { serviceId: service.id, units, start, end, name, email, phone, notes, payment, monthly, passId: pass.id, totalCents, fullCents: pass.monthlyCents };
+  }
   const q = quote(service, units);
   return { serviceId: service.id, units, start, end, name, email, phone, notes, payment, monthly, totalCents: q.totalCents, fullCents: q.fullCents };
 }
@@ -123,6 +131,7 @@ export async function createBooking(order: Order, origin: string): Promise<Booki
 
 async function createCheckoutSession(order: Order, origin: string, eventId?: string) {
   const service = getService(order.serviceId)!;
+  const pass = order.passId ? getPass(order.passId) : undefined;
   const metadata: Record<string, string> = { ordine: serializeOrder(order), note: order.notes, evento: eventId ?? "" };
   const when = order.start
     ? new Date(order.start).toLocaleString("it-IT", { timeZone: TIME_ZONE, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
@@ -138,7 +147,9 @@ async function createCheckoutSession(order: Order, origin: string, eventId?: str
         price_data: {
           currency: "eur",
           unit_amount: order.totalCents,
-          product_data: { name: `${service.title} — ${unitLabel(service, order.units)}`, description: when },
+          product_data: pass
+            ? { name: `${pass.title} — Backrooms Studio`, description: `${passContents(pass)} ogni mese. Prima sessione: ${service.title}, ${when}` }
+            : { name: `${service.title} — ${unitLabel(service, order.units)}`, description: when },
           ...(order.monthly ? { recurring: { interval: "month" as const } } : {}),
         },
       },
@@ -149,7 +160,7 @@ async function createCheckoutSession(order: Order, origin: string, eventId?: str
     // Lo slot resta bloccato al massimo ~30 minuti (minimo consentito da Stripe).
     expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
   };
-  if (order.monthly) params.subscription_data = { metadata, description: `${service.title} — rinnovo mensile` };
+  if (order.monthly) params.subscription_data = { metadata, description: `${pass?.title ?? service.title} — rinnovo mensile` };
   else params.payment_intent_data = { metadata, description: `${service.title} — ${unitLabel(service, order.units)}` };
 
   return stripe().checkout.sessions.create(params);
@@ -198,7 +209,7 @@ export async function confirmPaidSession(session: Stripe.Checkout.Session) {
     }
   }
 
-  await Promise.all([notifyStudio(order, order.monthly ? "Nuovo abbonamento mensile pagato" : "Nuovo acquisto pagato online"), confirmToCustomer(order, true)]);
+  await Promise.all([notifyStudio(order, order.passId ? `Nuovo ${getPass(order.passId)?.title ?? "Pass"} attivato` : "Nuovo acquisto pagato online"), confirmToCustomer(order, true)]);
 }
 
 export async function releaseExpiredSession(session: Stripe.Checkout.Session) {

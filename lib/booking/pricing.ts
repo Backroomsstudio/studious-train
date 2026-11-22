@@ -12,6 +12,7 @@ export interface PriceQuote {
 }
 
 export function discountFor(service: BookableService, units: number, table?: Record<number, number>): number {
+  if (service.noDiscount) return 0;
   const source = table ?? DISCOUNTS_BY_SERVICE[service.id] ?? DISCOUNTS;
   // Si usa lo scaglione più alto raggiunto: con sconti su 3 e 5, chi prende 4 ha quello del 3.
   let best = 0;

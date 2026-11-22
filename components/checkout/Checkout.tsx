@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
   BEATSTARS_LICENSE_PRICE,
@@ -9,6 +9,14 @@ import {
   bookingMinutes,
   getService,
   maxUnitsFor,
+  PASS_CHECKOUT_EXTRA_DISCOUNT,
+  PASS_PERKS,
+  PASS_UNIT_LABELS,
+  passCheckoutCents,
+  passesFor,
+  type Pass,
+  type PassId,
+  type PassUnit,
   type ServiceId,
 } from "@/lib/booking/catalog";
 import { formatDuration, formatEuro, quote, unitLabel } from "@/lib/booking/pricing";
@@ -55,8 +63,11 @@ export function Checkout({ initialService, cancelled }: { initialService?: Servi
   const [reloadKey, setReloadKey] = useState(0);
 
   const [payment, setPayment] = useState<"online" | "contanti">("online");
-  const [monthly, setMonthly] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // Proposta del Pass mensile subito prima di pagare
+  const passDialog = useRef<HTMLDialogElement>(null);
+  const [pendingPayload, setPendingPayload] = useState<Record<string, unknown> | null>(null);
+  const eligiblePasses = passesFor(service, units);
   const [error, setError] = useState<string | null>(null);
 
   const inStudio = service.where === "studio";
@@ -130,35 +141,17 @@ export function Checkout({ initialService, cancelled }: { initialService?: Servi
     };
   }, [slotStart, minutes, service.showDuration]);
 
-  const canPayCash = service.cashAllowed && !monthly;
+  const canPayCash = service.cashAllowed;
   const ready = !inStudio || Boolean(slotStart);
 
-  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
-    if (!ready) {
-      setError("Scegli giorno e orario della sessione.");
-      return;
-    }
-    const data = new FormData(e.currentTarget);
+  const send = async (payload: Record<string, unknown>) => {
     setSubmitting(true);
+    setError(null);
     try {
       const res = await fetch("/api/prenota", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          servizio: serviceId,
-          quantita: units,
-          inizio: slotStart,
-          nome: data.get("nome"),
-          email: data.get("email"),
-          telefono: data.get("telefono"),
-          note: data.get("note"),
-          sito: data.get("sito"),
-          privacy: data.get("privacy") === "on",
-          pagamento: canPayCash ? payment : "online",
-          mensile: monthly,
-        }),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -173,6 +166,43 @@ export function Checkout({ initialService, cancelled }: { initialService?: Servi
       setError((err as Error).message);
       setSubmitting(false);
     }
+  };
+
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    if (!ready) {
+      setError("Scegli giorno e orario della sessione.");
+      return;
+    }
+    const form = e.currentTarget;
+    if (!form.reportValidity()) return;
+    const data = new FormData(form);
+    const payload = {
+      servizio: serviceId,
+      quantita: units,
+      inizio: slotStart,
+      nome: data.get("nome"),
+      email: data.get("email"),
+      telefono: data.get("telefono"),
+      note: data.get("note"),
+      sito: data.get("sito"),
+      privacy: data.get("privacy") === "on",
+      pagamento: canPayCash ? payment : "online",
+    };
+    // Prima di pagare si propone il Pass mensile, se ne esiste uno che include questo acquisto.
+    if (eligiblePasses.length > 0) {
+      setPendingPayload(payload);
+      passDialog.current?.showModal();
+      return;
+    }
+    void send(payload);
+  };
+
+  const choosePass = (passId: PassId | null) => {
+    passDialog.current?.close();
+    if (!pendingPayload) return;
+    void send(passId ? { ...pendingPayload, pass: passId, pagamento: "online" } : pendingPayload);
   };
 
   const wa = whatsappLink(`Ciao ${studio.name}! Vorrei informazioni per prenotare: ${service.title}.`);
@@ -469,33 +499,9 @@ export function Checkout({ initialService, cancelled }: { initialService?: Servi
               disabled={!canPayCash}
               onSelect={() => setPayment("contanti")}
               title="Contanti in studio"
-              text={
-                !service.cashAllowed
-                  ? "Non disponibile per i servizi a distanza."
-                  : monthly
-                    ? "Non disponibile con il rinnovo mensile."
-                    : "Prenoti ora e paghi il giorno della sessione."
-              }
+              text={!service.cashAllowed ? "Non disponibile per i servizi a distanza." : "Prenoti ora e paghi il giorno della sessione."}
             />
           </div>
-
-          <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-white/12 p-4">
-            <input
-              type="checkbox"
-              checked={monthly}
-              onChange={(e) => {
-                setMonthly(e.target.checked);
-                if (e.target.checked) setPayment("online");
-              }}
-              className="mt-1 h-4 w-4 accent-white"
-            />
-            <span>
-              <span className="block text-sm font-semibold text-white">Rinnova ogni mese</span>
-              <span className="block text-sm text-mist">
-                Ti addebitiamo {formatEuro(price.totalCents)} ogni mese per lo stesso pacchetto ({unitLabel(service, units)}). Disdici quando vuoi scrivendoci.
-              </span>
-            </span>
-          </label>
 
           <label className="mt-5 flex items-start gap-3 text-sm text-mist">
             <input type="checkbox" name="privacy" required className="mt-1 h-4 w-4 accent-white" />
@@ -538,7 +544,6 @@ export function Checkout({ initialService, cancelled }: { initialService?: Servi
               <dt className="text-mist">Totale</dt>
               <dd className="font-display text-4xl text-white">
                 {formatEuro(price.totalCents)}
-                {monthly && <span className="ml-1 font-sans text-sm text-mist">/mese</span>}
               </dd>
             </div>
           </dl>
@@ -559,7 +564,71 @@ export function Checkout({ initialService, cancelled }: { initialService?: Servi
           </p>
         </div>
       </aside>
+
+      <dialog
+        ref={passDialog}
+        data-lenis-prevent
+        aria-labelledby="pass-title"
+        className="m-auto w-[min(100%-2rem,56rem)] max-h-[92dvh] overflow-y-auto rounded-3xl border border-white/10 bg-titanium/95 p-0 text-mist shadow-[0_40px_120px_-20px_rgba(0,0,0,0.9)] backdrop:bg-black/70"
+        onClick={(e) => {
+          if (e.target === passDialog.current) passDialog.current?.close();
+        }}
+      >
+        <div className="p-6 sm:p-10">
+          <p className="eyebrow">Prima di pagare · Solo da qui −{PASS_CHECKOUT_EXTRA_DISCOUNT}% ogni mese</p>
+          <h2 id="pass-title" className="mt-3 font-display text-4xl leading-none text-white sm:text-5xl">
+            Fallo diventare un <em className="chrome-text">Pass</em>
+          </h2>
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-mist">
+            Invece di {formatEuro(price.totalCents)} una volta, attiva il Backrooms Pass: la sessione che hai scelto diventa la prima del mese e ogni mese hai di
+            nuovo sessioni, beat e mix. {PASS_PERKS.join(" · ")}. Il Pass si paga online, con rinnovo automatico.
+          </p>
+          <div className={cn("mt-8 grid gap-4", eligiblePasses.length === 2 && "md:grid-cols-2", eligiblePasses.length >= 3 && "md:grid-cols-3")}>
+            {eligiblePasses.map((p) => (
+              <PassCard key={p.id} pass={p} onChoose={() => choosePass(p.id)} disabled={submitting} />
+            ))}
+          </div>
+          <div className="mt-8 flex flex-col items-center gap-2 border-t border-white/10 pt-6 sm:flex-row sm:justify-between">
+            <p className="text-sm text-mist">
+              Oppure continua con {service.title.toLowerCase()} ({unitLabel(service, units)}) a {formatEuro(price.totalCents)}.
+            </p>
+            <button type="button" onClick={() => choosePass(null)} disabled={submitting} className={buttonStyles.ghost}>
+              No grazie, continua
+            </button>
+          </div>
+        </div>
+      </dialog>
     </form>
+  );
+}
+
+function PassCard({ pass, onChoose, disabled }: { pass: Pass; onChoose: () => void; disabled: boolean }) {
+  const monthly = passCheckoutCents(pass);
+  return (
+    <article className={cn("relative flex flex-col rounded-2xl border p-5", pass.recommended ? "border-white bg-white/[0.06]" : "border-white/15")}>
+      {pass.recommended && (
+        <span className="absolute -top-3 left-5 rounded-full bg-white px-3 py-1 font-mono text-[0.6rem] font-bold uppercase tracking-[0.16em] text-obsidian">Consigliato</span>
+      )}
+      <h3 className="font-display text-3xl text-white">{pass.title}</h3>
+      <p className="text-sm text-mist">{pass.tagline}</p>
+      <ul className="mt-4 grid gap-1.5 text-sm text-white/90">
+        {(Object.keys(pass.includes) as PassUnit[]).map((k) => (
+          <li key={k}>
+            {pass.includes[k]} {pass.includes[k] === 1 ? PASS_UNIT_LABELS[k].one : PASS_UNIT_LABELS[k].many}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-5 font-display text-4xl text-white">
+        {formatEuro(monthly)}
+        <span className="font-sans text-sm text-mist">/mese</span>
+      </p>
+      <p className="text-xs text-mist">
+        <s>{formatEuro(pass.monthlyCents)}</s> · valore {formatEuro(pass.valueCents)}
+      </p>
+      <button type="button" onClick={onChoose} disabled={disabled} className={cn(buttonStyles.small, "mt-5 w-full")}>
+        Attiva {pass.title}
+      </button>
+    </article>
   );
 }
 

@@ -41,3 +41,11 @@ test("pagato online: evento verde con promemoria normali", () => {
   assert.match(ev.description, /rinnovo mensile attivo/);
   assert.deepEqual(ev.reminders, { useDefault: true });
 });
+
+test("ordine con Pass: torna identico dai metadati e il calendario lo dice", () => {
+  const withPass: Order = { ...order, payment: "online", monthly: true, passId: "pro", totalCents: 27000, fullCents: 30000 };
+  assert.deepEqual(deserializeOrder(serializeOrder(withPass), withPass.notes), withPass);
+  const ev = orderEvent(withPass, "pagato");
+  assert.match(ev.summary, /Pass Pro/);
+  assert.match(ev.description, /prima del Pass/);
+});

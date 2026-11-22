@@ -99,3 +99,36 @@ test("utilità sulle date", () => {
   assert.equal(isValidDay("2026-02-30"), false);
   assert.equal(isValidDay("2026-02-28"), true);
 });
+
+import { passes, passesFor, passCheckoutCents, getPass, BEATSTARS_URL } from "../lib/booking/catalog.ts";
+
+test("noleggio studio: 35 € l'ora, mai sconti", () => {
+  const nol = getService("noleggio")!;
+  assert.equal(quote(nol, 1).totalCents, 3500);
+  assert.equal(quote(nol, 3).totalCents, 10500);
+  assert.equal(quote(nol, 6).totalCents, 21000);
+  assert.equal(quote(nol, 6).discountPercent, 0);
+  assert.equal(passesFor(nol, 1).length, 0); // il Pass non include il noleggio
+});
+
+test("Pass: valore coerente con il listino e ulteriore sconto dal checkout", () => {
+  for (const p of passes) {
+    const value = p.includes.sessions * 5000 + p.includes.beats * 6000 + p.includes.mixes * 7000;
+    assert.equal(p.valueCents, value, p.id);
+  }
+  assert.equal(passCheckoutCents(getPass("start")!), 22500);
+  assert.equal(passCheckoutCents(getPass("pro")!), 27000);
+  assert.equal(passCheckoutCents(getPass("label")!), 40500);
+});
+
+test("si propongono solo i Pass che includono l'acquisto", () => {
+  assert.deepEqual(passesFor(reg, 2).map((p) => p.id), ["start", "pro", "label"]);
+  assert.deepEqual(passesFor(reg, 5).map((p) => p.id), ["pro", "label"]);
+  assert.deepEqual(passesFor(reg, 6).map((p) => p.id), ["label"]);
+  assert.deepEqual(passesFor(beat, 2).map((p) => p.id), ["pro", "label"]);
+  assert.deepEqual(passesFor(mix, 3).map((p) => p.id), ["pro", "label"]);
+});
+
+test("link BeatStars impostato", () => {
+  assert.equal(BEATSTARS_URL, "https://beatstars.com/backroomss");
+});

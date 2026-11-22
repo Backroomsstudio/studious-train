@@ -2,7 +2,7 @@
  * L'ordine e la sua rappresentazione nel calendario (titolo, colore, promemoria, descrizione).
  * Modulo puro: testabile senza Google né Stripe.
  */
-import { getService, type BookableService, type ServiceId } from "./catalog.ts";
+import { getPass, getService, PASS_UNIT_LABELS, type BookableService, type Pass, type PassId, type PassUnit, type ServiceId } from "./catalog.ts";
 import { formatEuro, formatDuration, unitLabel } from "./pricing.ts";
 import { TIME_ZONE } from "./slots.ts";
 
@@ -20,7 +20,10 @@ export interface Order {
   phone: string;
   notes: string;
   payment: PaymentMethod;
+  /** true = abbonamento mensile (oggi solo tramite Pass) */
   monthly: boolean;
+  /** Pass attivato al checkout: l'acquisto diventa la prima sessione del Pass */
+  passId?: PassId;
   totalCents: number;
   fullCents: number;
 }
@@ -40,7 +43,8 @@ const STATUS_PREFIX: Record<OrderStatus, string> = {
 
 export function orderTitle(order: Order, status: OrderStatus): string {
   const service = getService(order.serviceId)!;
-  return `${STATUS_PREFIX[status]} · ${service.title} · ${order.name}`;
+  const pass = order.passId ? getPass(order.passId) : undefined;
+  return `${STATUS_PREFIX[status]} · ${service.title}${pass ? ` (${pass.title})` : ""} · ${order.name}`;
 }
 
 export function orderDescription(order: Order, status: OrderStatus, extra: string[] = []): string {
@@ -48,6 +52,7 @@ export function orderDescription(order: Order, status: OrderStatus, extra: strin
   const lines = [
     status === "da-saldare" ? `⚠️ DA SALDARE IN CONTANTI: ${formatEuro(order.totalCents)}` : null,
     status === "pagato" ? `Pagato online: ${formatEuro(order.totalCents)}${order.monthly ? " (rinnovo mensile attivo)" : ""}` : null,
+    order.passId ? `${getPass(order.passId)?.title ?? "Pass"}: ${passContents(getPass(order.passId)!)} al mese. Questa sessione è la prima del Pass.` : null,
     status === "in-attesa" ? "Il cliente sta pagando online: se non completa entro 30 minuti lo slot si libera da solo." : null,
     "",
     `Servizio: ${service.title}`,
@@ -94,6 +99,7 @@ export function serializeOrder(order: Order): string {
     e: order.email.slice(0, 120),
     p: order.phone.slice(0, 30),
     m: order.monthly ? 1 : 0,
+    k: order.passId ?? "",
     t: order.totalCents,
     f: order.fullCents,
     y: order.payment === "contanti" ? "c" : "o",
@@ -116,6 +122,7 @@ export function deserializeOrder(raw: string, notes = ""): Order | null {
       notes,
       payment: c.y === "c" ? "contanti" : "online",
       monthly: c.m === 1,
+      ...(c.k && getPass(c.k) ? { passId: c.k as PassId } : {}),
       totalCents: Number(c.t),
       fullCents: Number(c.f),
     };
@@ -129,9 +136,16 @@ export function describeOrderForHumans(order: Order, service: BookableService = 
     ? new Date(order.start).toLocaleString("it-IT", { timeZone: TIME_ZONE, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
     : null;
   return [
-    `${service.title} — ${unitLabel(service, order.units)}`,
+    order.passId ? `${getPass(order.passId)!.title}: ${passContents(getPass(order.passId)!)} ogni mese` : null,
+    `${service.title} — ${unitLabel(service, order.units)}${order.passId ? " (prima sessione del Pass)" : ""}`,
     when ? `Quando: ${when}${service.showDuration && order.end ? ` (${formatDuration((Date.parse(order.end) - Date.parse(order.start!)) / 60000)})` : ""}` : "A distanza: ti scriviamo noi per i dettagli e il materiale.",
     `Totale: ${formatEuro(order.totalCents)}${order.monthly ? " al mese" : ""}`,
     order.payment === "contanti" ? "Pagamento: in contanti in studio, il giorno della sessione." : "Pagamento: online.",
-  ];
+  ].filter((l): l is string => l !== null);
+}
+
+export function passContents(pass: Pass): string {
+  return (Object.keys(pass.includes) as PassUnit[])
+    .map((k) => `${pass.includes[k]} ${pass.includes[k] === 1 ? PASS_UNIT_LABELS[k].one : PASS_UNIT_LABELS[k].many}`)
+    .join(", ");
 }
