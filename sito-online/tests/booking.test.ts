@@ -2,7 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { bookableServices, getService, maxUnitsFor, bookingMinutes } from "../src/booking/catalog.ts";
 import { quote, discountFor, formatEuro } from "../src/booking/pricing.ts";
-import { slotsForDay, romeToUtc, romeDay, isBookable, addDays, isValidDay } from "../src/booking/slots.ts";
+import { slotsForDay, romeToUtc, romeDay, isBookable, addDays, isValidDay, DEFAULT_RULES } from "../src/booking/slots.ts";
+
+const ALL_DAY = { ...DEFAULT_RULES, firstStartHour: 0, lastStartHour: 23 };
 
 const reg = getService("registrazione")!;
 const beat = getService("beat-studio")!;
@@ -75,7 +77,7 @@ test("giorni del cambio d'ora: 23 e 24 inizi da orologio, nessun doppione", () =
 test("slot occupati, passati e liberi", () => {
   const now = new Date("2026-12-10T08:00:00Z"); // 9:00 a Roma
   const busy = [{ start: "2026-12-10T14:00:00Z", end: "2026-12-10T16:00:00Z" }]; // 15–17 a Roma
-  const slots = slotsForDay("2026-12-10", 90, busy, now);
+  const slots = slotsForDay("2026-12-10", 90, busy, now, ALL_DAY);
   const by = Object.fromEntries(slots.map((s) => [s.label, s.state]));
   assert.equal(by["10:00"], "passato"); // preavviso di 3 ore
   assert.equal(by["12:00"], "libero");
@@ -88,10 +90,10 @@ test("slot occupati, passati e liberi", () => {
 test("il server ricontrolla il blocco richiesto", () => {
   const now = new Date("2026-12-10T08:00:00Z");
   const busy = [{ start: "2026-12-10T14:00:00Z", end: "2026-12-10T16:00:00Z" }];
-  assert.equal(isBookable("2026-12-10T11:00:00.000Z", 60, busy, now), true);
-  assert.equal(isBookable("2026-12-10T13:00:00.000Z", 120, busy, now), false);
-  assert.equal(isBookable("2026-12-10T11:30:00.000Z", 60, busy, now), false); // non è un inizio valido
-  assert.equal(isBookable("spazzatura", 60, busy, now), false);
+  assert.equal(isBookable("2026-12-10T11:00:00.000Z", 60, busy, now, ALL_DAY), true);
+  assert.equal(isBookable("2026-12-10T13:00:00.000Z", 120, busy, now, ALL_DAY), false);
+  assert.equal(isBookable("2026-12-10T11:30:00.000Z", 60, busy, now, ALL_DAY), false); // non è un inizio valido
+  assert.equal(isBookable("spazzatura", 60, busy, now, ALL_DAY), false);
 });
 
 test("utilità sulle date", () => {
@@ -140,4 +142,10 @@ test("fascia oraria prenotabile, anche oltre la mezzanotte", () => {
   assert.equal(day[0], "00:00");
   assert.ok(day.includes("02:00") && !day.includes("03:00") && !day.includes("09:00") && day.includes("10:00") && day.includes("23:00"));
   assert.equal(slotsForDay("2026-12-10", 60, [], now, { ...base, firstStartHour: 0, lastStartHour: 23 }).length, 24);
+});
+
+test("orari online dello studio: inizio dalle 14:00 alle 02:00", () => {
+  const now = new Date("2026-01-01T00:00:00Z");
+  const labels = slotsForDay("2026-12-10", 60, [], now).map((s) => s.label);
+  assert.deepEqual(labels, ["00:00", "01:00", "02:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"]);
 });

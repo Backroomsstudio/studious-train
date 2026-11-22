@@ -32,8 +32,9 @@ export const DEFAULT_RULES: BookingRules = {
   minNoticeMinutes: 3 * 60,
   horizonDays: 60,
   stepMinutes: 60,
-  firstStartHour: 0,
-  lastStartHour: 23,
+  // Sessioni prenotabili online dalle 14:00 alle 02:00 (inizio). Le altre ore si concordano su WhatsApp.
+  firstStartHour: 14,
+  lastStartHour: 2,
 };
 
 export interface Interval {
