@@ -16,9 +16,10 @@ import {
 import { cartQuote, unitLabel } from "./pricing.ts";
 import { DEFAULT_RULES, fitsAt, TIME_ZONE, type Interval } from "./slots.ts";
 import { busyIntervals, deleteEvent, eventsBetween, eventsWithPrivate, getEvent, insertEvent, patchEvent, CalendarError, type CalendarEvent } from "./google-calendar.ts";
-import { deserializeOrder, orderEvent, passContents, serializeOrder, type Appointment, type Order } from "./order.ts";
+import { deserializeOrder, orderEvent, orderRecap, passContents, serializeOrder, type Appointment, type Order, type OrderRecap } from "./order.ts";
 import { stripe } from "./stripe.ts";
 import { confirmToCustomer, notifyRenewal, notifyStudio } from "./mail.ts";
+import { notifyWhatsApp } from "./whatsapp.ts";
 
 export class BookingError extends Error {
   readonly status: number;
@@ -166,6 +167,8 @@ async function assertFirstTime(order: Order) {
 export interface BookingResult {
   /** Pagina su cui mandare il cliente: Stripe Checkout o la conferma */
   redirectUrl: string;
+  /** Contanti: riepilogo per il pop-up di conferma (il posto è già riservato) */
+  recap?: OrderRecap;
 }
 
 const onceOnly = (order: Order) => order.lines.some((l) => getService(l.serviceId)?.oncePerCustomer);
@@ -192,8 +195,9 @@ export async function createBooking(order: Order, origin: string): Promise<Booki
 
   if (order.payment === "contanti") {
     // Contanti: gli appuntamenti sono subito confermati, in rosso e con promemoria 30 minuti prima.
-    await Promise.all([notifyStudio(order, "Nuova prenotazione · DA SALDARE IN CONTANTI"), confirmToCustomer(order, false)]);
-    return { redirectUrl: `${origin}/prenota/confermata/?stato=contanti` };
+    const headline = "Nuova prenotazione · DA SALDARE IN CONTANTI";
+    await Promise.all([notifyStudio(order, headline), confirmToCustomer(order, false), notifyWhatsApp(order, headline)]);
+    return { redirectUrl: `${origin}/prenota/confermata/?stato=contanti`, recap: orderRecap(order, "da-saldare") };
   }
 
   try {
@@ -284,6 +288,15 @@ export async function cancelHold(eventIds: string[]) {
   for (const s of sessions) await stripe().checkout.sessions.expire(s).catch(() => undefined);
 }
 
+/** Riepilogo per la pagina di ritorno da Stripe: legge la sessione e dice se il pagamento è andato a buon fine. */
+export async function recapForSession(sessionId: string): Promise<OrderRecap | null> {
+  const session = await stripe().checkout.sessions.retrieve(sessionId);
+  const order = orderFromMetadata(session.metadata);
+  if (!order) return null;
+  const paid = session.payment_status === "paid" || session.payment_status === "no_payment_required";
+  return orderRecap(order, paid ? "pagato" : "in-attesa");
+}
+
 function orderFromMetadata(meta: Stripe.Metadata | null | undefined): Order | null {
   if (!meta?.ordine) return null;
   return deserializeOrder(meta.ordine, meta.note ?? "");
@@ -319,7 +332,8 @@ export async function confirmPaidSession(session: Stripe.Checkout.Session) {
   }
   if (alreadyDone) return;
 
-  await Promise.all([notifyStudio(order, order.passId ? `Nuovo ${getPass(order.passId)?.title ?? "Pass"} attivato` : "Nuovo acquisto pagato online"), confirmToCustomer(order, true)]);
+  const headline = order.passId ? `Nuovo ${getPass(order.passId)?.title ?? "Pass"} attivato` : "Nuova prenotazione · PAGATA ONLINE";
+  await Promise.all([notifyStudio(order, headline), confirmToCustomer(order, true), notifyWhatsApp(order, headline)]);
 }
 
 export async function releaseExpiredSession(session: Stripe.Checkout.Session) {

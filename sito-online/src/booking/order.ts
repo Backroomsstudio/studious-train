@@ -244,6 +244,60 @@ export function deserializeOrder(raw: string, notes = ""): Order | null {
   }
 }
 
+/** Riepilogo dell'ordine per il pop-up di conferma: niente email né telefono del cliente. */
+export interface OrderRecap {
+  nome: string;
+  titolo: string;
+  stato: OrderStatus;
+  righe: string[];
+  appuntamenti: { titolo: string; quando: string; inizio: string; fine: string }[];
+  aDistanza: string[];
+  totale: string;
+  mensile: boolean;
+  pagamento: PaymentMethod;
+  regola: boolean;
+}
+
+export function orderRecap(order: Order, stato: OrderStatus): OrderRecap {
+  const offer = offerName(order);
+  const single = order.lines.length === 1 ? getService(order.lines[0].serviceId)!.title : null;
+  return {
+    nome: order.name,
+    titolo: offer ?? single ?? "Il tuo progetto",
+    stato,
+    righe: order.lines.map(lineText),
+    appuntamenti: order.appointments.map((a) => ({ titolo: lineText(a), quando: whenText(a), inizio: a.start, fine: a.end })),
+    aDistanza: remoteLines(order).map(lineText),
+    totale: formatEuro(order.totalCents),
+    mensile: order.monthly,
+    pagamento: order.payment,
+    regola: Boolean(order.policy),
+  };
+}
+
+/** Messaggio WhatsApp per lo studio: corto, leggibile dal telefono. */
+export function whatsappText(order: Order, headline: string): string {
+  const offer = offerName(order);
+  const remote = remoteLines(order);
+  return [
+    `🎧 *${headline}*`,
+    "",
+    `👤 ${order.name}`,
+    order.phone ? `📞 ${order.phone}` : null,
+    `✉️ ${order.email}`,
+    "",
+    offer ? `📦 ${offer}` : null,
+    ...order.lines.map((l) => `• ${lineText(l)}`),
+    ...(order.appointments.length ? ["", "🗓 *In studio*", ...order.appointments.map((a) => `• ${getService(a.serviceId)!.short}: ${whenText(a)}`)] : []),
+    remote.length ? `\n🌐 A distanza: ${remote.map(lineText).join(", ")}` : null,
+    "",
+    `💶 *${formatEuro(order.totalCents)}*${order.monthly ? " al mese" : ""} · ${order.payment === "contanti" ? "DA SALDARE in contanti al primo appuntamento" : "pagato online"}`,
+    order.notes ? `📝 ${order.notes.slice(0, 300)}` : null,
+  ]
+    .filter((l): l is string => l !== null)
+    .join("\n");
+}
+
 /** Riepilogo leggibile per le email. */
 export function describeOrderForHumans(order: Order): string[] {
   const offer = offerName(order);

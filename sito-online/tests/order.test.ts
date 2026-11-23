@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { deserializeOrder, orderEvent, serializeOrder, describeOrderForHumans, CALENDAR_COLORS, type Order } from "../src/booking/order.ts";
+import { deserializeOrder, orderEvent, serializeOrder, describeOrderForHumans, orderRecap, whatsappText, CALENDAR_COLORS, type Order } from "../src/booking/order.ts";
 
 const order: Order = {
   lines: [{ serviceId: "registrazione", units: 2 }],
@@ -106,4 +106,29 @@ test("email: elenca servizi, appuntamenti e cosa si fa a distanza", () => {
   assert.match(text, /In studio:/);
   assert.match(text, /A distanza: Mix & Master — 5 brani/);
   assert.match(text, /Totale: 690\s?€/);
+});
+
+
+test("riepilogo per il pop-up: niente email né telefono, appuntamenti e totale", () => {
+  const r = orderRecap(ep, "pagato");
+  assert.equal(r.nome, "Marco");
+  assert.equal(r.appuntamenti.length, 3);
+  assert.equal(r.aDistanza.length, 1);
+  assert.match(r.totale, /690/);
+  assert.equal(r.stato, "pagato");
+  const json = JSON.stringify(orderRecap(order, "da-saldare"));
+  assert.ok(!json.includes("giulia@example.com"));
+  assert.ok(!json.includes("3331234567"));
+});
+
+test("messaggio WhatsApp allo studio: cliente, appuntamenti, totale e pagamento", () => {
+  const t = whatsappText(order, "Nuova prenotazione · DA SALDARE IN CONTANTI");
+  assert.match(t, /Giulia B\./);
+  assert.match(t, /3331234567/);
+  assert.match(t, /In studio/);
+  assert.match(t, /contanti/);
+  assert.ok(t.length < 1500);
+  const t2 = whatsappText(ep, "Nuova prenotazione · PAGATA ONLINE");
+  assert.match(t2, /pagato online/);
+  assert.match(t2, /A distanza/);
 });

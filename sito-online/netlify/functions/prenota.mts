@@ -16,8 +16,8 @@ export default async (req: Request) => {
     if (order.appointments.length && !calendarConfigured) throw new BookingError("Le prenotazioni online non sono ancora attive", 503);
     if (order.payment === "online" && !stripeConfigured) throw new BookingError("I pagamenti online non sono ancora attivi", 503);
 
-    const { redirectUrl } = await createBooking(order, new URL(req.url).origin);
-    return Response.json({ redirectUrl });
+    const { redirectUrl, recap } = await createBooking(order, new URL(req.url).origin);
+    return Response.json({ redirectUrl, ...(recap ? { riepilogo: recap } : {}) });
   } catch (e) {
     if (e instanceof BookingError) return Response.json({ error: e.message }, { status: e.status });
     console.error("[prenota]", e);

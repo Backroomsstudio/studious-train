@@ -33,8 +33,14 @@ export const serverConfig = {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean),
+
+  /** WhatsApp allo studio tramite CallMeBot: la chiave arriva sul WhatsApp del numero che riceve i messaggi */
+  whatsappApiKey: env("WHATSAPP_APIKEY"),
+  /** Numero che riceve i messaggi (lo stesso che ha attivato CallMeBot), con il prefisso internazionale */
+  whatsappPhone: (env("WHATSAPP_PHONE") || studio.phone).replace(/[^\d+]/g, ""),
 };
 
 export const calendarConfigured = Boolean(serverConfig.googleClientEmail && serverConfig.googlePrivateKey);
 export const stripeConfigured = Boolean(serverConfig.stripeSecretKey);
 export const mailConfigured = Boolean(serverConfig.smtpUser && serverConfig.smtpPass);
+export const whatsappConfigured = Boolean(serverConfig.whatsappApiKey && serverConfig.whatsappPhone);

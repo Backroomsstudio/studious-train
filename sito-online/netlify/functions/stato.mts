@@ -1,5 +1,5 @@
 import { busyIntervals } from "../../src/booking/google-calendar.ts";
-import { calendarConfigured, mailConfigured, serverConfig, stripeConfigured } from "../../src/booking/server-config.ts";
+import { calendarConfigured, mailConfigured, serverConfig, stripeConfigured, whatsappConfigured } from "../../src/booking/server-config.ts";
 import { stripe } from "../../src/booking/stripe.ts";
 
 /**
@@ -46,6 +46,7 @@ export default async () => {
   else out.webhook = "ok: segreto impostato";
   out.email = mailConfigured ? `ok: notifiche a ${serverConfig.notifyEmails.length} indirizzi` : "manca: SMTP_USER e SMTP_PASS (le prenotazioni funzionano, ma senza email)";
 
+  out.whatsapp = whatsappConfigured ? `ok: messaggi a ${serverConfig.whatsappPhone.slice(0, 6)}…` : "manca: WHATSAPP_APIKEY (le prenotazioni funzionano, ma senza messaggio WhatsApp)";
   const pronto = [out.calendario, out.stripe, out.webhook].every((v) => String(v).startsWith("ok"));
   return Response.json({ pronto, ...out }, { headers: { "Cache-Control": "no-store" } });
 };
