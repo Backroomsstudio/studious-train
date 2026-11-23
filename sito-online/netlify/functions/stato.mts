@@ -1,5 +1,6 @@
 import { busyIntervals } from "../../src/booking/google-calendar.ts";
-import { calendarConfigured, mailConfigured, serverConfig, stripeConfigured } from "../../src/booking/server-config.ts";
+import { telegramBotName } from "../../src/booking/telegram.ts";
+import { calendarConfigured, mailConfigured, serverConfig, stripeConfigured, telegramConfigured } from "../../src/booking/server-config.ts";
 import { stripe } from "../../src/booking/stripe.ts";
 
 /**
@@ -46,6 +47,17 @@ export default async () => {
   else out.webhook = "ok: segreto impostato";
   out.email = mailConfigured ? `ok: notifiche a ${serverConfig.notifyEmails.length} indirizzi` : "manca: SMTP_USER e SMTP_PASS (le prenotazioni funzionano, ma senza email)";
 
+  if (!serverConfig.telegramToken) out.telegram = "manca: TELEGRAM_BOT_TOKEN (le prenotazioni funzionano, ma senza messaggio Telegram)";
+  else {
+    try {
+      const bot = await telegramBotName();
+      out.telegram = telegramConfigured
+        ? `ok: @${bot} scrive a ${serverConfig.telegramChatIds.length} chat`
+        : `manca: TELEGRAM_CHAT_ID (il bot @${bot} funziona, ma non sa a chi scrivere)`;
+    } catch {
+      out.telegram = "errore: Telegram rifiuta TELEGRAM_BOT_TOKEN (copiato male o revocato)";
+    }
+  }
   const pronto = [out.calendario, out.stripe, out.webhook].every((v) => String(v).startsWith("ok"));
   return Response.json({ pronto, ...out }, { headers: { "Cache-Control": "no-store" } });
 };

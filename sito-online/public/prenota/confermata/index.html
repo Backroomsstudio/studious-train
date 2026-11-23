@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#050507"><meta name="color-scheme" content="dark">
 <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png?v=20261027">
 <link rel="preload" href="/fonts/cinzel.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/montserrat.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/main.css?v=20261027"><link rel="stylesheet" href="/css/fx.css?v=20261120"><link rel="stylesheet" href="/css/prenota.css?v=20261122">
+<link rel="stylesheet" href="/css/main.css?v=20261027"><link rel="stylesheet" href="/css/fx.css?v=20261120"><link rel="stylesheet" href="/css/prenota.css?v=20261125">
 </head>
 <body class="svc-page">
 <header class="hdr solid"><a class="brand" href="/" aria-label="Backrooms Studio, torna alla home"><img src="/brand/logo-silver-120.webp" width="44" height="34" alt=""><span>Backrooms <small class="t2">Studio</small></span></a></header>
@@ -18,7 +18,7 @@
   <h1 id="page-title" class="gold-text t3d">Ci vediamo in studio</h1>
   <p class="lead" id="ok-text">Grazie! La prenotazione è confermata: tra pochi istanti ricevi un'email di riepilogo e la ricevuta di pagamento.</p>
   <p class="lead" style="margin-top:14px">Se hai scelto un servizio a distanza ti scriviamo noi per ricevere il materiale. Non trovi l'email? Controlla lo spam o scrivici.</p>
-  <div class="co-ok-acts"><a class="btn" href="/">Torna al sito</a><a class="btn-ghost" href="https://wa.me/393248911607?text=Ciao%20Backrooms%20Studio!%20Ho%20appena%20prenotato%20dal%20sito." target="_blank" rel="noopener">Scrivici su WhatsApp</a></div>
+  <div class="co-ok-acts"><button type="button" class="btn" id="ok-recap" hidden>Rivedi il riepilogo</button><a class="btn-ghost" href="/">Torna al sito</a><a class="btn-ghost" href="https://wa.me/393248911607?text=Ciao%20Backrooms%20Studio!%20Ho%20appena%20prenotato%20dal%20sito." target="_blank" rel="noopener">Scrivici su WhatsApp</a></div>
 </div></section>
 </main>
 <script>
@@ -27,5 +27,6 @@ if (new URLSearchParams(location.search).get('stato') === 'contanti') {
   document.getElementById('ok-text').textContent = "Il tuo orario è riservato. Porta i contanti il giorno della sessione: ti abbiamo mandato un'email con tutti i dettagli.";
 }
 </script>
+<script src="/js/prenota-ok.js?v=20261125" defer></script>
 </body>
 </html>

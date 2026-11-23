@@ -244,6 +244,64 @@ export function deserializeOrder(raw: string, notes = ""): Order | null {
   }
 }
 
+/** Riepilogo dell'ordine per il pop-up di conferma: niente email né telefono del cliente. */
+export interface OrderRecap {
+  nome: string;
+  titolo: string;
+  stato: OrderStatus;
+  righe: string[];
+  appuntamenti: { titolo: string; quando: string; inizio: string; fine: string }[];
+  aDistanza: string[];
+  totale: string;
+  mensile: boolean;
+  pagamento: PaymentMethod;
+  regola: boolean;
+}
+
+export function orderRecap(order: Order, stato: OrderStatus): OrderRecap {
+  const offer = offerName(order);
+  const single = order.lines.length === 1 ? getService(order.lines[0].serviceId)!.title : null;
+  return {
+    nome: order.name,
+    titolo: offer ?? single ?? "Il tuo progetto",
+    stato,
+    righe: order.lines.map(lineText),
+    appuntamenti: order.appointments.map((a) => ({ titolo: lineText(a), quando: whenText(a), inizio: a.start, fine: a.end })),
+    aDistanza: remoteLines(order).map(lineText),
+    totale: formatEuro(order.totalCents),
+    mensile: order.monthly,
+    pagamento: order.payment,
+    regola: Boolean(order.policy),
+  };
+}
+
+const escHtml = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** Messaggio Telegram per lo studio (HTML di Telegram): corto, leggibile dal telefono. */
+export function telegramText(order: Order, headline: string): string {
+  const e = escHtml;
+  const offer = offerName(order);
+  const remote = remoteLines(order);
+  const tel = order.phone.replace(/[^\d+]/g, "");
+  return [
+    `🎧 <b>${e(headline)}</b>`,
+    "",
+    `👤 ${e(order.name)}`,
+    order.phone ? `📞 ${e(order.phone)}${tel.length >= 6 ? ` · <a href="https://wa.me/${tel.startsWith("+") ? tel.slice(1) : tel.length === 10 ? "39" + tel : tel}">WhatsApp</a>` : ""}` : null,
+    `✉️ ${e(order.email)}`,
+    "",
+    offer ? `📦 <b>${e(offer)}</b>` : null,
+    ...order.lines.map((l) => `• ${e(lineText(l))}`),
+    ...(order.appointments.length ? ["", "🗓 <b>In studio</b>", ...order.appointments.map((a) => `• ${e(getService(a.serviceId)!.short)}: ${e(whenText(a))}`)] : []),
+    remote.length ? `\n🌐 A distanza: ${e(remote.map(lineText).join(", "))}` : null,
+    "",
+    `💶 <b>${e(formatEuro(order.totalCents))}</b>${order.monthly ? " al mese" : ""} · ${order.payment === "contanti" ? "DA SALDARE in contanti al primo appuntamento" : "pagato online"}`,
+    order.notes ? `📝 ${e(order.notes.slice(0, 500))}` : null,
+  ]
+    .filter((l): l is string => l !== null)
+    .join("\n");
+}
+
 /** Riepilogo leggibile per le email. */
 export function describeOrderForHumans(order: Order): string[] {
   const offer = offerName(order);

@@ -33,8 +33,17 @@ export const serverConfig = {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean),
+
+  /** Telegram allo studio: token del bot creato con @BotFather */
+  telegramToken: env("TELEGRAM_BOT_TOKEN"),
+  /** Chi riceve i messaggi: uno o più chat id (separati da virgola), es. i 3 soci o un gruppo */
+  telegramChatIds: env("TELEGRAM_CHAT_ID")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => /^-?\d+$/.test(s)),
 };
 
 export const calendarConfigured = Boolean(serverConfig.googleClientEmail && serverConfig.googlePrivateKey);
 export const stripeConfigured = Boolean(serverConfig.stripeSecretKey);
 export const mailConfigured = Boolean(serverConfig.smtpUser && serverConfig.smtpPass);
+export const telegramConfigured = Boolean(serverConfig.telegramToken && serverConfig.telegramChatIds.length);

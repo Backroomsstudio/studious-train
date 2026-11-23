@@ -33,6 +33,8 @@ import {
 import { cartQuote, formatDuration, formatEuro, unitLabel } from "../booking/pricing.ts";
 import { addDays, bookableWindow, DEFAULT_RULES, romeDay, slotsForDay, TIME_ZONE, type Interval, type Slot } from "../booking/slots.ts";
 import { studio } from "../booking/studio.ts";
+import type { OrderRecap } from "../booking/order.ts";
+import { showRecap } from "./recap.ts";
 
 const DAYS_PER_PAGE = 7;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -1201,12 +1203,43 @@ async function send(payload: Record<string, unknown>) {
       throw new Error(json.error ?? "Qualcosa è andato storto: riprova o scrivici su WhatsApp.");
     }
     track("checkout_invio", { pagamento: payload.pagamento, pass: payload.pass ?? "", pacchetto: payload.pacchetto ?? "" });
+    // Contanti: il posto è già riservato, si mostra subito il riepilogo senza cambiare pagina.
+    if (json.riepilogo) {
+      state.submitting = false;
+      renderDone(json.riepilogo as OrderRecap);
+      showRecap(json.riepilogo as OrderRecap);
+      return;
+    }
     location.href = json.redirectUrl;
   } catch (e) {
     state.submitting = false;
     state.error = (e as Error).message;
     renderNav();
   }
+}
+
+/** Dopo una prenotazione in contanti: al posto del questionario resta la conferma, con il riepilogo a portata di clic. */
+function renderDone(r: OrderRecap) {
+  $("bk-progress").replaceChildren();
+  ($("bk-back") as HTMLButtonElement).hidden = true;
+  ($("bk-next") as HTMLButtonElement).hidden = true;
+  $("bk-error").hidden = true;
+  $("bk-stage").replaceChildren(
+    h(
+      "div",
+      { class: "bk-card enter bk-done" },
+      h("div", { class: "bk-ok-badge", "aria-hidden": "true" }, h("span", {}, "✓")),
+      h("div", { class: "eyebrow" }, "Prenotazione registrata"),
+      h("h2", { class: "bk-q gold-text t3d" }, "Il posto è tuo!"),
+      h("p", { class: "bk-lead" }, `Grazie ${r.nome}: trovi tutto nel riepilogo. Per qualsiasi cosa scrivici su WhatsApp.`),
+      h(
+        "div",
+        { class: "bk-ok-acts" },
+        h("button", { type: "button", class: "btn", onclick: () => showRecap(r) }, "Rivedi il riepilogo"),
+        h("a", { class: "btn-ghost", href: "/prenota/" }, "Prenota altro"),
+      ),
+    ),
+  );
 }
 
 async function submit() {
