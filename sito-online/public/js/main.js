@@ -101,6 +101,9 @@
   var revs = $('#revs');
   function rstep(d) { var c = $('.rev', revs); revs.scrollBy({ left: d * (c.offsetWidth + 20), behavior: 'smooth' }); }
   $('#rprev').addEventListener('click', function () { rstep(-1); }); $('#rnext').addEventListener('click', function () { rstep(1); });
+  revs.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('.rev-toggle'); if (!b) return; var o = b.closest('.rev').classList.toggle('open'); b.setAttribute('aria-expanded', o ? 'true' : 'false'); b.textContent = o ? 'Chiudi' : 'Leggi tutta'; });
+  function rfit() { [].forEach.call(revs.querySelectorAll('.rev.long:not(.open)'), function (f) { var q = f.querySelector('q'); f.classList.toggle('fits', q.scrollHeight <= q.clientHeight + 2); }); }
+  rfit(); window.addEventListener('resize', function () { clearTimeout(rfit.t); rfit.t = setTimeout(rfit, 200); });
 
   /* ---------- prenotazione ---------- */
   var dlg = $('#book'), form = $('#bookform');

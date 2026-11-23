@@ -1,0 +1,380 @@
+{
+  "fonte": "Google Maps",
+  "placeId": "ChIJAUVFRv4xf0cRz0a2QhYqzgU",
+  "urlGoogle": "https://maps.google.com/?cid=418318090488923855",
+  "urlScrivi": "https://search.google.com/local/writereview?placeid=ChIJAUVFRv4xf0cRz0a2QhYqzgU",
+  "aggiornato": "2026-11-23",
+  "recensioni": [
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2w5eE9FWXhWbXN4YUdrdGFFNVpkMDVCTWpsWWFrRRAB",
+      "nome": "GIULIA BOAKYE",
+      "stelle": 5,
+      "testo": "10/10",
+      "data": "2026-11-23"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2tSaWRHWlFNVkppWHpaMFZUZFdWbmxtZEdjek1HYxAB",
+      "nome": "Matteo Dalla Valle",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-11-23"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2pBMFlVWTVVRkY2YzA5aVMxTmpkWEpvTlc5WFlWRRAB",
+      "nome": "Dino Nianzou",
+      "stelle": 5,
+      "testo": "Posto molto professionale, accogliente e di grande qualità dove ci si sente subito a proprio agio con ragazzi competenti nel proprio lavoro",
+      "data": "2026-11-22"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT21rNU5VTnhVREpRZUU1T1VXOWtlRkZpUVRaa1dGRRAB",
+      "nome": "jnk.al3x",
+      "stelle": 5,
+      "testo": "ragazzi super competenti, ambiente swag e capiscono subito cosa fare🏃💨 correteci",
+      "data": "2026-11-21"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2swMVEzQXhjVU5WTkhsSGJtWklhbE5TUzNwa1pXYxAB",
+      "nome": "Aleksandar Jankovic",
+      "stelle": 5,
+      "testo": "Migliore studio di vicenza‼️‼️‼️ andate tutti perfavore, I RAGAZZI CI FANNO FARE",
+      "data": "2026-11-21"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2tkblIybFRhV2xNYjBVMFNVTlZOWGh1YjNOYVFtYxAB",
+      "nome": "andrea cunegatti",
+      "stelle": 5,
+      "testo": "studio folle, i ragazzi davvero bravi e super disponibili, swag swag",
+      "data": "2026-11-20"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT25JeFpHaHlOWFF6UVVkc2RqazJNWFIxTVdoaldVRRAB",
+      "nome": "Andrea Randon",
+      "stelle": 5,
+      "testo": "esperienza incredibile",
+      "data": "2026-11-20"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2s5UVdIQkhlbDlNTFRCcE5sbFlhWGN0VkdOaVJrRRAB",
+      "nome": "Andrea Venzi",
+      "stelle": 4,
+      "testo": "Fire🔥🔥🔥",
+      "data": "2026-11-20"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2tKU05FZG1Va1J6VnpVMWJGZE5OMGM0VFhoa2NHYxAB",
+      "nome": "Leonardo Corrá",
+      "stelle": 5,
+      "testo": "Studio top professionale",
+      "data": "2026-11-20"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2pKaWJqZFRPV2QxWkhsU2FpMUtRa2N3WTFKNVRGRRAB",
+      "nome": "Riccardo Zorzo",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-11-20"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2toblNHdHZXV3hVUmxKbGQzaFdWSHBzWVV0SVNGRRAB",
+      "nome": "Daniele Costa",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-11-19"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2poek9XZHpUM1JRTTBOeGNWcElhMUpYUlVkd2NtYxAB",
+      "nome": "Denis Codreanu",
+      "stelle": 5,
+      "testo": "Studio professionale pulito e accogliente, ragazzi in gamba e ci hanno fatto sentire subito a casa. Torneremo :)",
+      "data": "2026-11-19"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2kwM2EwaE5hWFptVEhONk5sbFBZM3A0TTAxcU1IYxAB",
+      "nome": "Teo Savi",
+      "stelle": 5,
+      "testo": "Studio bene allestito con gente motivata e competente.",
+      "data": "2026-11-18"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT25KS1drUXRabmRrWVRaU0xVbHRjVFkwZFdWTWRuYxAB",
+      "nome": "Nicholas Biasiotto",
+      "stelle": 5,
+      "testo": "Spacca!🔥\nLo studio è una hit, è immenso con tutti i comfort adatti a far sentire chiunque come fosse a casa sua e i ragazzi sanno tutti il fatto loro… il vero riconosce il vero🫂🩸",
+      "data": "2026-11-18"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2xaaVgyaGZPVEF6ZVVFMlZYcFpZV0ZMWTNCdFpVRRAB",
+      "nome": "Klaudio Shacma",
+      "stelle": 5,
+      "testo": "SESSIONE DIFFICILE, TNX RAGAZZO🐐❄️",
+      "data": "2026-11-18"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2w4eFYzQlBSVlJPZVU5dmRGWXlYM3BLTUdVNU1HYxAB",
+      "nome": "Marko Milenkovic",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-11-18"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2trMFVqTTBiekpwYVZKellXdGFhMU5YT1RoTFQxRRAB",
+      "nome": "zakaria el fadi",
+      "stelle": 5,
+      "testo": "Ottima esperienza studio ampio e comodo, e ragazzi in gamba, consiglio! 💯",
+      "data": "2026-11-17"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT25KVVN6WjROVlZoZUhSSVQweEdaRk5aVVhOTU1IYxAB",
+      "nome": "Pier Andrea Munari",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-11-16"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT210R00zQnRTMU5XVlVrMWEySTVZamc0TkZWd2JVRRAB",
+      "nome": "Riccardo nieddu",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-11-16"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT210WE5ETmtkSFJWTmpCa2EwSjVZV0Y1YjNSeGRuYxAB",
+      "nome": "Rachid Latify",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-11-16"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT25GR01qQXpObUl4WVd0R1R6QkJSVXQyWXpSUlVXYxAB",
+      "nome": "Alessio Kokici",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-11-16"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2paWVlWVklUMTh0ZDJWVlgxSnlSazk2TUMwMWRVRRAB",
+      "nome": "Gressi Gjura",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-11-16"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2xjM2RtWjZSbkp0YTBORlNtODVWa2xVY1hSYVUwRRAB",
+      "nome": "Visso",
+      "stelle": 5,
+      "testo": "Esperienza unica 🔥🐐",
+      "data": "2026-11-16"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT25Sb1RXMWpTM2N6T0d3MGRGazJUWFZaYW00eVJFRRAB",
+      "nome": "Anna Donazzolo",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-11-16"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT25FeGQxazBXRm94YVZOaGJ6SmthSEpVWkdGemVGRRAB",
+      "nome": "ale",
+      "stelle": 5,
+      "testo": "Belli forti",
+      "data": "2026-11-09"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT25CSUxWVlpkbGcyVVZKSFQyODVhSGhPZUdSc1NrRRAB",
+      "nome": "Stefano Doppieri",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-11-09"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2sxRVl6VjRUR0pIUzBOZlFXSXdiVkZPT1RKYUxVRRAB",
+      "nome": "Mattia Lorenzin",
+      "stelle": 5,
+      "testo": "Studio curato e accogliente, ti fa immergere nel giusto mood artistico.\nPersonale preparato e gentile, super consigliato!",
+      "data": "2026-11-09"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT25kR1ozTXRlRU5rTkhkd01IWllVREJ6V1RoaVMzYxAB",
+      "nome": "Omar Bortoli",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-11-09"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT21GMldsOU1kRXBrZG5OaVNuVklWR3htYWtkSlVVRRAB",
+      "nome": "Sara Di Paola",
+      "stelle": 5,
+      "testo": "Ho registrato qui e mi sono trovata benissimo. I ragazzi che lo gestiscono sono molto bravi, professionali, ma allo stesso tempo ti fanno sentire a casa. Il sound è ottimo e i prezzi sono assolutamente onesti e in linea con quello che offrono. Super consigliati 🫶🏼",
+      "data": "2026-11-09"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2xsRVJIWm1TMkpxU1VOdE0zWlJNUzF0WTJkaWFFRRAB",
+      "nome": "Matteo Bertozzo",
+      "stelle": 5,
+      "testo": "lo studio è pazzesco e i ragazzi sono molto disponibili e competenti, lo consiglio",
+      "data": "2026-11-02"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2tGdk1teE5kVWRYTkRRMlNEaDBSR3N6VkdrMlNHYxAB",
+      "nome": "Lorenzo Meca",
+      "stelle": 5,
+      "testo": "Lo studio è super accogliente, ti immergi completamente nel suo mood. Il personale molto giovane, ma molto competente e sul pezzo. Super simpatici e performanti, consigliatissimo!",
+      "data": "2026-10-26"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT21Od1NFVlpkR3hQT1Vkek5FZHZNMGRaVERkUmMyYxAB",
+      "nome": "Gioele Gasparini",
+      "stelle": 5,
+      "testo": "Studio incredibile e i ragazzi che ci stanno dietro ancora di più. Si viene seguiti passo passo e lo spazio è molto curato e accogliente. Consiglio vivamente",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT205c1l6bEZWWFpDUzNOU09UVk9hMWN0WVZWVlVFRRAB",
+      "nome": "Costel Costel",
+      "stelle": 5,
+      "testo": "mix e master CRAZY",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2w4M1EwWk5Ta2gzTVMxaFdVTlNkVzVOYlhOeWRrRRAB",
+      "nome": "Davide",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2t0WU1FZEdVazh6VGpoclRYSk9hRmhpYVZoQ1NIYxAB",
+      "nome": "Annamaria Di Lauro",
+      "stelle": 5,
+      "testo": "ragazzi super competenti e studio pazzesco. un ambiente in cui lavorare bene, senza pressioni, con persone sempre pronte a dare consigli giusti quando ci si sente in difficoltà. Top.",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT21ka1gxWjJWbEZwZW1SM1VHaHhNa2RuYjJ0NlNWRRAB",
+      "nome": "Star Ghost",
+      "stelle": 5,
+      "testo": "Il team di Backrooms mancava!!!\nRagazzi super disponibili, con prezzi accessibili e professionalità al Top 💯\nHo girato un po’ di studi negli anni ma detta sinceramente, ad oggi sti ragazzi, sono gli unici che si interessano realmente al percorso/progetto che può avere in mente un artista ⚡️ indipendentemente dal budget che non è affatto scontato\nConsigliatissimi a mani basse\n\nFreya, Luca e Dani siete Tanta Tanta roba",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2xCV04xOW5Va0ZITmxkMmMxVTBhM2RIVlZwUVYxRRAB",
+      "nome": "Giuliano Xotta",
+      "stelle": 5,
+      "testo": "Posto eccezionale e ben curato,i ragazzi sono super gentili e disponibili,ti fanno sentire come a casa,passate a fare un salto,consigliato",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2pWQ1RsOTJkMVJxYmtSaVgzWkJlVkY0YkVaQ1ZXYxAB",
+      "nome": "oak editzz",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2sxUk1WZGFNbVJJVlZWc1Z6RnphbEZCUVRaVmJGRRAB",
+      "nome": "Alessandro Gal",
+      "stelle": 5,
+      "testo": "Il miglior servizio che potete ricevere, ragazzi in gamba e disponibili che ti supportano, professionale e qualità top!!!",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT21SU2NqZFFXV2xIYlhaZmN6bEJhVU0yWTNob2JXYxAB",
+      "nome": "AMIRA ROM",
+      "stelle": 5,
+      "testo": "Esperienza fantastica per la mia prima sessione in studio! I ragazzi sono competenti, professionali e incredibilmente accoglienti. Ti mettono subito a proprio agio e fanno un lavoro eccezionale. Consigliatissimo a chiunque voglia registrare la propria musica in un ambiente stimolante e amichevole",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT25GR2NUSjVTbVJuWVdSSVltVkVaalpNYzBkaVNFRRAB",
+      "nome": "Alessandro Sella",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2xWaU5XWnNRakJGU210NU1sOWphWFZGV1hjNVkyYxAB",
+      "nome": "Iago",
+      "stelle": 5,
+      "testo": "Ragazzi in gamba e capaci di fare il proprio lavoro ti fanno stare come a casa parlando dello studio spaziale",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT201NldXVlBiMUV4ZHpoSVgzZE5Za05OYW1oTFZXYxAB",
+      "nome": "kevin cremasco",
+      "stelle": 5,
+      "testo": "Ambiente ottimo, ragazzi simpatici e professionali",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2toRWNEaFpOM0p3TTI1aFFXVTFlVEptTUhWSmNtYxAB",
+      "nome": "Alessandro Sfoggia",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT21GR1ZFdDVUakJzVG5Kbk5WOUtNbk5RTmtNNExVRRAB",
+      "nome": "Mattia Refosco (grevee)",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2pSNVlsOXJPRmxqVEhkU05FNDVhMGw2ZFdKT2EwRRAB",
+      "nome": "A.D.1 Official",
+      "stelle": 5,
+      "testo": "Ragazzi veramente preparati e competenti, ti seguono in tutto nella produzione del tuo brano, la location è veramente suggestiva e ti dà tutti i comfort per rilassarti mentre registri. Passate che meritano",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT21KVk9HOUtjRmg0VjBaaVdYSmhObk5GV0dKcWVtYxAB",
+      "nome": "Diego Chessari",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2xSNmJsVktjVFI0UlVsQlZFeGhkSE41VUMxS1ltYxAB",
+      "nome": "Scally",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2pCUlZVSnVialV5YldKVFFqZFRUMkZIVURGMlRrRRAB",
+      "nome": "Eros Asan",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT205S09XcDRSV3RwVjBGNGFISnpjVkJaTW5oamExRRAB",
+      "nome": "luca fabrello",
+      "stelle": 5,
+      "testo": "Producer competente e disponibile in un ambiente professionale, l’ideale per fare una sessione al meglio. Ci tornerò sicuramente.\nGrande Freya, grande Daniele e grande Plugghe!",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2tFdFZsRmFiMk01WDBwa1IzaEtiak5xYldad1JYYxAB",
+      "nome": "Matteo Poncato",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT2pSVFVuRTFjRWR6YlhJMWNVVlJkbDl0WTJsS05GRRAB",
+      "nome": "Francesco Sartori",
+      "stelle": 5,
+      "testo": "Ragazzi veramente forti e preparati nel loro lavoro, abbiamo lavorato ad un paio di produzioni e sono venute come me le immaginavo, studio consigliatissimo",
+      "data": "2026-10-24"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT25KTWFFa3dhazVFYm01MlVqVkdUMmRFWkZoU1RVRRAB",
+      "nome": "Giorgio Strazzi",
+      "stelle": 5,
+      "testo": "Bellissima esperienza, abbiamo fatto una sessione di registrazione e una sessione di beat e Freya e Daniele sono veramente forti, sono uscito con una traccia di cui sono attualmente soddisfatto, ci tornerò assolutamente",
+      "data": "2026-10-24"
+    }
+  ]
+}

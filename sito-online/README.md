@@ -112,3 +112,11 @@ npm install
 BOOKING_DEMO=1 npm run dev   # http://localhost:8888 con calendario finto, senza Google
 npm test                     # prezzi, sconti, Pass, slot, cambio d'ora, eventi
 ```
+
+## Recensioni Google (sezione #recensioni della home)
+
+- **Fonte unica:** `data/recensioni.json`, le recensioni come sono su Google Maps, dalla più recente (nome, stelle, testo, data approssimativa).
+- `node scripts/recensioni.mjs` rigenera la sezione #recensioni di `public/index.html` e il contatore «5,0 su Google · N recensioni» (anche nella hero). Gira da solo in `npm run build`, quindi a ogni deploy di Netlify.
+- `node scripts/recensioni.mjs --sync lette.json` unisce l'elenco letto da Google Maps: aggiunge le nuove, aggiorna i testi cambiati, toglie quelle cancellate da Google. Se ne mancano più di 3 in una volta si ferma (lettura incompleta) e non tocca nulla.
+- Ogni giorno un'attività pianificata di Claude legge le recensioni da Google Maps, lancia `--sync`, esegue i test e pubblica solo se c'è qualcosa di nuovo.
+- In pagina: schede con testo nel carosello (i testi lunghi si aprono con «Leggi tutta»), valutazioni senza commento in una riga di nomi, link a Google per leggerle tutte e per lasciarne una.
