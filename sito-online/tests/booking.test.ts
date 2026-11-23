@@ -239,3 +239,20 @@ test("controllo doppie prenotazioni: gli eventi «Disponibile» non contano", as
   assert.equal(lostRace(ours, [ours, occupato], new Set(["nostro"])), true);
   assert.equal(lostRace(ours, [ours, dopo], new Set(["nostro"])), false);
 });
+
+test("dopo un impegno che finisce alla mezz'ora si può iniziare subito (niente buco di 30 minuti)", () => {
+  const now = new Date("2026-11-20T10:00:00Z");
+  const day = "2026-12-02";
+  const beat = { start: romeToUtc(day, 18).toISOString(), end: romeToUtc(day, 19, 30).toISOString() };
+  const slots = slotsForDay(day, 120, [beat], now);
+  const s1930 = slots.find((s) => s.label === "19:30");
+  assert.ok(s1930, "19:30 proposto");
+  assert.equal(s1930!.state, "libero");
+  assert.equal(slots.find((s) => s.label === "20:00")?.state, "libero");
+  // in ordine di orario e senza doppioni
+  const labels = slots.map((s) => s.label);
+  assert.deepEqual(labels, [...new Set(labels)]);
+  assert.ok(labels.indexOf("19:30") === labels.indexOf("19:00") + 1);
+  // il server accetta lo stesso orario
+  assert.ok(fitsAt(s1930!.start, 120, [beat], now));
+});
