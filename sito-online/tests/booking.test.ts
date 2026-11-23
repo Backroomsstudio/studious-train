@@ -131,7 +131,7 @@ test("il server ricontrolla il blocco richiesto", () => {
   const busy = [{ start: "2026-12-10T14:00:00Z", end: "2026-12-10T16:00:00Z" }];
   assert.equal(isBookable("2026-12-10T11:00:00.000Z", 60, busy, now, ALL_DAY), true);
   assert.equal(isBookable("2026-12-10T13:00:00.000Z", 120, busy, now, ALL_DAY), false);
-  assert.equal(isBookable("2026-12-10T11:30:00.000Z", 60, busy, now, ALL_DAY), false); // non è un inizio valido
+  assert.equal(isBookable("2026-12-10T11:15:00.000Z", 60, busy, now, ALL_DAY), false); // non è un inizio valido
   assert.equal(isBookable("spazzatura", 60, busy, now, ALL_DAY), false);
 });
 
@@ -191,9 +191,9 @@ test("orari online dello studio: dalle 14:00 alle 02:00 della notte dopo", () =>
   const slots = slotsForDay("2026-12-10", 60, [], now);
   assert.deepEqual(
     slots.map((s) => s.label),
-    ["14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "00:00", "01:00"],
+    ["14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00", "23:30", "00:00", "00:30", "01:00"],
   );
-  // 00:00 e 01:00 sono la notte tra giovedì 10 e venerdì 11
+  // dopo mezzanotte è la notte tra giovedì 10 e venerdì 11
   assert.equal(slots.at(-1)!.start, "2026-12-11T00:00:00.000Z");
   // Un blocco di 2 ore finisce entro le 02:00: ultimo inizio a mezzanotte
   assert.equal(slotsForDay("2026-12-10", 120, [], now).at(-1)!.label, "00:00");
@@ -255,4 +255,12 @@ test("dopo un impegno che finisce alla mezz'ora si può iniziare subito (niente 
   assert.ok(labels.indexOf("19:30") === labels.indexOf("19:00") + 1);
   // il server accetta lo stesso orario
   assert.ok(fitsAt(s1930!.start, 120, [beat], now));
+});
+
+test("si può prenotare a ogni mezz'ora, non solo alle ore piene", () => {
+  const now = new Date("2026-11-20T10:00:00Z");
+  const labels = slotsForDay("2026-12-02", 90, [], now).map((s) => s.label);
+  assert.deepEqual(labels.slice(0, 4), ["14:00", "14:30", "15:00", "15:30"]);
+  // l'ultimo inizio per 1 h 30 è 00:30 (finisce alle 02:00)
+  assert.equal(labels.at(-1), "00:30");
 });

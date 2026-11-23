@@ -27,7 +27,7 @@ export const DEFAULT_RULES: BookingRules = {
   // Si prenota online almeno 24 ore prima dell'inizio.
   minNoticeMinutes: 24 * 60,
   horizonDays: 60,
-  stepMinutes: 60,
+  stepMinutes: 30,
   // Disponibilità online dalle 14:00 alle 02:00 della notte dopo: l'ultima sessione finisce alle 02:00.
   // Le altre ore si concordano su WhatsApp.
   openHour: 14,
