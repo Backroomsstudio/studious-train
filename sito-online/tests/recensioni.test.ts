@@ -58,3 +58,24 @@ test("la pagina online è allineata a data/recensioni.json", () => {
   assert.equal((html.match(new RegExp(`su Google · ${count} recensioni`, "g")) || []).length, 2);
   assert.equal((html.match(/<figure class="slab rev( long)?">/g) || []).length, data.recensioni.filter((x: any) => x.testo).length);
 });
+
+test("/api/recensioni: impagina il JSON letto da GitHub e lo mette in cache sulla CDN", async () => {
+  // @ts-ignore: modulo .mts importato dal test
+  const { default: handler } = await import("../netlify/functions/recensioni.mts");
+  const data = JSON.parse(readFileSync(DATA_FILE, "utf8"));
+  const orig = globalThis.fetch;
+  try {
+    globalThis.fetch = (async () => new Response(JSON.stringify(data))) as typeof fetch;
+    const res: Response = await handler();
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get("Netlify-CDN-Cache-Control") || "", /max-age=1800/);
+    const body = await res.json();
+    assert.equal(body.count, data.recensioni.length);
+    assert.equal(body.label, `${summary(data).avg} su Google · ${data.recensioni.length} recensioni`);
+    assert.ok(body.cards.includes('<figure class="slab rev'));
+    globalThis.fetch = (async () => new Response("no", { status: 404 })) as typeof fetch;
+    assert.equal((await handler()).status, 503);
+  } finally {
+    globalThis.fetch = orig;
+  }
+});

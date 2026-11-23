@@ -104,6 +104,19 @@
   revs.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('.rev-toggle'); if (!b) return; var o = b.closest('.rev').classList.toggle('open'); b.setAttribute('aria-expanded', o ? 'true' : 'false'); b.textContent = o ? 'Chiudi' : 'Leggi tutta'; });
   function rfit() { [].forEach.call(revs.querySelectorAll('.rev.long:not(.open)'), function (f) { var q = f.querySelector('q'); f.classList.toggle('fits', q.scrollHeight <= q.clientHeight + 2); }); }
   rfit(); window.addEventListener('resize', function () { clearTimeout(rfit.t); rfit.t = setTimeout(rfit, 200); });
+  // Recensioni arrivate dopo l'ultimo deploy: /api/recensioni le legge da GitHub (nessun deploy necessario).
+  var rsec = $('#recensioni');
+  if (rsec && window.fetch) fetch('/api/recensioni').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+    if (!d || !(d.count > 0) || !/^\d,\d$/.test(d.avg) || typeof d.cards !== 'string') return;
+    if (String(d.count) === rsec.getAttribute('data-count') && d.aggiornato === rsec.getAttribute('data-aggiornato')) return;
+    rsec.setAttribute('data-count', d.count); rsec.setAttribute('data-aggiornato', d.aggiornato || '');
+    var eb = $('.eyebrow', rsec); if (eb) eb.textContent = d.label;
+    revs.innerHTML = d.cards; revs.scrollLeft = 0;
+    var wt = $('.rev-more-t', rsec), wl = $('.rev-wall', rsec);
+    if (wt && wl) { wt.textContent = d.wallTitle; wl.innerHTML = d.chips; wt.hidden = wl.hidden = !d.chips; }
+    [].forEach.call(document.querySelectorAll('a.rating > span:last-child'), function (s) { s.innerHTML = '<b>' + d.avg + '</b> su Google · ' + Number(d.count) + ' recensioni'; });
+    rfit();
+  }).catch(function () {});
 
   /* ---------- prenotazione ---------- */
   var dlg = $('#book'), form = $('#bookform');
