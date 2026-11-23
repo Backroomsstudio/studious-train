@@ -1114,7 +1114,7 @@ function renderReceipt() {
         : null,
     h("div", { class: "rtotal" }, h("div", {}, h("div", { class: "lb" }, "Totale")), h("div", { class: "big gold-text" }, formatEuro(total), pass ? h("small", { class: "co-per" }, "/mese") : null)),
     !pkg && state.mode === "misura" && !pass && q.discountUnits > 0 && q.discountUnits < 3
-      ? h("p", { class: "bk-r-tip" }, `Con ${3 - q.discountUnits} servizi in più scatta il −10% su tutto.`)
+      ? h("p", { class: "bk-r-tip" }, `Con ${3 - q.discountUnits === 1 ? "1 servizio" : `${3 - q.discountUnits} servizi`} in più scatta il −10% su tutto.`)
       : null,
   ];
   box.replaceChildren(...parts.filter((p): p is Node => p instanceof Node));
