@@ -227,3 +227,15 @@ test("appuntamenti di fila: si può iniziare alla mezz'ora, dentro la fascia 14�
   assert.equal(fitsAt("2026-12-11T00:30:00.000Z", 60, [], now), false); // finirebbe alle 02:30
   assert.equal(fitsAt("2026-12-10T13:00:00.000Z", 60, [{ start: "2026-12-10T13:30:00.000Z", end: "2026-12-10T14:00:00.000Z" }], now), false);
 });
+
+
+test("controllo doppie prenotazioni: gli eventi «Disponibile» non contano", async () => {
+  const { lostRace } = await import("../src/booking/book.ts");
+  const ours = { id: "nostro", summary: "x", created: "2026-11-23T16:00:00Z", start: { dateTime: "2026-11-25T23:00:00+01:00" }, end: { dateTime: "2026-11-26T02:00:00+01:00" } };
+  const libero = { id: "a", summary: "Plugghe madrid", created: "2026-11-22T19:00:00Z", transparency: "transparent", start: { dateTime: "2026-11-25T21:30:00+01:00" }, end: { dateTime: "2026-11-26T00:30:00+01:00" } };
+  const occupato = { ...libero, id: "b", transparency: undefined };
+  const dopo = { ...occupato, id: "c", created: "2026-11-23T16:00:05Z" };
+  assert.equal(lostRace(ours, [ours, libero], new Set(["nostro"])), false);
+  assert.equal(lostRace(ours, [ours, occupato], new Set(["nostro"])), true);
+  assert.equal(lostRace(ours, [ours, dopo], new Set(["nostro"])), false);
+});

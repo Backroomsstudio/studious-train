@@ -136,16 +136,24 @@ async function assertNoRace(created: CalendarEvent[]) {
   const ours = new Set(created.map((e) => e.id));
   for (const ev of created) {
     const others = await eventsBetween(new Date(ev.start.dateTime), new Date(ev.end.dateTime));
-    const lost = others.some(
-      (e) =>
-        !ours.has(e.id) &&
-        (Date.parse(e.created ?? "") < Date.parse(ev.created ?? "") || (e.created === ev.created && (e.id ?? "") < (ev.id ?? ""))),
-    );
-    if (lost) {
+    if (lostRace(ev, others, ours)) {
       await Promise.all(created.map((e) => deleteEvent(e.id!)));
       throw new BookingError("Qualcuno ha appena prenotato uno di questi orari: scegline un altro.", 409);
     }
   }
+}
+
+/**
+ * Il nostro evento perde se nello stesso orario c'è un altro evento che occupa la sala creato prima.
+ * Gli eventi segnati come "Disponibile" (transparent) non occupano la sala, come per la disponibilità.
+ */
+export function lostRace(ev: CalendarEvent, others: CalendarEvent[], ours: Set<string | undefined>): boolean {
+  return others.some(
+    (e) =>
+      !ours.has(e.id) &&
+      e.transparency !== "transparent" &&
+      (Date.parse(e.created ?? "") < Date.parse(ev.created ?? "") || (e.created === ev.created && (e.id ?? "") < (ev.id ?? ""))),
+  );
 }
 
 /** Impronte (non reversibili) di email e telefono, per riconoscere chi ha già fatto la prova. */
