@@ -1,10 +1,22 @@
 import type Stripe from "stripe";
 import { createHash } from "node:crypto";
-import { bookingMinutes, CANCELLATION_HOURS, CANCELLATION_POLICY, getPass, getService, maxUnitsFor, passCheckoutCents, passCovers } from "./catalog.ts";
-import { quote, unitLabel } from "./pricing.ts";
-import { DEFAULT_RULES, isBookable, TIME_ZONE } from "./slots.ts";
+import {
+  CANCELLATION_HOURS,
+  CANCELLATION_POLICY,
+  getPackage,
+  getPass,
+  getService,
+  maxUnitsFor,
+  normalizeLines,
+  passCheckoutCents,
+  passCovers,
+  planBlocks,
+  type CartLine,
+} from "./catalog.ts";
+import { cartQuote, unitLabel } from "./pricing.ts";
+import { DEFAULT_RULES, fitsAt, TIME_ZONE, type Interval } from "./slots.ts";
 import { busyIntervals, deleteEvent, eventsBetween, eventsWithPrivate, getEvent, insertEvent, patchEvent, CalendarError, type CalendarEvent } from "./google-calendar.ts";
-import { deserializeOrder, orderEvent, passContents, serializeOrder, type Order } from "./order.ts";
+import { deserializeOrder, orderEvent, passContents, serializeOrder, type Appointment, type Order } from "./order.ts";
 import { stripe } from "./stripe.ts";
 import { confirmToCustomer, notifyRenewal, notifyStudio } from "./mail.ts";
 
@@ -22,14 +34,34 @@ function str(v: unknown, max: number): string {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
 }
 
+/** Righe del carrello dal browser: { righe: [{servizio, quantita}] } oppure il vecchio { servizio, quantita }. */
+function readLines(body: Record<string, unknown>): CartLine[] {
+  const raw = Array.isArray(body.righe) ? body.righe : body.servizio ? [{ servizio: body.servizio, quantita: body.quantita }] : [];
+  const lines: CartLine[] = [];
+  for (const r of raw.slice(0, 10)) {
+    const row = (r ?? {}) as Record<string, unknown>;
+    const service = getService(str(row.servizio, 40));
+    if (!service) throw new BookingError("Servizio non valido");
+    const units = Number(row.quantita);
+    if (!Number.isInteger(units) || units < 1 || units > maxUnitsFor(service)) throw new BookingError("Quantità non valida");
+    lines.push({ serviceId: service.id, units });
+  }
+  return lines;
+}
+
 /** Valida i dati inviati dal browser e ricalcola il prezzo dal listino. */
 export function parseOrder(body: Record<string, unknown>): Order {
   if (str(body.sito, 100)) throw new BookingError("Richiesta non valida"); // campo trappola anti-bot
-  const service = getService(str(body.servizio, 40));
-  if (!service) throw new BookingError("Servizio non valido");
 
-  const units = Number(body.quantita);
-  if (!Number.isInteger(units) || units < 1 || units > maxUnitsFor(service)) throw new BookingError("Quantità non valida");
+  // Pacchetto pronto: le righe arrivano dal listino, non dal browser.
+  const rawPackage = str(body.pacchetto, 20);
+  const pkg = rawPackage ? getPackage(rawPackage) : undefined;
+  if (rawPackage && !pkg) throw new BookingError("Pacchetto non valido");
+  const lines = normalizeLines(pkg ? pkg.lines : readLines(body));
+  if (!lines.length) throw new BookingError("Scegli almeno un servizio");
+  for (const l of lines) if (l.units > maxUnitsFor(getService(l.serviceId)!)) throw new BookingError("Quantità non valida");
+  const services = lines.map((l) => getService(l.serviceId)!);
+  if (services.some((s) => s.standalone) && lines.length > 1) throw new BookingError("La sessione di prova si prenota da sola");
 
   const name = str(body.nome, 80);
   const email = str(body.email, 120).toLowerCase();
@@ -43,60 +75,75 @@ export function parseOrder(body: Record<string, unknown>): Order {
   const rawPass = str(body.pass, 20);
   const pass = rawPass ? getPass(rawPass) : undefined;
   if (rawPass && !pass) throw new BookingError("Pass non valido");
-  if (pass && !passCovers(pass, service, units)) throw new BookingError("Questo Pass non include l'acquisto scelto");
+  if (pass && (pkg || !passCovers(pass, lines))) throw new BookingError("Questo Pass non include l'acquisto scelto");
   const monthly = Boolean(pass);
+
   // Servizi solo in presenza (sessione di prova): si paga sempre in studio.
-  const payment = service.onlineAllowed === false ? "contanti" : pass ? "online" : body.pagamento === "contanti" ? "contanti" : "online";
-  if (payment === "contanti" && !service.cashAllowed) throw new BookingError("Questo servizio si paga solo online");
-  // Pagamento online di una sessione in studio: serve l'accettazione della regola di cancellazione.
-  const policyRequired = payment === "online" && service.where === "studio";
-  if (policyRequired && body.policy !== true) {
-    throw new BookingError(`Per pagare online accetta le condizioni di cancellazione (avviso entro ${CANCELLATION_HOURS} ore)`);
+  const payment = services.some((s) => s.onlineAllowed === false) ? "contanti" : pass ? "online" : body.pagamento === "contanti" ? "contanti" : "online";
+  if (payment === "contanti" && services.some((s) => !s.cashAllowed)) {
+    throw new BookingError("Nel carrello ci sono servizi a distanza: si pagano online");
   }
   if (payment === "contanti" && phone.replace(/\D/g, "").length < 6) throw new BookingError("Per pagare in studio serve un numero di telefono");
 
-  let start: string | undefined;
-  let end: string | undefined;
-  if (service.where === "studio") {
-    const d = new Date(str(body.inizio, 40));
-    if (Number.isNaN(d.getTime())) throw new BookingError("Scegli data e ora della sessione");
-    start = d.toISOString();
-    end = new Date(d.getTime() + bookingMinutes(service, units) * 60000).toISOString();
+  // Appuntamenti in studio: il browser manda un inizio per ognuno, nello stesso ordine del piano.
+  const blocks = planBlocks(lines);
+  const starts: unknown[] = Array.isArray(body.inizi) ? body.inizi : body.inizio ? [body.inizio] : [];
+  if (starts.length !== blocks.length) throw new BookingError(blocks.length === 1 ? "Scegli data e ora della sessione" : "Scegli data e ora di ogni appuntamento");
+  const appointments: Appointment[] = blocks.map((b, i) => {
+    const d = new Date(str(starts[i], 40));
+    if (Number.isNaN(d.getTime())) throw new BookingError("Scegli data e ora di ogni appuntamento");
+    return { serviceId: b.serviceId, units: b.units, start: d.toISOString(), end: new Date(d.getTime() + b.minutes * 60000).toISOString() };
+  });
+
+  // Pagamento online con appuntamenti in studio: serve l'accettazione della regola di cancellazione.
+  const policyRequired = payment === "online" && appointments.length > 0;
+  if (policyRequired && body.policy !== true) {
+    throw new BookingError(`Per pagare online accetta le condizioni di cancellazione (avviso entro ${CANCELLATION_HOURS} ore)`);
   }
 
-  if (pass) {
-    const totalCents = passCheckoutCents(pass);
-    return { serviceId: service.id, units, start, end, name, email, phone, notes, payment, monthly, passId: pass.id, totalCents, fullCents: pass.monthlyCents, ...(policyRequired ? { policy: true } : {}) };
-  }
-  const q = quote(service, units);
-  return { serviceId: service.id, units, start, end, name, email, phone, notes, payment, monthly, totalCents: q.totalCents, fullCents: q.fullCents, ...(policyRequired ? { policy: true } : {}) };
+  const base = { lines, appointments, name, email, phone, notes, payment: payment as Order["payment"], monthly, ...(policyRequired ? { policy: true } : {}) };
+  if (pass) return { ...base, passId: pass.id, totalCents: passCheckoutCents(pass), fullCents: pass.monthlyCents };
+  const q = cartQuote(lines, pkg?.id);
+  return { ...base, ...(pkg ? { packageId: pkg.id } : {}), totalCents: q.totalCents, fullCents: q.fullCents };
 }
 
-/** Lo slot è ancora libero su tutti i calendari? */
-async function assertSlotFree(order: Order) {
-  const service = getService(order.serviceId)!;
-  const start = new Date(order.start!);
-  const minutes = bookingMinutes(service, order.units);
-  const busy = await busyIntervals(new Date(start.getTime() - 24 * 3600_000), new Date(start.getTime() + 24 * 3600_000));
-  if (!isBookable(order.start!, minutes, busy, new Date(), DEFAULT_RULES)) {
-    throw new BookingError("Questo orario non è più disponibile: scegline un altro.", 409);
+/** Tutti gli appuntamenti sono ancora liberi (e non si accavallano tra loro)? */
+async function assertSlotsFree(order: Order) {
+  if (!order.appointments.length) return;
+  const startsMs = order.appointments.map((a) => Date.parse(a.start));
+  const endsMs = order.appointments.map((a) => Date.parse(a.end));
+  const busy: Interval[] = await busyIntervals(new Date(Math.min(...startsMs) - 24 * 3600_000), new Date(Math.max(...endsMs) + 24 * 3600_000));
+  const now = new Date();
+  for (const a of order.appointments) {
+    if (!fitsAt(a.start, (Date.parse(a.end) - Date.parse(a.start)) / 60000, busy, now, DEFAULT_RULES)) {
+      throw new BookingError(
+        order.appointments.length > 1
+          ? `L'orario scelto per ${getService(a.serviceId)!.short.toLowerCase()} non è più disponibile: scegline un altro.`
+          : "Questo orario non è più disponibile: scegline un altro.",
+        409,
+      );
+    }
+    busy.push({ start: a.start, end: a.end });
   }
 }
 
 /**
- * Dopo aver scritto l'evento, controlla che nessun altro abbia preso lo stesso orario nello stesso istante.
- * In caso di pareggio vince l'evento creato per primo; l'altro viene cancellato.
+ * Dopo aver scritto gli eventi, controlla che nessun altro abbia preso gli stessi orari nello stesso istante.
+ * In caso di pareggio vince l'evento creato per primo; i nostri vengono cancellati.
  */
-async function assertNoRace(created: CalendarEvent, order: Order) {
-  const others = await eventsBetween(new Date(order.start!), new Date(order.end!));
-  const lost = others.some(
-    (e) =>
-      e.id !== created.id &&
-      (Date.parse(e.created ?? "") < Date.parse(created.created ?? "") || (e.created === created.created && (e.id ?? "") < (created.id ?? ""))),
-  );
-  if (lost) {
-    await deleteEvent(created.id!);
-    throw new BookingError("Qualcuno ha appena prenotato questo orario: scegline un altro.", 409);
+async function assertNoRace(created: CalendarEvent[]) {
+  const ours = new Set(created.map((e) => e.id));
+  for (const ev of created) {
+    const others = await eventsBetween(new Date(ev.start.dateTime), new Date(ev.end.dateTime));
+    const lost = others.some(
+      (e) =>
+        !ours.has(e.id) &&
+        (Date.parse(e.created ?? "") < Date.parse(ev.created ?? "") || (e.created === ev.created && (e.id ?? "") < (ev.id ?? ""))),
+    );
+    if (lost) {
+      await Promise.all(created.map((e) => deleteEvent(e.id!)));
+      throw new BookingError("Qualcuno ha appena prenotato uno di questi orari: scegline un altro.", 409);
+    }
   }
 }
 
@@ -121,47 +168,67 @@ export interface BookingResult {
   redirectUrl: string;
 }
 
+const onceOnly = (order: Order) => order.lines.some((l) => getService(l.serviceId)?.oncePerCustomer);
+
 export async function createBooking(order: Order, origin: string): Promise<BookingResult> {
-  const service = getService(order.serviceId)!;
-  let hold: CalendarEvent | null = null;
+  const holds: CalendarEvent[] = [];
+  if (onceOnly(order)) await assertFirstTime(order);
 
-  if (service.oncePerCustomer) await assertFirstTime(order);
-
-  if (service.where === "studio") {
-    await assertSlotFree(order);
-    const event = orderEvent(order, order.payment === "contanti" ? "da-saldare" : "in-attesa");
-    if (service.oncePerCustomer) Object.assign(event.extendedProperties.private, customerKeys(order));
-    hold = await insertEvent(event);
-    await assertNoRace(hold, order);
+  if (order.appointments.length) {
+    await assertSlotsFree(order);
+    const status = order.payment === "contanti" ? "da-saldare" : "in-attesa";
+    try {
+      for (let i = 0; i < order.appointments.length; i++) {
+        const event = orderEvent(order, i, status);
+        if (onceOnly(order)) Object.assign(event.extendedProperties.private, customerKeys(order));
+        holds.push(await insertEvent(event));
+      }
+    } catch (e) {
+      await Promise.all(holds.map((h) => deleteEvent(h.id!).catch(() => undefined)));
+      throw e;
+    }
+    await assertNoRace(holds);
   }
 
   if (order.payment === "contanti") {
-    // Contanti: la sessione è subito confermata, in rosso e con promemoria 30 minuti prima.
+    // Contanti: gli appuntamenti sono subito confermati, in rosso e con promemoria 30 minuti prima.
     await Promise.all([notifyStudio(order, "Nuova prenotazione · DA SALDARE IN CONTANTI"), confirmToCustomer(order, false)]);
     return { redirectUrl: `${origin}/prenota/confermata/?stato=contanti` };
   }
 
   try {
-    const session = await createCheckoutSession(order, origin, hold?.id);
-    if (hold?.id) {
-      await patchEvent(hold.id, { extendedProperties: { private: { ...hold.extendedProperties?.private, sessione: session.id } } });
-    }
+    const ids = holds.map((h) => h.id!);
+    const session = await createCheckoutSession(order, origin, ids);
+    await Promise.all(holds.map((h) => patchEvent(h.id!, { extendedProperties: { private: { ...h.extendedProperties?.private, sessione: session.id } } })));
     if (!session.url) throw new Error("Stripe non ha restituito l'indirizzo di pagamento");
     return { redirectUrl: session.url };
   } catch (e) {
-    if (hold?.id) await deleteEvent(hold.id).catch(() => undefined);
+    await Promise.all(holds.map((h) => deleteEvent(h.id!).catch(() => undefined)));
     throw e;
   }
 }
 
-async function createCheckoutSession(order: Order, origin: string, eventId?: string) {
-  const service = getService(order.serviceId)!;
-  const pass = order.passId ? getPass(order.passId) : undefined;
-  const metadata: Record<string, string> = { ordine: serializeOrder(order), note: order.notes, evento: eventId ?? "" };
-  const when = order.start
-    ? new Date(order.start).toLocaleString("it-IT", { timeZone: TIME_ZONE, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
-    : "A distanza";
+function productName(order: Order): string {
+  const pkg = order.packageId ? getPackage(order.packageId) : undefined;
+  if (pkg) return `${pkg.title} — Backrooms Studio`;
+  if (order.lines.length === 1) {
+    const s = getService(order.lines[0].serviceId)!;
+    return `${s.title} — ${unitLabel(s, order.lines[0].units)}`;
+  }
+  return "Prenotazione Backrooms Studio";
+}
 
+function productDescription(order: Order): string {
+  const what = order.lines.map((l) => `${getService(l.serviceId)!.short}: ${unitLabel(getService(l.serviceId)!, l.units)}`).join(" · ");
+  const when = order.appointments
+    .map((a) => new Date(a.start).toLocaleString("it-IT", { timeZone: TIME_ZONE, weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))
+    .join(", ");
+  return (when ? `${what}. In studio: ${when}` : `${what}. A distanza`).slice(0, 480);
+}
+
+async function createCheckoutSession(order: Order, origin: string, eventIds: string[]) {
+  const pass = order.passId ? getPass(order.passId) : undefined;
+  const metadata: Record<string, string> = { ordine: serializeOrder(order), note: order.notes, eventi: eventIds.join(",") };
   const params: Stripe.Checkout.SessionCreateParams = {
     mode: order.monthly ? "subscription" : "payment",
     locale: "it",
@@ -173,38 +240,48 @@ async function createCheckoutSession(order: Order, origin: string, eventId?: str
           currency: "eur",
           unit_amount: order.totalCents,
           product_data: pass
-            ? { name: `${pass.title} — Backrooms Studio`, description: `${passContents(pass)} ogni mese. Prima sessione: ${service.title}, ${when}` }
-            : { name: `${service.title} — ${unitLabel(service, order.units)}`, description: when },
+            ? { name: `${pass.title} — Backrooms Studio`, description: `${passContents(pass)} ogni mese. Primo acquisto: ${productDescription(order)}`.slice(0, 480) }
+            : { name: productName(order), description: productDescription(order) },
           ...(order.monthly ? { recurring: { interval: "month" as const } } : {}),
         },
       },
     ],
     metadata,
     success_url: `${origin}/prenota/confermata/?stato=pagato&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: eventId ? `${origin}/api/prenota/annulla?evento=${encodeURIComponent(eventId)}` : `${origin}/prenota/?annullato=1`,
+    cancel_url: eventIds.length ? `${origin}/api/prenota/annulla?eventi=${encodeURIComponent(eventIds.join(","))}` : `${origin}/prenota/?annullato=1`,
     ...(order.policy ? { custom_text: { submit: { message: CANCELLATION_POLICY } } } : {}),
-    // Lo slot resta bloccato al massimo ~30 minuti (minimo consentito da Stripe).
+    // Gli orari restano bloccati al massimo ~30 minuti (minimo consentito da Stripe).
     expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
   };
-  if (order.monthly) params.subscription_data = { metadata, description: `${pass?.title ?? service.title} — rinnovo mensile` };
-  else params.payment_intent_data = { metadata, description: `${service.title} — ${unitLabel(service, order.units)}` };
+  if (order.monthly) params.subscription_data = { metadata, description: `${pass?.title ?? productName(order)} — rinnovo mensile` };
+  else params.payment_intent_data = { metadata, description: productName(order) };
 
   return stripe().checkout.sessions.create(params);
 }
 
-/** Il cliente ha annullato su Stripe: si chiude la sessione e si libera subito lo slot. */
-export async function cancelHold(eventId: string) {
-  let event: CalendarEvent;
-  try {
-    event = await getEvent(eventId);
-  } catch (e) {
-    if (e instanceof CalendarError && (e.status === 404 || e.status === 410)) return;
-    throw e;
+/** Id degli eventi dai metadati (nuovo formato "eventi", vecchio "evento"). */
+export function eventIdsFrom(meta: Record<string, string | undefined> | null | undefined): string[] {
+  const raw = meta?.eventi ?? meta?.evento ?? "";
+  return raw.split(",").map((s) => s.trim()).filter((s) => /^[a-v0-9]{5,1024}$/.test(s));
+}
+
+/** Il cliente ha annullato su Stripe: si chiude la sessione e si liberano subito gli orari. */
+export async function cancelHold(eventIds: string[]) {
+  const sessions = new Set<string>();
+  for (const id of eventIds) {
+    let event: CalendarEvent;
+    try {
+      event = await getEvent(id);
+    } catch (e) {
+      if (e instanceof CalendarError && (e.status === 404 || e.status === 410)) continue;
+      throw e;
+    }
+    const props = event.extendedProperties?.private ?? {};
+    if (props.stato !== "in-attesa") continue; // mai cancellare una prenotazione pagata o in contanti
+    if (props.sessione) sessions.add(props.sessione);
+    await deleteEvent(id);
   }
-  const props = event.extendedProperties?.private ?? {};
-  if (props.stato !== "in-attesa") return; // mai cancellare una prenotazione pagata o in contanti
-  if (props.sessione) await stripe().checkout.sessions.expire(props.sessione).catch(() => undefined);
-  await deleteEvent(eventId);
+  for (const s of sessions) await stripe().checkout.sessions.expire(s).catch(() => undefined);
 }
 
 function orderFromMetadata(meta: Stripe.Metadata | null | undefined): Order | null {
@@ -212,35 +289,42 @@ function orderFromMetadata(meta: Stripe.Metadata | null | undefined): Order | nu
   return deserializeOrder(meta.ordine, meta.note ?? "");
 }
 
-/** Pagamento riuscito: lo slot diventa verde e partono le email. Idempotente (Stripe può ripetere i webhook). */
+/** Pagamento riuscito: gli appuntamenti diventano verdi e partono le email. Idempotente (Stripe può ripetere i webhook). */
 export async function confirmPaidSession(session: Stripe.Checkout.Session) {
   const order = orderFromMetadata(session.metadata);
   if (!order) throw new Error(`Sessione ${session.id} senza ordine nei metadati`);
-  const eventId = session.metadata?.evento;
+  const ids = eventIdsFrom(session.metadata);
   const extra = [`Stripe: ${session.id}`];
 
-  if (eventId) {
+  let alreadyDone = order.appointments.length > 0;
+  for (let i = 0; i < order.appointments.length; i++) {
+    const id = ids[i];
     let event: CalendarEvent | null = null;
-    try {
-      event = await getEvent(eventId);
-    } catch (e) {
-      if (!(e instanceof CalendarError && (e.status === 404 || e.status === 410))) throw e;
+    if (id) {
+      try {
+        event = await getEvent(id);
+      } catch (e) {
+        if (!(e instanceof CalendarError && (e.status === 404 || e.status === 410))) throw e;
+      }
     }
     if (event && event.status !== "cancelled") {
-      if (event.extendedProperties?.private?.stato === "pagato") return; // già confermato
-      await patchEvent(eventId, { ...orderEvent(order, "pagato", extra) });
+      if (event.extendedProperties?.private?.stato === "pagato") continue; // già confermato
+      alreadyDone = false;
+      await patchEvent(id!, { ...orderEvent(order, i, "pagato", extra) });
     } else {
-      // Lo slot era scaduto prima del pagamento: si ricrea l'evento e si segnala di controllare.
-      await insertEvent(orderEvent(order, "pagato", [...extra, "⚠️ Pagato dopo la scadenza dello slot: controllare eventuali sovrapposizioni."]));
+      // L'orario era scaduto prima del pagamento: si ricrea l'evento e si segnala di controllare.
+      alreadyDone = false;
+      await insertEvent(orderEvent(order, i, "pagato", [...extra, "⚠️ Pagato dopo la scadenza dello slot: controllare eventuali sovrapposizioni."]));
     }
   }
+  if (alreadyDone) return;
 
   await Promise.all([notifyStudio(order, order.passId ? `Nuovo ${getPass(order.passId)?.title ?? "Pass"} attivato` : "Nuovo acquisto pagato online"), confirmToCustomer(order, true)]);
 }
 
 export async function releaseExpiredSession(session: Stripe.Checkout.Session) {
-  const eventId = session.metadata?.evento;
-  if (eventId) await cancelHold(eventId);
+  const ids = eventIdsFrom(session.metadata);
+  if (ids.length) await cancelHold(ids);
 }
 
 export async function handleRenewal(invoice: Stripe.Invoice) {
@@ -249,3 +333,4 @@ export async function handleRenewal(invoice: Stripe.Invoice) {
   if (!order) return;
   await notifyRenewal(order, invoice.amount_paid);
 }
+

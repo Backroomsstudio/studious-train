@@ -1,5 +1,4 @@
 import { BookingError, createBooking, parseOrder } from "../../src/booking/book.ts";
-import { getService } from "../../src/booking/catalog.ts";
 import { calendarConfigured, stripeConfigured } from "../../src/booking/server-config.ts";
 
 /** POST /api/prenota — crea la prenotazione e restituisce dove mandare il cliente (Stripe o conferma). */
@@ -14,8 +13,7 @@ export default async (req: Request) => {
 
   try {
     const order = parseOrder(body);
-    const service = getService(order.serviceId)!;
-    if (service.where === "studio" && !calendarConfigured) throw new BookingError("Le prenotazioni online non sono ancora attive", 503);
+    if (order.appointments.length && !calendarConfigured) throw new BookingError("Le prenotazioni online non sono ancora attive", 503);
     if (order.payment === "online" && !stripeConfigured) throw new BookingError("I pagamenti online non sono ancora attivi", 503);
 
     const { redirectUrl } = await createBooking(order, new URL(req.url).origin);

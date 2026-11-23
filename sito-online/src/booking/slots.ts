@@ -171,3 +171,25 @@ export function isBookable(startIso: string, durationMinutes: number, busy: Inte
     slotsForDay(d, durationMinutes, busy, now, rules).some((s) => s.start === start.toISOString() && s.state === "libero"),
   );
 }
+
+/**
+ * Controllo lato server per un appuntamento che può iniziare anche alla mezz'ora
+ * (es. la registrazione subito dopo un beat da 1 h 30 nello stesso giorno).
+ * Deve stare tutto dentro la fascia prenotabile di un giorno, rispettare preavviso e orizzonte
+ * e non toccare nessun impegno.
+ */
+export function fitsAt(startIso: string, durationMinutes: number, busy: Interval[], now: Date, rules: BookingRules = DEFAULT_RULES): boolean {
+  const start = Date.parse(startIso);
+  if (Number.isNaN(start) || durationMinutes <= 0) return false;
+  if (start % (30 * 60000) !== 0) return false;
+  const end = start + durationMinutes * 60000;
+  if (start < now.getTime() + rules.minNoticeMinutes * 60000) return false;
+  if (start > now.getTime() + rules.horizonDays * 24 * 60 * 60000) return false;
+  const day = romeDay(new Date(start));
+  const inWindow = [day, addDays(day, -1)].some((d) => {
+    const { open, close } = bookableWindow(d, rules);
+    return start >= open.getTime() && end <= close.getTime();
+  });
+  if (!inWindow) return false;
+  return !busy.some((b) => overlaps(start, end, Date.parse(b.start), Date.parse(b.end)));
+}

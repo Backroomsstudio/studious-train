@@ -71,7 +71,7 @@ export async function notifyRenewal(order: Order, amountCents: number) {
     [
       `Rinnovo mensile incassato: ${euro}.`,
       "",
-      pass ? `${pass.title}: questo mese il cliente ha di nuovo ${passContents(pass)}.` : describeOrderForHumans({ ...order, start: undefined, end: undefined }).join("\n"),
+      pass ? `${pass.title}: questo mese il cliente ha di nuovo ${passContents(pass)}.` : describeOrderForHumans({ ...order, appointments: [] }).join("\n"),
       "",
       `Contattalo per fissare le sessioni del mese.`,
       `Email: ${order.email}${order.phone ? ` · Telefono: ${order.phone}` : ""}`,

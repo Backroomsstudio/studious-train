@@ -9,8 +9,7 @@
   "scripts": {
     "build": "esbuild src/prenota/main.ts --bundle --minify --format=iife --target=es2019 --outfile=public/js/prenota.js",
     "dev": "npm run build && node --experimental-strip-types scripts/dev.mjs",
-    "test": "node --test tests/*.test.ts",
-    "demo": "node scripts/build-demo.mjs"
+    "test": "node --test tests/*.test.ts"
   },
   "dependencies": {
     "nodemailer": "10.6.1",
