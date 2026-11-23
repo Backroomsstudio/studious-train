@@ -94,6 +94,8 @@ export interface CalendarEvent {
   end: { dateTime: string; timeZone?: string };
   created?: string;
   status?: string;
+  /** "transparent" = segnato come Disponibile: non occupa la sala */
+  transparency?: string;
   reminders?: { useDefault: boolean; overrides?: { method: "popup" | "email"; minutes: number }[] };
   extendedProperties?: { private?: Record<string, string> };
 }
