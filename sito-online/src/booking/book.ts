@@ -13,13 +13,15 @@ import {
   planBlocks,
   type CartLine,
 } from "./catalog.ts";
-import { cartQuote, unitLabel } from "./pricing.ts";
+import { cartQuote, formatEuro, unitLabel } from "./pricing.ts";
 import { DEFAULT_RULES, fitsAt, TIME_ZONE, type Interval } from "./slots.ts";
 import { busyIntervals, deleteEvent, eventsBetween, eventsWithPrivate, getEvent, insertEvent, patchEvent, CalendarError, type CalendarEvent } from "./google-calendar.ts";
 import { deserializeOrder, orderEvent, orderRecap, passContents, serializeOrder, type Appointment, type Order, type OrderRecap } from "./order.ts";
 import { stripe } from "./stripe.ts";
 import { confirmToCustomer, notifyRenewal, notifyStudio } from "./mail.ts";
-import { notifyTelegram } from "./telegram.ts";
+import { notifyTelegram, notifyTelegramText } from "./telegram.ts";
+import { accountingEntry, recordInAccounting } from "./accounting.ts";
+import { accountingConfigured } from "./server-config.ts";
 
 export class BookingError extends Error {
   readonly status: number;
@@ -204,7 +206,13 @@ export async function createBooking(order: Order, origin: string): Promise<Booki
   if (order.payment === "contanti") {
     // Contanti: gli appuntamenti sono subito confermati, in rosso e con promemoria 30 minuti prima.
     const headline = "Nuova prenotazione · DA SALDARE IN CONTANTI";
-    await Promise.all([notifyStudio(order, headline), confirmToCustomer(order, false), notifyTelegram(order, headline)]);
+    const ref = holds[0]?.id?.slice(0, 10) ?? Date.now().toString(36);
+    await Promise.all([
+      notifyStudio(order, headline),
+      confirmToCustomer(order, false),
+      notifyTelegram(order, headline),
+      bookkeeping(order, { paid: false, at: new Date(), ref }),
+    ]);
     return { redirectUrl: `${origin}/prenota/confermata/?stato=contanti`, recap: orderRecap(order, "da-saldare") };
   }
 
@@ -341,7 +349,12 @@ export async function confirmPaidSession(session: Stripe.Checkout.Session) {
   if (alreadyDone) return;
 
   const headline = order.passId ? `Nuovo ${getPass(order.passId)?.title ?? "Pass"} attivato` : "Nuova prenotazione · PAGATA ONLINE";
-  await Promise.all([notifyStudio(order, headline), confirmToCustomer(order, true), notifyTelegram(order, headline)]);
+  await Promise.all([
+    notifyStudio(order, headline),
+    confirmToCustomer(order, true),
+    notifyTelegram(order, headline),
+    bookkeeping(order, { paid: true, at: new Date(), ref: session.id.slice(-10) }),
+  ]);
 }
 
 export async function releaseExpiredSession(session: Stripe.Checkout.Session) {
@@ -353,6 +366,25 @@ export async function handleRenewal(invoice: Stripe.Invoice) {
   if (invoice.billing_reason !== "subscription_cycle") return;
   const order = orderFromMetadata(invoice.parent?.subscription_details?.metadata);
   if (!order) return;
-  await notifyRenewal(order, invoice.amount_paid);
+  await Promise.all([
+    notifyRenewal(order, invoice.amount_paid),
+    bookkeeping(order, {
+      paid: true,
+      at: new Date(),
+      ref: (invoice.id ?? "").slice(-10),
+      amountCents: invoice.amount_paid,
+      service: `Rinnovo ${order.passId ? (getPass(order.passId)?.title ?? "Pass") : "abbonamento"}`,
+    }),
+  ]);
+}
+
+/** Riga nel registro di contabilità; se non si riesce, avvisa su Telegram così la si aggiunge a mano. */
+async function bookkeeping(order: Order, opts: Parameters<typeof accountingEntry>[1]) {
+  const res = await recordInAccounting(accountingEntry(order, opts));
+  if (!res.ok && accountingConfigured) {
+    await notifyTelegramText(
+      `⚠️ Contabilità NON aggiornata per ${order.name} (${formatEuro(opts.amountCents ?? order.totalCents)}): ${res.reason}. Aggiungi la riga a mano.`,
+    );
+  }
 }
 

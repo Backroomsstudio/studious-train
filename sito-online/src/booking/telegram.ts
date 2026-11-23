@@ -12,14 +12,23 @@ export async function notifyTelegram(order: Order, headline: string) {
     console.warn(`[telegram] non configurato, messaggio non inviato: ${headline}`);
     return;
   }
-  const text = telegramText(order, headline);
+  await send(telegramText(order, headline), "HTML");
+}
+
+/** Messaggio di solo testo allo studio (avvisi). */
+export async function notifyTelegramText(text: string) {
+  if (!telegramConfigured) return;
+  await send(text);
+}
+
+async function send(text: string, parseMode?: "HTML") {
   await Promise.all(
     serverConfig.telegramChatIds.map(async (chatId) => {
       try {
         const res = await fetch(`https://api.telegram.org/bot${serverConfig.telegramToken}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
+          body: JSON.stringify({ chat_id: chatId, text, ...(parseMode ? { parse_mode: parseMode } : {}), disable_web_page_preview: true }),
           signal: AbortSignal.timeout(10_000),
         });
         if (!res.ok) console.error(`[telegram] invio a ${chatId} fallito`, res.status, (await res.text()).slice(0, 200));

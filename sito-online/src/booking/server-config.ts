@@ -34,6 +34,9 @@ export const serverConfig = {
     .map((s) => s.trim())
     .filter(Boolean),
 
+  /** Foglio Google della contabilità (id preso dal link): il robot scrive una riga a ogni prenotazione */
+  accountingSheetId: env("CONTABILITA_SHEET_ID"),
+
   /** Telegram allo studio: token del bot creato con @BotFather */
   telegramToken: env("TELEGRAM_BOT_TOKEN"),
   /** Chi riceve i messaggi: uno o più chat id (separati da virgola), es. i 3 soci o un gruppo */
@@ -46,4 +49,5 @@ export const serverConfig = {
 export const calendarConfigured = Boolean(serverConfig.googleClientEmail && serverConfig.googlePrivateKey);
 export const stripeConfigured = Boolean(serverConfig.stripeSecretKey);
 export const mailConfigured = Boolean(serverConfig.smtpUser && serverConfig.smtpPass);
+export const accountingConfigured = Boolean(serverConfig.accountingSheetId && serverConfig.googleClientEmail && serverConfig.googlePrivateKey);
 export const telegramConfigured = Boolean(serverConfig.telegramToken && serverConfig.telegramChatIds.length);
