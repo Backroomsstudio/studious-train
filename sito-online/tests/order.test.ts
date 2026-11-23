@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { deserializeOrder, orderEvent, serializeOrder, describeOrderForHumans, orderRecap, whatsappText, CALENDAR_COLORS, type Order } from "../src/booking/order.ts";
+import { deserializeOrder, orderEvent, serializeOrder, describeOrderForHumans, orderRecap, telegramText, CALENDAR_COLORS, type Order } from "../src/booking/order.ts";
 
 const order: Order = {
   lines: [{ serviceId: "registrazione", units: 2 }],
@@ -121,14 +121,16 @@ test("riepilogo per il pop-up: niente email né telefono, appuntamenti e totale"
   assert.ok(!json.includes("3331234567"));
 });
 
-test("messaggio WhatsApp allo studio: cliente, appuntamenti, totale e pagamento", () => {
-  const t = whatsappText(order, "Nuova prenotazione · DA SALDARE IN CONTANTI");
+test("messaggio Telegram allo studio: cliente, appuntamenti, totale e pagamento", () => {
+  const t = telegramText(order, "Nuova prenotazione · DA SALDARE IN CONTANTI");
   assert.match(t, /Giulia B\./);
   assert.match(t, /3331234567/);
   assert.match(t, /In studio/);
   assert.match(t, /contanti/);
   assert.ok(t.length < 1500);
-  const t2 = whatsappText(ep, "Nuova prenotazione · PAGATA ONLINE");
+  const t2 = telegramText(ep, "Nuova prenotazione · PAGATA ONLINE");
   assert.match(t2, /pagato online/);
   assert.match(t2, /A distanza/);
+  const t3 = telegramText({ ...order, name: "<b>Tom & Jerry</b>" }, "x");
+  assert.match(t3, /&lt;b&gt;Tom &amp; Jerry&lt;\/b&gt;/);
 });

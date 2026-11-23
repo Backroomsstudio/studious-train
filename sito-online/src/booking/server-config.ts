@@ -34,13 +34,16 @@ export const serverConfig = {
     .map((s) => s.trim())
     .filter(Boolean),
 
-  /** WhatsApp allo studio tramite CallMeBot: la chiave arriva sul WhatsApp del numero che riceve i messaggi */
-  whatsappApiKey: env("WHATSAPP_APIKEY"),
-  /** Numero che riceve i messaggi (lo stesso che ha attivato CallMeBot), con il prefisso internazionale */
-  whatsappPhone: (env("WHATSAPP_PHONE") || studio.phone).replace(/[^\d+]/g, ""),
+  /** Telegram allo studio: token del bot creato con @BotFather */
+  telegramToken: env("TELEGRAM_BOT_TOKEN"),
+  /** Chi riceve i messaggi: uno o più chat id (separati da virgola), es. i 3 soci o un gruppo */
+  telegramChatIds: env("TELEGRAM_CHAT_ID")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => /^-?\d+$/.test(s)),
 };
 
 export const calendarConfigured = Boolean(serverConfig.googleClientEmail && serverConfig.googlePrivateKey);
 export const stripeConfigured = Boolean(serverConfig.stripeSecretKey);
 export const mailConfigured = Boolean(serverConfig.smtpUser && serverConfig.smtpPass);
-export const whatsappConfigured = Boolean(serverConfig.whatsappApiKey && serverConfig.whatsappPhone);
+export const telegramConfigured = Boolean(serverConfig.telegramToken && serverConfig.telegramChatIds.length);

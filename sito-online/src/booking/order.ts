@@ -275,24 +275,28 @@ export function orderRecap(order: Order, stato: OrderStatus): OrderRecap {
   };
 }
 
-/** Messaggio WhatsApp per lo studio: corto, leggibile dal telefono. */
-export function whatsappText(order: Order, headline: string): string {
+const escHtml = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** Messaggio Telegram per lo studio (HTML di Telegram): corto, leggibile dal telefono. */
+export function telegramText(order: Order, headline: string): string {
+  const e = escHtml;
   const offer = offerName(order);
   const remote = remoteLines(order);
+  const tel = order.phone.replace(/[^\d+]/g, "");
   return [
-    `🎧 *${headline}*`,
+    `🎧 <b>${e(headline)}</b>`,
     "",
-    `👤 ${order.name}`,
-    order.phone ? `📞 ${order.phone}` : null,
-    `✉️ ${order.email}`,
+    `👤 ${e(order.name)}`,
+    order.phone ? `📞 ${e(order.phone)}${tel.length >= 6 ? ` · <a href="https://wa.me/${tel.startsWith("+") ? tel.slice(1) : tel.length === 10 ? "39" + tel : tel}">WhatsApp</a>` : ""}` : null,
+    `✉️ ${e(order.email)}`,
     "",
-    offer ? `📦 ${offer}` : null,
-    ...order.lines.map((l) => `• ${lineText(l)}`),
-    ...(order.appointments.length ? ["", "🗓 *In studio*", ...order.appointments.map((a) => `• ${getService(a.serviceId)!.short}: ${whenText(a)}`)] : []),
-    remote.length ? `\n🌐 A distanza: ${remote.map(lineText).join(", ")}` : null,
+    offer ? `📦 <b>${e(offer)}</b>` : null,
+    ...order.lines.map((l) => `• ${e(lineText(l))}`),
+    ...(order.appointments.length ? ["", "🗓 <b>In studio</b>", ...order.appointments.map((a) => `• ${e(getService(a.serviceId)!.short)}: ${e(whenText(a))}`)] : []),
+    remote.length ? `\n🌐 A distanza: ${e(remote.map(lineText).join(", "))}` : null,
     "",
-    `💶 *${formatEuro(order.totalCents)}*${order.monthly ? " al mese" : ""} · ${order.payment === "contanti" ? "DA SALDARE in contanti al primo appuntamento" : "pagato online"}`,
-    order.notes ? `📝 ${order.notes.slice(0, 300)}` : null,
+    `💶 <b>${e(formatEuro(order.totalCents))}</b>${order.monthly ? " al mese" : ""} · ${order.payment === "contanti" ? "DA SALDARE in contanti al primo appuntamento" : "pagato online"}`,
+    order.notes ? `📝 ${e(order.notes.slice(0, 500))}` : null,
   ]
     .filter((l): l is string => l !== null)
     .join("\n");

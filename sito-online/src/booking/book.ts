@@ -19,7 +19,7 @@ import { busyIntervals, deleteEvent, eventsBetween, eventsWithPrivate, getEvent,
 import { deserializeOrder, orderEvent, orderRecap, passContents, serializeOrder, type Appointment, type Order, type OrderRecap } from "./order.ts";
 import { stripe } from "./stripe.ts";
 import { confirmToCustomer, notifyRenewal, notifyStudio } from "./mail.ts";
-import { notifyWhatsApp } from "./whatsapp.ts";
+import { notifyTelegram } from "./telegram.ts";
 
 export class BookingError extends Error {
   readonly status: number;
@@ -196,7 +196,7 @@ export async function createBooking(order: Order, origin: string): Promise<Booki
   if (order.payment === "contanti") {
     // Contanti: gli appuntamenti sono subito confermati, in rosso e con promemoria 30 minuti prima.
     const headline = "Nuova prenotazione · DA SALDARE IN CONTANTI";
-    await Promise.all([notifyStudio(order, headline), confirmToCustomer(order, false), notifyWhatsApp(order, headline)]);
+    await Promise.all([notifyStudio(order, headline), confirmToCustomer(order, false), notifyTelegram(order, headline)]);
     return { redirectUrl: `${origin}/prenota/confermata/?stato=contanti`, recap: orderRecap(order, "da-saldare") };
   }
 
@@ -333,7 +333,7 @@ export async function confirmPaidSession(session: Stripe.Checkout.Session) {
   if (alreadyDone) return;
 
   const headline = order.passId ? `Nuovo ${getPass(order.passId)?.title ?? "Pass"} attivato` : "Nuova prenotazione · PAGATA ONLINE";
-  await Promise.all([notifyStudio(order, headline), confirmToCustomer(order, true), notifyWhatsApp(order, headline)]);
+  await Promise.all([notifyStudio(order, headline), confirmToCustomer(order, true), notifyTelegram(order, headline)]);
 }
 
 export async function releaseExpiredSession(session: Stripe.Checkout.Session) {
