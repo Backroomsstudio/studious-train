@@ -27,7 +27,7 @@ export const DEFAULT_RULES: BookingRules = {
   // Si prenota online almeno 24 ore prima dell'inizio.
   minNoticeMinutes: 24 * 60,
   horizonDays: 60,
-  stepMinutes: 60,
+  stepMinutes: 30,
   // Disponibilità online dalle 14:00 alle 02:00 della notte dopo: l'ultima sessione finisce alle 02:00.
   // Le altre ore si concordano su WhatsApp.
   openHour: 14,
@@ -143,7 +143,20 @@ export function slotsForDay(
   const labels = new Set<string>();
 
   // Si avanza in tempo reale (UTC): nei giorni del cambio d'ora non ci sono doppioni né ore mancanti.
-  for (let startMs = open.getTime(); startMs + durationMinutes * 60000 <= closeMs; startMs += rules.stepMinutes * 60000) {
+  const starts: number[] = [];
+  for (let startMs = open.getTime(); startMs + durationMinutes * 60000 <= closeMs; startMs += rules.stepMinutes * 60000) starts.push(startMs);
+  // In più, subito dopo la fine di un impegno (es. beat 18:00–19:30 → master dalle 19:30): niente buchi di mezz'ora.
+  const regular = new Set(starts);
+  const extra = new Set<number>();
+  for (const [, be] of busyMs) {
+    if (be % (30 * 60000) !== 0 || regular.has(be) || be < open.getTime() || be + durationMinutes * 60000 > closeMs) continue;
+    const endMs = be + durationMinutes * 60000;
+    if (be >= earliest && be <= latest && !busyMs.some(([bs, b2]) => overlaps(be, endMs, bs, b2))) extra.add(be);
+  }
+  starts.push(...extra);
+  starts.sort((a, b) => a - b);
+
+  for (const startMs of starts) {
     const start = new Date(startMs);
     const label = romeTimeLabel(start);
     // La notte del ritorno all'ora solare un'ora "da orologio" si ripete: si propone una volta sola.
