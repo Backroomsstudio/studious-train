@@ -1,20 +1,44 @@
 /**
- * L'ordine e la sua rappresentazione nel calendario (titolo, colore, promemoria, descrizione).
+ * L'ordine (un carrello con uno o più servizi) e la sua rappresentazione nel calendario:
+ * un evento per ogni appuntamento in studio, con titolo, colore, promemoria e descrizione.
  * Modulo puro: testabile senza Google né Stripe.
  */
-import { CANCELLATION_HOURS, getPass, getService, PASS_UNIT_LABELS, type BookableService, type Pass, type PassId, type PassUnit, type ServiceId } from "./catalog.ts";
-import { formatEuro, formatDuration, unitLabel } from "./pricing.ts";
+import {
+  bookingMinutes,
+  CANCELLATION_HOURS,
+  getPackage,
+  getPass,
+  getService,
+  PASS_UNIT_LABELS,
+  type CartLine,
+  type PackageId,
+  type Pass,
+  type PassId,
+  type PassUnit,
+  type ServiceId,
+} from "./catalog.ts";
+import { formatDuration, formatEuro, unitLabel } from "./pricing.ts";
 import { TIME_ZONE } from "./slots.ts";
 
 export type PaymentMethod = "online" | "contanti";
 export type OrderStatus = "in-attesa" | "pagato" | "da-saldare";
 
-export interface Order {
+/** Un appuntamento in studio con il suo orario. */
+export interface Appointment {
   serviceId: ServiceId;
   units: number;
-  /** Inizio in ISO UTC (solo servizi in studio) */
-  start?: string;
-  end?: string;
+  /** Inizio e fine in ISO UTC */
+  start: string;
+  end: string;
+}
+
+export interface Order {
+  /** Pacchetto pronto scelto (prezzo fisso), se c'è */
+  packageId?: PackageId;
+  /** Cosa compra: servizi e quantità */
+  lines: CartLine[];
+  /** Appuntamenti in studio, in ordine di lavoro (beat, registrazione, mix) */
+  appointments: Appointment[];
   name: string;
   email: string;
   phone: string;
@@ -22,9 +46,9 @@ export interface Order {
   payment: PaymentMethod;
   /** true = abbonamento mensile (oggi solo tramite Pass) */
   monthly: boolean;
-  /** Pass attivato al checkout: l'acquisto diventa la prima sessione del Pass */
+  /** Pass attivato al checkout: l'acquisto diventa il primo del Pass */
   passId?: PassId;
-  /** Il cliente ha accettato la regola di cancellazione (pagamenti online di sessioni in studio) */
+  /** Il cliente ha accettato la regola di cancellazione (pagamenti online con appuntamenti in studio) */
   policy?: boolean;
   totalCents: number;
   fullCents: number;
@@ -43,23 +67,62 @@ const STATUS_PREFIX: Record<OrderStatus, string> = {
   "da-saldare": "💵 DA SALDARE",
 };
 
-export function orderTitle(order: Order, status: OrderStatus): string {
-  const service = getService(order.serviceId)!;
-  const pass = order.passId ? getPass(order.passId) : undefined;
-  return `${STATUS_PREFIX[status]} · ${service.title}${pass ? ` (${pass.title})` : ""} · ${order.name}`;
+function lineText(l: { serviceId: ServiceId; units: number }): string {
+  const s = getService(l.serviceId)!;
+  return `${s.short} — ${unitLabel(s, l.units)}`;
 }
 
-export function orderDescription(order: Order, status: OrderStatus, extra: string[] = []): string {
-  const service = getService(order.serviceId)!;
+function whenText(a: Appointment): string {
+  const s = getService(a.serviceId)!;
+  const day = new Date(a.start).toLocaleString("it-IT", { timeZone: TIME_ZONE, weekday: "long", day: "numeric", month: "long" });
+  const from = new Date(a.start).toLocaleTimeString("it-IT", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit" });
+  const to = new Date(a.end).toLocaleTimeString("it-IT", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit" });
+  return s.showDuration ? `${day}, ${from}–${to} (${formatDuration((Date.parse(a.end) - Date.parse(a.start)) / 60000)})` : `${day}, dalle ${from}`;
+}
+
+/** Nome del pacchetto o del Pass, se c'è. */
+function offerName(order: Order): string | null {
+  if (order.passId) return getPass(order.passId)?.title ?? "Pass";
+  if (order.packageId) return getPackage(order.packageId)?.title ?? null;
+  return null;
+}
+
+/** Righe da fare a distanza (beat o mix senza appuntamento). */
+function remoteLines(order: Order): CartLine[] {
+  return order.lines.filter((l) => getService(l.serviceId)?.where === "remoto");
+}
+
+export function orderTitle(order: Order, index: number, status: OrderStatus): string {
+  const a = order.appointments[index];
+  const s = getService(a.serviceId)!;
+  const same = order.appointments.filter((x) => x.serviceId === a.serviceId);
+  const part = same.length > 1 ? ` (${same.indexOf(a) + 1}/${same.length})` : "";
+  const offer = offerName(order);
+  return `${STATUS_PREFIX[status]} · ${s.short} ${unitLabel(s, a.units)}${part}${offer ? ` · ${offer}` : ""} · ${order.name}`;
+}
+
+export function orderDescription(order: Order, index: number, status: OrderStatus, extra: string[] = []): string {
+  const a = order.appointments[index];
+  const first = index === 0;
+  const offer = offerName(order);
+  const others = order.appointments.filter((_, i) => i !== index);
+  const remote = remoteLines(order);
   const lines = [
-    status === "da-saldare" ? `⚠️ DA SALDARE IN CONTANTI: ${formatEuro(order.totalCents)}` : null,
-    status === "pagato" ? `Pagato online: ${formatEuro(order.totalCents)}${order.monthly ? " (rinnovo mensile attivo)" : ""}` : null,
-    order.passId ? `${getPass(order.passId)?.title ?? "Pass"}: ${passContents(getPass(order.passId)!)} al mese. Questa sessione è la prima del Pass.` : null,
+    status === "da-saldare"
+      ? first
+        ? `⚠️ DA SALDARE IN CONTANTI: ${formatEuro(order.totalCents)}${order.appointments.length > 1 ? " (tutto l'ordine, a questo primo appuntamento)" : ""}`
+        : `Contanti: tutto l'ordine (${formatEuro(order.totalCents)}) si salda al primo appuntamento.`
+      : null,
+    status === "pagato" ? `Pagato online: ${formatEuro(order.totalCents)}${order.monthly ? " (rinnovo mensile attivo)" : ""}${order.appointments.length > 1 ? " · tutto l'ordine" : ""}` : null,
+    order.passId ? `${offer}: ${passContents(getPass(order.passId)!)} al mese. Questo acquisto è il primo del Pass.` : null,
     status === "in-attesa" ? "Il cliente sta pagando online: se non completa entro 30 minuti lo slot si libera da solo." : null,
     "",
-    `Servizio: ${service.title}`,
-    `Quantità: ${unitLabel(service, order.units)}`,
-    order.fullCents !== order.totalCents ? `Prezzo pieno: ${formatEuro(order.fullCents)} · Totale: ${formatEuro(order.totalCents)}` : `Totale: ${formatEuro(order.totalCents)}`,
+    `Questo appuntamento: ${lineText(a)}`,
+    others.length ? `Altri appuntamenti dello stesso ordine:\n${others.map((o) => `• ${lineText(o)}: ${whenText(o)}`).join("\n")}` : null,
+    remote.length ? `Da fare a distanza (senza l'artista):\n${remote.map((r) => `• ${lineText(r)}`).join("\n")}` : null,
+    "",
+    offer && order.packageId ? `Pacchetto: ${offer}` : null,
+    order.fullCents !== order.totalCents ? `Prezzo pieno: ${formatEuro(order.fullCents)} · Totale ordine: ${formatEuro(order.totalCents)}` : `Totale ordine: ${formatEuro(order.totalCents)}`,
     "",
     `Cliente: ${order.name}`,
     `Email: ${order.email}`,
@@ -73,36 +136,50 @@ export function orderDescription(order: Order, status: OrderStatus, extra: strin
   return lines.filter((l): l is string => l !== null).join("\n");
 }
 
-/** Evento di calendario per un ordine in studio. */
-export function orderEvent(order: Order, status: OrderStatus, extra: string[] = []) {
-  if (!order.start || !order.end) throw new Error("Ordine senza orario");
+/** Evento di calendario per l'appuntamento numero `index` dell'ordine. */
+export function orderEvent(order: Order, index: number, status: OrderStatus, extra: string[] = []) {
+  const a = order.appointments[index];
+  if (!a) throw new Error("Ordine senza appuntamento");
   return {
-    summary: orderTitle(order, status),
-    description: orderDescription(order, status, extra),
+    summary: orderTitle(order, index, status),
+    description: orderDescription(order, index, status, extra),
     colorId: CALENDAR_COLORS[status],
-    start: { dateTime: order.start, timeZone: TIME_ZONE },
-    end: { dateTime: order.end, timeZone: TIME_ZONE },
+    start: { dateTime: a.start, timeZone: TIME_ZONE },
+    end: { dateTime: a.end, timeZone: TIME_ZONE },
     // Contanti: notifica 30 minuti prima per ricordarsi di incassare.
     reminders:
       status === "da-saldare"
         ? { useDefault: false, overrides: [{ method: "popup" as const, minutes: 30 }] }
         : { useDefault: true },
-    extendedProperties: { private: { stato: status, ordine: serializeOrder(order) } },
+    extendedProperties: { private: { stato: status, ordine: serializeOrder(order), parte: `${index + 1}/${order.appointments.length}` } as Record<string, string> },
   };
 }
 
-/** L'ordine viaggia compresso nei metadati di Stripe e del calendario (limite Stripe: 500 caratteri per valore). */
+/* ---------- l'ordine compresso nei metadati di Stripe (max 500 caratteri per valore) ---------- */
+
+const CODES: Record<ServiceId, string> = {
+  prova: "p",
+  registrazione: "r",
+  "beat-studio": "b",
+  "beat-remoto": "B",
+  "mix-studio": "m",
+  "mix-remoto": "M",
+  noleggio: "n",
+};
+const FROM_CODE = Object.fromEntries(Object.entries(CODES).map(([k, v]) => [v, k])) as Record<string, ServiceId>;
+
 export function serializeOrder(order: Order): string {
   const compact = {
-    s: order.serviceId,
-    u: order.units,
-    a: order.start ?? "",
-    b: order.end ?? "",
-    n: order.name.slice(0, 80),
-    e: order.email.slice(0, 120),
-    p: order.phone.slice(0, 30),
+    v: 2,
+    k: order.packageId ?? "",
+    l: order.lines.map((l) => `${CODES[l.serviceId]}${l.units}`).join(","),
+    // inizio in minuti dall'epoch, in base 36: la fine si ricalcola dal listino
+    a: order.appointments.map((a) => `${CODES[a.serviceId]}${a.units}@${Math.round(Date.parse(a.start) / 60000).toString(36)}`).join(","),
+    n: order.name.slice(0, 60),
+    e: order.email.slice(0, 100),
+    p: order.phone.slice(0, 24),
     m: order.monthly ? 1 : 0,
-    k: order.passId ?? "",
+    ps: order.passId ?? "",
     pc: order.policy ? 1 : 0,
     t: order.totalCents,
     f: order.fullCents,
@@ -111,41 +188,76 @@ export function serializeOrder(order: Order): string {
   return JSON.stringify(compact);
 }
 
+function parseUnits(token: string): { serviceId: ServiceId; units: number } | null {
+  const m = /^([a-zA-Z])(\d{1,2})$/.exec(token);
+  if (!m || !FROM_CODE[m[1]]) return null;
+  return { serviceId: FROM_CODE[m[1]], units: Number(m[2]) };
+}
+
 export function deserializeOrder(raw: string, notes = ""): Order | null {
   try {
     const c = JSON.parse(raw);
-    if (!getService(c.s)) return null;
-    return {
-      serviceId: c.s,
-      units: Number(c.u),
-      start: c.a || undefined,
-      end: c.b || undefined,
+    const common = {
       name: String(c.n),
       email: String(c.e),
       phone: String(c.p ?? ""),
       notes,
-      payment: c.y === "c" ? "contanti" : "online",
+      payment: (c.y === "c" ? "contanti" : "online") as PaymentMethod,
       monthly: c.m === 1,
-      ...(c.k && getPass(c.k) ? { passId: c.k as PassId } : {}),
       ...(c.pc === 1 ? { policy: true } : {}),
       totalCents: Number(c.t),
       fullCents: Number(c.f),
+    };
+    if (c.v === 2) {
+      const lines = String(c.l || "")
+        .split(",")
+        .filter(Boolean)
+        .map(parseUnits);
+      if (!lines.length || lines.some((l) => !l)) return null;
+      const appointments: Appointment[] = [];
+      for (const token of String(c.a || "").split(",").filter(Boolean)) {
+        const [u, t] = token.split("@");
+        const unit = parseUnits(u);
+        if (!unit || !t) return null;
+        const start = parseInt(t, 36) * 60000;
+        appointments.push({ ...unit, start: new Date(start).toISOString(), end: new Date(start + bookingMinutes(getService(unit.serviceId)!, unit.units) * 60000).toISOString() });
+      }
+      return {
+        ...(c.k && getPackage(c.k) ? { packageId: c.k as PackageId } : {}),
+        lines: lines as CartLine[],
+        appointments,
+        ...common,
+        ...(c.ps && getPass(c.ps) ? { passId: c.ps as PassId } : {}),
+      };
+    }
+    // Formato precedente (un solo servizio): pagamenti avviati prima dell'aggiornamento del sito.
+    if (!getService(c.s)) return null;
+    const line = { serviceId: c.s as ServiceId, units: Number(c.u) };
+    return {
+      lines: [line],
+      appointments: c.a && c.b ? [{ ...line, start: c.a, end: c.b }] : [],
+      ...common,
+      ...(c.k && getPass(c.k) ? { passId: c.k as PassId } : {}),
     };
   } catch {
     return null;
   }
 }
 
-export function describeOrderForHumans(order: Order, service: BookableService = getService(order.serviceId)!): string[] {
-  const when = order.start
-    ? new Date(order.start).toLocaleString("it-IT", { timeZone: TIME_ZONE, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
-    : null;
+/** Riepilogo leggibile per le email. */
+export function describeOrderForHumans(order: Order): string[] {
+  const offer = offerName(order);
+  const remote = remoteLines(order);
   return [
-    order.passId ? `${getPass(order.passId)!.title}: ${passContents(getPass(order.passId)!)} ogni mese` : null,
-    `${service.title} — ${unitLabel(service, order.units)}${order.passId ? " (prima sessione del Pass)" : ""}`,
-    when ? `Quando: ${when}${service.showDuration && order.end ? ` (${formatDuration((Date.parse(order.end) - Date.parse(order.start!)) / 60000)})` : ""}` : "A distanza: ti scriviamo noi per i dettagli e il materiale.",
+    order.passId ? `${offer}: ${passContents(getPass(order.passId)!)} ogni mese` : null,
+    order.packageId ? `Pacchetto: ${offer}` : null,
+    ...order.lines.map((l) => `• ${lineText(l)}`),
+    "",
+    ...(order.appointments.length ? ["In studio:", ...order.appointments.map((a) => `• ${getService(a.serviceId)!.short}: ${whenText(a)}`)] : []),
+    remote.length ? `A distanza: ${remote.map((r) => lineText(r)).join(", ")}. Ti scriviamo noi per i dettagli e il materiale.` : null,
+    "",
     `Totale: ${formatEuro(order.totalCents)}${order.monthly ? " al mese" : ""}`,
-    order.payment === "contanti" ? "Pagamento: in contanti in studio, il giorno della sessione." : "Pagamento: online.",
+    order.payment === "contanti" ? "Pagamento: in contanti in studio, al primo appuntamento." : "Pagamento: online.",
     order.policy ? `Cancellazioni: avvisaci almeno ${CANCELLATION_HOURS} ore prima; dopo, il pagamento non è rimborsabile.` : null,
   ].filter((l): l is string => l !== null);
 }

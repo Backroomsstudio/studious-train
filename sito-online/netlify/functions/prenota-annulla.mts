@@ -1,14 +1,14 @@
-import { cancelHold } from "../../src/booking/book.ts";
+import { cancelHold, eventIdsFrom } from "../../src/booking/book.ts";
 
-/** Il cliente torna indietro da Stripe senza pagare: si libera subito lo slot e si torna al checkout. */
+/** Il cliente torna indietro da Stripe senza pagare: si liberano subito gli orari e si torna al checkout. */
 export default async (req: Request) => {
   const url = new URL(req.url);
-  const eventId = url.searchParams.get("evento") ?? "";
-  if (/^[a-v0-9]{5,1024}$/.test(eventId)) {
+  const ids = eventIdsFrom({ eventi: url.searchParams.get("eventi") ?? undefined, evento: url.searchParams.get("evento") ?? undefined });
+  if (ids.length) {
     try {
-      await cancelHold(eventId);
+      await cancelHold(ids);
     } catch (e) {
-      // Se fallisce, lo slot si libera comunque alla scadenza della sessione Stripe (webhook "expired").
+      // Se fallisce, gli orari si liberano comunque alla scadenza della sessione Stripe (webhook "expired").
       console.error("[annulla]", e);
     }
   }

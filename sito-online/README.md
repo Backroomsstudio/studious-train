@@ -18,21 +18,22 @@ Sul sito, questi pulsanti "Prenota" portano al checkout:
 
 - "Prima sessione a 20 €", con la sessione di prova già scelta.
 
-Questi aprono ancora la richiesta su WhatsApp: Singolo/EP/Album, Corsi, Live e Visita.
+Singolo ed EP portano ai pacchetti del checkout (`?pacchetto=singolo`, `?pacchetto=ep`). Aprono ancora la richiesta su WhatsApp: Album, Corsi, Live e Visita.
 
 ## Come funziona
 
-1. Il cliente apre **/prenota/** e sceglie a cascata. Prima uno dei tre bottoni **Sessione**, **Beat** o **Mix & Master**. Dentro si apre il secondo livello:
-   - Sessione: registrazione con engineer, sessione di prova o sala senza fonico;
-   - Beat e Mix & Master: in presenza o a distanza.
+1. Il cliente apre **/prenota/** e risponde a un questionario, una domanda alla volta, con lo scontrino che si aggiorna a lato:
+   - **Pacchetto pronto** (prezzo fisso): Singolo completo 159 €, Type beat 109 €, Doppio singolo 309 €, EP 5 brani 690 €. Nei pacchetti il mix & master lo fate voi, senza l'artista: in calendario si fissano solo beat e registrazione.
+   - **Su misura**: quante tracce registrare (50 € a traccia), se serve il beat (in studio o a distanza) e se serve il mix & master (lo fate voi o in studio con lui). Si può prendere tutto insieme.
+   - **Sessione di prova** o **sala senza fonico**, a parte.
 
-   Poi si aprono, uno dopo l'altro, quantità, calendario, dati, pagamento e, in fondo, riepilogo e pagamento.
+   Il calcolatore traduce le tracce in tempo di sala: 1 traccia 1 h 30, 2 tracce 2 h 30, 3 tracce 3 h 30 (un'ora a traccia + 30 minuti di preparazione). Beat in studio 1 h 30 l'uno, mix & master in studio 2 ore a brano. Ogni servizio in studio è un appuntamento a sé (oltre 6 ore si divide in più appuntamenti): il cliente sceglie un orario per ognuno, oppure "tutto di fila" nello stesso giorno se ci sta nella fascia 14:00–02:00. Poi dati e pagamento: un solo pagamento per tutto l'ordine.
 2. Per i servizi **in studio** vede il calendario dei prossimi 60 giorni, con gli orari liberi e quelli occupati. Il calendario legge in tempo reale il Google Calendar dello studio, ma mostra solo "occupato": nessun nome né dettaglio esce dal sito.
 3. Sceglie come pagare:
    - **Online** (carta, PayPal, Apple Pay, Google Pay): va sulla pagina sicura di Stripe. Intanto lo slot compare nel calendario in **grigio** ("⏳ IN ATTESA DI PAGAMENTO") e resta bloccato al massimo 30 minuti.
      - Se paga, l'evento diventa **verde** ("✅ PAGATO") e partono le email, al cliente e a voi.
      - Se annulla o non paga entro 30 minuti, lo slot si libera da solo.
-   - **Contanti in studio** (solo per i servizi in studio): l'evento viene creato subito in **rosso** ("💵 DA SALDARE"), con la cifra da incassare nella descrizione e **una notifica 30 minuti prima** della sessione.
+   - **Contanti in studio** (solo se nel carrello non ci sono servizi a distanza): gli eventi vengono creati subito in **rosso** ("💵 DA SALDARE"), con la cifra di tutto l'ordine da incassare al primo appuntamento e **una notifica 30 minuti prima**.
    - **Backrooms Pass**: quando il cliente clicca per pagare, prima di andare su Stripe gli viene proposto il Pass mensile con un ulteriore −10% su ogni mese (Start 225 €, Pro 270 €, Label 405 € invece di 250, 300 e 450). Vengono proposti solo i Pass che includono l'acquisto in corso, che diventa la prima sessione del Pass. Il Pass si paga solo online, con rinnovo automatico. A ogni rinnovo vi arriva un'email per fissare le sessioni del mese. Se il cliente rifiuta, paga normalmente il singolo acquisto.
 4. I servizi **a distanza** (beat su commissione, mix & master) non occupano il calendario: si pagano online e vi arriva l'email con i dati del cliente.
 
@@ -40,17 +41,19 @@ Questi aprono ancora la richiesta su WhatsApp: Singolo/EP/Album, Corsi, Live e V
 
 Si modifica tutto in `sito-online/src/booking/catalog.ts`:
 
-| Servizio | Prezzo | In calendario | Massimo |
-| --- | --- | --- | --- |
-| Prima Sessione di Prova | 20 € (invece di 50 €), **si paga solo in studio**, una volta per cliente (stessa email o telefono) | 1 h | 1 |
-| Sessione di Registrazione | 50 € l'ora | 1 h per ora | 6 ore |
-| Sessione di Beat in Studio | 60 € a sessione | 1 h 30 per sessione | 4 sessioni (6 h) |
-| Beat a Distanza su Commissione | 60 € a beat | — | 6 |
-| Mix & Master in Studio | 70 € a brano | 2 h per brano (non mostrato al cliente) | 3 brani (6 h) |
-| Mix & Master a Distanza | 70 € a brano | — | 6 |
-| Noleggio Studio | 35 € l'ora, **mai scontato** | 1 h per ora | 6 ore |
+| Servizio | Prezzo | In calendario |
+| --- | --- | --- |
+| Prima Sessione di Prova | 20 € (invece di 50 €), **si paga solo in studio**, una volta per cliente, si prenota da sola | 1 h |
+| Registrazione con engineer | 50 € a traccia | 1 h a traccia + 30 min per appuntamento |
+| Beat su misura in studio | 60 € a beat | 1 h 30 a beat |
+| Beat su misura a distanza | 60 € a beat | — |
+| Mix & Master in studio | 70 € a brano | 2 h a brano (non mostrato al cliente) |
+| Mix & Master a distanza | 70 € a brano | — |
+| Sala senza fonico | 35 € l'ora, **mai scontato** | 1 h per ora |
 
-- **Sconti per quantità**: stessa scala del calcolatore del sito (1–2 a listino, da 3 −10%, da 5 −20%, da 10 −30%), arrotondati all'euro. Si cambiano in `DISCOUNTS`, che vale per tutti i servizi, o in `DISCOUNTS_BY_SERVICE`, che vale per un servizio solo.
+- **Pacchetti**: contenuti e prezzi in `packages`.
+- **Sconti per quantità sul carrello su misura**: come sul sito, "in qualsiasi combinazione": contano tutte le unità insieme (tracce, beat, brani), da 3 −10%, da 5 −20%, da 10 −30%, arrotondati all'euro. Si cambiano in `DISCOUNTS`. La sala senza fonico non si sconta e non conta.
+- **Appuntamenti**: un appuntamento non supera 6 ore (`MAX_BOOKING_MINUTES`); oltre si divide in più appuntamenti il più possibile uguali (5 beat = 3 + 2).
 - **Catalogo BeatStars**: link al negozio in `BEATSTARS_URL` (https://beatstars.com/backroomss), beat già pronti con licenza base a 30 €.
 - **Pass**: contenuti e prezzi in `passes`, ulteriore sconto dal checkout in `PASS_CHECKOUT_EXTRA_DISCOUNT` (oggi 10%).
 - **Caparra**: il checkout non chiede caparre: si paga tutto online oppure tutto in contanti in studio.

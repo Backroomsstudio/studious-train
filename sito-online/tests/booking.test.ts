@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { bookableServices, getService, maxUnitsFor, bookingMinutes } from "../src/booking/catalog.ts";
-import { quote, discountFor, formatEuro } from "../src/booking/pricing.ts";
-import { slotsForDay, romeToUtc, romeDay, isBookable, addDays, isValidDay, DEFAULT_RULES } from "../src/booking/slots.ts";
+import { bookableServices, getService, bookingMinutes, unitsPerBlock, planBlocks, packages, getPackage } from "../src/booking/catalog.ts";
+import { quote, discountFor, formatEuro, cartQuote } from "../src/booking/pricing.ts";
+import { slotsForDay, romeToUtc, romeDay, isBookable, fitsAt, addDays, isValidDay, DEFAULT_RULES } from "../src/booking/slots.ts";
 
 const ALL_DAY = { ...DEFAULT_RULES, minNoticeMinutes: 3 * 60, openHour: 0, closeHour: 0 };
 
@@ -12,31 +12,71 @@ const mix = getService("mix-studio")!;
 
 test("prezzi del listino", () => {
   assert.equal(reg.unitPriceCents, 5000);
+  assert.equal(reg.unit.one, "traccia");
   assert.equal(beat.unitPriceCents, 6000);
   assert.equal(getService("beat-remoto")!.unitPriceCents, 6000);
   assert.equal(mix.unitPriceCents, 7000);
   assert.equal(getService("mix-remoto")!.unitPriceCents, 7000);
 });
 
-test("tetto di 6 ore per i servizi in studio", () => {
-  assert.equal(maxUnitsFor(reg), 6);
-  assert.equal(maxUnitsFor(beat), 4);
-  assert.equal(maxUnitsFor(mix), 3);
-  for (const s of bookableServices.filter((x) => x.where === "studio")) {
-    assert.ok(bookingMinutes(s, maxUnitsFor(s)) <= 360, s.id);
-  }
+test("calcolatore del tempo: tracce + 30 minuti, beat 1 h 30, mix 2 ore", () => {
+  assert.equal(bookingMinutes(reg, 1), 90);
+  assert.equal(bookingMinutes(reg, 2), 150); // 2 tracce = 2 h 30
+  assert.equal(bookingMinutes(reg, 3), 210); // 3 tracce = 3 h 30
+  assert.equal(bookingMinutes(beat, 2), 180);
+  assert.equal(bookingMinutes(mix, 1), 120);
+  assert.equal(bookingMinutes(getService("mix-remoto")!, 3), 0);
 });
 
-test("scala sconti del calcolatore: 1–2 listino, 3+ −10%, 5+ −20%", () => {
+test("ogni appuntamento resta entro 6 ore: oltre si divide in più appuntamenti", () => {
+  for (const s of bookableServices.filter((x) => x.where === "studio")) {
+    assert.ok(bookingMinutes(s, unitsPerBlock(s)) <= 360, s.id);
+  }
+  assert.deepEqual(
+    planBlocks([{ serviceId: "beat-studio", units: 5 }, { serviceId: "registrazione", units: 5 }, { serviceId: "mix-remoto", units: 5 }]).map((b) => [b.serviceId, b.units, b.minutes]),
+    [["beat-studio", 3, 270], ["beat-studio", 2, 180], ["registrazione", 5, 330]],
+  );
+  assert.deepEqual(planBlocks([{ serviceId: "registrazione", units: 8 }]).map((b) => b.units), [4, 4]);
+  assert.deepEqual(planBlocks([{ serviceId: "mix-remoto", units: 2 }]), []);
+});
+
+test("scala sconti a servizio singolo: 1–2 listino, 3+ −10%, 5+ −20%", () => {
   assert.equal(quote(reg, 1).totalCents, 5000);
   assert.equal(quote(reg, 2).totalCents, 10000);
   assert.equal(quote(reg, 3).totalCents, 13500); // 150 € − 10%
-  assert.equal(quote(reg, 4).totalCents, 18000); // 200 € − 10%
   assert.equal(quote(reg, 5).totalCents, 20000); // 250 € − 20%
-  assert.equal(quote(reg, 6).totalCents, 24000); // 300 € − 20%
   assert.equal(quote(beat, 4).totalCents, 21600); // 240 € − 10%
-  assert.equal(quote(mix, 3).totalCents, 18900); // 210 € − 10%
   assert.equal(quote(getService("mix-remoto")!, 5).totalCents, 28000); // 350 € − 20%
+});
+
+test("carrello libero: sconto su tutti i servizi insieme, in qualsiasi combinazione", () => {
+  // 2 tracce + 1 beat = 3 servizi → −10%: 160 € → 144 €
+  const q = cartQuote([{ serviceId: "registrazione", units: 2 }, { serviceId: "beat-remoto", units: 1 }]);
+  assert.equal(q.fullCents, 16000);
+  assert.equal(q.discountPercent, 10);
+  assert.equal(q.totalCents, 14400);
+  // la sala senza fonico non si sconta e non conta
+  const n = cartQuote([{ serviceId: "registrazione", units: 2 }, { serviceId: "noleggio", units: 2 }]);
+  assert.equal(n.discountPercent, 0);
+  assert.equal(n.totalCents, 17000);
+  assert.throws(() => cartQuote([]));
+});
+
+test("pacchetti: prezzo fisso, sotto il listino", () => {
+  assert.deepEqual(packages.map((p) => [p.id, p.title, p.priceCents]), [
+    ["singolo", "Singolo completo", 15900],
+    ["typebeat", "Type beat", 10900],
+    ["doppio", "Doppio singolo", 30900],
+    ["ep", "EP 5 brani", 69000],
+  ]);
+  for (const p of packages) {
+    const q = cartQuote(p.lines, p.id);
+    assert.equal(q.totalCents, p.priceCents);
+    assert.ok(q.fullCents > p.priceCents, p.id);
+    // il master nei pacchetti è a distanza: in calendario solo beat e registrazione
+    assert.ok(!planBlocks(p.lines).some((b) => b.serviceId.startsWith("mix")), p.id);
+  }
+  assert.equal(cartQuote(getPackage("singolo")!.lines, "singolo").fullCents, 18000);
 });
 
 test("sconto a scaglioni, arrotondato all'euro", () => {
@@ -52,8 +92,7 @@ test("sconto a scaglioni, arrotondato all'euro", () => {
 
 test("quantità fuori intervallo rifiutate", () => {
   assert.throws(() => quote(reg, 0));
-  assert.throws(() => quote(reg, 7));
-  assert.throws(() => quote(beat, 5));
+  assert.throws(() => quote(reg, 11));
   assert.throws(() => quote(reg, 1.5));
 });
 
@@ -110,7 +149,7 @@ test("noleggio studio: 35 € l'ora, mai sconti", () => {
   assert.equal(quote(nol, 3).totalCents, 10500);
   assert.equal(quote(nol, 6).totalCents, 21000);
   assert.equal(quote(nol, 6).discountPercent, 0);
-  assert.equal(passesFor(nol, 1).length, 0); // il Pass non include il noleggio
+  assert.equal(passesFor([{ serviceId: "noleggio", units: 1 }]).length, 0); // il Pass non include il noleggio
 });
 
 test("Pass: valore coerente con il listino e ulteriore sconto dal checkout", () => {
@@ -124,11 +163,13 @@ test("Pass: valore coerente con il listino e ulteriore sconto dal checkout", () 
 });
 
 test("si propongono solo i Pass che includono l'acquisto", () => {
-  assert.deepEqual(passesFor(reg, 2).map((p) => p.id), ["start", "pro", "label"]);
-  assert.deepEqual(passesFor(reg, 5).map((p) => p.id), ["pro", "label"]);
-  assert.deepEqual(passesFor(reg, 6).map((p) => p.id), ["label"]);
-  assert.deepEqual(passesFor(beat, 2).map((p) => p.id), ["pro", "label"]);
-  assert.deepEqual(passesFor(mix, 3).map((p) => p.id), ["pro", "label"]);
+  const r = (n: number) => [{ serviceId: "registrazione" as const, units: n }];
+  assert.deepEqual(passesFor(r(2)).map((p) => p.id), ["start", "pro", "label"]);
+  assert.deepEqual(passesFor(r(5)).map((p) => p.id), ["pro", "label"]);
+  assert.deepEqual(passesFor(r(6)).map((p) => p.id), ["label"]);
+  assert.deepEqual(passesFor([{ serviceId: "beat-studio", units: 2 }]).map((p) => p.id), ["pro", "label"]);
+  // carrello misto: 2 tracce + 2 beat + 3 mix sta nel Pro e nel Label
+  assert.deepEqual(passesFor([...r(2), { serviceId: "beat-remoto", units: 2 }, { serviceId: "mix-remoto", units: 3 }]).map((p) => p.id), ["pro", "label"]);
 });
 
 test("link BeatStars impostato", () => {
@@ -174,4 +215,15 @@ test("non si prenota a meno di 24 ore dall'inizio", () => {
   const tomorrow = slotsForDay("2026-12-11", 60, [], now);
   assert.equal(tomorrow.find((s) => s.label === "14:00")?.state, "libero"); // esattamente 24 ore dopo
   assert.equal(isBookable("2026-12-11T12:00:00.000Z", 60, [], now), false); // 13:00 di domani: fuori fascia
+});
+
+test("appuntamenti di fila: si può iniziare alla mezz'ora, dentro la fascia 14–02", () => {
+  const now = new Date("2026-12-01T00:00:00Z");
+  // beat 14:00–15:30 poi registrazione 15:30–18:00 (ora di Roma = UTC+1)
+  assert.equal(fitsAt("2026-12-10T14:30:00.000Z", 150, [{ start: "2026-12-10T13:00:00.000Z", end: "2026-12-10T14:30:00.000Z" }], now), true);
+  assert.equal(fitsAt("2026-12-10T14:15:00.000Z", 60, [], now), false); // non è una mezz'ora
+  assert.equal(fitsAt("2026-12-10T12:30:00.000Z", 60, [], now), false); // 13:30, prima dell'apertura
+  assert.equal(fitsAt("2026-12-11T00:30:00.000Z", 30, [], now), true); // 01:30–02:00
+  assert.equal(fitsAt("2026-12-11T00:30:00.000Z", 60, [], now), false); // finirebbe alle 02:30
+  assert.equal(fitsAt("2026-12-10T13:00:00.000Z", 60, [{ start: "2026-12-10T13:30:00.000Z", end: "2026-12-10T14:00:00.000Z" }], now), false);
 });
