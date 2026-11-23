@@ -67,12 +67,12 @@ const STATUS_PREFIX: Record<OrderStatus, string> = {
   "da-saldare": "💵 DA SALDARE",
 };
 
-function lineText(l: { serviceId: ServiceId; units: number }): string {
+export function lineText(l: { serviceId: ServiceId; units: number }): string {
   const s = getService(l.serviceId)!;
   return `${s.short} — ${unitLabel(s, l.units)}`;
 }
 
-function whenText(a: Appointment): string {
+export function whenText(a: Appointment): string {
   const s = getService(a.serviceId)!;
   const day = new Date(a.start).toLocaleString("it-IT", { timeZone: TIME_ZONE, weekday: "long", day: "numeric", month: "long" });
   const from = new Date(a.start).toLocaleTimeString("it-IT", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit" });
@@ -81,14 +81,14 @@ function whenText(a: Appointment): string {
 }
 
 /** Nome del pacchetto o del Pass, se c'è. */
-function offerName(order: Order): string | null {
+export function offerName(order: Order): string | null {
   if (order.passId) return getPass(order.passId)?.title ?? "Pass";
   if (order.packageId) return getPackage(order.packageId)?.title ?? null;
   return null;
 }
 
 /** Righe da fare a distanza (beat o mix senza appuntamento). */
-function remoteLines(order: Order): CartLine[] {
+export function remoteLines(order: Order): CartLine[] {
   return order.lines.filter((l) => getService(l.serviceId)?.where === "remoto");
 }
 

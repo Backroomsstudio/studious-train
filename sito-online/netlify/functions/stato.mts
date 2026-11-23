@@ -1,5 +1,6 @@
 import { busyIntervals } from "../../src/booking/google-calendar.ts";
 import { telegramBotName } from "../../src/booking/telegram.ts";
+import { accountingStatus } from "../../src/booking/accounting.ts";
 import { calendarConfigured, mailConfigured, serverConfig, stripeConfigured, telegramConfigured } from "../../src/booking/server-config.ts";
 import { stripe } from "../../src/booking/stripe.ts";
 
@@ -58,6 +59,7 @@ export default async () => {
       out.telegram = "errore: Telegram rifiuta TELEGRAM_BOT_TOKEN (copiato male o revocato)";
     }
   }
+  out.contabilita = await accountingStatus();
   const pronto = [out.calendario, out.stripe, out.webhook].every((v) => String(v).startsWith("ok"));
   return Response.json({ pronto, ...out }, { headers: { "Cache-Control": "no-store" } });
 };

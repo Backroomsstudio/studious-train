@@ -15,14 +15,15 @@ function base64url(input: string | Buffer): string {
   return Buffer.from(input).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 }
 
-async function accessToken(): Promise<string> {
+/** Token dell'account di servizio (calendario + fogli Google). */
+export async function accessToken(): Promise<string> {
   if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) return cachedToken.value;
   const now = Math.floor(Date.now() / 1000);
   const header = base64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const claims = base64url(
     JSON.stringify({
       iss: serverConfig.googleClientEmail,
-      scope: "https://www.googleapis.com/auth/calendar",
+      scope: "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/spreadsheets",
       aud: "https://oauth2.googleapis.com/token",
       iat: now,
       exp: now + 3600,
