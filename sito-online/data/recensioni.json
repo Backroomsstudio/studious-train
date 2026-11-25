@@ -3,8 +3,22 @@
   "placeId": "ChIJAUVFRv4xf0cRz0a2QhYqzgU",
   "urlGoogle": "https://maps.google.com/?cid=418318090488923855",
   "urlScrivi": "https://search.google.com/local/writereview?placeid=ChIJAUVFRv4xf0cRz0a2QhYqzgU",
-  "aggiornato": "2026-11-23",
+  "aggiornato": "2026-11-25",
   "recensioni": [
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT25oZlQwcDRTVFZRTkRZMGNrNVJkV3BRVmpSeGFFRRAB",
+      "nome": "Leo Leo",
+      "stelle": 5,
+      "testo": "Ottimo service da parte dei tecnici, produzioni di livello e struttura all'avanguardia. I producer mi hanno guidato e consigliato mantenendo intatta la mia visione artistica, top esperienza",
+      "data": "2026-11-25"
+    },
+    {
+      "id": "Ci9DQUlRQUNvZENodHljRjlvT201dFpYSllMWEp0ZG5kVlFYVkpXR1ZPYlRscFdVRRAB",
+      "nome": "Andrea Bizzotto",
+      "stelle": 5,
+      "testo": "",
+      "data": "2026-11-25"
+    },
     {
       "id": "Ci9DQUlRQUNvZENodHljRjlvT2w5eE9FWXhWbXN4YUdrdGFFNVpkMDVCTWpsWWFrRRAB",
       "nome": "GIULIA BOAKYE",
